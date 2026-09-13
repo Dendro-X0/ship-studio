@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Human portal sprint** opens paste-source tabs only (Polar→GitHub); Desktop **Paste in terminal**; `--open-all` for full dashboards
 - **CI** (GitHub Actions): `cargo test -p shipctl` + CLI smoke on `main`
 - **Desktop / TUI / MCP** vault export surfaces (`Export vault`, TUI `v`, `ship_vault`)
 - **Guide** step `vault` (optional encrypted backup after secrets)

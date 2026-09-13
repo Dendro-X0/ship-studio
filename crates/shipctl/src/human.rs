@@ -23,25 +23,39 @@ pub struct HumanSprint {
 
 /// Fast path for the operator: navigate → copy from dashboards → paste into put CLIs.
 pub fn run(project: &Path, open: bool, put: bool) -> Result<HumanSprint> {
+    run_with_options(project, open, put, false)
+}
+
+/// `open_all_entries`: also open every guide entry URL (CF/Vercel dashboards), not only paste sources.
+pub fn run_with_options(
+    project: &Path,
+    open: bool,
+    put: bool,
+    open_all_entries: bool,
+) -> Result<HumanSprint> {
     let project = std::fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
     let guide = guide::plan_for(&project)?;
     let secrets = secrets::plan_for(&project, None)?;
 
     let put_queue = put_queue_from_hints(&secrets.hints);
 
-    // Open value-source pages for the put queue first (GitHub/Polar), not CF token list by mistake.
-    let mut open_order = Vec::new();
+    // Default open set = value-source pages for the paste queue only (Polar/GitHub…),
+    // prioritized — not the full CF API-token catalog unless --open-all.
+    let mut source_urls: Vec<String> = Vec::new();
     let mut seen = HashSet::new();
     for h in &put_queue {
         if let Some(url) = &h.entry_url {
             if seen.insert(url.clone()) {
-                open_order.push(url.clone());
+                source_urls.push(url.clone());
             }
         }
     }
-    for url in prioritize_urls(&guide.entry_urls) {
-        if seen.insert(url.clone()) {
-            open_order.push(url);
+    let mut open_order = prioritize_urls(&source_urls);
+    if open_all_entries {
+        for url in prioritize_urls(&guide.entry_urls) {
+            if seen.insert(url.clone()) {
+                open_order.push(url);
+            }
         }
     }
 
@@ -95,6 +109,8 @@ pub fn run(project: &Path, open: bool, put: bool) -> Result<HumanSprint> {
                 );
                 if let Some(url) = &hint.entry_url {
                     eprintln!("    source page: {url}");
+                    // Re-focus the right tab before each paste.
+                    let _ = portal::open_url(url);
                 }
                 let _ = io::stderr().flush();
                 let id = ProviderId::parse(&hint.provider)?;
@@ -131,15 +147,15 @@ pub fn run(project: &Path, open: bool, put: bool) -> Result<HumanSprint> {
         }
     } else if !put_queue.is_empty() {
         checklist.push(
-            "Next in your terminal (interactive paste): shipctl human --project . --open --put"
+            "Next: shipctl human --project . --put   (opens each source page, then wrangler secret put)"
                 .into(),
         );
         for h in &put_queue {
             checklist.push(format!(
-                "  · shipctl secrets put --project {} --provider {} --name {}",
-                project.display(),
+                "  · {} / {}  ← {}",
                 h.provider,
-                h.name
+                h.name,
+                h.entry_url.as_deref().unwrap_or("(no url)")
             ));
         }
     }
@@ -150,7 +166,7 @@ pub fn run(project: &Path, open: bool, put: bool) -> Result<HumanSprint> {
     let sprint = HumanSprint {
         schema: "ship-studio/human/v1".into(),
         project: project.display().to_string(),
-        minutes_hint: "Aim: open tabs → copy 2–3 values → paste into put prompts (~few minutes).".into(),
+        minutes_hint: "Aim: 2–3 source tabs → copy → paste into put prompts (~few minutes).".into(),
         opened,
         open_order,
         put_queue,
@@ -248,6 +264,51 @@ mod tests {
         let ordered = prioritize_urls(&urls);
         assert!(ordered[0].contains("polar"));
         assert!(ordered[1].contains("github"));
+    }
+
+    #[test]
+    fn human_default_open_order_is_paste_sources_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-human-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("wrangler.toml"),
+            "# Secrets\n# - GITHUB_TOKEN\n# - POLAR_WEBHOOK_SECRET\nname = \"x\"\n",
+        )
+        .unwrap();
+        // Touch .git so guide also lists github entry URLs.
+        std::fs::create_dir_all(dir.join(".git")).unwrap();
+        let sprint = run_with_options(&dir, false, false, false).unwrap();
+        assert!(
+            !sprint.open_order.iter().any(|u| u.contains("cloudflare.com")),
+            "default open should not include CF token page: {:?}",
+            sprint.open_order
+        );
+        assert!(
+            sprint.open_order.iter().any(|u| u.contains("github.com"))
+                || sprint.open_order.iter().any(|u| u.contains("polar.sh")),
+            "expected paste sources: {:?}",
+            sprint.open_order
+        );
+        if sprint.open_order.len() >= 2 {
+            let polar_i = sprint
+                .open_order
+                .iter()
+                .position(|u| u.contains("polar.sh"));
+            let gh_i = sprint
+                .open_order
+                .iter()
+                .position(|u| u.contains("github.com"));
+            if let (Some(p), Some(g)) = (polar_i, gh_i) {
+                assert!(p < g, "polar should sort before github: {:?}", sprint.open_order);
+            }
+        }
     }
 
     #[test]

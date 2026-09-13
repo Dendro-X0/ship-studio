@@ -194,7 +194,8 @@ fn tool(name: &str, description: &str, flow_flags: bool) -> Value {
         });
     }
     if name == "ship_human" {
-        props["open"] = json!({ "type": "boolean", "description": "Open prioritized entry URLs (default true)" });
+        props["open"] = json!({ "type": "boolean", "description": "Open paste-source URLs (default true)" });
+        props["open_all"] = json!({ "type": "boolean", "description": "Also open full guide entry URLs" });
         props["put"] = json!({ "type": "boolean", "description": "Interactively put queued secrets" });
     }
     json!({
@@ -395,7 +396,11 @@ fn call_tool(params: Value) -> Result<Value> {
                 .get("put")
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false);
-            serde_json::to_value(human::run(&project, open, put)?)?
+            let open_all = args
+                .get("open_all")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            serde_json::to_value(human::run_with_options(&project, open, put, open_all)?)?
         }
         "ship_flow_dry_run" => {
             serde_json::to_value(flow::plan(&project, skip_sign, skip_deploy, offline)?)?

@@ -72,6 +72,20 @@ type SecretsPlan = {
   }>;
 };
 
+type HumanSprint = {
+  minutes_hint?: string;
+  open_order?: string[];
+  put_queue?: Array<{
+    provider?: string;
+    name?: string;
+    put_cli?: string[];
+    entry_url?: string | null;
+    detail?: string;
+  }>;
+  checklist?: string[];
+};
+
+let lastHuman: HumanSprint | null = null;
 let lastPortal: PortalPlan | null = null;
 let lastSecrets: SecretsPlan | null = null;
 let portalFilter: string | null = null;
@@ -113,6 +127,8 @@ const ACTION_IDS = [
   "btn-wizard",
   "btn-ship",
   "btn-human",
+  "btn-human-open",
+  "btn-human-put",
   "btn-guide",
   "btn-configure",
   "btn-portal",
@@ -493,6 +509,85 @@ async function loadSecrets() {
     });
   } catch {
     /* shown in output */
+  }
+}
+
+function applyHumanSprint(sprint: HumanSprint | null) {
+  lastHuman = sprint;
+  const panel = document.querySelector<HTMLElement>("#human-panel");
+  const list = document.querySelector<HTMLElement>("#human-queue");
+  const hint = document.querySelector<HTMLElement>("#human-hint");
+  if (!panel || !list) return;
+  if (!sprint?.put_queue?.length && !sprint?.open_order?.length) {
+    panel.hidden = true;
+    list.innerHTML = "";
+    return;
+  }
+  panel.hidden = false;
+  if (hint && sprint.minutes_hint) hint.textContent = sprint.minutes_hint;
+  const queue = sprint.put_queue ?? [];
+  list.innerHTML = queue
+    .map((h, i) => {
+      const cmd = (h.put_cli ?? []).join(" ");
+      const url = h.entry_url ?? "";
+      return `<li class="portal-step">
+        <div class="meta">
+          <div class="title"><span class="kind">${i + 1}</span>${escapeHtml(
+            h.provider ?? "",
+          )} · ${escapeHtml(h.name ?? "")}</div>
+          <p class="detail">${escapeHtml(url || "no source url")}${
+            cmd ? ` · ${escapeHtml(cmd)}` : ""
+          }</p>
+        </div>
+        <div class="btns">
+          <button type="button" class="human-open" data-url="${escapeHtml(
+            url,
+          )}" ${url ? "" : "disabled"}>Open source</button>
+          <button type="button" class="human-copy" data-cmd="${escapeHtml(
+            cmd,
+          )}" ${cmd ? "" : "disabled"}>Copy CLI</button>
+        </div>
+      </li>`;
+    })
+    .join("");
+  list.querySelectorAll<HTMLButtonElement>(".human-open").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-url");
+      if (url) await openUrl(url);
+    });
+  });
+  list.querySelectorAll<HTMLButtonElement>(".human-copy").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const cmd = btn.getAttribute("data-cmd") ?? "";
+      if (!cmd) return;
+      await navigator.clipboard.writeText(cmd);
+      appendStream({ stream: "meta", text: `copied: ${cmd}` });
+    });
+  });
+}
+
+async function runHumanPortal(opts?: { openSources?: boolean }) {
+  setStep("paste", "active");
+  const args = ["human", "--project", projectPath(), "--no-open"];
+  const result = await run(args, { step: "paste" });
+  if (!result?.ok || !result.stdout) {
+    setStep("paste", "fail");
+    return;
+  }
+  try {
+    const sprint = JSON.parse(result.stdout) as HumanSprint;
+    applyHumanSprint(sprint);
+    if (opts?.openSources) {
+      const urls = [...new Set(sprint.open_order ?? [])];
+      for (const url of urls) await openUrl(url);
+      appendStream({
+        stream: "meta",
+        text: `Opened ${urls.length} paste-source page(s). Copy values, then Paste in terminal.`,
+      });
+    }
+    setStep("paste", "done");
+  } catch {
+    setStep("paste", "fail");
   }
 }
 
@@ -1007,11 +1102,32 @@ async function runWizard() {
     void run(args);
   });
   document.querySelector("#btn-human")?.addEventListener("click", () => {
-    void run(["human", "--project", projectPath()]);
-    appendStream({
-      stream: "meta",
-      text: "Human portal opened dashboards. In a terminal run: shipctl human --project <path> --put  and paste each value.",
-    });
+    void runHumanPortal({ openSources: true });
+  });
+  document.querySelector("#btn-human-open")?.addEventListener("click", () => {
+    void (async () => {
+      if (!lastHuman) await runHumanPortal({ openSources: false });
+      const urls = [...new Set(lastHuman?.open_order ?? [])];
+      for (const url of urls) await openUrl(url);
+      appendStream({
+        stream: "meta",
+        text: `Opened ${urls.length} paste-source page(s).`,
+      });
+    })();
+  });
+  document.querySelector("#btn-human-put")?.addEventListener("click", async () => {
+    const project = projectPath();
+    if (!project) return;
+    try {
+      await invoke("open_human_put_terminal", { project });
+      appendStream({
+        stream: "meta",
+        text: "Launched terminal: shipctl human --no-open --put — paste each value when prompted.",
+      });
+      setStep("paste", "done");
+    } catch (err) {
+      appendStream({ stream: "stderr", text: String(err) });
+    }
   });
   document.querySelector("#btn-guide")?.addEventListener("click", () =>
     run(["guide", "--project", projectPath()]),

@@ -69,12 +69,15 @@ enum Commands {
     Human {
         #[arg(long, default_value = ".")]
         project: PathBuf,
-        /// Open Polar → GitHub → deploy dashboards (default: true).
+        /// Open paste-source pages (Polar/GitHub…) — default true.
         #[arg(long, default_value_t = true)]
         open: bool,
         /// Skip opening browsers.
         #[arg(long, default_value_t = false)]
         no_open: bool,
+        /// Also open every guide entry URL (CF/Vercel dashboards), not only paste sources.
+        #[arg(long, default_value_t = false)]
+        open_all: bool,
         /// Interactively put each queued secret (paste in terminal).
         #[arg(long, default_value_t = false)]
         put: bool,
@@ -258,10 +261,11 @@ fn main() -> Result<()> {
             project,
             open,
             no_open,
+            open_all,
             put,
         } => {
             let do_open = open && !no_open;
-            let sprint = human::run(&project, do_open, put)?;
+            let sprint = human::run_with_options(&project, do_open, put, open_all)?;
             println!("{}", serde_json::to_string_pretty(&sprint)?);
         }
         Commands::Tui { project } => tui::run(&project)?,

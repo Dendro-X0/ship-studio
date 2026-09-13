@@ -4,12 +4,13 @@
 **Updated:** 2026-09-13  
 
 ```text
-GOAL:     Shipping portal on three surfaces: CLI (JSON) · TUI · Desktop — same shipctl engine
-NOT:      Replace Cloudflare/Vercel/Netlify/GitHub · merge Signet/Orbit · invent cloud secrets
-RUNTIME:  Local + offline-first (bridge never requires network; open/login are operator-initiated)
+GOAL:     Get a human to the right paste surfaces in minutes (CLI · TUI · Desktop)
+NOT:      Replace Cloudflare/Vercel/Netlify/GitHub · finish OAuth without the human · invent cloud secrets
+RUNTIME:  Local + offline-first (bridge never requires network; open/login/put are operator-initiated)
 SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri)
-PROOF:    cargo test -p shipctl · CI on main · guide · portal · secrets · vault · tui --help
-DONE:     Portal + secrets + vault.km + guide/human + TUI/desktop + GitHub + CI
+PROOF:    cargo test -p shipctl · human --no-open JSON · desktop Human portal · CI
+DONE:     Portal detect + human sprint (paste-source tabs + put queue) + vault + surfaces
+NOT YET:  Operator must still paste Worker secrets / redeploy (see OPERATOR-NEXT)
 ```
 
 ## Architecture
@@ -59,7 +60,7 @@ bash scripts/stage-desktop.sh
 ./target/release/ship-studio-desktop.exe
 ```
 
-Buttons: **Human portal** · Wizard · Ship · Guide · Portal · Secrets · **Export vault** · …
+Buttons: **Human portal** (open sources + paste terminal) · Wizard · Ship · Guide · Portal · Secrets · Export vault · …
 
 ## TUI
 

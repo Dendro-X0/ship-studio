@@ -59,12 +59,20 @@
           <span class="step-id">2</span>
           <div>
             <strong>Portal</strong>
-            <span class="step-desc">Provider entry points</span>
+            <span class="step-desc">Open entry points</span>
+          </div>
+        </div>
+        <div class="step-sep" aria-hidden="true"></div>
+        <div class="step" data-step="paste">
+          <span class="step-id">3</span>
+          <div>
+            <strong>Paste</strong>
+            <span class="step-desc">Human portal secrets</span>
           </div>
         </div>
         <div class="step-sep" aria-hidden="true"></div>
         <div class="step" data-step="sign">
-          <span class="step-id">3</span>
+          <span class="step-id">4</span>
           <div>
             <strong>Sign</strong>
             <span class="step-desc">Signet ritual</span>
@@ -72,12 +80,26 @@
         </div>
         <div class="step-sep" aria-hidden="true"></div>
         <div class="step" data-step="deploy">
-          <span class="step-id">4</span>
+          <span class="step-id">5</span>
           <div>
             <strong>Deploy</strong>
             <span class="step-desc">Orbit ship</span>
           </div>
         </div>
+      </section>
+
+      <section class="portal-panel" id="human-panel" hidden>
+        <div class="ritual-head">
+          <div>
+            <label>Human portal</label>
+            <p class="hint" id="human-hint">Open 2–3 source tabs → copy → paste into wrangler. This is the shipping-portal sprint.</p>
+          </div>
+          <div class="portal-actions">
+            <button type="button" id="btn-human-open" disabled title="Open Polar/GitHub source pages only">Open sources</button>
+            <button type="button" id="btn-human-put" class="primary" disabled title="Launch terminal for interactive paste">Paste in terminal</button>
+          </div>
+        </div>
+        <ul class="portal-steps" id="human-queue"></ul>
       </section>
 
       <section class="portal-panel" id="portal-panel" hidden>

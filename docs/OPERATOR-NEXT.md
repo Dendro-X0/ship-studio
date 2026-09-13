@@ -26,24 +26,18 @@ If helper points at missing `E:\Temp\gh-cli\bin\gh.exe`, point it at `C:\Program
 
 `origin/main` is published. Clone: `git clone https://github.com/Dendro-X0/ship-studio.git`
 
-## 3) assess-api Worker secrets (paste)
+## 3) assess-api Worker secrets — **this is the remaining portal goal**
 
-Wrangler is already logged in. Values must come from GitHub PAT + Polar dashboard:
+The portal now opens **paste-source pages only** (Polar/GitHub), not five dashboards. Finish the sprint:
 
 ```bash
 cd "E:/Web Projects/ship-studio"
+# Desktop: Open assess-api → Human portal → Paste in terminal
+# or CLI:
 ./target/release/shipctl.exe human --project "E:/Web Projects/assess-api" --put
 ```
 
-Or one-by-one:
-
-```bash
-./target/release/shipctl.exe secrets put --project "E:/Web Projects/assess-api" --provider cloudflare --name GITHUB_TOKEN
-./target/release/shipctl.exe secrets put --project "E:/Web Projects/assess-api" --provider cloudflare --name POLAR_WEBHOOK_SECRET
-./target/release/shipctl.exe secrets put --project "E:/Web Projects/assess-api" --provider cloudflare --name POLAR_CHECKOUT_URL
-./target/release/shipctl.exe secrets put --project "E:/Web Projects/assess-api" --provider cloudflare --name API_KEY_PEPPER
-```
-
+That re-opens each source URL before each `wrangler secret put`. You still must create/copy the values yourself.
 ## 4) Encrypted backup (after you have values)
 
 ```bash

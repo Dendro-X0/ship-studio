@@ -395,14 +395,18 @@ fn do_human(app: &mut App, open: bool, put: bool) {
     match result {
         Ok(sprint) => {
             app.push(format!(
-                "human · opened={} · put_queue={}",
-                sprint.opened.len(),
+                "human · sources={} · put_queue={}",
+                sprint.open_order.len(),
                 sprint.put_queue.len()
             ));
-            for c in &sprint.checklist {
+            for c in sprint.checklist.iter().take(8) {
                 app.push(format!("  · {c}"));
             }
-            app.status = "human portal — run --put in a terminal to paste".into();
+            app.status = if put {
+                "human put pass finished".into()
+            } else {
+                "human — Enter again after enabling put, or: shipctl human --put".into()
+            };
         }
         Err(e) => {
             app.push(format!("human failed: {e:#}"));
