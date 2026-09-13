@@ -1,36 +1,26 @@
 # Ship Studio
 
-**Local-first Ship workflow:** environment setup → Signet (sign/trust) → Orbit (deploy), offline-capable, MCP + desktop shell (CodaCtrl-shaped).
-
-Signet (Rust) and Orbit (Go) stay **separate products**. This repo is the **bridge + client**, not a source merge.
-
-## Product contract
-
-See [docs/PRODUCT.md](./docs/PRODUCT.md).
+**Local-first shipping portal** on three surfaces: **CLI** (JSON/MCP) · **TUI** · **Desktop** — same `shipctl` engine (Signet + Orbit adapters).
 
 ## Quick start
 
 ```bash
 cd "E:/Web Projects/ship-studio"
 cargo build -p shipctl --release
-./target/release/shipctl.exe doctor --project "E:/Web Projects/my-protfolio"
-./target/release/shipctl.exe flow --project "E:/path/to/repo" --dry-run
+./target/release/shipctl.exe ship --project "E:/path/to/repo"
+./target/release/shipctl.exe guide --project "E:/path/to/repo" --open
+./target/release/shipctl.exe tui --project "E:/path/to/repo"
 ```
 
-MCP (stdio):
-
-```bash
-shipctl mcp
-```
+Contract: [docs/PRODUCT.md](./docs/PRODUCT.md) · Manual gates: [docs/OPERATOR-NEXT.md](./docs/OPERATOR-NEXT.md)
 
 ## Layout
 
 | Path | Role |
 |------|------|
-| `crates/shipctl` | CLI + adapters + MCP |
-| `apps/desktop` | CodaCtrl-like Tauri shell (Open folder → Doctor → Flow) |
-
-## Desktop
+| `crates/shipctl` | CLI + TUI + MCP + guide/portal/secrets/vault |
+| `apps/desktop` | Tauri shell (Wizard / Portal / Secrets) |
+| `specs/backend/` | Design contracts |
 
 ## Desktop
 
@@ -39,14 +29,13 @@ bash scripts/stage-desktop.sh
 ./target/release/ship-studio-desktop.exe
 ```
 
-Bare `cargo build -p ship-studio-desktop` keeps `cfg(dev)` and opens `localhost:1420` → `ERR_CONNECTION_REFUSED` without Vite. Always use `tauri build` / `tauri dev` / `stage-desktop.sh`.
-
-Optional: `SHIPCTL_PATH` → `shipctl.exe` if not beside the desktop exe or under workspace `target/release`.
-
 ## Proof
 
 ```bash
 cargo test -p shipctl
-./target/release/shipctl.exe doctor --project .
-# Desktop: Open folder → Doctor / Flow dry-run / Status
+./target/release/shipctl.exe guide --project .
+# Encrypted key backup (Clavis-compatible):
+SHIP_VAULT_PASSPHRASE='…' MY_TOKEN='…' \
+  ./target/release/shipctl.exe vault export --out ./ship-secrets.km \
+  --title GITHUB_TOKEN --value-env MY_TOKEN
 ```

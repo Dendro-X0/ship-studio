@@ -1,68 +1,88 @@
 # Ship Studio — product contract
 
-**Status:** Active — desktop v0 shell usable  
-**Updated:** 2026-09-12  
+**Status:** Active — CLI + TUI + desktop  
+**Updated:** 2026-09-13  
 
 ```text
-GOAL:     One local Ship workflow: configure → sign (Signet) → deploy (Orbit)
-NOT:      Merge Signet/Orbit source · cloud control plane · launch/checkout bands
-RUNTIME:  Local + offline-first (bridge never requires network; adapters may call local CLIs only)
-SHELL:    Desktop client akin to CodaCtrl (one window = one repo) — `apps/desktop`
-PROOF:    Signet build+sign dogfood · assess-api Orbit Cloudflare deploy via shipctl
-DONE:     Bridge shell dogfooded end-to-end (Signet sign + Orbit deploy) — secrets/gaps are app-side
+GOAL:     Shipping portal on three surfaces: CLI (JSON) · TUI · Desktop — same shipctl engine
+NOT:      Replace Cloudflare/Vercel/Netlify/GitHub · merge Signet/Orbit · invent cloud secrets
+RUNTIME:  Local + offline-first (bridge never requires network; open/login are operator-initiated)
+SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri)
+PROOF:    cargo test -p shipctl · guide · portal · secrets · vault · tui --help
+DONE:     Portal + secrets + vault.km export + guide --open + ship + human + TUI/desktop
 ```
 
 ## Architecture
 
 ```text
-Desktop shell (apps/desktop)
-        │
-        ▼
-   shipctl  (CLI / MCP)  ← beside exe, SHIPCTL_PATH, workspace target, or PATH
-        │
-   ┌────┴────┐
-   ▼         ▼
- signet     orbit
- (PATH / SIGNET_PATH / ORBIT_PATH / sibling ../ship)
+┌─ Desktop (Tauri) ─┐     ┌─ TUI (ratatui) ─┐     ┌─ CLI / MCP ─┐
+│  apps/desktop     │     │  shipctl tui    │     │  shipctl *  │
+└────────┬──────────┘     └────────┬────────┘     └──────┬──────┘
+         └────────────┬────────────┴─────────────────────┘
+                      ▼
+                   shipctl
+         guide · portal · secrets · configure · signet · orbit
 ```
 
-## Commands (v0)
+Design: `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-portal-design.md` · `specs/backend/paste-secret-assist-design.md` · `specs/backend/vault-export-design.md`
+
+## Commands
 
 | Command | Meaning |
 |---------|---------|
-| `doctor` | Check Signet/Orbit, probe project, optional `.ship/studio.json` |
-| `configure` | Probe repo + merge `.ship/studio.json` (`sign_args` / `deploy_args`) |
-| `sign` | Invoke `signet` (defaults from studio.json; `--offline` → `doctor --json`) |
-| `deploy` | Invoke `orbit` (defaults from studio.json; refuses `--offline`) |
-| `flow` | configure → sign → deploy (sign uses studio `sign_args`, not `--help`) |
-| `status` | Read `.ship/last-run.json` (per-step exit codes + RFC3339 timestamps) |
-| `mcp` | Stdio MCP: doctor, configure, sign, deploy, flow, flow_dry_run, status |
+| `doctor` | Check Signet/Orbit; includes portal providers + secret hint count |
+| `guide` | Unified offline checklist; `--open` entry URLs |
+| `ship` | One-shot offline prep → `.ship/last-guide.json` |
+| `human` | **Portal sprint:** open Polar→GitHub→dashboards, then `--put` paste queue |
+| `configure` | Write `.ship/studio.json` |
+| `portal` | Provider entry plan; `--open` / `--login` |
+| `secrets` | Paste-secret assist; `--put NAME --provider …` |
+| `vault` | **Encrypted `.km` export** (Clavis-compatible); `export` / `add` / `list` / `show` |
+| `tui` | Interactive terminal wizard |
+| `sign` / `deploy` / `flow` / `status` | Signet / Orbit / pipeline / last-run |
+| `mcp` | Stdio MCP (`ship_guide`, `ship_portal`, `ship_secrets`, `ship_vault`, …) |
+
+## Providers (portal)
+
+| Provider | Detect | OAuth CLI | Token page |
+|----------|--------|-----------|------------|
+| Cloudflare | wrangler.* | wrangler / orbit login | dash API tokens |
+| Vercel | vercel.json / `.vercel` | vercel / orbit login | account tokens |
+| Netlify | netlify.toml / `.netlify` | netlify / orbit login | PATs |
+| GitHub | `.git` | `gh auth login` | settings/tokens |
+| Polar | `POLAR_*` / polar.sh markers | dashboard (no CLI OAuth) | polar.sh/dashboard |
 
 ## Desktop
 
 ```bash
-# Preferred release stage (copies shipctl next to the exe)
 bash scripts/stage-desktop.sh
 ./target/release/ship-studio-desktop.exe
 ```
 
-Shortcuts: `Esc` cancel · `Ctrl+D` doctor · `Ctrl+S` sign · `Ctrl+Enter` flow dry-run · `Ctrl+Shift+Enter` flow
+Buttons: **Human portal** · Wizard · Ship · Guide · Portal · Secrets · **Export vault** · …
 
-## `.ship/studio.json`
+## TUI
 
-- `sign_args` — default `["doctor","--json"]`, or `["scan","--json"]` when no `signet.toml`
-- `deploy_args` — default `["status"]` (non-interactive). With wrangler → `deploy --provider cloudflare`; with only vercel → `deploy --provider vercel`. Legacy `["ship"]` auto-migrates when CF/Vercel detected.
-- Edit in UI (presets + Save) or by hand
+```bash
+cargo build -p shipctl --release
+./target/release/shipctl.exe tui --project .
+# Home: Ship wizard · Guide · Portal · Secrets · …
+```
 
 ## Offline / security
 
-- Bridge process does **not** call vendor HTTPS itself.
-- Network only happens if the operator runs Signet/Orbit steps that need it (explicit).
-- `--offline` refuses deploy; sign falls back to local `signet doctor`.
+- Bridge does **not** call vendor HTTPS itself.
+- `guide` / `portal` / `secrets` JSON offline-safe; open/login/put are explicit.
+- Secret values never stored in `.ship/` plaintext.
+- Optional **vault export**: Argon2id + AES-256-GCM `kmvault` file (open in Clavis / Keys Manager). Passphrase via TTY or `SHIP_VAULT_PASSPHRASE`.
+
+```bash
+shipctl vault export --out ./ship-secrets.km --from-hints --project .
+shipctl vault list --file ./ship-secrets.km
+```
 
 ## Non-goals (v0)
 
-- Rewriting wrangler/vercel inside this repo
-- Multi-root portfolio hub
-- Paid unlock / Gumroad / traffic
-- Full CodaCtrl Design/Perf/Verify lanes
+- Rewriting provider CLIs inside this repo
+- Completing OAuth without the human
+- Multi-root portfolio hub / paid unlock bands

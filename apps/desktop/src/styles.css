@@ -179,6 +179,7 @@ body {
 .workflow,
 .health,
 .ritual,
+.portal-panel,
 .actions,
 .output-wrap {
   background: color-mix(in srgb, var(--panel) 92%, transparent);
@@ -186,6 +187,88 @@ body {
   border-radius: 12px;
   padding: 0.95rem 1rem;
   backdrop-filter: blur(8px);
+}
+
+.portal-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.provider-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.65rem 0;
+}
+
+.provider-filters button {
+  font-size: 0.75rem;
+  padding: 0.28rem 0.55rem;
+}
+
+.provider-filters button.active {
+  border-color: #2f6b4a;
+  background: var(--accent-dim);
+  color: var(--accent-text);
+}
+
+.portal-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.portal-step {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.55rem;
+  align-items: start;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
+.portal-step .meta {
+  margin: 0;
+}
+
+.portal-step .title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.portal-step .detail {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.portal-step .kind {
+  display: inline-block;
+  margin-right: 0.35rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--warn);
+}
+
+.portal-step .btns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.portal-step .btns button {
+  font-size: 0.75rem;
+  padding: 0.28rem 0.55rem;
+  white-space: nowrap;
 }
 
 .project label {

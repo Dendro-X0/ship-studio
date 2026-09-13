@@ -18,7 +18,7 @@
                 <span class="name">Ship Studio</span>
                 <span class="badge">LOCAL</span>
               </div>
-              <p class="sub">Signet → Orbit bridge · one window = one repo</p>
+              <p class="sub">CLI · TUI · Desktop · shipping portal · one window = one repo</p>
             </div>
           </div>
           <div class="toggles">
@@ -55,11 +55,11 @@
           </div>
         </div>
         <div class="step-sep" aria-hidden="true"></div>
-        <div class="step" data-step="configure">
+        <div class="step" data-step="portal">
           <span class="step-id">2</span>
           <div>
-            <strong>Configure</strong>
-            <span class="step-desc">Write .ship intent</span>
+            <strong>Portal</strong>
+            <span class="step-desc">Provider entry points</span>
           </div>
         </div>
         <div class="step-sep" aria-hidden="true"></div>
@@ -77,6 +77,33 @@
             <strong>Deploy</strong>
             <span class="step-desc">Orbit ship</span>
           </div>
+        </div>
+      </section>
+
+      <section class="portal-panel" id="portal-panel" hidden>
+        <div class="ritual-head">
+          <div>
+            <label>Portal steps</label>
+            <p class="hint">Open the entry — OAuth and env values stay manual. Same plan as <code>shipctl portal</code> / TUI.</p>
+          </div>
+          <div class="portal-actions">
+            <button type="button" id="btn-portal-refresh" disabled>Refresh</button>
+            <button type="button" id="btn-portal-open-all" disabled>Open all URLs</button>
+          </div>
+        </div>
+        <div class="provider-filters" id="provider-filters" hidden></div>
+        <ul class="portal-steps" id="portal-steps"></ul>
+        <div class="secrets-block" id="secrets-block" hidden>
+          <div class="ritual-head">
+            <div>
+              <label>Secret hints</label>
+              <p class="hint">Names only — paste values in a terminal with <code>shipctl secrets put</code> or TUI. Optional: encrypt a Clavis-compatible <code>.km</code> backup.</p>
+            </div>
+            <div class="portal-actions">
+              <button type="button" id="btn-vault-export" disabled title="Encrypt secrets into a .km vault file">Export vault</button>
+            </div>
+          </div>
+          <ul class="portal-steps" id="secrets-steps"></ul>
         </div>
       </section>
 
@@ -127,6 +154,8 @@
           <button type="button" class="preset" data-sign="build" disabled>build</button>
           <button type="button" class="preset" data-deploy="status" disabled>deploy: status</button>
           <button type="button" class="preset" data-deploy="deploy --provider cloudflare" disabled>deploy: cf</button>
+          <button type="button" class="preset" data-deploy="deploy --provider vercel" disabled>deploy: vercel</button>
+          <button type="button" class="preset" data-deploy="deploy --provider netlify" disabled>deploy: netlify</button>
           <button type="button" class="preset" data-deploy="ship" disabled>deploy: ship (TUI)</button>
         </div>
         <div class="ritual-grid">
@@ -143,7 +172,15 @@
 
       <section class="actions" id="actions">
         <button type="button" id="btn-doctor" class="primary" disabled>Doctor</button>
+        <button type="button" id="btn-wizard" disabled title="Guide → Portal → Secrets → Configure → dry-run">Wizard</button>
+        <button type="button" id="btn-ship" disabled title="shipctl ship — one-shot offline prep">Ship</button>
+        <button type="button" id="btn-human" class="primary" disabled title="Open Polar/GitHub then paste secrets">Human portal</button>
+        <button type="button" id="btn-guide" disabled>Guide</button>
         <button type="button" id="btn-configure" disabled>Configure</button>
+        <button type="button" id="btn-portal" disabled title="Provider entry points">Portal</button>
+        <button type="button" id="btn-portal-open" disabled title="Open token pages in browser">Portal open</button>
+        <button type="button" id="btn-secrets" disabled title="Paste-secret assist">Secrets</button>
+        <button type="button" id="btn-vault" disabled title="Export encrypted .km vault (Clavis)">Export vault</button>
         <button type="button" id="btn-sign" disabled>Sign</button>
         <button type="button" id="btn-deploy" disabled>Deploy</button>
         <button type="button" id="btn-flow-dry" disabled>Flow dry-run</button>

@@ -11,3 +11,7 @@ apps/desktop/src-tauri/target/
 .codectx/
 .env
 .env.*
+# Encrypted vaults may sit next to a project — never commit them.
+*.km
+ship-secrets.km
+vault-export-tmp.json

@@ -162,6 +162,130 @@ fn pick_project() -> Result<Option<String>, String> {
 }
 
 #[tauri::command]
+fn pick_vault_save(default_name: Option<String>) -> Result<Option<String>, String> {
+    let name = default_name.unwrap_or_else(|| "ship-secrets.km".into());
+    let file = rfd::FileDialog::new()
+        .set_title("Save encrypted vault (.km)")
+        .add_filter("Clavis vault", &["km"])
+        .set_file_name(&name)
+        .save_file();
+    Ok(file.map(|p| p.display().to_string()))
+}
+
+/// Run shipctl with extra env (used for SHIP_VAULT_PASSPHRASE; values not logged).
+#[tauri::command]
+fn run_shipctl_env(
+    app: AppHandle,
+    active: State<'_, ActiveRun>,
+    project: String,
+    args: Vec<String>,
+    env: std::collections::HashMap<String, String>,
+) -> Result<CmdResult, String> {
+    let (shipctl, mut child) = {
+        let _gate = active
+            .gate
+            .lock()
+            .map_err(|_| "lock poisoned".to_string())?;
+        if active.pid.load(Ordering::SeqCst) != 0 {
+            return Err("a command is already running — Cancel first".into());
+        }
+        active.cancel_requested.store(false, Ordering::SeqCst);
+
+        let shipctl = resolve_shipctl()?;
+        let project_path = Path::new(&project);
+        if !project_path.is_dir() {
+            return Err(format!("not a directory: {project}"));
+        }
+
+        // Never echo env keys that look like secrets/passphrases.
+        emit_line(
+            &app,
+            "meta",
+            &format!("$ {} {}", shipctl.display(), args.join(" ")),
+        );
+
+        let mut cmd = Command::new(&shipctl);
+        cmd.current_dir(project_path)
+            .args(&args)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        for (k, v) in &env {
+            cmd.env(k, v);
+        }
+
+        let child = cmd
+            .spawn()
+            .map_err(|e| format!("spawn {}: {e}", shipctl.display()))?;
+
+        active.pid.store(child.id(), Ordering::SeqCst);
+        (shipctl, child)
+    };
+
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| "missing stdout pipe".to_string())?;
+    let stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| "missing stderr pipe".to_string())?;
+
+    let app_out = app.clone();
+    let out_handle = thread::spawn(move || {
+        let mut buf = String::new();
+        let reader = BufReader::new(stdout);
+        for line in reader.lines() {
+            let line = line.unwrap_or_default();
+            emit_line(&app_out, "stdout", &line);
+            buf.push_str(&line);
+            buf.push('\n');
+        }
+        buf
+    });
+
+    let app_err = app.clone();
+    let err_handle = thread::spawn(move || {
+        let mut buf = String::new();
+        let reader = BufReader::new(stderr);
+        for line in reader.lines() {
+            let line = line.unwrap_or_default();
+            emit_line(&app_err, "stderr", &line);
+            buf.push_str(&line);
+            buf.push('\n');
+        }
+        buf
+    });
+
+    let status = child
+        .wait()
+        .map_err(|e| format!("wait {}: {e}", shipctl.display()))?;
+
+    let cancelled = active.cancel_requested.swap(false, Ordering::SeqCst);
+    active.pid.store(0, Ordering::SeqCst);
+
+    let stdout = out_handle.join().unwrap_or_default();
+    let stderr = err_handle.join().unwrap_or_default();
+    let code = status.code().unwrap_or(1);
+
+    let meta = if cancelled {
+        format!("exit {code} (cancelled)")
+    } else {
+        format!("exit {code}")
+    };
+    emit_line(&app, "meta", &meta);
+
+    Ok(CmdResult {
+        ok: status.success() && !cancelled,
+        code,
+        stdout,
+        stderr,
+        shipctl: shipctl.display().to_string(),
+        cancelled,
+    })
+}
+
+#[tauri::command]
 fn cancel_shipctl(app: AppHandle, active: State<'_, ActiveRun>) -> Result<bool, String> {
     let pid = active.pid.load(Ordering::SeqCst);
     if pid == 0 {
@@ -350,6 +474,41 @@ fn save_ritual_args(
     Ok(studio)
 }
 
+#[tauri::command]
+fn write_temp_json(path: String, json: String) -> Result<String, String> {
+    let p = PathBuf::from(&path);
+    if let Some(parent) = p.parent() {
+        fs::create_dir_all(parent).map_err(|e| format!("mkdir: {e}"))?;
+    }
+    fs::write(&p, json.as_bytes()).map_err(|e| format!("write {}: {e}", p.display()))?;
+    Ok(p.display().to_string())
+}
+
+/// Write vault entry JSON to OS temp (not under the project). Returns absolute path.
+#[tauri::command]
+fn write_vault_entries_temp(json: String) -> Result<String, String> {
+    let mut p = std::env::temp_dir();
+    p.push(format!(
+        "ship-vault-export-{}-{}.json",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0)
+    ));
+    fs::write(&p, json.as_bytes()).map_err(|e| format!("write {}: {e}", p.display()))?;
+    Ok(p.display().to_string())
+}
+
+#[tauri::command]
+fn delete_path(path: String) -> Result<(), String> {
+    let p = PathBuf::from(&path);
+    if p.is_file() {
+        fs::remove_file(&p).map_err(|e| format!("delete {}: {e}", p.display()))?;
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -357,11 +516,16 @@ pub fn run() {
         .manage(ActiveRun::new())
         .invoke_handler(tauri::generate_handler![
             pick_project,
+            pick_vault_save,
             run_shipctl,
+            run_shipctl_env,
             cancel_shipctl,
             load_ship_state,
             save_ritual_args,
-            resolve_shipctl_path
+            resolve_shipctl_path,
+            write_temp_json,
+            write_vault_entries_temp,
+            delete_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

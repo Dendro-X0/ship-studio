@@ -44,8 +44,11 @@ fn suggested_deploy_args(detected: &Detected) -> Vec<String> {
             "cloudflare".into(),
         ];
     }
-    if detected.vercel && !detected.wrangler {
+    if detected.vercel {
         return vec!["deploy".into(), "--provider".into(), "vercel".into()];
+    }
+    if detected.netlify {
+        return vec!["deploy".into(), "--provider".into(), "netlify".into()];
     }
     if detected.orbit_configured {
         return vec!["status".into()];
@@ -84,6 +87,12 @@ pub struct Detected {
     pub tauri: bool,
     pub wrangler: bool,
     pub vercel: bool,
+    #[serde(default)]
+    pub netlify: bool,
+    #[serde(default)]
+    pub github: bool,
+    #[serde(default)]
+    pub polar: bool,
     #[serde(default)]
     pub orbit_configured: bool,
     pub hints: Vec<String>,
@@ -181,6 +190,10 @@ pub fn probe(project: &Path) -> Detected {
     );
     d.vercel = any_named(project, &["vercel.json"])
         || project.join(".vercel").is_dir();
+    d.netlify = any_named(project, &["netlify.toml"])
+        || project.join(".netlify").is_dir();
+    d.github = project.join(".git").is_dir() || project.join(".git").is_file();
+    d.polar = detect_polar(project);
     d.orbit_configured = project.join(".orbit/state.json").is_file();
     let orbit_configured = d.orbit_configured;
 
@@ -203,15 +216,84 @@ pub fn probe(project: &Path) -> Detected {
         d.hints
             .push("vercel.json / .vercel detected — Orbit can deploy Vercel.".into());
     }
+    if d.netlify {
+        d.hints
+            .push("netlify.toml / .netlify detected — Orbit can deploy Netlify.".into());
+    }
+    if d.github {
+        d.hints
+            .push("git repo detected — portal can open GitHub token / gh auth login.".into());
+    }
+    if d.polar {
+        d.hints
+            .push("Polar markers detected — portal opens polar.sh dashboard for checkout/webhook.".into());
+    }
     if orbit_configured {
         d.hints
             .push(".orbit/state.json found — Orbit already configured for this repo.".into());
     }
-    if !d.wrangler && !d.vercel && !orbit_configured {
+    if !d.wrangler && !d.vercel && !d.netlify && !orbit_configured {
         d.hints
-            .push("No wrangler/vercel/Orbit config yet — run `orbit configure` when ready to deploy.".into());
+            .push("No wrangler/vercel/netlify/Orbit config yet — run `shipctl portal` then `orbit configure`.".into());
+    } else {
+        d.hints
+            .push("Run `shipctl portal` to open OAuth / token entry points for detected providers.".into());
     }
     d
+}
+
+fn detect_polar(project: &Path) -> bool {
+    for name in [".dev.vars", ".env", ".env.local"] {
+        if env_file_has_polar_key(&project.join(name)) {
+            return true;
+        }
+    }
+    if let Ok(entries) = fs::read_dir(project) {
+        for ent in entries.flatten() {
+            let p = ent.path();
+            if !p.is_dir() {
+                continue;
+            }
+            for name in [".dev.vars", ".env", "wrangler.toml"] {
+                let f = p.join(name);
+                if env_file_has_polar_key(&f) || file_mentions_polar(&f) {
+                    return true;
+                }
+            }
+            if ent.file_name().to_string_lossy() == "apps" {
+                if let Ok(apps) = fs::read_dir(&p) {
+                    for app in apps.flatten() {
+                        let ap = app.path();
+                        for name in [".dev.vars", ".env", "wrangler.toml"] {
+                            let f = ap.join(name);
+                            if env_file_has_polar_key(&f) || file_mentions_polar(&f) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+fn env_file_has_polar_key(path: &Path) -> bool {
+    let Ok(raw) = fs::read_to_string(path) else {
+        return false;
+    };
+    raw.lines().any(|l| {
+        let t = l.trim();
+        !t.starts_with('#') && t.to_ascii_uppercase().starts_with("POLAR_")
+    })
+}
+
+fn file_mentions_polar(path: &Path) -> bool {
+    let Ok(raw) = fs::read_to_string(path) else {
+        return false;
+    };
+    let lower = raw.to_ascii_lowercase();
+    lower.contains("polar_") || lower.contains("polar.sh")
 }
 
 /// Build intent without writing (for dry-run plan when `.ship` is missing).
@@ -242,7 +324,7 @@ pub fn intent_for(project: &Path) -> Result<StudioIntent> {
         .as_ref()
         .map(|e| e.deploy_args == vec!["ship".to_string()])
         .unwrap_or(false)
-        && (detected.wrangler || detected.vercel)
+        && (detected.wrangler || detected.vercel || detected.netlify)
     {
         suggested_deploy_args(&detected)
     } else {

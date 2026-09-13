@@ -14,7 +14,20 @@ pub struct DoctorReport {
     pub orbit: ToolStatus,
     pub studio: Option<serde_json::Value>,
     pub detected: crate::config::Detected,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub portal_providers: Vec<String>,
+    pub secret_hint_count: usize,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub provider_clis: Vec<ProviderCliStatus>,
     pub notes: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ProviderCliStatus {
+    pub provider: String,
+    pub bin: String,
+    pub found: bool,
+    pub fix: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -133,6 +146,20 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
         .flatten()
         .and_then(|s| serde_json::to_value(s).ok());
 
+    let portal_providers = crate::portal::detected_providers(&detected)
+        .into_iter()
+        .map(|p| p.as_str().to_string())
+        .collect::<Vec<_>>();
+    let provider_clis = provider_cli_status(&detected);
+    let secret_hint_count = crate::secrets::plan_for(&project, None)
+        .map(|p| {
+            p.hints
+                .iter()
+                .filter(|h| h.name != "<NAME>")
+                .count()
+        })
+        .unwrap_or(0);
+
     let mut notes = Vec::new();
     notes.push("Bridge is offline-first: it does not call vendor HTTPS itself.".into());
     if !signet.found {
@@ -144,6 +171,26 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
     if !exists {
         notes.push("project path is not a directory.".into());
     }
+    if !portal_providers.is_empty() {
+        notes.push(format!(
+            "Portal providers: {} — run `shipctl portal` or TUI wizard.",
+            portal_providers.join(", ")
+        ));
+    }
+    for cli in &provider_clis {
+        if !cli.found {
+            notes.push(format!(
+                "{} CLI `{}` missing — {}",
+                cli.provider, cli.bin, cli.fix
+            ));
+        }
+    }
+    if secret_hint_count > 0 {
+        notes.push(format!(
+            "{secret_hint_count} secret hint(s) — run `shipctl secrets` to paste via provider CLI."
+        ));
+    }
+    notes.push("Full checklist: `shipctl guide` · one-shot prep: `shipctl ship`".into());
     notes.extend(detected.hints.iter().cloned());
 
     let ok = exists && signet.found && orbit.found;
@@ -156,8 +203,54 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
         orbit,
         studio,
         detected,
+        portal_providers,
+        secret_hint_count,
+        provider_clis,
         notes,
     })
+}
+
+fn provider_cli_status(detected: &crate::config::Detected) -> Vec<ProviderCliStatus> {
+    let mut out = Vec::new();
+    let checks: &[(&str, bool, &str, &str)] = &[
+        (
+            "cloudflare",
+            detected.wrangler,
+            "wrangler",
+            "npm i -g wrangler (or use project pnpm exec wrangler)",
+        ),
+        (
+            "vercel",
+            detected.vercel,
+            "vercel",
+            "npm i -g vercel",
+        ),
+        (
+            "netlify",
+            detected.netlify,
+            "netlify",
+            "npm i -g netlify-cli",
+        ),
+        (
+            "github",
+            detected.github,
+            "gh",
+            "install GitHub CLI: https://cli.github.com/",
+        ),
+    ];
+    for (provider, needed, bin, fix) in checks {
+        if !*needed {
+            continue;
+        }
+        let found = which(bin).is_ok() || which(format!("{bin}.exe")).is_ok();
+        out.push(ProviderCliStatus {
+            provider: (*provider).into(),
+            bin: (*bin).into(),
+            found,
+            fix: (*fix).into(),
+        });
+    }
+    out
 }
 
 fn resolve_bin(prefer: &[&str], fallback: Option<PathBuf>) -> Result<PathBuf> {
@@ -243,10 +336,33 @@ mod tests {
         );
     }
 
+    #[test]
+    fn configure_suggests_netlify_deploy_args() {
+        let dir = tempfile_dir();
+        std::fs::write(dir.join("netlify.toml"), "[build]\n").unwrap();
+        let intent = crate::config::configure(&dir).expect("configure");
+        assert_eq!(
+            intent.deploy_args,
+            vec![
+                "deploy".to_string(),
+                "--provider".to_string(),
+                "netlify".to_string()
+            ]
+        );
+        assert!(intent.detected.netlify);
+    }
+
     fn tempfile_dir() -> PathBuf {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static N: AtomicU64 = AtomicU64::new(0);
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-test-{}",
-            std::process::id()
+            "shipctl-test-{}-{}-{}",
+            std::process::id(),
+            N.fetch_add(1, Ordering::Relaxed),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
         ));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();

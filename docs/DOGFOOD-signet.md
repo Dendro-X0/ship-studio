@@ -13,7 +13,7 @@ Target: `E:/Experimental projects/Self-signed-distribution`
 
 ## Notes
 
-- minisign SUMS key missing (optional warning) — `signet sums-key create` if needed
+- minisign SUMS key: **created** 2026-09-13 under `.signet/sums/` — `SHA256SUMS.minisig` written via `signet build --skip-build`
 - No wrangler/vercel on this repo — Orbit deploy not exercised here
 - Desktop: Open folder → that path → Doctor / Sign with preset `build`
 

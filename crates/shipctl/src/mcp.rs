@@ -3,6 +3,12 @@
 use crate::adapters;
 use crate::config;
 use crate::flow;
+use crate::guide;
+use crate::human;
+use crate::portal;
+use crate::secrets;
+use crate::ship;
+use crate::vault_km;
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
 use std::io::{self, BufRead, Write};
@@ -58,6 +64,24 @@ fn tools() -> Vec<Value> {
             "Write .ship/studio.json env/workflow intent",
             false,
         ),
+        tool_portal(),
+        tool_secrets(),
+        tool_vault(),
+        tool(
+            "ship_guide",
+            "Unified offline shipping checklist (doctor+portal+secrets+flow); optional open entry URLs",
+            false,
+        ),
+        tool(
+            "ship_ship",
+            "One-shot offline prep: guide → configure → flow dry-run; optional open entry URLs",
+            false,
+        ),
+        tool(
+            "ship_human",
+            "Human portal sprint: open Polar/GitHub/dashboards; optional interactive secret put queue",
+            false,
+        ),
         tool(
             "ship_flow_dry_run",
             "Print configure→sign→deploy plan",
@@ -82,6 +106,71 @@ fn tools() -> Vec<Value> {
     ]
 }
 
+fn tool_secrets() -> Value {
+    json!({
+        "name": "ship_secrets",
+        "description": "Paste-secret assist: hinted secret names + put CLI (never stores values)",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "project": { "type": "string" },
+                "provider": { "type": "string" },
+                "open": { "type": "boolean" }
+            }
+        }
+    })
+}
+
+fn tool_vault() -> Value {
+    json!({
+        "name": "ship_vault",
+        "description": "Encrypted kmvault (.km) export/list/show — Clavis-compatible. Passphrase via SHIP_VAULT_PASSPHRASE or argument (local only).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "description": "export | list | show"
+                },
+                "out": { "type": "string", "description": "Output .km path (export)" },
+                "file": { "type": "string", "description": "Existing .km path (list/show)" },
+                "title": { "type": "string", "description": "Entry title (export one / show)" },
+                "value": { "type": "string", "description": "Secret value (export one; prefer not logging)" },
+                "url": { "type": "string" },
+                "name": { "type": "string", "description": "Vault display name" },
+                "passphrase": { "type": "string", "description": "Optional; else SHIP_VAULT_PASSPHRASE" },
+                "entries": {
+                    "type": "array",
+                    "description": "export: [{title,value,url?}]",
+                    "items": { "type": "object" }
+                }
+            },
+            "required": ["action"]
+        }
+    })
+}
+
+fn tool_portal() -> Value {
+    json!({
+        "name": "ship_portal",
+        "description": "Provider portal plan: Cloudflare/Vercel/Netlify/GitHub entry URLs and OAuth CLI steps",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "project": { "type": "string", "description": "Absolute project path" },
+                "provider": {
+                    "type": "string",
+                    "description": "Optional filter: cloudflare|vercel|netlify|github"
+                },
+                "open": {
+                    "type": "boolean",
+                    "description": "Open token pages in the system browser"
+                }
+            }
+        }
+    })
+}
+
 fn tool(name: &str, description: &str, flow_flags: bool) -> Value {
     let mut props = json!({
         "project": { "type": "string", "description": "Absolute project path" }
@@ -97,6 +186,16 @@ fn tool(name: &str, description: &str, flow_flags: bool) -> Value {
             "items": { "type": "string" },
             "description": "Optional override args"
         });
+    }
+    if name == "ship_guide" || name == "ship_ship" {
+        props["open"] = json!({
+            "type": "boolean",
+            "description": "Open all unique entry URLs in the browser"
+        });
+    }
+    if name == "ship_human" {
+        props["open"] = json!({ "type": "boolean", "description": "Open prioritized entry URLs (default true)" });
+        props["put"] = json!({ "type": "boolean", "description": "Interactively put queued secrets" });
     }
     json!({
         "name": name,
@@ -135,6 +234,169 @@ fn call_tool(params: Value) -> Result<Value> {
     let body = match name {
         "ship_doctor" => serde_json::to_value(adapters::doctor(&project)?)?,
         "ship_configure" => serde_json::to_value(config::configure(&project)?)?,
+        "ship_portal" => {
+            let filter = args
+                .get("provider")
+                .and_then(|p| p.as_str())
+                .map(portal::ProviderId::parse)
+                .transpose()?;
+            let plan = portal::plan_for(&project, filter)?;
+            let open = args
+                .get("open")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            let mut out = serde_json::to_value(&plan)?;
+            if open {
+                let opened = portal::open_urls(&plan)?;
+                out["opened"] = json!(opened);
+            }
+            out
+        }
+        "ship_secrets" => {
+            let filter = args
+                .get("provider")
+                .and_then(|p| p.as_str())
+                .map(portal::ProviderId::parse)
+                .transpose()?;
+            let plan = secrets::plan_for(&project, filter)?;
+            let open = args
+                .get("open")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            let mut out = serde_json::to_value(&plan)?;
+            if open {
+                let opened = secrets::open_entry_urls(&plan)?;
+                out["opened"] = json!(opened);
+            }
+            out
+        }
+        "ship_vault" => {
+            let action = args
+                .get("action")
+                .and_then(|a| a.as_str())
+                .unwrap_or("list");
+            if let Some(pass) = args.get("passphrase").and_then(|p| p.as_str()) {
+                if !pass.is_empty() {
+                    std::env::set_var("SHIP_VAULT_PASSPHRASE", pass);
+                }
+            }
+            match action {
+                "export" => {
+                    let out_path = args
+                        .get("out")
+                        .and_then(|p| p.as_str())
+                        .map(PathBuf::from)
+                        .context("ship_vault export requires out")?;
+                    let vault_name = args
+                        .get("name")
+                        .and_then(|n| n.as_str())
+                        .unwrap_or("Ship Studio secrets");
+                    let path = if let Some(arr) = args.get("entries").and_then(|e| e.as_array()) {
+                        let mut entries = Vec::new();
+                        for item in arr {
+                            let title = item
+                                .get("title")
+                                .or_else(|| item.get("name"))
+                                .and_then(|x| x.as_str())
+                                .unwrap_or("")
+                                .to_string();
+                            let value = item
+                                .get("value")
+                                .or_else(|| item.get("password"))
+                                .and_then(|x| x.as_str())
+                                .unwrap_or("")
+                                .to_string();
+                            if title.is_empty() || value.is_empty() {
+                                continue;
+                            }
+                            let url = item
+                                .get("url")
+                                .and_then(|x| x.as_str())
+                                .unwrap_or("")
+                                .to_string();
+                            let notes = item
+                                .get("notes")
+                                .and_then(|x| x.as_str())
+                                .unwrap_or("Exported via MCP ship_vault")
+                                .to_string();
+                            entries.push((title, value, url, notes));
+                        }
+                        vault_km::export_entries(&out_path, vault_name, &entries)?
+                    } else {
+                        let title = args
+                            .get("title")
+                            .and_then(|t| t.as_str())
+                            .context("ship_vault export needs entries[] or title+value")?;
+                        let value = args
+                            .get("value")
+                            .and_then(|v| v.as_str())
+                            .context("ship_vault export needs value")?;
+                        let url = args.get("url").and_then(|u| u.as_str()).unwrap_or("");
+                        vault_km::export_one(&out_path, vault_name, title, value, url)?
+                    };
+                    json!({
+                        "ok": true,
+                        "path": path,
+                        "format": "kmvault/v1",
+                        "compatible_with": "Clavis / Keys Manager"
+                    })
+                }
+                "list" => {
+                    let file = args
+                        .get("file")
+                        .and_then(|p| p.as_str())
+                        .map(PathBuf::from)
+                        .context("ship_vault list requires file")?;
+                    let titles = vault_km::list_titles(&file)?;
+                    json!({ "file": file, "titles": titles })
+                }
+                "show" => {
+                    let file = args
+                        .get("file")
+                        .and_then(|p| p.as_str())
+                        .map(PathBuf::from)
+                        .context("ship_vault show requires file")?;
+                    let title = args
+                        .get("title")
+                        .and_then(|t| t.as_str())
+                        .context("ship_vault show requires title")?;
+                    let value = vault_km::show_value(&file, title)?;
+                    json!({ "title": title, "value": value })
+                }
+                other => anyhow::bail!("ship_vault unknown action: {other}"),
+            }
+        }
+        "ship_guide" => {
+            let plan = guide::plan_for(&project)?;
+            let open = args
+                .get("open")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            let mut out = serde_json::to_value(&plan)?;
+            if open {
+                let opened = guide::open_entries(&plan)?;
+                out["opened"] = json!(opened);
+            }
+            out
+        }
+        "ship_ship" => {
+            let open = args
+                .get("open")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            serde_json::to_value(ship::run(&project, open)?)?
+        }
+        "ship_human" => {
+            let open = args
+                .get("open")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true);
+            let put = args
+                .get("put")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            serde_json::to_value(human::run(&project, open, put)?)?
+        }
         "ship_flow_dry_run" => {
             serde_json::to_value(flow::plan(&project, skip_sign, skip_deploy, offline)?)?
         }

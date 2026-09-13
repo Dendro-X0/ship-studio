@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { openPath } from "@tauri-apps/plugin-opener";
+import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 
 type CmdResult = {
   ok: boolean;
@@ -29,6 +29,9 @@ type Detected = {
   tauri?: boolean;
   wrangler?: boolean;
   vercel?: boolean;
+  netlify?: boolean;
+  github?: boolean;
+  polar?: boolean;
   orbit_configured?: boolean;
   hints?: string[];
 };
@@ -40,6 +43,38 @@ type DoctorReport = {
   notes?: string[];
   detected?: Detected;
 };
+
+type PortalStep = {
+  id?: string;
+  provider?: string;
+  kind?: string;
+  title?: string;
+  detail?: string;
+  entry_url?: string | null;
+  cli?: string[] | null;
+  human?: boolean;
+};
+
+type PortalPlan = {
+  providers?: string[];
+  steps?: PortalStep[];
+  notes?: string[];
+};
+
+type SecretsPlan = {
+  hints?: Array<{
+    provider?: string;
+    name?: string;
+    put_cli?: string[];
+    entry_url?: string | null;
+    detail?: string;
+    source?: string;
+  }>;
+};
+
+let lastPortal: PortalPlan | null = null;
+let lastSecrets: SecretsPlan | null = null;
+let portalFilter: string | null = null;
 
 type ShipState = {
   project: string;
@@ -75,7 +110,18 @@ const deployArgsEl = () => document.querySelector<HTMLInputElement>("#deploy-arg
 
 const ACTION_IDS = [
   "btn-doctor",
+  "btn-wizard",
+  "btn-ship",
+  "btn-human",
+  "btn-guide",
   "btn-configure",
+  "btn-portal",
+  "btn-portal-open",
+  "btn-portal-refresh",
+  "btn-portal-open-all",
+  "btn-secrets",
+  "btn-vault",
+  "btn-vault-export",
   "btn-sign",
   "btn-deploy",
   "btn-flow-dry",
@@ -226,7 +272,7 @@ function setStep(id: string, state: "idle" | "active" | "done" | "fail") {
 }
 
 function resetSteps() {
-  for (const id of ["doctor", "configure", "sign", "deploy"]) {
+  for (const id of ["doctor", "portal", "sign", "deploy"]) {
     setStep(id, "idle");
   }
 }
@@ -304,6 +350,279 @@ function renderRecent(list: string[]) {
   });
 }
 
+function applyPortalPlan(plan: PortalPlan | null) {
+  lastPortal = plan;
+  const panel = document.querySelector<HTMLElement>("#portal-panel");
+  const list = document.querySelector<HTMLElement>("#portal-steps");
+  const filters = document.querySelector<HTMLElement>("#provider-filters");
+  if (!panel || !list || !filters) return;
+  if (!plan?.steps?.length) {
+    panel.hidden = true;
+    list.innerHTML = "";
+    filters.hidden = true;
+    filters.innerHTML = "";
+    return;
+  }
+  panel.hidden = false;
+  const providers = plan.providers ?? [];
+  filters.hidden = providers.length <= 1;
+  filters.innerHTML = [
+    `<button type="button" data-filter="" class="${portalFilter ? "" : "active"}">All</button>`,
+    ...providers.map(
+      (p) =>
+        `<button type="button" data-filter="${escapeHtml(p)}" class="${
+          portalFilter === p ? "active" : ""
+        }">${escapeHtml(p)}</button>`,
+    ),
+  ].join("");
+  filters.querySelectorAll("button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const f = btn.getAttribute("data-filter") || null;
+      portalFilter = f || null;
+      applyPortalPlan(lastPortal);
+    });
+  });
+
+  const steps = (plan.steps ?? []).filter(
+    (s) => !portalFilter || s.provider === portalFilter,
+  );
+  list.innerHTML = steps
+    .map((s, idx) => {
+      const url = s.entry_url ?? "";
+      const cli = (s.cli ?? []).join(" ");
+      const openDisabled = url ? "" : "disabled";
+      const canLogin = s.kind === "oauth" || (s.cli && s.cli.length > 0);
+      const loginDisabled = canLogin ? "" : "disabled";
+      return `<li class="portal-step" data-idx="${idx}">
+        <div class="meta">
+          <div class="title"><span class="kind">${escapeHtml(
+            s.kind ?? "",
+          )}</span>${escapeHtml(s.title ?? s.id ?? "step")}</div>
+          <p class="detail">${escapeHtml(s.detail ?? "")}${
+            url ? ` · ${escapeHtml(url)}` : cli ? ` · ${escapeHtml(cli)}` : ""
+          }</p>
+        </div>
+        <div class="btns">
+          <button type="button" class="portal-open" data-url="${escapeHtml(
+            url,
+          )}" ${openDisabled}>Open</button>
+          <button type="button" class="portal-login" data-provider="${escapeHtml(
+            s.provider ?? "",
+          )}" ${loginDisabled}>Login CLI</button>
+        </div>
+      </li>`;
+    })
+    .join("");
+
+  list.querySelectorAll<HTMLButtonElement>(".portal-open").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-url");
+      if (url) await openUrl(url);
+    });
+  });
+  list.querySelectorAll<HTMLButtonElement>(".portal-login").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const provider = btn.getAttribute("data-provider");
+      if (!provider) return;
+      void run([
+        "portal",
+        "--project",
+        projectPath(),
+        "--provider",
+        provider,
+        "--login",
+      ]);
+    });
+  });
+}
+
+async function loadSecrets() {
+  const result = await run(["secrets", "--project", projectPath()]);
+  if (!result?.ok || !result.stdout) return;
+  try {
+    const plan = JSON.parse(result.stdout) as SecretsPlan;
+    lastSecrets = plan;
+    const block = document.querySelector<HTMLElement>("#secrets-block");
+    const list = document.querySelector<HTMLElement>("#secrets-steps");
+    const panel = document.querySelector<HTMLElement>("#portal-panel");
+    if (!block || !list || !panel) return;
+    panel.hidden = false;
+    if (!plan.hints?.length) {
+      block.hidden = true;
+      list.innerHTML = "";
+      return;
+    }
+    block.hidden = false;
+    list.innerHTML = plan.hints
+      .map((h) => {
+        const cmd = (h.put_cli ?? []).join(" ");
+        const url = h.entry_url ?? "";
+        return `<li class="portal-step">
+          <div class="meta">
+            <div class="title"><span class="kind">${escapeHtml(
+              h.provider ?? "",
+            )}</span>${escapeHtml(h.name ?? "")}</div>
+            <p class="detail">${escapeHtml(h.detail ?? "")}${
+              cmd ? ` · ${escapeHtml(cmd)}` : ""
+            }</p>
+          </div>
+          <div class="btns">
+            <button type="button" class="secret-open" data-url="${escapeHtml(
+              url,
+            )}" ${url ? "" : "disabled"}>Open</button>
+            <button type="button" class="secret-copy" data-cmd="${escapeHtml(
+              cmd,
+            )}" ${cmd ? "" : "disabled"}>Copy CLI</button>
+          </div>
+        </li>`;
+      })
+      .join("");
+    list.querySelectorAll<HTMLButtonElement>(".secret-open").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const url = btn.getAttribute("data-url");
+        if (url) await openUrl(url);
+      });
+    });
+    list.querySelectorAll<HTMLButtonElement>(".secret-copy").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const cmd = btn.getAttribute("data-cmd") ?? "";
+        if (!cmd) return;
+        await navigator.clipboard.writeText(cmd);
+        appendStream({ stream: "meta", text: `copied: ${cmd}` });
+      });
+    });
+  } catch {
+    /* shown in output */
+  }
+}
+
+async function exportVault() {
+  const project = projectPath();
+  if (!project) {
+    show("Open a project folder first.");
+    return;
+  }
+  if (!lastSecrets?.hints?.length) {
+    await loadSecrets();
+  }
+  const hints = (lastSecrets?.hints ?? []).filter(
+    (h): h is typeof h & { name: string } => !!h.name && !h.name.includes("<"),
+  );
+  if (!hints.length) {
+    appendStream({
+      stream: "meta",
+      text: "No secret hints — add wrangler # Secrets or empty .dev.vars keys, or use CLI: shipctl vault export --out ./ship-secrets.km",
+    });
+    return;
+  }
+
+  const out = await invoke<string | null>("pick_vault_save", {
+    defaultName: "ship-secrets.km",
+  });
+  if (!out) return;
+
+  const pass = window.prompt("Vault passphrase (remember this — needed to open in Clavis)");
+  if (!pass) return;
+  const again = window.prompt("Confirm passphrase");
+  if (pass !== again) {
+    appendStream({ stream: "stderr", text: "Passphrases do not match." });
+    return;
+  }
+
+  const entries: Array<{ title: string; value: string; url?: string; notes?: string }> =
+    [];
+  for (const h of hints) {
+    const value = window.prompt(
+      `Paste value for ${h.name} (Cancel skips this name)`,
+      "",
+    );
+    if (value == null || value === "") continue;
+    entries.push({
+      title: h.name,
+      value,
+      url: h.entry_url ?? "",
+      notes: "Exported from Ship Studio desktop",
+    });
+  }
+  if (!entries.length) {
+    appendStream({ stream: "meta", text: "No values entered — vault not written." });
+    return;
+  }
+
+  if (running) {
+    show("Already running — wait for the current command.");
+    return;
+  }
+  setBusy(true, "Exporting vault…");
+  setProjectUi(true);
+  let entriesPath = "";
+  try {
+    entriesPath = await invoke<string>("write_vault_entries_temp", {
+      json: JSON.stringify(entries),
+    });
+    const result = await invoke<CmdResult>("run_shipctl_env", {
+      project,
+      args: [
+        "vault",
+        "export",
+        "--out",
+        out,
+        "--entries-file",
+        entriesPath,
+        "--name",
+        "Ship Studio secrets",
+      ],
+      env: { SHIP_VAULT_PASSPHRASE: pass },
+    });
+    if (entriesPath) {
+      await invoke("delete_path", { path: entriesPath }).catch(() => undefined);
+    }
+    const pretty = prettyMaybe(result.stdout);
+    show(
+      `vault export · exit ${result.code}\n\n${pretty ?? result.stdout}${
+        result.stderr.trim() ? `\n\n[stderr]\n${result.stderr.trim()}` : ""
+      }`,
+    );
+    if (result.ok) {
+      appendStream({
+        stream: "meta",
+        text: `Encrypted vault saved · ${out} — open in Clavis / Keys Manager`,
+      });
+    }
+  } catch (err) {
+    if (entriesPath) {
+      await invoke("delete_path", { path: entriesPath }).catch(() => undefined);
+    }
+    appendStream({ stream: "stderr", text: String(err) });
+  } finally {
+    setBusy(false, "Ready");
+    setProjectUi(true);
+  }
+}
+
+async function loadPortal(openAll = false) {
+  const args = ["portal", "--project", projectPath()];
+  const result = await run(args, { step: "portal" });
+  if (!result?.ok || !result.stdout) return;
+  try {
+    const plan = JSON.parse(result.stdout) as PortalPlan;
+    applyPortalPlan(plan);
+    setStep("portal", "done");
+    if (openAll) {
+      const urls = [
+        ...new Set(
+          (plan.steps ?? [])
+            .map((s) => s.entry_url)
+            .filter((u): u is string => !!u),
+        ),
+      ];
+      for (const url of urls) await openUrl(url);
+    }
+  } catch {
+    /* plan already in output */
+  }
+}
+
 function applyDetected(detected?: Detected) {
   const host = document.querySelector<HTMLElement>("#detect-chips");
   if (!host) return;
@@ -318,6 +637,9 @@ function applyDetected(detected?: Detected) {
     ["tauri", detected.tauri],
     ["wrangler", detected.wrangler],
     ["vercel", detected.vercel],
+    ["netlify", detected.netlify],
+    ["github", detected.github],
+    ["polar", detected.polar],
     ["orbit", detected.orbit_configured],
   ];
   host.hidden = false;
@@ -420,7 +742,7 @@ function parseDoctor(stdout: string): DoctorReport | null {
   }
 }
 
-async function run(args: string[], opts?: { step?: string; quietHeader?: boolean }) {
+async function run(args: string[], opts?: { step?: string; quietHeader?: boolean }): Promise<CmdResult | undefined> {
   const project = projectPath();
   if (!project) {
     show("Open a project folder first.");
@@ -439,7 +761,17 @@ async function run(args: string[], opts?: { step?: string; quietHeader?: boolean
   try {
     const result = await invoke<CmdResult>("run_shipctl", { project, args });
     // Final pretty pass for JSON-heavy commands
-    if (args[0] === "doctor" || args[0] === "configure" || args[0] === "status" || args[0] === "flow") {
+    if (
+      args[0] === "doctor" ||
+      args[0] === "configure" ||
+      args[0] === "portal" ||
+      args[0] === "secrets" ||
+      args[0] === "guide" ||
+      args[0] === "ship" ||
+      args[0] === "human" ||
+      args[0] === "status" ||
+      args[0] === "flow"
+    ) {
       const pretty = prettyMaybe(result.stdout);
       if (pretty) {
         const stderr = result.stderr.trim()
@@ -465,6 +797,7 @@ async function run(args: string[], opts?: { step?: string; quietHeader?: boolean
     }
     setBusy(false, result.cancelled ? "Cancelled" : result.ok ? "Ready" : "Failed", !result.ok && !result.cancelled);
     setProjectUi(true);
+    return result;
   } catch (err) {
     appendStream({ stream: "stderr", text: String(err) });
     if (opts?.step) setStep(opts.step, "fail");
@@ -634,12 +967,90 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+async function runWizard() {
+  appendStream({ stream: "meta", text: "wizard: guide → doctor → portal → secrets → configure → dry-run → open entries" });
+  const guideResult = await run(["guide", "--project", projectPath()]);
+  await run(["doctor", "--project", projectPath()], { step: "doctor" });
+  await loadPortal(false);
+  await loadSecrets();
+  await run(["configure", "--project", projectPath()], { step: "configure" });
+  await run(flowArgs(true));
+  let opened = 0;
+  try {
+    const plan = guideResult?.stdout ? (JSON.parse(guideResult.stdout) as { entry_urls?: string[] }) : null;
+    const urls = [...new Set(plan?.entry_urls ?? [])];
+    if (urls.length && confirm(`Open ${urls.length} provider/marketplace entry page(s) in the browser?`)) {
+      for (const url of urls) {
+        await openUrl(url);
+        opened += 1;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  appendStream({
+    stream: "meta",
+    text: `wizard offline done · opened ${opened} url(s) — paste secrets via TUI/CLI, then Flow when ready`,
+  });
+}
+
   document.querySelector("#btn-doctor")?.addEventListener("click", () =>
     run(["doctor", "--project", projectPath()], { step: "doctor" }),
+  );
+  document.querySelector("#btn-wizard")?.addEventListener("click", () => {
+    void runWizard();
+  });
+  document.querySelector("#btn-ship")?.addEventListener("click", () => {
+    const open = confirm("Also open provider/marketplace entry pages in the browser?");
+    const args = ["ship", "--project", projectPath()];
+    if (open) args.push("--open");
+    void run(args);
+  });
+  document.querySelector("#btn-human")?.addEventListener("click", () => {
+    void run(["human", "--project", projectPath()]);
+    appendStream({
+      stream: "meta",
+      text: "Human portal opened dashboards. In a terminal run: shipctl human --project <path> --put  and paste each value.",
+    });
+  });
+  document.querySelector("#btn-guide")?.addEventListener("click", () =>
+    run(["guide", "--project", projectPath()]),
   );
   document.querySelector("#btn-configure")?.addEventListener("click", () =>
     run(["configure", "--project", projectPath()], { step: "configure" }),
   );
+  document.querySelector("#btn-portal")?.addEventListener("click", () => {
+    void loadPortal(false);
+  });
+  document.querySelector("#btn-portal-open")?.addEventListener("click", () => {
+    void loadPortal(true);
+  });
+  document.querySelector("#btn-portal-refresh")?.addEventListener("click", () => {
+    void loadPortal(false);
+  });
+  document.querySelector("#btn-portal-open-all")?.addEventListener("click", async () => {
+    const urls = [
+      ...new Set(
+        (lastPortal?.steps ?? [])
+          .map((s) => s.entry_url)
+          .filter((u): u is string => !!u),
+      ),
+    ];
+    if (urls.length === 0) {
+      await loadPortal(true);
+      return;
+    }
+    for (const url of urls) await openUrl(url);
+  });
+  document.querySelector("#btn-secrets")?.addEventListener("click", () => {
+    void loadSecrets();
+  });
+  document.querySelector("#btn-vault")?.addEventListener("click", () => {
+    void exportVault();
+  });
+  document.querySelector("#btn-vault-export")?.addEventListener("click", () => {
+    void exportVault();
+  });
   document.querySelector("#btn-sign")?.addEventListener("click", () => {
     const args = ["sign", "--project", projectPath()];
     if (offline()) args.push("--offline");
