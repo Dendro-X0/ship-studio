@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  shipctl:
+    name: shipctl test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "."
+          cache-targets: "true"
+      - name: Test shipctl
+        run: cargo test -p shipctl --locked
+      - name: CLI smoke
+        run: |
+          cargo build -p shipctl --release --locked
+          ./target/release/shipctl --help
+          ./target/release/shipctl doctor --project .
+          ./target/release/shipctl guide --project .
+          ./target/release/shipctl vault --help

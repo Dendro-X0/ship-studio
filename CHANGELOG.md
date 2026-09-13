@@ -4,6 +4,7 @@
 
 ### Added
 
+- **CI** (GitHub Actions): `cargo test -p shipctl` + CLI smoke on `main`
 - **Desktop / TUI / MCP** vault export surfaces (`Export vault`, TUI `v`, `ship_vault`)
 - **Guide** step `vault` (optional encrypted backup after secrets)
 - **`shipctl vault`** encrypted `.km` export (Clavis / Keys Manager `kmvault` v1): `export` / `add` / `list` / `show`

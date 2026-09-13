@@ -8,8 +8,8 @@ GOAL:     Shipping portal on three surfaces: CLI (JSON) · TUI · Desktop — sa
 NOT:      Replace Cloudflare/Vercel/Netlify/GitHub · merge Signet/Orbit · invent cloud secrets
 RUNTIME:  Local + offline-first (bridge never requires network; open/login are operator-initiated)
 SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri)
-PROOF:    cargo test -p shipctl · guide · portal · secrets · vault · tui --help
-DONE:     Portal + secrets + vault.km export + guide --open + ship + human + TUI/desktop
+PROOF:    cargo test -p shipctl · CI on main · guide · portal · secrets · vault · tui --help
+DONE:     Portal + secrets + vault.km + guide/human + TUI/desktop + GitHub + CI
 ```
 
 ## Architecture
