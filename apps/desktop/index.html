@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ship Studio</title>
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="top">
+        <div class="brand-row">
+          <div class="brand">
+            <span class="mark" aria-hidden="true"></span>
+            <div>
+              <div class="name-line">
+                <span class="name">Ship Studio</span>
+                <span class="badge">LOCAL</span>
+              </div>
+              <p class="sub">Signet → Orbit bridge · one window = one repo</p>
+            </div>
+          </div>
+          <div class="toggles">
+            <label class="toggle" title="Refuse deploy; prefer offline-safe sign">
+              <input type="checkbox" id="opt-offline" checked />
+              <span>Offline</span>
+            </label>
+            <label class="toggle" title="Include orbit ship in Flow">
+              <input type="checkbox" id="opt-deploy" />
+              <span>Include deploy</span>
+            </label>
+          </div>
+        </div>
+      </header>
+
+      <section class="project">
+        <label>Project</label>
+        <div class="row">
+          <input id="project-path" type="text" readonly placeholder="Open a folder…" />
+          <button type="button" id="btn-open" class="primary">Open folder…</button>
+          <button type="button" id="btn-reveal" disabled title="Open .ship in Explorer">Reveal .ship</button>
+        </div>
+        <div class="recent" id="recent-list" hidden></div>
+        <div class="chips" id="detect-chips" hidden></div>
+        <p class="hint">CodaCtrl rule: this window binds one repo. Open another window for a second project.</p>
+      </section>
+
+      <section class="workflow" aria-label="Workflow">
+        <div class="step" data-step="doctor">
+          <span class="step-id">1</span>
+          <div>
+            <strong>Doctor</strong>
+            <span class="step-desc">Find Signet + Orbit</span>
+          </div>
+        </div>
+        <div class="step-sep" aria-hidden="true"></div>
+        <div class="step" data-step="configure">
+          <span class="step-id">2</span>
+          <div>
+            <strong>Configure</strong>
+            <span class="step-desc">Write .ship intent</span>
+          </div>
+        </div>
+        <div class="step-sep" aria-hidden="true"></div>
+        <div class="step" data-step="sign">
+          <span class="step-id">3</span>
+          <div>
+            <strong>Sign</strong>
+            <span class="step-desc">Signet ritual</span>
+          </div>
+        </div>
+        <div class="step-sep" aria-hidden="true"></div>
+        <div class="step" data-step="deploy">
+          <span class="step-id">4</span>
+          <div>
+            <strong>Deploy</strong>
+            <span class="step-desc">Orbit ship</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="health" id="health">
+        <div class="tool-card" id="card-signet">
+          <div class="tool-head">
+            <span class="tool-name">Signet</span>
+            <span class="pill muted" id="pill-signet">—</span>
+          </div>
+          <p class="tool-meta" id="meta-signet">Run Doctor</p>
+        </div>
+        <div class="tool-card" id="card-orbit">
+          <div class="tool-head">
+            <span class="tool-name">Orbit</span>
+            <span class="pill muted" id="pill-orbit">—</span>
+          </div>
+          <p class="tool-meta" id="meta-orbit">Run Doctor</p>
+        </div>
+        <div class="tool-card" id="card-lastrun">
+          <div class="tool-head">
+            <span class="tool-name">Last run</span>
+            <span class="pill muted" id="pill-lastrun">None</span>
+          </div>
+          <p class="tool-meta" id="meta-lastrun">No .ship/last-run.json yet</p>
+        </div>
+        <div class="tool-card wide" id="card-notes">
+          <div class="tool-head">
+            <span class="tool-name">Notes</span>
+            <span class="pill muted" id="pill-doctor">Ready</span>
+          </div>
+          <ul class="notes" id="notes-list">
+            <li>Open a project, then Doctor.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="ritual" id="ritual">
+        <div class="ritual-head">
+          <div>
+            <label>Ritual args</label>
+            <p class="hint">Saved into <code>.ship/studio.json</code> — used by Sign / Flow / Deploy</p>
+          </div>
+          <button type="button" id="btn-save-args" disabled>Save args</button>
+        </div>
+        <div class="presets" id="sign-presets">
+          <button type="button" class="preset" data-sign="doctor --json" disabled>doctor</button>
+          <button type="button" class="preset" data-sign="scan --json" disabled>scan</button>
+          <button type="button" class="preset" data-sign="build" disabled>build</button>
+          <button type="button" class="preset" data-deploy="status" disabled>deploy: status</button>
+          <button type="button" class="preset" data-deploy="deploy --provider cloudflare" disabled>deploy: cf</button>
+          <button type="button" class="preset" data-deploy="ship" disabled>deploy: ship (TUI)</button>
+        </div>
+        <div class="ritual-grid">
+          <label class="field">
+            <span>sign_args</span>
+            <input id="sign-args" type="text" placeholder="doctor --json" disabled />
+          </label>
+          <label class="field">
+            <span>deploy_args</span>
+            <input id="deploy-args" type="text" placeholder="status" disabled />
+          </label>
+        </div>
+      </section>
+
+      <section class="actions" id="actions">
+        <button type="button" id="btn-doctor" class="primary" disabled>Doctor</button>
+        <button type="button" id="btn-configure" disabled>Configure</button>
+        <button type="button" id="btn-sign" disabled>Sign</button>
+        <button type="button" id="btn-deploy" disabled>Deploy</button>
+        <button type="button" id="btn-flow-dry" disabled>Flow dry-run</button>
+        <button type="button" id="btn-flow" disabled>Run flow</button>
+        <button type="button" id="btn-status" disabled>Status</button>
+        <button type="button" id="btn-cancel" class="danger" disabled>Cancel</button>
+        <button type="button" id="btn-copy" disabled>Copy output</button>
+        <button type="button" id="btn-clear" disabled>Clear output</button>
+      </section>
+
+      <section class="output-wrap">
+        <div class="output-head">
+          <span>Output</span>
+          <span id="run-state" class="ready">Ready</span>
+        </div>
+        <pre id="output">Open a project, then run Doctor.</pre>
+      </section>
+
+      <footer class="foot">
+        <span id="shipctl-path" title="Resolved shipctl">shipctl: …</span>
+        <span class="keys">Esc cancel · Ctrl+D doctor · Ctrl+S sign · Ctrl+Enter flow dry-run · Ctrl+Shift+Enter flow</span>
+      </footer>
+    </div>
+  </body>
+</html>

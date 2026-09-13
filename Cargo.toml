@@ -1,0 +1,13 @@
+[workspace]
+members = ["crates/shipctl", "apps/desktop/src-tauri"]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+version = "0.1.0"
+authors = ["Dendro-X0"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

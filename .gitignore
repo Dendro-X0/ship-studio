@@ -1,0 +1,13 @@
+target/
+.ship/
+*.exe
+!scripts/**
+.DS_Store
+node_modules/
+dist/
+apps/desktop/dist/
+apps/desktop/src-tauri/target/
+*.log
+.codectx/
+.env
+.env.*
