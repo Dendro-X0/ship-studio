@@ -24,6 +24,7 @@ use std::time::Duration;
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Screen {
     Home,
+    Launch,
     Providers,
     Portal,
     Secrets,
@@ -51,12 +52,14 @@ struct App {
     selected: Vec<bool>,
     plan: Option<PortalPlan>,
     secrets_plan: Option<SecretsPlan>,
+    launch_view: Option<crate::launch::LaunchView>,
     wizard: Option<WizardPhase>,
     status: String,
     log: Vec<String>,
 }
 
 const HOME_ITEMS: &[&str] = &[
+    "Launch (open → verify → next)",
     "Ship wizard (guided)",
     "Ship (one-shot offline prep)",
     "Human portal (open → paste)",
@@ -109,6 +112,7 @@ pub fn run(project: &Path) -> Result<()> {
         selected,
         plan: None,
         secrets_plan: None,
+        launch_view: None,
         wizard: None,
         status: format!("project: {}", project.display()),
         log: vec![
@@ -180,6 +184,21 @@ fn event_loop(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) 
                         }
                     }
                 }
+                KeyCode::Char('L') => open_launch(app),
+                _ => {}
+            },
+            Screen::Launch => match key.code {
+                KeyCode::Esc | KeyCode::Char('b') => {
+                    app.screen = Screen::Home;
+                    app.status = "back".into();
+                }
+                KeyCode::Char('q') => return Ok(()),
+                KeyCode::Char('o') | KeyCode::Enter => launch_open(app),
+                KeyCode::Char('v') => launch_verify(app),
+                KeyCode::Char('c') => launch_confirm(app),
+                KeyCode::Char('n') => launch_next(app, false),
+                KeyCode::Char('N') => launch_next(app, true),
+                KeyCode::Char('r') => open_launch(app),
                 _ => {}
             },
             Screen::Providers => match key.code {
@@ -328,58 +347,227 @@ fn selected_providers(app: &App) -> Vec<ProviderId> {
 fn home_action(app: &mut App) -> Result<bool> {
     match app.home_idx {
         0 => {
-            start_wizard(app);
+            open_launch(app);
             Ok(true)
         }
         1 => {
-            do_ship_prep(app, false);
+            start_wizard(app);
             Ok(true)
         }
         2 => {
-            do_human(app, true, false);
+            do_ship_prep(app, false);
             Ok(true)
         }
         3 => {
-            show_guide(app);
+            do_human(app, true, false);
             Ok(true)
         }
         4 => {
-            run_doctor(app);
+            show_guide(app);
             Ok(true)
         }
         5 => {
+            run_doctor(app);
+            Ok(true)
+        }
+        6 => {
             app.wizard = None;
             app.screen = Screen::Providers;
             app.status = "Space toggle · Enter open portal".into();
             Ok(true)
         }
-        6 => {
+        7 => {
             open_portal_auto(app);
             Ok(true)
         }
-        7 => {
+        8 => {
             open_secrets(app);
             Ok(true)
         }
-        8 => {
+        9 => {
             do_configure(app);
             Ok(true)
         }
-        9 => {
+        10 => {
             do_dry_run(app);
             Ok(true)
         }
-        10 => {
+        11 => {
             do_flow(app);
             Ok(true)
         }
-        11 => {
+        12 => {
             do_status(app);
             Ok(true)
         }
-        12 => Ok(false),
+        13 => Ok(false),
         _ => Ok(true),
     }
+}
+
+fn open_launch(app: &mut App) {
+    match crate::launch::load_or_build(&app.project) {
+        Ok(state) => {
+            let view = crate::launch::view(&state);
+            app.push(format!(
+                "launch · {}/{} · done={}",
+                view.current_index + 1,
+                view.total,
+                view.done_count
+            ));
+            if let Some(cur) = &view.current {
+                app.push(format!("current · {} · {}", cur.id, cur.title));
+            }
+            app.launch_view = Some(view);
+            app.screen = Screen::Launch;
+            app.status = "launch — o open · v verify · c confirm · n next".into();
+        }
+        Err(e) => {
+            app.push(format!("launch failed: {e:#}"));
+            app.status = "launch failed".into();
+        }
+    }
+}
+
+fn launch_open(app: &mut App) {
+    let _ = disable_raw_mode();
+    let _ = execute!(io::stdout(), LeaveAlternateScreen);
+    let result = crate::launch::open_current(&app.project);
+    let _ = execute!(io::stdout(), EnterAlternateScreen);
+    let _ = enable_raw_mode();
+    match result {
+        Ok(view) => {
+            app.push("launch open ok");
+            app.launch_view = Some(view);
+            app.status = "opened — verify or confirm".into();
+        }
+        Err(e) => {
+            app.push(format!("launch open failed: {e:#}"));
+            app.status = "open failed".into();
+        }
+    }
+}
+
+fn launch_verify(app: &mut App) {
+    let _ = disable_raw_mode();
+    let _ = execute!(io::stdout(), LeaveAlternateScreen);
+    let result = crate::launch::verify_current(&app.project);
+    let _ = execute!(io::stdout(), EnterAlternateScreen);
+    let _ = enable_raw_mode();
+    match result {
+        Ok((ok, msg, view)) => {
+            app.push(format!("verify · {msg}"));
+            app.launch_view = Some(view);
+            app.status = if ok {
+                "verified — press n for next".into()
+            } else {
+                "verify failed — confirm or retry".into()
+            };
+        }
+        Err(e) => {
+            app.push(format!("verify failed: {e:#}"));
+            app.status = "verify failed".into();
+        }
+    }
+}
+
+fn launch_confirm(app: &mut App) {
+    match crate::launch::confirm_current(&app.project) {
+        Ok(view) => {
+            app.push("confirmed");
+            app.launch_view = Some(view);
+            app.status = "confirmed — press n for next".into();
+        }
+        Err(e) => {
+            app.push(format!("confirm failed: {e:#}"));
+            app.status = "confirm failed".into();
+        }
+    }
+}
+
+fn launch_next(app: &mut App, force: bool) {
+    match crate::launch::next(&app.project, force) {
+        Ok(view) => {
+            if let Some(cur) = &view.current {
+                app.push(format!("next · {}", cur.id));
+            }
+            let finished = view.finished;
+            app.launch_view = Some(view);
+            app.status = if finished {
+                "launch finished".into()
+            } else {
+                "advanced — o open · v verify".into()
+            };
+        }
+        Err(e) => {
+            app.push(format!("next failed: {e:#}"));
+            app.status = "next failed".into();
+        }
+    }
+}
+
+fn draw_launch(f: &mut ratatui::Frame, app: &App, area: Rect) {
+    let Some(view) = &app.launch_view else {
+        f.render_widget(
+            Paragraph::new("no launch plan").block(Block::default().borders(Borders::ALL)),
+            area,
+        );
+        return;
+    };
+    let mut lines: Vec<Line> = Vec::new();
+    lines.push(Line::from(format!(
+        "progress {}/{} · done {} · {}",
+        view.current_index + 1,
+        view.total,
+        view.done_count,
+        if view.finished {
+            "FINISHED"
+        } else {
+            "in progress"
+        }
+    )));
+    if let Some(cur) = &view.current {
+        lines.push(Line::from(""));
+        lines.push(Line::from(Span::styled(
+            format!("▶ {}", cur.title),
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        )));
+        lines.push(Line::from(cur.detail.as_str()));
+        if let Some(url) = &cur.entry_url {
+            lines.push(Line::from(format!("entry: {url}")));
+        }
+        if let Some(h) = &cur.verify_hint {
+            lines.push(Line::from(format!("verify: {h}")));
+        }
+        lines.push(Line::from(format!("status: {:?}", cur.status)));
+    }
+    lines.push(Line::from(""));
+    for (i, s) in view.steps.iter().enumerate() {
+        let mark = match s.status {
+            crate::launch::StepStatus::Done => "✓",
+            crate::launch::StepStatus::Skipped => "–",
+            crate::launch::StepStatus::Pending => {
+                if i == view.current_index {
+                    "→"
+                } else {
+                    "·"
+                }
+            }
+        };
+        lines.push(Line::from(format!("{mark} {}", s.title)));
+    }
+    f.render_widget(
+        Paragraph::new(lines)
+            .wrap(Wrap { trim: true })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("guided launch"),
+            ),
+        area,
+    );
 }
 
 fn do_human(app: &mut App, open: bool, put: bool) {
@@ -826,6 +1014,7 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
 
     match app.screen {
         Screen::Home => draw_home(f, app, chunks[1]),
+        Screen::Launch => draw_launch(f, app, chunks[1]),
         Screen::Providers => draw_providers(f, app, chunks[1]),
         Screen::Portal => draw_portal(f, app, chunks[1]),
         Screen::Secrets => draw_secrets(f, app, chunks[1]),
@@ -846,7 +1035,8 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
     f.render_widget(log, chunks[2]);
 
     let help = match app.screen {
-        Screen::Home => "↑↓ · Enter · w wizard · d doctor · p portal · q quit",
+        Screen::Home => "↑↓ · Enter · L launch · w wizard · d doctor · p portal · q quit",
+        Screen::Launch => "o/Enter open · v verify · c confirm · n next · N force-next · r refresh · Esc back",
         Screen::Providers => "↑↓ · Space toggle · Enter continue · Esc back",
         Screen::Portal => "↑↓ · Enter/o open · l login · a all · n next · Esc back",
         Screen::Secrets => "↑↓ · Enter put · o open URL · v vault.km · a all · n next · Esc back",

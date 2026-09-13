@@ -18,17 +18,21 @@ cd "E:/Web Projects/ship-studio"
 ./target/release/shipctl.exe launch --project "E:/Web Projects/assess-api" next
 ```
 
-Desktop: open assess-api → **Launch** → Open / Verify / Confirm / Next.
+Desktop: open assess-api → **Launch** → Open / Verify / Confirm / Next.  
+TUI: `shipctl tui` → **Launch** (`L`) → o / v / c / n.
 
-Progress is stored in the project’s `.ship/launch.json` (no secret values).
+Progress: project `.ship/launch.json` (no secret values).
+
+**assess-api now:** past doctor/oauth; on paste secrets (Polar/GitHub values still need you).
 
 ## Remaining human work
 
 | Step | You do |
 |------|--------|
-| OAuth | Complete Wrangler/Vercel login in browser when Open starts it |
-| Paste | Create GitHub PAT / Polar values on their sites; paste into wrangler |
+| Paste | Create GitHub PAT / Polar values on their sites; `launch open` → put → `confirm` → `next` |
 | Deploy | Allow network deploy when Launch reaches deploy |
+
+If `verify` times out on wrangler/vercel: `shipctl launch confirm` when you know the step is done.
 
 ## Optional vault backup
 

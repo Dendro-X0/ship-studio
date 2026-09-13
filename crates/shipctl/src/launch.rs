@@ -9,8 +9,17 @@ use crate::secrets;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use which::which;
+
+fn resolve_bin(name: &str) -> Result<PathBuf> {
+    which(name)
+        .or_else(|_| which(format!("{name}.cmd")))
+        .or_else(|_| which(format!("{name}.exe")))
+        .with_context(|| format!("program not found: {name} (is it on PATH?)"))
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -330,36 +339,49 @@ pub fn open_current(project: &Path) -> Result<LaunchView> {
     };
     if let Some(url) = &step.entry_url {
         portal::open_url(url)?;
-    } else if step.kind == StepKind::Oauth {
+    }
+    if step.kind == StepKind::Oauth {
         let work = if step.id.contains("cloudflare") {
             secrets::wrangler_workdir(project)
         } else {
             project.to_path_buf()
         };
-        if step.id.contains("cloudflare") {
-            let _ = Command::new("wrangler")
-                .arg("login")
-                .current_dir(&work)
-                .stdin(Stdio::inherit())
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
-                .status();
+        let (bin, args): (PathBuf, &[&str]) = if step.id.contains("cloudflare") {
+            (resolve_bin("wrangler")?, &["login"])
         } else if step.id.contains("vercel") {
-            let _ = Command::new("vercel")
-                .arg("login")
-                .current_dir(&work)
-                .stdin(Stdio::inherit())
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
-                .status();
+            (resolve_bin("vercel")?, &["login"])
         } else if step.id.contains("netlify") {
-            let _ = Command::new("netlify")
-                .arg("login")
-                .current_dir(&work)
-                .stdin(Stdio::inherit())
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
-                .status();
+            (resolve_bin("netlify")?, &["login"])
+        } else {
+            return Ok(view(&state));
+        };
+        let _ = Command::new(&bin)
+            .args(args)
+            .current_dir(&work)
+            .stdin(Stdio::inherit())
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .status();
+    }
+    if step.kind == StepKind::Paste {
+        if let (Some(provider), Some(name)) = (&step.put_provider, &step.put_name) {
+            eprintln!(
+                "After copying the value, put with:\n  shipctl secrets put --project {} --provider {} --name {}",
+                project.display(),
+                provider,
+                name
+            );
+            if std::io::stdin().is_terminal() {
+                eprint!("Run put now? [y/N] ");
+                let _ = std::io::Write::flush(&mut std::io::stderr());
+                let mut line = String::new();
+                let _ = std::io::stdin().read_line(&mut line);
+                if line.trim().eq_ignore_ascii_case("y") {
+                    let id = ProviderId::parse(provider)?;
+                    let code = secrets::put_secret(project, id, name)?;
+                    eprintln!("put exited {code}");
+                }
+            }
         }
     }
     save_state(project, &state)?;
@@ -367,17 +389,53 @@ pub fn open_current(project: &Path) -> Result<LaunchView> {
 }
 
 fn run_capture(bin: &str, args: &[&str], cwd: &Path) -> Result<(i32, String)> {
-    let out = Command::new(bin)
+    use std::io::Read;
+    let path = resolve_bin(bin)?;
+    let mut child = Command::new(&path)
         .args(args)
         .current_dir(cwd)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .output()
+        .spawn()
         .with_context(|| format!("run {bin}"))?;
-    let mut text = String::from_utf8_lossy(&out.stdout).to_string();
-    text.push_str(&String::from_utf8_lossy(&out.stderr));
-    Ok((out.status.code().unwrap_or(1), text))
+    let mut stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| anyhow::anyhow!("missing stdout"))?;
+    let mut stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| anyhow::anyhow!("missing stderr"))?;
+    let t_out = std::thread::spawn(move || {
+        let mut s = String::new();
+        let _ = stdout.read_to_string(&mut s);
+        s
+    });
+    let t_err = std::thread::spawn(move || {
+        let mut s = String::new();
+        let _ = stderr.read_to_string(&mut s);
+        s
+    });
+    let timeout = std::time::Duration::from_secs(20);
+    let start = std::time::Instant::now();
+    let status = loop {
+        match child.try_wait()? {
+            Some(status) => break status,
+            None if start.elapsed() > timeout => {
+                let _ = child.kill();
+                let _ = child.wait();
+                bail!(
+                    "{bin} timed out after {}s — if already logged in: shipctl launch confirm",
+                    timeout.as_secs()
+                );
+            }
+            None => std::thread::sleep(std::time::Duration::from_millis(200)),
+        }
+    };
+    let mut text = t_out.join().unwrap_or_default();
+    text.push_str(&t_err.join().unwrap_or_default());
+    Ok((status.code().unwrap_or(1), text))
 }
 
 pub fn verify_current(project: &Path) -> Result<(bool, String, LaunchView)> {
