@@ -15,19 +15,18 @@ gh auth login
 gh auth status
 ```
 
-## 2) Ship Studio remote (optional publish)
+## 2) Ship Studio remote — **local commit done; push blocked here**
 
-Repo is local-only today (`main`, no `origin`).
+Local path: `E:/Web Projects/ship-studio`  
+Remote: https://github.com/Dendro-X0/ship-studio.git  
+Local commits: `45687d6` (initial) · `da90ff0` (portal/vault/desktop)  
+`origin` is already configured. Push from this host failed (HTTPS connection reset) and `gh` is not logged in.
 
 ```bash
 cd "E:/Web Projects/ship-studio"
-# After you create an empty GitHub repo:
-git remote add origin git@github.com:<you>/ship-studio.git
-git add -A && git status   # review; then commit if you want
+gh auth login          # if needed
 git push -u origin main
 ```
-
-Agent will **not** create the GitHub repo or push without you asking.
 
 ## 3) assess-api Worker secrets (paste)
 
