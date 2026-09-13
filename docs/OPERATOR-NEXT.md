@@ -15,19 +15,16 @@ gh auth login
 gh auth status
 ```
 
-## 2) Ship Studio remote — **local commit done; push blocked here**
+## 2) Ship Studio remote — **pushed**
 
 Local path: `E:/Web Projects/ship-studio`  
-Remote: https://github.com/Dendro-X0/ship-studio.git  
-Local commits: `45687d6` (initial) · `da90ff0` (portal/vault/desktop)  
-`origin` is already configured. Push from this host failed (HTTPS connection reset) and `gh` is not logged in.
+Remote: https://github.com/Dendro-X0/ship-studio  
+`origin/main` tracks local `main` (pushed 2026-09-13).
 
-```bash
-cd "E:/Web Projects/ship-studio"
-gh auth login          # if needed
-git push -u origin main
-```
-
+If push fails again on this machine, check:
+1. Broken helper pointing at `E:\Temp\gh-cli\bin\gh.exe` — use real CLI: `C:\Program Files\GitHub CLI\gh.exe`
+2. HTTPS “password” must be a **Personal Access Token**, not your GitHub account password (2FA blocks passwords)
+3. Network: `curl -I https://github.com` should return `200` before retrying `git push`
 ## 3) assess-api Worker secrets (paste)
 
 Wrangler is already logged in. Values must come from GitHub PAT + Polar dashboard:
