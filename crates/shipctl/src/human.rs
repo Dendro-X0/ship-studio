@@ -212,6 +212,11 @@ fn prioritize_urls(urls: &[String]) -> Vec<String> {
     out
 }
 
+/// Put destinations for launch / human sprint (skips catalog stubs + pepper).
+pub fn put_queue_public(hints: &[SecretHint]) -> Vec<SecretHint> {
+    put_queue_from_hints(hints)
+}
+
 fn put_queue_from_hints(hints: &[SecretHint]) -> Vec<SecretHint> {
     // Prefer putting on Cloudflare Worker when both catalog and CF list the same name.
     let mut by_name: std::collections::BTreeMap<String, SecretHint> =

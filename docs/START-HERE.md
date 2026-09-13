@@ -1,8 +1,9 @@
 # START HERE — Ship Studio
 
 1. **Product contract:** [docs/PRODUCT.md](./docs/PRODUCT.md)
-2. **What still needs a human:** [docs/OPERATOR-NEXT.md](./docs/OPERATOR-NEXT.md)
-3. **Design specs:** [specs/backend/](./specs/backend/)
+2. **Guided launch:** `shipctl launch` — open → verify → next ([design](../specs/backend/guided-launch-design.md))
+3. **What still needs a human:** [docs/OPERATOR-NEXT.md](./docs/OPERATOR-NEXT.md)
+4. **Design specs:** [specs/backend/](../specs/backend/)
 
 ## Build
 

@@ -85,6 +85,30 @@ type HumanSprint = {
   checklist?: string[];
 };
 
+type LaunchView = {
+  current_index?: number;
+  total?: number;
+  done_count?: number;
+  finished?: boolean;
+  current?: {
+    id?: string;
+    title?: string;
+    kind?: string;
+    detail?: string;
+    entry_url?: string | null;
+    status?: string;
+    verify_hint?: string | null;
+  } | null;
+  steps?: Array<{
+    id?: string;
+    title?: string;
+    status?: string;
+    kind?: string;
+  }>;
+  notes?: string[];
+};
+
+let lastLaunch: LaunchView | null = null;
 let lastHuman: HumanSprint | null = null;
 let lastPortal: PortalPlan | null = null;
 let lastSecrets: SecretsPlan | null = null;
@@ -129,6 +153,11 @@ const ACTION_IDS = [
   "btn-human",
   "btn-human-open",
   "btn-human-put",
+  "btn-launch",
+  "btn-launch-open",
+  "btn-launch-verify",
+  "btn-launch-confirm",
+  "btn-launch-next",
   "btn-guide",
   "btn-configure",
   "btn-portal",
@@ -591,6 +620,80 @@ async function runHumanPortal(opts?: { openSources?: boolean }) {
   }
 }
 
+function applyLaunchView(view: LaunchView | null) {
+  lastLaunch = view;
+  void lastLaunch;
+  const panel = document.querySelector<HTMLElement>("#launch-panel");
+  const currentEl = document.querySelector<HTMLElement>("#launch-current");
+  const list = document.querySelector<HTMLElement>("#launch-steps");
+  const hint = document.querySelector<HTMLElement>("#launch-hint");
+  if (!panel || !currentEl || !list) return;
+  if (!view?.steps?.length) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  const cur = view.current;
+  if (hint) {
+    hint.textContent = view.finished
+      ? "Launch workflow finished."
+      : `Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ${view.done_count ?? 0} done — work on the official platform, then Verify/Confirm.`;
+  }
+  currentEl.innerHTML = cur
+    ? `<div class="title"><span class="kind">${escapeHtml(cur.kind ?? "")}</span>${escapeHtml(cur.title ?? "")}</div>
+       <p class="detail">${escapeHtml(cur.detail ?? "")}${
+         cur.verify_hint ? ` · verify: ${escapeHtml(cur.verify_hint)}` : ""
+       }</p>`
+    : "<p class=\"detail\">No current step</p>";
+  list.innerHTML = (view.steps ?? [])
+    .map((s, i) => {
+      const active = i === view.current_index ? " active-step" : "";
+      return `<li class="portal-step${active}">
+        <div class="meta">
+          <div class="title"><span class="kind">${escapeHtml(s.status ?? "")}</span>${escapeHtml(s.title ?? s.id ?? "")}</div>
+        </div>
+      </li>`;
+    })
+    .join("");
+}
+
+async function refreshLaunch() {
+  const result = await run(["launch", "--project", projectPath()], {
+    step: "paste",
+  });
+  if (!result?.ok || !result.stdout) return;
+  try {
+    applyLaunchView(JSON.parse(result.stdout) as LaunchView);
+  } catch {
+    /* shown in output */
+  }
+}
+
+async function launchAction(sub: string[]) {
+  const args = ["launch", ...sub, "--project", projectPath()];
+  // clap: parent flags before subcommand is awkward; use: launch --project . verify
+  const ordered =
+    sub.length === 0
+      ? ["launch", "--project", projectPath()]
+      : ["launch", "--project", projectPath(), ...sub];
+  const result = await run(ordered, { step: "paste" });
+  if (!result?.stdout) return;
+  try {
+    const parsed = JSON.parse(result.stdout) as LaunchView & {
+      launch?: LaunchView;
+      ok?: boolean;
+      message?: string;
+    };
+    applyLaunchView(parsed.launch ?? parsed);
+    if (parsed.message) {
+      appendStream({ stream: "meta", text: parsed.message });
+    }
+  } catch {
+    /* raw output shown */
+  }
+  void args;
+}
+
 async function exportVault() {
   const project = projectPath();
   if (!project) {
@@ -864,6 +967,7 @@ async function run(args: string[], opts?: { step?: string; quietHeader?: boolean
       args[0] === "guide" ||
       args[0] === "ship" ||
       args[0] === "human" ||
+      args[0] === "launch" ||
       args[0] === "status" ||
       args[0] === "flow"
     ) {
@@ -1103,6 +1207,21 @@ async function runWizard() {
   });
   document.querySelector("#btn-human")?.addEventListener("click", () => {
     void runHumanPortal({ openSources: true });
+  });
+  document.querySelector("#btn-launch")?.addEventListener("click", () => {
+    void refreshLaunch();
+  });
+  document.querySelector("#btn-launch-open")?.addEventListener("click", () => {
+    void launchAction(["open"]);
+  });
+  document.querySelector("#btn-launch-verify")?.addEventListener("click", () => {
+    void launchAction(["verify"]);
+  });
+  document.querySelector("#btn-launch-confirm")?.addEventListener("click", () => {
+    void launchAction(["confirm"]);
+  });
+  document.querySelector("#btn-launch-next")?.addEventListener("click", () => {
+    void launchAction(["next"]);
   });
   document.querySelector("#btn-human-open")?.addEventListener("click", () => {
     void (async () => {

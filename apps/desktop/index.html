@@ -88,6 +88,23 @@
         </div>
       </section>
 
+      <section class="portal-panel" id="launch-panel" hidden>
+        <div class="ritual-head">
+          <div>
+            <label>Guided launch</label>
+            <p class="hint" id="launch-hint">One step at a time on official platforms — Open → Verify/Confirm → Next until ship.</p>
+          </div>
+          <div class="portal-actions">
+            <button type="button" id="btn-launch-open" disabled>Open</button>
+            <button type="button" id="btn-launch-verify" disabled>Verify</button>
+            <button type="button" id="btn-launch-confirm" disabled>Confirm</button>
+            <button type="button" id="btn-launch-next" class="primary" disabled>Next</button>
+          </div>
+        </div>
+        <div class="launch-current" id="launch-current"></div>
+        <ul class="portal-steps" id="launch-steps"></ul>
+      </section>
+
       <section class="portal-panel" id="human-panel" hidden>
         <div class="ritual-head">
           <div>
@@ -197,6 +214,7 @@
         <button type="button" id="btn-wizard" disabled title="Guide → Portal → Secrets → Configure → dry-run">Wizard</button>
         <button type="button" id="btn-ship" disabled title="shipctl ship — one-shot offline prep">Ship</button>
         <button type="button" id="btn-human" class="primary" disabled title="Open Polar/GitHub then paste secrets">Human portal</button>
+        <button type="button" id="btn-launch" class="primary" disabled title="Guided launch: open → verify → next">Launch</button>
         <button type="button" id="btn-guide" disabled>Guide</button>
         <button type="button" id="btn-configure" disabled>Configure</button>
         <button type="button" id="btn-portal" disabled title="Provider entry points">Portal</button>

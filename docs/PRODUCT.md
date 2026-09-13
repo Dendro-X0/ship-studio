@@ -4,13 +4,13 @@
 **Updated:** 2026-09-13  
 
 ```text
-GOAL:     Get a human to the right paste surfaces in minutes (CLI · TUI · Desktop)
+GOAL:     Guided launch: open official entry → verify → next until ship (CLI · TUI · Desktop)
 NOT:      Replace Cloudflare/Vercel/Netlify/GitHub · finish OAuth without the human · invent cloud secrets
-RUNTIME:  Local + offline-first (bridge never requires network; open/login/put are operator-initiated)
+RUNTIME:  Local + offline-first (bridge never requires network; open/login/put/verify are operator-initiated)
 SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri)
-PROOF:    cargo test -p shipctl · human --no-open JSON · desktop Human portal · CI
-DONE:     Portal detect + human sprint (paste-source tabs + put queue) + vault + surfaces
-NOT YET:  Operator must still paste Worker secrets / redeploy (see OPERATOR-NEXT)
+PROOF:    cargo test -p shipctl · shipctl launch · Desktop Launch panel
+DONE:     Guided launch stepper + portal/human/vault surfaces
+NOT YET:  Operator must complete paste/deploy on vendor platforms (see OPERATOR-NEXT)
 ```
 
 ## Architecture
@@ -25,7 +25,7 @@ NOT YET:  Operator must still paste Worker secrets / redeploy (see OPERATOR-NEXT
          guide · portal · secrets · configure · signet · orbit
 ```
 
-Design: `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-portal-design.md` · `specs/backend/paste-secret-assist-design.md` · `specs/backend/vault-export-design.md`
+Design: `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-portal-design.md` · `specs/backend/paste-secret-assist-design.md` · `specs/backend/vault-export-design.md` · `specs/backend/guided-launch-design.md`
 
 ## Commands
 
@@ -34,7 +34,8 @@ Design: `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-p
 | `doctor` | Check Signet/Orbit; includes portal providers + secret hint count |
 | `guide` | Unified offline checklist; `--open` entry URLs |
 | `ship` | One-shot offline prep → `.ship/last-guide.json` |
-| `human` | **Portal sprint:** open Polar→GitHub→dashboards, then `--put` paste queue |
+| `launch` | **Guided launch:** open → verify/confirm → next until deploy |
+| `human` | Portal sprint: open Polar→GitHub, then `--put` paste queue |
 | `configure` | Write `.ship/studio.json` |
 | `portal` | Provider entry plan; `--open` / `--login` |
 | `secrets` | Paste-secret assist; `--put NAME --provider …` |
@@ -60,7 +61,7 @@ bash scripts/stage-desktop.sh
 ./target/release/ship-studio-desktop.exe
 ```
 
-Buttons: **Human portal** (open sources + paste terminal) · Wizard · Ship · Guide · Portal · Secrets · Export vault · …
+Buttons: **Launch** (open/verify/next) · **Human portal** · Wizard · Ship · Guide · Portal · Secrets · Export vault · …
 
 ## TUI
 

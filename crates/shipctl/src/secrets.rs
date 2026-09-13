@@ -260,6 +260,11 @@ fn find_wrangler_dir(project: &Path) -> Option<PathBuf> {
     find_wrangler_file(project).and_then(|f| f.parent().map(|p| p.to_path_buf()))
 }
 
+/// Directory where `wrangler secret *` should run (often `apps/api`).
+pub fn wrangler_workdir(project: &Path) -> PathBuf {
+    find_wrangler_dir(project).unwrap_or_else(|| project.to_path_buf())
+}
+
 pub fn parse_wrangler_secret_names(wrangler_path: &Path) -> Result<Vec<String>> {
     let raw = fs::read_to_string(wrangler_path).unwrap_or_default();
     let mut names = Vec::new();

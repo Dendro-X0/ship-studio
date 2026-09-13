@@ -5,6 +5,7 @@ mod config;
 mod flow;
 mod guide;
 mod human;
+mod launch;
 mod mcp;
 mod portal;
 mod secrets;
@@ -100,6 +101,13 @@ enum Commands {
         #[arg(long)]
         put: Option<String>,
     },
+    /// Guided launch: open entry → verify → next until product ship.
+    Launch {
+        #[command(subcommand)]
+        action: Option<LaunchCmd>,
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+    },
     /// Encrypted vault.km export (Clavis / Keys Manager compatible).
     Vault {
         #[command(subcommand)]
@@ -143,6 +151,25 @@ enum Commands {
     },
     /// Stdio MCP server (tools: doctor, configure, portal, sign, deploy, flow, status).
     Mcp,
+}
+
+#[derive(Subcommand, Debug)]
+enum LaunchCmd {
+    /// Show current step and progress (default).
+    Status,
+    /// Open official entry URL / start OAuth CLI for the current step.
+    Open,
+    /// Run automatic verify for the current step.
+    Verify,
+    /// Mark current step done (operator attestation).
+    Confirm,
+    /// Advance to the next pending step (requires done, or --force).
+    Next {
+        #[arg(long, default_value_t = false)]
+        force: bool,
+    },
+    /// Clear launch progress and rebuild the plan.
+    Reset,
 }
 
 #[derive(Subcommand, Debug)]
@@ -292,6 +319,43 @@ fn main() -> Result<()> {
                     eprintln!("opened {} url(s)", opened.len());
                 }
                 println!("{}", serde_json::to_string_pretty(&plan)?);
+            }
+        }
+        Commands::Launch { action, project } => {
+            let action = action.unwrap_or(LaunchCmd::Status);
+            match action {
+                LaunchCmd::Status => {
+                    let state = launch::load_or_build(&project)?;
+                    println!("{}", serde_json::to_string_pretty(&launch::view(&state))?);
+                }
+                LaunchCmd::Open => {
+                    let view = launch::open_current(&project)?;
+                    println!("{}", serde_json::to_string_pretty(&view)?);
+                }
+                LaunchCmd::Verify => {
+                    let (ok, msg, view) = launch::verify_current(&project)?;
+                    eprintln!("{msg}");
+                    println!("{}", serde_json::to_string_pretty(&serde_json::json!({
+                        "ok": ok,
+                        "message": msg,
+                        "launch": view,
+                    }))?);
+                    if !ok {
+                        bail!("verify failed");
+                    }
+                }
+                LaunchCmd::Confirm => {
+                    let view = launch::confirm_current(&project)?;
+                    println!("{}", serde_json::to_string_pretty(&view)?);
+                }
+                LaunchCmd::Next { force } => {
+                    let view = launch::next(&project, force)?;
+                    println!("{}", serde_json::to_string_pretty(&view)?);
+                }
+                LaunchCmd::Reset => {
+                    let view = launch::reset(&project)?;
+                    println!("{}", serde_json::to_string_pretty(&view)?);
+                }
             }
         }
         Commands::Vault { action } => match action {

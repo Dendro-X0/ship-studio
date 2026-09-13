@@ -5,6 +5,7 @@ use crate::config;
 use crate::flow;
 use crate::guide;
 use crate::human;
+use crate::launch;
 use crate::portal;
 use crate::secrets;
 use crate::ship;
@@ -80,6 +81,11 @@ fn tools() -> Vec<Value> {
         tool(
             "ship_human",
             "Human portal sprint: open Polar/GitHub/dashboards; optional interactive secret put queue",
+            false,
+        ),
+        tool(
+            "ship_launch",
+            "Guided launch status (open→verify→next). Use CLI for open/verify/confirm/next mutations.",
             false,
         ),
         tool(
@@ -401,6 +407,10 @@ fn call_tool(params: Value) -> Result<Value> {
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false);
             serde_json::to_value(human::run_with_options(&project, open, put, open_all)?)?
+        }
+        "ship_launch" => {
+            let state = launch::load_or_build(&project)?;
+            serde_json::to_value(launch::view(&state))?
         }
         "ship_flow_dry_run" => {
             serde_json::to_value(flow::plan(&project, skip_sign, skip_deploy, offline)?)?
