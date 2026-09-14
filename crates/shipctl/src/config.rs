@@ -309,8 +309,12 @@ pub fn intent_for(project: &Path) -> Result<StudioIntent> {
     if sign_args.is_empty() {
         sign_args = default_sign_args();
     }
-    if existing.is_none() && !detected.signet_toml {
-        sign_args = vec!["scan".into(), "--json".into()];
+    if existing.is_none() {
+        if detected.tauri || detected.signet_toml {
+            sign_args = vec!["build".into()];
+        } else if !detected.signet_toml {
+            sign_args = vec!["scan".into(), "--json".into()];
+        }
     }
 
     let deploy_args = existing

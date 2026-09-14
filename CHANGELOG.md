@@ -4,9 +4,12 @@
 
 ### Added
 
-- **Guided launch** (`shipctl launch`): open official entry → verify/confirm → next until deploy
-- **TUI Launch** screen (`L` / home item): o open · v verify · c confirm · n next
+- **Guided launch** (`shipctl launch` / `open` / `run`): adaptive plan through Signet build→release, Polar listing, Orbit deploy
+- **TUI Launch** screen (`L` / home item): o open/run · v verify · c confirm · n next
+- Desktop Launch **Open / Run** opens a terminal for Sign/OAuth/Deploy steps
 - Verify uses PATH-resolved CLIs (`wrangler.cmd` on Windows) with a 20s timeout
+- Tauri/`signet.toml` projects get Signet steps; worker-only repos skip them
+- Configure defaults `sign_args=[build]` when Tauri or signet.toml is present
 - **Human portal sprint** opens paste-source tabs only (Polar→GitHub); Desktop **Paste in terminal**; `--open-all` for full dashboards
 - **CI** (GitHub Actions): `cargo test -p shipctl` + CLI smoke on `main`
 - **Desktop / TUI / MCP** vault export surfaces (`Export vault`, TUI `v`, `ship_vault`)

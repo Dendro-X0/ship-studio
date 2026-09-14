@@ -2,64 +2,57 @@
 
 **Status:** Active  
 **Updated:** 2026-09-13  
-**Owner:** `crates/shipctl` (`launch`) · Desktop Launch panel
+**Owner:** `crates/shipctl` (`launch`) · Desktop / TUI Launch
 
 ## Vision
 
-Semi-automated shipping: for each task, **open the official entry point** → operator completes work **on the vendor platform** → tool **verifies** (CLI check or operator confirm) → **advance** to the next step → repeat until launch.
+Semi-automated shipping through to **product launch**: for each task, open the official entry **or run the local Signet/Orbit CLI**, operator finishes vendor UI when needed, tool verifies, then next — until sign → release → listing → deploy are done.
 
-The tool never replaces Cloudflare / GitHub / Polar / Vercel; it sequences and verifies.
+## Adaptive plan
 
-## State
+| Project signal | Extra steps after secrets/configure |
+|----------------|-------------------------------------|
+| Tauri / `signet.toml` | identity → `signet build` → `signet ship --plan` → `signet release --dry-run` → `signet release` (confirm tag) |
+| Polar markers | listing — open Polar dashboard (marketplace paste is human) |
+| Wrangler / Vercel / Netlify | `shipctl deploy` (Orbit) |
+| Always | doctor → oauth → paste → configure → intent → flow dry-run → deploy |
 
-Persisted at `.ship/launch.json` (no secrets):
-
-```json
-{
-  "schema": "ship-studio/launch/v1",
-  "project": "…",
-  "current": 0,
-  "steps": [
-    { "id": "doctor", "status": "done", "verified_at": "…" },
-    { "id": "paste.GITHUB_TOKEN", "status": "pending" }
-  ]
-}
-```
-
-Plan is rebuilt each run from project detection; statuses merge by `id`.
+Worker-only repos skip desktop Signet build/release unless `signet.toml` exists.
 
 ## Step kinds
 
-| kind | open | verify |
-|------|------|--------|
-| `auto` | none / optional | local CLI (doctor, configure file, flow plan) |
-| `oauth` | provider login/dashboard URL | `wrangler whoami` / `vercel whoami` / `gh auth status` |
-| `paste` | value **source** URL (GitHub/Polar…) | operator `confirm` **or** `wrangler secret list` contains name (network, optional) |
-| `deploy` | none | `orbit` status / last-run ok **or** confirm |
+| kind | Open / Run | Verify |
+|------|------------|--------|
+| `auto` | optional `run` argv | doctor / studio.json / flow plan / identity list |
+| `oauth` | provider login CLI | whoami (20s timeout) |
+| `paste` | source URL + optional put | confirm or secret list |
+| `sign` | `signet …` via `run` | exit 0 or confirm |
+| `list` | Polar/GitHub release URL | confirm (marketplace is human) |
+| `deploy` | `shipctl deploy` / orbit | last-run ok or confirm |
 
 ## Commands
 
 ```text
-shipctl launch --project .              # show current step + progress
-shipctl launch open --project .         # open entry_url for current
-shipctl launch verify --project .       # run verify; print ok/fail
-shipctl launch confirm --project .      # mark current human-attested done
-shipctl launch next --project .         # advance if current done (or --force)
-shipctl launch reset --project .        # clear statuses
+shipctl launch [--project .]
+shipctl launch open|run     # open URL and/or execute step.run
+shipctl launch verify|confirm|next|reset
 ```
 
-## Desktop
+## Surfaces
 
-**Launch** panel: progress strip · current title/detail · Open · Verify · Confirm · Next.
+- CLI JSON + stderr prompts  
+- Desktop Launch: Open/Run · Verify · Confirm · Next  
+- TUI Launch: `o` · `v` · `c` · `n`
 
 ## Invariants
 
-1. Bridge does not call vendor HTTPS APIs itself; verify may spawn local provider CLIs (operator-initiated).
-2. Never store secret values.
-3. Official platforms remain the place of work; shipctl only sequences.
+1. Bridge does not call vendor HTTPS itself.  
+2. Never store secret values.  
+3. Official platforms remain the place of marketplace listing / OAuth.  
+4. Network steps (live release, deploy) require operator initiation.
 
 ## Proof
 
-- L1: plan builds for wrangler fixture; merge status; next advances
-- L2: `shipctl launch` / `verify` / `next` on assess-api offline steps (doctor/configure)
-- L3: Desktop Launch panel wired
+- L1: tauri fixture includes build/release steps; wrangler fixture skips them  
+- L2: `shipctl launch` / verify configure / next  
+- L3: Desktop + TUI Launch controls

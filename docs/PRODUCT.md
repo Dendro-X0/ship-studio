@@ -4,13 +4,13 @@
 **Updated:** 2026-09-13  
 
 ```text
-GOAL:     Guided launch: open official entry → verify → next until ship (CLI · TUI · Desktop)
+GOAL:     Guided launch through sign → release → listing → deploy (CLI · TUI · Desktop)
 NOT:      Replace Cloudflare/Vercel/Netlify/GitHub · finish OAuth without the human · invent cloud secrets
 RUNTIME:  Local + offline-first (bridge never requires network; open/login/put/verify are operator-initiated)
 SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri)
 PROOF:    cargo test -p shipctl · shipctl launch · Desktop Launch panel
-DONE:     Guided launch stepper + portal/human/vault surfaces
-NOT YET:  Operator must complete paste/deploy on vendor platforms (see OPERATOR-NEXT)
+DONE:     Adaptive launch plan (Signet when Tauri/signet.toml; Polar listing; Orbit deploy)
+NOT YET:  Operator must complete paste / live release / marketplace / deploy on vendor platforms (see OPERATOR-NEXT)
 ```
 
 ## Architecture
@@ -34,7 +34,7 @@ Design: `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-p
 | `doctor` | Check Signet/Orbit; includes portal providers + secret hint count |
 | `guide` | Unified offline checklist; `--open` entry URLs |
 | `ship` | One-shot offline prep → `.ship/last-guide.json` |
-| `launch` | **Guided launch:** open → verify/confirm → next until deploy |
+| `launch` | **Guided launch:** open/run → verify/confirm → next (sign · release · list · deploy) |
 | `human` | Portal sprint: open Polar→GitHub, then `--put` paste queue |
 | `configure` | Write `.ship/studio.json` |
 | `portal` | Provider entry plan; `--open` / `--login` |
@@ -61,7 +61,7 @@ bash scripts/stage-desktop.sh
 ./target/release/ship-studio-desktop.exe
 ```
 
-Buttons: **Launch** (open/verify/next) · **Human portal** · Wizard · Ship · Guide · Portal · Secrets · Export vault · …
+Buttons: **Launch** (open/run · verify · confirm · next through ship) · **Human portal** · Wizard · Ship · Guide · Portal · Secrets · Export vault · …
 
 ## TUI
 

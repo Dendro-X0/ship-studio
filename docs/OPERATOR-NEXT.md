@@ -18,18 +18,22 @@ cd "E:/Web Projects/ship-studio"
 ./target/release/shipctl.exe launch --project "E:/Web Projects/assess-api" next
 ```
 
-Desktop: open assess-api → **Launch** → Open / Verify / Confirm / Next.  
+Desktop: open project → **Launch** → Open/Run · Verify · Confirm · Next.  
 TUI: `shipctl tui` → **Launch** (`L`) → o / v / c / n.
 
 Progress: project `.ship/launch.json` (no secret values).
 
-**assess-api now:** past doctor/oauth; on paste secrets (Polar/GitHub values still need you).
+**Adaptive plan:** Tauri/`signet.toml` adds Signet build → ship plan → release dry-run → live release; Polar adds listing; always ends in Orbit deploy.
+
+**assess-api now:** past doctor/oauth; on paste secrets (Polar/GitHub values still need you). Worker-only → no Signet desktop steps unless you add `signet.toml`.
 
 ## Remaining human work
 
 | Step | You do |
 |------|--------|
 | Paste | Create GitHub PAT / Polar values on their sites; `launch open` → put → `confirm` → `next` |
+| Sign / release | On desktop projects: Open/Run Signet steps; Confirm live `signet release` |
+| Listing | Polar dashboard paste (marketplace is human) |
 | Deploy | Allow network deploy when Launch reaches deploy |
 
 If `verify` times out on wrangler/vercel: `shipctl launch confirm` when you know the step is done.

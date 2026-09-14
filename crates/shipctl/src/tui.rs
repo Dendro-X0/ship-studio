@@ -439,7 +439,7 @@ fn launch_open(app: &mut App) {
         Ok(view) => {
             app.push("launch open ok");
             app.launch_view = Some(view);
-            app.status = "opened — verify or confirm".into();
+            app.status = "opened/ran — verify or confirm".into();
         }
         Err(e) => {
             app.push(format!("launch open failed: {e:#}"));
@@ -538,10 +538,16 @@ fn draw_launch(f: &mut ratatui::Frame, app: &App, area: Rect) {
         if let Some(url) = &cur.entry_url {
             lines.push(Line::from(format!("entry: {url}")));
         }
+        if let Some(run) = &cur.run {
+            lines.push(Line::from(format!("run: {}", run.join(" "))));
+        }
         if let Some(h) = &cur.verify_hint {
             lines.push(Line::from(format!("verify: {h}")));
         }
-        lines.push(Line::from(format!("status: {:?}", cur.status)));
+        lines.push(Line::from(format!(
+            "kind: {:?} · status: {:?}",
+            cur.kind, cur.status
+        )));
     }
     lines.push(Line::from(""));
     for (i, s) in view.steps.iter().enumerate() {
@@ -1036,7 +1042,7 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
 
     let help = match app.screen {
         Screen::Home => "↑↓ · Enter · L launch · w wizard · d doctor · p portal · q quit",
-        Screen::Launch => "o/Enter open · v verify · c confirm · n next · N force-next · r refresh · Esc back",
+        Screen::Launch => "o/Enter open/run · v verify · c confirm · n next · N force-next · r refresh · Esc back",
         Screen::Providers => "↑↓ · Space toggle · Enter continue · Esc back",
         Screen::Portal => "↑↓ · Enter/o open · l login · a all · n next · Esc back",
         Screen::Secrets => "↑↓ · Enter put · o open URL · v vault.km · a all · n next · Esc back",

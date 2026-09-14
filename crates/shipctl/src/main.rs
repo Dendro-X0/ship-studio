@@ -157,8 +157,10 @@ enum Commands {
 enum LaunchCmd {
     /// Show current step and progress (default).
     Status,
-    /// Open official entry URL / start OAuth CLI for the current step.
+    /// Open official entry URL / start OAuth CLI / execute step.run for the current step.
     Open,
+    /// Alias for Open (execute local CLI when the step has a `run` argv).
+    Run,
     /// Run automatic verify for the current step.
     Verify,
     /// Mark current step done (operator attestation).
@@ -328,7 +330,7 @@ fn main() -> Result<()> {
                     let state = launch::load_or_build(&project)?;
                     println!("{}", serde_json::to_string_pretty(&launch::view(&state))?);
                 }
-                LaunchCmd::Open => {
+                LaunchCmd::Open | LaunchCmd::Run => {
                     let view = launch::open_current(&project)?;
                     println!("{}", serde_json::to_string_pretty(&view)?);
                 }

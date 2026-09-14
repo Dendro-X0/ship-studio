@@ -98,6 +98,7 @@ type LaunchView = {
     entry_url?: string | null;
     status?: string;
     verify_hint?: string | null;
+    run?: string[] | null;
   } | null;
   steps?: Array<{
     id?: string;
@@ -637,11 +638,13 @@ function applyLaunchView(view: LaunchView | null) {
   if (hint) {
     hint.textContent = view.finished
       ? "Launch workflow finished."
-      : `Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ${view.done_count ?? 0} done — work on the official platform, then Verify/Confirm.`;
+      : `Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ${view.done_count ?? 0} done — Open/Run on official platforms or local Signet/Orbit, then Verify/Confirm.`;
   }
   currentEl.innerHTML = cur
     ? `<div class="title"><span class="kind">${escapeHtml(cur.kind ?? "")}</span>${escapeHtml(cur.title ?? "")}</div>
        <p class="detail">${escapeHtml(cur.detail ?? "")}${
+         cur.run?.length ? ` · run: ${escapeHtml(cur.run.join(" "))}` : ""
+       }${
          cur.verify_hint ? ` · verify: ${escapeHtml(cur.verify_hint)}` : ""
        }</p>`
     : "<p class=\"detail\">No current step</p>";
@@ -1212,7 +1215,37 @@ async function runWizard() {
     void refreshLaunch();
   });
   document.querySelector("#btn-launch-open")?.addEventListener("click", () => {
-    void launchAction(["open"]);
+    void (async () => {
+      const project = projectPath();
+      if (!project) return;
+      const cur = lastLaunch?.current;
+      const needsTerminal =
+        Boolean(cur?.run?.length) ||
+        cur?.kind === "oauth" ||
+        cur?.kind === "paste" ||
+        cur?.kind === "sign" ||
+        cur?.kind === "deploy";
+      if (needsTerminal) {
+        try {
+          await invoke("open_launch_open_terminal", { project });
+          appendStream({
+            stream: "meta",
+            text: "Launched terminal: shipctl launch open — complete the step, then Verify/Confirm here.",
+          });
+          window.setTimeout(() => {
+            void refreshLaunch();
+          }, 1500);
+        } catch (e) {
+          appendStream({
+            stream: "stderr",
+            text: `open terminal failed: ${String(e)} — falling back to in-app open`,
+          });
+          void launchAction(["open"]);
+        }
+      } else {
+        void launchAction(["open"]);
+      }
+    })();
   });
   document.querySelector("#btn-launch-verify")?.addEventListener("click", () => {
     void launchAction(["verify"]);

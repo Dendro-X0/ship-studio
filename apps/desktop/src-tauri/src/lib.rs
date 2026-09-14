@@ -172,6 +172,54 @@ fn pick_vault_save(default_name: Option<String>) -> Result<Option<String>, Strin
     Ok(file.map(|p| p.display().to_string()))
 }
 
+/// Open an interactive terminal for `shipctl launch open` (OAuth / sign / deploy run).
+#[tauri::command]
+fn open_launch_open_terminal(project: String) -> Result<(), String> {
+    let shipctl = resolve_shipctl()?;
+    let project_path = PathBuf::from(&project);
+    if !project_path.is_dir() {
+        return Err(format!("not a directory: {project}"));
+    }
+
+    #[cfg(windows)]
+    {
+        let wt = Command::new("wt")
+            .args([
+                "-d",
+                &project,
+                shipctl.to_str().unwrap_or("shipctl"),
+                "launch",
+                "--project",
+                &project,
+                "open",
+            ])
+            .spawn();
+        if wt.is_ok() {
+            return Ok(());
+        }
+        Command::new("cmd")
+            .args([
+                "/C",
+                "start",
+                "Ship Studio launch",
+                shipctl.to_str().unwrap_or("shipctl"),
+                "launch",
+                "--project",
+                &project,
+                "open",
+            ])
+            .spawn()
+            .map_err(|e| format!("spawn terminal: {e}"))?;
+        return Ok(());
+    }
+
+    #[cfg(not(windows))]
+    {
+        let _ = (&shipctl, &project_path);
+        Err("open_launch_open_terminal is implemented for Windows in this build".into())
+    }
+}
+
 /// Open an interactive terminal for `shipctl human --no-open --put` (paste loop).
 #[tauri::command]
 fn open_human_put_terminal(project: String) -> Result<(), String> {
@@ -569,6 +617,7 @@ pub fn run() {
             pick_project,
             pick_vault_save,
             open_human_put_terminal,
+            open_launch_open_terminal,
             run_shipctl,
             run_shipctl_env,
             cancel_shipctl,

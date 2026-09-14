@@ -27,6 +27,8 @@ pub enum StepKind {
     Auto,
     Oauth,
     Paste,
+    Sign,
+    List,
     Deploy,
 }
 
@@ -52,6 +54,9 @@ pub struct LaunchStep {
     pub put_provider: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub put_name: Option<String>,
+    /// Local CLI to run on Open/Run, e.g. `["signet","build"]` or `["shipctl","deploy"]`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub run: Option<Vec<String>>,
     pub status: StepStatus,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub verified_at: Option<String>,
@@ -112,81 +117,78 @@ fn merge_statuses(fresh: &mut [LaunchStep], saved: &LaunchState) {
     }
 }
 
+fn step(
+    id: &str,
+    title: &str,
+    kind: StepKind,
+    detail: &str,
+    entry_url: Option<String>,
+    verify_hint: Option<String>,
+    run: Option<Vec<String>>,
+) -> LaunchStep {
+    LaunchStep {
+        id: id.into(),
+        title: title.into(),
+        kind,
+        detail: detail.into(),
+        entry_url,
+        verify_hint,
+        put_provider: None,
+        put_name: None,
+        run,
+        status: StepStatus::Pending,
+        verified_at: None,
+    }
+}
+
 fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
     let doctor = adapters::doctor(project)?;
+    let detected = config::probe(project);
     let portal = portal::plan_for(project, None)?;
     let secrets_plan = secrets::plan_for(project, None)?;
     let put_queue = human::put_queue_public(&secrets_plan.hints);
+    let wants_signet = detected.tauri || detected.signet_toml;
 
     let mut steps = Vec::new();
-    steps.push(LaunchStep {
-        id: "doctor".into(),
-        title: "Doctor — local Signet + Orbit".into(),
-        kind: StepKind::Auto,
-        detail: if doctor.ok {
-            "Tools found.".into()
+    steps.push(step(
+        "doctor",
+        "Doctor — local Signet + Orbit",
+        StepKind::Auto,
+        if doctor.ok {
+            "Tools found."
         } else {
-            "Fix doctor failures before continuing.".into()
+            "Fix doctor failures before continuing."
         },
-        entry_url: None,
-        verify_hint: Some("shipctl doctor".into()),
-        put_provider: None,
-        put_name: None,
-        status: StepStatus::Pending,
-        verified_at: None,
-    });
+        None,
+        Some("shipctl doctor".into()),
+        None,
+    ));
 
     for id in &portal.providers {
         let Ok(pid) = ProviderId::parse(id) else {
             continue;
         };
-        let (title, hint, url) = match pid {
+        if matches!(pid, ProviderId::Polar | ProviderId::Github) {
+            continue;
+        }
+        let (title, hint) = match pid {
             ProviderId::Cloudflare => (
-                "Cloudflare — Wrangler OAuth".into(),
-                "wrangler whoami (prefer OAuth over API tokens)".into(),
-                None, // Open runs `wrangler login`
+                "Cloudflare — Wrangler OAuth",
+                "wrangler whoami (prefer OAuth over API tokens)",
             ),
-            ProviderId::Vercel => (
-                "Vercel — CLI login".into(),
-                "vercel whoami".into(),
-                None,
-            ),
-            ProviderId::Netlify => (
-                "Netlify — CLI login".into(),
-                "netlify status".into(),
-                None,
-            ),
-            ProviderId::Github => (
-                "GitHub — gh auth (optional for PAT create)".into(),
-                "gh auth status".into(),
-                Some("https://github.com/settings/tokens/new".into()),
-            ),
-            ProviderId::Polar => (
-                "Polar — open dashboard (no CLI OAuth)".into(),
-                "Confirm in UI after copying checkout/webhook values".into(),
-                Some("https://polar.sh/dashboard".into()),
-            ),
+            ProviderId::Vercel => ("Vercel — CLI login", "vercel whoami"),
+            ProviderId::Netlify => ("Netlify — CLI login", "netlify status"),
+            _ => continue,
         };
-        // Polar oauth step is weak — skip as oauth; paste steps cover it.
-        if matches!(pid, ProviderId::Polar) {
-            continue;
-        }
-        // Skip GitHub oauth as required gate — PAT paste is the real gate.
-        if matches!(pid, ProviderId::Github) {
-            continue;
-        }
-        steps.push(LaunchStep {
-            id: format!("oauth.{}", pid.as_str()),
+        steps.push(step(
+            &format!("oauth.{}", pid.as_str()),
             title,
-            kind: StepKind::Oauth,
-            detail: "Complete login on the official site / CLI — then Verify.".into(),
-            entry_url: url,
-            verify_hint: Some(hint),
-            put_provider: None,
-            put_name: None,
-            status: StepStatus::Pending,
-            verified_at: None,
-        });
+            StepKind::Oauth,
+            "Complete login on the official site / CLI — then Verify.",
+            None,
+            Some(hint.into()),
+            None,
+        ));
     }
 
     for h in &put_queue {
@@ -205,49 +207,155 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             )),
             put_provider: Some(h.provider.clone()),
             put_name: Some(h.name.clone()),
+            run: None,
             status: StepStatus::Pending,
             verified_at: None,
         });
     }
 
-    steps.push(LaunchStep {
-        id: "configure".into(),
-        title: "Configure — write .ship/studio.json".into(),
-        kind: StepKind::Auto,
-        detail: "Persist sign/deploy intent for flow.".into(),
-        entry_url: None,
-        verify_hint: Some(".ship/studio.json exists".into()),
-        put_provider: None,
-        put_name: None,
-        status: StepStatus::Pending,
-        verified_at: None,
-    });
+    steps.push(step(
+        "configure",
+        "Configure — write .ship/studio.json",
+        StepKind::Auto,
+        "Persist sign/deploy intent for flow.",
+        None,
+        Some(".ship/studio.json exists".into()),
+        Some(vec![
+            "shipctl".into(),
+            "configure".into(),
+            "--project".into(),
+            ".".into(),
+        ]),
+    ));
 
-    steps.push(LaunchStep {
-        id: "flow_dry_run".into(),
-        title: "Flow dry-run — preview sign → deploy".into(),
-        kind: StepKind::Auto,
-        detail: "Offline plan check before network deploy.".into(),
-        entry_url: None,
-        verify_hint: Some("shipctl flow --dry-run --offline --skip-deploy".into()),
-        put_provider: None,
-        put_name: None,
-        status: StepStatus::Pending,
-        verified_at: None,
-    });
+    steps.push(step(
+        "intent",
+        "Ship intent — set sign_args / deploy_args for real ship",
+        StepKind::Auto,
+        if wants_signet {
+            "Recommend sign_args=[build] and provider deploy_args for desktop+web ship."
+        } else {
+            "Recommend provider deploy_args (Worker/docs). Signet build skipped unless signet.toml appears."
+        },
+        None,
+        Some("studio.json sign_args/deploy_args look ship-ready".into()),
+        None,
+    ));
 
-    steps.push(LaunchStep {
-        id: "deploy".into(),
-        title: "Deploy — Orbit ship (network)".into(),
-        kind: StepKind::Deploy,
-        detail: "Run deploy when ready. Confirm or check last-run.".into(),
-        entry_url: None,
-        verify_hint: Some("shipctl deploy / last-run ok, or confirm".into()),
-        put_provider: None,
-        put_name: None,
-        status: StepStatus::Pending,
-        verified_at: None,
-    });
+    if wants_signet {
+        if !detected.signet_toml {
+            steps.push(step(
+                "signet.scan",
+                "Signet — scan/init project signing config",
+                StepKind::Sign,
+                "Create signet.toml from repo scan (or init).",
+                None,
+                Some("signet.toml exists".into()),
+                Some(vec!["signet".into(), "scan".into(), "--apply".into()]),
+            ));
+        }
+        steps.push(step(
+            "signet.identity",
+            "Signet — signing identity",
+            StepKind::Sign,
+            "Ensure a local signing identity exists (create once).",
+            None,
+            Some("signet identity list shows an identity".into()),
+            Some(vec!["signet".into(), "identity".into(), "list".into()]),
+        ));
+        steps.push(step(
+            "signet.build",
+            "Signet — build & sign artifacts",
+            StepKind::Sign,
+            "Build and sign desktop/mobile artifacts. Network may be used for timestamps.",
+            None,
+            Some("signet build exit 0 (or confirm)".into()),
+            Some(vec!["signet".into(), "build".into()]),
+        ));
+        steps.push(step(
+            "signet.ship_plan",
+            "Signet — multi-platform ship plan",
+            StepKind::Sign,
+            "Review coverage plan before CI/collect/release.",
+            None,
+            Some("signet ship --plan exit 0".into()),
+            Some(vec!["signet".into(), "ship".into(), "--plan".into()]),
+        ));
+        steps.push(step(
+            "signet.release_dry",
+            "Signet — release dry-run (checksums / GitHub payload)",
+            StepKind::Sign,
+            "Offline-ish check of release packaging. Set tag via SIGNET_RELEASE_TAG or confirm.",
+            None,
+            Some("signet release --dry-run exit 0".into()),
+            Some(vec![
+                "signet".into(),
+                "release".into(),
+                "--dry-run".into(),
+                "--tag".into(),
+                std::env::var("SIGNET_RELEASE_TAG").unwrap_or_else(|_| "v0.1.0".into()),
+            ]),
+        ));
+        steps.push(step(
+            "signet.release",
+            "Signet — publish GitHub Release (network)",
+            StepKind::Sign,
+            "Live release upload. Requires gh auth. Confirm after success.",
+            Some("https://github.com/releases/new".into()),
+            Some("confirm after signet release succeeds".into()),
+            Some(vec![
+                "signet".into(),
+                "release".into(),
+                "--tag".into(),
+                std::env::var("SIGNET_RELEASE_TAG").unwrap_or_else(|_| "v0.1.0".into()),
+            ]),
+        ));
+    }
+
+    if detected.polar {
+        steps.push(step(
+            "listing.polar",
+            "Listing — Polar product / checkout (official dashboard)",
+            StepKind::List,
+            "Update Polar product listing & checkout URL on polar.sh — Ship Studio only opens the door.",
+            Some("https://polar.sh/dashboard".into()),
+            Some("confirm listing/checkout updated".into()),
+            None,
+        ));
+    }
+
+    steps.push(step(
+        "flow_dry_run",
+        "Flow dry-run — preview configure → sign → deploy",
+        StepKind::Auto,
+        "Offline plan check before network deploy.",
+        None,
+        Some("shipctl flow --dry-run --offline --skip-deploy".into()),
+        Some(vec![
+            "shipctl".into(),
+            "flow".into(),
+            "--project".into(),
+            ".".into(),
+            "--dry-run".into(),
+            "--offline".into(),
+            "--skip-deploy".into(),
+        ]),
+    ));
+
+    steps.push(step(
+        "deploy",
+        "Deploy — Orbit (network)",
+        StepKind::Deploy,
+        "Run Orbit deploy with studio.json deploy_args. Confirm or check last-run.",
+        None,
+        Some("shipctl deploy / last-run ok, or confirm".into()),
+        Some(vec![
+            "shipctl".into(),
+            "deploy".into(),
+            "--project".into(),
+            ".".into(),
+        ]),
+    ));
 
     Ok(steps)
 }
@@ -283,11 +391,52 @@ fn load_state(project: &Path, snap_to_pending: bool) -> Result<LaunchState> {
         steps,
         notes: vec![
             "Work on official platforms; shipctl only sequences and verifies.".into(),
-            "Paste steps: Open → copy on vendor site → put CLI → Confirm → Next.".into(),
+            "Paste: Open → copy on vendor site → put → Confirm → Next.".into(),
+            "Sign/release/deploy: Open/Run executes local CLI; Confirm after live network steps.".into(),
         ],
     };
     save_state(&project, &state)?;
     Ok(state)
+}
+
+fn resolve_run_bin(name: &str) -> Result<PathBuf> {
+    if name == "shipctl" {
+        if let Ok(exe) = std::env::current_exe() {
+            return Ok(exe);
+        }
+    }
+    resolve_bin(name)
+}
+
+/// Whether a successful Open/Run may auto-mark the step done (no live network publish).
+fn auto_done_after_run(step: &LaunchStep) -> bool {
+    match step.kind {
+        StepKind::Deploy | StepKind::List | StepKind::Paste | StepKind::Oauth => false,
+        StepKind::Sign if step.id == "signet.release" => false,
+        StepKind::Auto | StepKind::Sign => true,
+    }
+}
+
+fn execute_run(project: &Path, argv: &[String]) -> Result<i32> {
+    let Some((bin_name, rest)) = argv.split_first() else {
+        bail!("empty run argv");
+    };
+    let bin = resolve_run_bin(bin_name)?;
+    let work = if bin_name == "wrangler" {
+        secrets::wrangler_workdir(project)
+    } else {
+        project.to_path_buf()
+    };
+    eprintln!("$ {} {}", bin.display(), rest.join(" "));
+    let status = Command::new(&bin)
+        .args(rest)
+        .current_dir(&work)
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()
+        .with_context(|| format!("run {}", argv.join(" ")))?;
+    Ok(status.code().unwrap_or(1))
 }
 
 pub fn view(state: &LaunchState) -> LaunchView {
@@ -305,6 +454,7 @@ pub fn view(state: &LaunchState) -> LaunchView {
     let mut actions = vec![
         "shipctl launch".into(),
         "shipctl launch open".into(),
+        "shipctl launch run".into(),
         "shipctl launch verify".into(),
         "shipctl launch confirm".into(),
         "shipctl launch next".into(),
@@ -316,6 +466,9 @@ pub fn view(state: &LaunchState) -> LaunchView {
                     "shipctl secrets put --provider {p} --name {n}"
                 ));
             }
+        }
+        if let Some(run) = &cur.run {
+            actions.push(format!("run: {}", run.join(" ")));
         }
     }
     LaunchView {
@@ -333,8 +486,9 @@ pub fn view(state: &LaunchState) -> LaunchView {
 }
 
 pub fn open_current(project: &Path) -> Result<LaunchView> {
-    let state = load_state(project, true)?;
-    let Some(step) = state.steps.get(state.current).cloned() else {
+    let mut state = load_state(project, true)?;
+    let idx = state.current;
+    let Some(step) = state.steps.get(idx).cloned() else {
         bail!("no launch steps");
     };
     if let Some(url) = &step.entry_url {
@@ -382,6 +536,20 @@ pub fn open_current(project: &Path) -> Result<LaunchView> {
                     eprintln!("put exited {code}");
                 }
             }
+        }
+    }
+    if let Some(argv) = &step.run {
+        let code = execute_run(project, argv)?;
+        if code == 0 && auto_done_after_run(&step) {
+            if let Some(s) = state.steps.get_mut(idx) {
+                s.status = StepStatus::Done;
+                s.verified_at = Some(now_rfc3339());
+            }
+            eprintln!("run ok — step marked done");
+        } else if code != 0 {
+            eprintln!("run exited {code} — fix, retry Open/Run, or Confirm if already done");
+        } else {
+            eprintln!("run ok — Confirm after you verify the live result, then Next");
         }
     }
     save_state(project, &state)?;
@@ -468,6 +636,23 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, LaunchView)> {
                 format!("dry-run {} step(s)", plan.steps.len()),
             )
         }
+        StepKind::Auto if step.id == "intent" => {
+            let path = config::ship_dir(project).join("studio.json");
+            if !path.is_file() {
+                (false, "studio.json missing — Open/Run configure first".into())
+            } else {
+                match config::read_studio(project)? {
+                    Some(s) => (
+                        true,
+                        format!(
+                            "intent ok · sign_args={:?} · deploy_args={:?}",
+                            s.sign_args, s.deploy_args
+                        ),
+                    ),
+                    None => (false, "studio.json unreadable".into()),
+                }
+            }
+        }
         StepKind::Oauth if step.id.contains("cloudflare") => {
             let (code, text) = run_capture("wrangler", &["whoami"], project)?;
             (
@@ -529,10 +714,47 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, LaunchView)> {
                 }
                 _ => (
                     false,
-                    "No successful last-run — deploy then Confirm, or retry Verify".into(),
+                    "No successful last-run — Open/Run deploy then Confirm, or retry Verify".into(),
                 ),
             }
         }
+        StepKind::Sign if step.id == "signet.scan" => {
+            let ok = project.join("signet.toml").is_file();
+            (
+                ok,
+                if ok {
+                    "signet.toml present".into()
+                } else {
+                    "signet.toml missing — Open/Run signet scan --apply".into()
+                },
+            )
+        }
+        StepKind::Sign if step.id == "signet.identity" => {
+            match run_capture("signet", &["identity", "list"], project) {
+                Ok((code, text)) => {
+                    let has = code == 0
+                        && text.lines().any(|l| {
+                            let t = l.trim();
+                            !t.is_empty()
+                                && !t.starts_with('{')
+                                && !t.to_ascii_lowercase().contains("no identit")
+                        });
+                    (
+                        has,
+                        if has {
+                            "signet identity list ok".into()
+                        } else {
+                            "no identity yet — create one, then Confirm / Verify".into()
+                        },
+                    )
+                }
+                Err(e) => (false, format!("signet identity list failed: {e:#}")),
+            }
+        }
+        StepKind::Sign | StepKind::List => (
+            false,
+            "after Open/Run succeeds on this step: shipctl launch confirm".into(),
+        ),
         _ => (false, "use confirm for this step".into()),
     };
 
@@ -618,10 +840,37 @@ mod tests {
         let state = load_or_build(&dir).unwrap();
         assert!(state.steps.iter().any(|s| s.id == "doctor"));
         assert!(state.steps.iter().any(|s| s.id == "deploy"));
+        assert!(state.steps.iter().any(|s| s.id == "intent"));
         assert!(state.steps.iter().any(|s| s.id.starts_with("paste.")));
+        assert!(!state.steps.iter().any(|s| s.id.starts_with("signet.")));
+        let deploy = state.steps.iter().find(|s| s.id == "deploy").unwrap();
+        assert!(deploy.run.is_some());
         let v = view(&state);
         assert!(!v.finished);
         assert_eq!(v.current.as_ref().unwrap().id, "doctor");
+    }
+
+    #[test]
+    fn tauri_plan_includes_signet_ship_steps() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-launch-tauri-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("src-tauri")).unwrap();
+        fs::write(dir.join("package.json"), "{}\n").unwrap();
+        let state = load_or_build(&dir).unwrap();
+        assert!(state.steps.iter().any(|s| s.id == "signet.scan"));
+        assert!(state.steps.iter().any(|s| s.id == "signet.build"));
+        assert!(state.steps.iter().any(|s| s.id == "signet.release_dry"));
+        assert!(state.steps.iter().any(|s| s.id == "signet.release"));
+        assert!(state.steps.iter().any(|s| s.id == "deploy"));
+        let build = state.steps.iter().find(|s| s.id == "signet.build").unwrap();
+        assert_eq!(build.kind, StepKind::Sign);
+        assert_eq!(build.run.as_ref().unwrap()[0], "signet");
     }
 
     #[test]
