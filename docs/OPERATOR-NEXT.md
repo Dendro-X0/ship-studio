@@ -23,7 +23,9 @@ TUI: Publish (`P`) → o / v / c / n.
 
 Progress: project `.ship/publish.json` (no secret values).
 
-**Adaptive plan (Advanced):** doctor → scopes → **legal.baseline** → oauth* → env → **db.provision** → configure → sign* → **trust.pack** → **sign.graduate** (opt-in) → **listing.*** (Polar / Gumroad / Lemon / npm / crates / stores / Steam…) → **submit.*** → **ci.release** → **release.github** → **container.deploy** → **marketing.deploy** → dry-run → deploy* → live check.
+**Adaptive plan (Advanced):** doctor → scopes → legal.baseline → oauth* → env → db.provision → configure → **sign.self.build → trust.pack → sign.graduate? → sign.self.release_dry → sign.self.release** (or release.github) → **ship.desktop_cut?** → listing.* → submit.* → ci.release → container.deploy → marketing.deploy → dry-run → deploy* → live check.
+
+Shipping hub: final-mile is sign → release → deploy. Docs/demos stay outside Studio (`specs/backend/shipping-hub-north-star.md`).
 
 **General** keeps the short spine (doctor, scopes, env, configure, sign.self.build, dry-run, deploy*, live_check).
 
@@ -47,7 +49,8 @@ Same open → verify → confirm → next pattern; state in `.ship/launch.json`.
 |------|--------|
 | Paste | Create tokens / DB URLs on vendor sites; Open → put → Confirm → Next |
 | Scopes | Pick Web / API / Desktop / Mobile / Container, then Save |
-| Sign | Self-sign locally; official certs · **graduate** OV/notarization · **Submit** store review on vendor sites |
+| Sign | Self-sign locally; Run `signet graduate notes` then apply/ov-sign/notarize; **Submit** store review on vendor sites |
+| Desktop cut | No Orbit host → Confirm `ship.desktop_cut` — Signet release is the deploy |
 | Listing | Polar · Gumroad · Lemon · npm · crates.io · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced) |
 | DB | Provision on Neon/Supabase/D1/Turso console; put connection on deploy target |
 | CI | After tag/Signet release, confirm GitHub Actions |

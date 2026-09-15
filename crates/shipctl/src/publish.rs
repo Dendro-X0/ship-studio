@@ -460,22 +460,6 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
             Some(vec!["signet".into(), "build".into()]),
             Some("sign"),
         ));
-        steps.push(step(
-            "sign.self.release_dry",
-            "Self-sign — release dry-run",
-            PubKind::Sign,
-            "Checksum / GitHub payload check before live release.",
-            2,
-            None,
-            Some(vec![
-                "signet".into(),
-                "release".into(),
-                "--dry-run".into(),
-                "--tag".into(),
-                std::env::var("SIGNET_RELEASE_TAG").unwrap_or_else(|_| "v0.1.0".into()),
-            ]),
-            Some("sign"),
-        ));
     }
 
     if (detected.tauri || detected.signet_toml) && !detected.trust_md {
@@ -496,13 +480,32 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
             "sign.graduate",
             "Graduate — OV / notarization",
             PubKind::Sign,
-            "Provision Authenticode (Azure Trusted Signing / OV) and/or Apple notarization. Confirm when identities exist in CI secrets. Do not claim verified publisher or SmartScreen silence until true.",
+            "Run Signet graduate notes, then apply/ov-sign/azure-sign/notarize as configured. Confirm when CI secrets + identities exist. Do not claim verified publisher or SmartScreen silence until true.",
             4,
             Some(
                 "https://learn.microsoft.com/en-us/azure/trusted-signing/"
                     .into(),
             ),
+            Some(vec!["signet".into(), "graduate".into(), "notes".into()]),
+            Some("sign"),
+        ));
+    }
+
+    if wants_signet && sign_mode != "official" {
+        steps.push(step(
+            "sign.self.release_dry",
+            "Self-sign — release dry-run",
+            PubKind::Sign,
+            "Checksum / GitHub payload check before live release.",
+            2,
             None,
+            Some(vec![
+                "signet".into(),
+                "release".into(),
+                "--dry-run".into(),
+                "--tag".into(),
+                std::env::var("SIGNET_RELEASE_TAG").unwrap_or_else(|_| "v0.1.0".into()),
+            ]),
             Some("sign"),
         ));
     }
@@ -510,6 +513,10 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
     if wants_signet && sign_mode != "self" {
         for p in signpath::plan_for(project).paths {
             if p.kind != "official" {
+                continue;
+            }
+            // Skip duplicate graduate path — Advanced already has `sign.graduate`.
+            if p.id == "graduate.checklist" {
                 continue;
             }
             if p.id == "official.github" && sign_mode != "official" {
@@ -542,6 +549,22 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
                 "--tag".into(),
                 std::env::var("SIGNET_RELEASE_TAG").unwrap_or_else(|_| "v0.1.0".into()),
             ]),
+            Some("sign"),
+        ));
+    }
+
+    // Desktop-only cut: Orbit deploy does not ship the Tauri/Signet binary.
+    let orbit_host = detected.wrangler || detected.vercel || detected.netlify;
+    if wants_signet && !orbit_host {
+        steps.push(step(
+            "ship.desktop_cut",
+            "Desktop cut — Signet release is the deploy",
+            PubKind::Check,
+            "No Cloudflare/Vercel/Netlify host detected. The final-mile cut is Signet build → release (+ optional marketing.deploy). Orbit deploy is not the desktop ship path.",
+            1,
+            config::github_releases_new_url(project)
+                .or_else(|| Some("https://github.com/releases".into())),
+            None,
             Some("sign"),
         ));
     }
@@ -1784,6 +1807,49 @@ mod tests {
         assert!(!general.steps.iter().any(|s| s.id == "sign.graduate"));
         assert!(!general.steps.iter().any(|s| s.id == "listing.gumroad"));
         assert!(!general.steps.iter().any(|s| s.id == "listing.lemon"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn final_mile_cut_order_and_graduate_run() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-cut-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join("signet.toml"), "name = \"cut\"\n").unwrap();
+        fs::write(dir.join("TRUST.md"), "# ok\n").unwrap();
+        fs::write(dir.join("LICENSE"), "MIT\n").unwrap();
+        fs::write(dir.join("SECURITY.md"), "#\n").unwrap();
+        fs::write(dir.join(".ship/markets.json"), r#"["graduate"]"#).unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let ids: Vec<_> = advanced.steps.iter().map(|s| s.id.as_str()).collect();
+        let build = ids.iter().position(|id| *id == "sign.self.build").unwrap();
+        let grad = ids.iter().position(|id| *id == "sign.graduate").unwrap();
+        let dry = ids
+            .iter()
+            .position(|id| *id == "sign.self.release_dry")
+            .unwrap();
+        let live = ids.iter().position(|id| *id == "sign.self.release").unwrap();
+        assert!(build < grad, "build before graduate: {ids:?}");
+        assert!(grad < dry, "graduate before release_dry: {ids:?}");
+        assert!(dry < live, "release_dry before release: {ids:?}");
+        let g = advanced.steps.iter().find(|s| s.id == "sign.graduate").unwrap();
+        assert_eq!(
+            g.run.as_ref().map(|r| r.iter().map(|s| s.as_str()).collect::<Vec<_>>()),
+            Some(vec!["signet", "graduate", "notes"])
+        );
+        assert!(
+            advanced.steps.iter().any(|s| s.id == "ship.desktop_cut"),
+            "desktop-only Signet project should cue Signet release as deploy"
+        );
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "ship.desktop_cut"));
+        assert!(!general.steps.iter().any(|s| s.id == "sign.graduate"));
         let _ = fs::remove_dir_all(&dir);
     }
 }

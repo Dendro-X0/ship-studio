@@ -21,7 +21,8 @@ Operator in **Advanced** mode can walk every new adaptive step with: **Open** (U
 | `legal.baseline` | Dashboard | Dashboard | — |
 | `trust.pack` | Open Sign | Sign | — |
 | `release.github` | Dashboard | Dashboard | GitHub Releases/new |
-| `sign.graduate` | Open Sign | Sign | Azure Trusted Signing docs |
+| `sign.graduate` | Open Sign | Sign | Azure Trusted Signing docs · Run `signet graduate notes` |
+| `ship.desktop_cut` | Open Sign | Sign | GitHub Releases (desktop-only cue) |
 | `listing.gumroad` / `listing.lemon` | Open Portal | Portal | Vendor dashboard |
 | `marketing.deploy` | Open Portal | Portal | Host dashboard (Pages/Vercel/Netlify) |
 | `container.deploy` | Open Portal | Portal (container filter) | Registry docs URL |

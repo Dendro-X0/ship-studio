@@ -90,11 +90,11 @@ pub fn plan_for(project: &Path) -> SignPortal {
             id: "graduate.checklist".into(),
             kind: "official".into(),
             title: "Graduate — OV / notarization checklist".into(),
-            detail: "Azure Trusted Signing or OV Authenticode + Apple notarization secrets. Do not claim verified publisher until real. Optional: `signet graduate` locally.".into(),
+            detail: "Azure Trusted Signing or OV Authenticode + Apple notarization secrets. Do not claim verified publisher until real. Run `signet graduate notes`, then apply/ov-sign/azure-sign/notarize.".into(),
             entry_url: Some(
                 "https://learn.microsoft.com/en-us/azure/trusted-signing/".into(),
             ),
-            run: Some(vec!["signet".into(), "graduate".into(), "--help".into()]),
+            run: Some(vec!["signet".into(), "graduate".into(), "notes".into()]),
         });
     }
     if wants_play {

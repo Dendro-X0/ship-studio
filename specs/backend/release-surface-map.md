@@ -48,7 +48,7 @@ Legend: **I** = implemented step/UI · **U** = URL / open-only · **G** = gap ·
 | Marketplace listing | U Polar/Gumroad/Lemon Adv | U Polar/Gumroad/Lemon Adv | U Polar+Steam/itch/Epic+npm/crates+Gumroad/Lemon Adv | U | U Play/ASC Adv | G | N |
 | Store submission (MAS / MS / Play / Steam) | N | N | U Adv | N | U Adv | N | N |
 | Dry-run flow | I | I | I | I | I | I | G |
-| Deploy (Orbit providers) | I CF | I Vercel/Netlify | weak | I | G | U stub | G |
+| Deploy (Orbit providers) | I CF | I Vercel/Netlify | Signet cut* | I | G | U stub | G |
 | Live check + skip if already live | I | I | I | I | I | G | G |
 | Marketing / landing deploy | U Adv | U Adv | U Adv | U Adv | U Adv | G | N |
 | DB provision / migrate hosting | U Adv | U Adv | U Adv | U Adv | U Adv | G | U Adv |
@@ -57,7 +57,8 @@ Legend: **I** = implemented step/UI · **U** = URL / open-only · **G** = gap ·
 | GitHub Release cut | U Adv* | U Adv* | I Signet / U Adv | U Adv* | U Adv* | U Adv* | G |
 
 \*Mobile env put is opportunistic (shared secret hints); no Play/ASC-specific secret catalog yet.  
-\*GitHub Release: Signet self path uses `sign.self.release`; other projects get Advanced `release.github` when `origin` is GitHub.
+\*GitHub Release: Signet self path uses `sign.self.release`; other projects get Advanced `release.github` when `origin` is GitHub.  
+\*Desktop deploy: no Orbit host → Advanced `ship.desktop_cut` (Signet release is the cut); see `shipping-hub-north-star.md`.
 
 ### Modes
 
@@ -120,6 +121,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 8 | **Package registries** | ✅ Detect publishable npm / crates.io (+ markets opt-in); Advanced `listing.npm` / `listing.crates` | Fixture markets npm+crates; General omits |
 | 9 | **Marketing deploy lane** | ✅ Detect `apps/website` / Pages / preview / markets; Advanced `marketing.deploy` | Fixture website + markets; General omits |
 | 10 | **Graduate signing + commerce** | ✅ Markets/env opt-in; Advanced `sign.graduate` · `listing.gumroad` · `listing.lemon` (+ Sign portal checklist) | Fixture markets; General omits |
+| 11 | **Final-mile run depth** | ✅ Cut order build→trust→graduate→release_dry→release; `signet graduate notes` run; `ship.desktop_cut`; doctor readiness | Unit cut-order test; dogfood green |
 
 ## Change protocol
 
@@ -137,6 +139,11 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 - `db-hosting-lane-design.md` — gap #3 (done)  
 - `mobile-listing-design.md` — gap #1 (done)  
 - `store-submission-split-design.md` — gap #2 (done)  
+- `professional-launch-baseline-design.md` — gap #7 (done)  
+- `package-registries-design.md` — gap #8 (done)  
+- `marketing-deploy-design.md` — gap #9 (done)  
+- `graduate-commerce-design.md` — gap #10 (done)  
+- `shipping-hub-north-star.md` — mission + band #11 (done first slice)  
 - `publish-portal-design.md` — live stepper  
 - `studio-scopes-design.md` — Web/Api/Desktop/Docs/Mobile  
 - `studio-modes-design.md` — General / Advanced  
@@ -146,10 +153,10 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Backlog #1–#6 cleared + Desktop Advanced dogfood.**  
+**Gaps #1–#11 first slices cleared.**  
 
 Suggested follow-ups (not parallel wizards):
 
-1. Live click-through in the already-running Desktop (Advanced · bind fixture / assess-api).  
-2. Optional matrix rows only when a real ship needs them (npm/crates.io, Fly/Railway).  
+1. Live Desktop L3 Open/Run on a Signet subject (final-mile cut).  
+2. Suite URL sync after marketing.deploy (band #12).  
 3. Keep `OPERATOR-NEXT.md` as the human-gate checklist.

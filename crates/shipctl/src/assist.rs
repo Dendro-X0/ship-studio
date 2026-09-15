@@ -92,7 +92,7 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
         AssistStep {
             id: "publish".into(),
             title: "Publish portal — minute wizard".into(),
-            detail: "Open/Run → Confirm → Next through env, sign, listing, deploy.".into(),
+            detail: "Open/Run → Confirm → Next — final-mile sign → release → deploy.".into(),
             view: "publish".into(),
             ready: has_studio,
         },
@@ -117,7 +117,23 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
     let mut notes = vec![
         "Assist sequences local CLIs + official URLs. Network deploy is operator-initiated."
             .into(),
+        "Shipping hub: final-mile is sign → release → deploy; docs/demos stay outside Studio."
+            .into(),
     ];
+    if detected.graduate_sign {
+        notes.push(
+            "Graduate opted in — Advanced sign.graduate Runs `signet graduate notes`."
+                .into(),
+        );
+    }
+    if (detected.tauri || detected.signet_toml)
+        && !(detected.wrangler || detected.vercel || detected.netlify)
+    {
+        notes.push(
+            "Desktop-only — cut via Signet release (+ marketing); Orbit is not the desktop deploy."
+                .into(),
+        );
+    }
     if detected.ci_release {
         notes.push(format!(
             "Release CI: {} — confirm Actions after tag/Signet release.",

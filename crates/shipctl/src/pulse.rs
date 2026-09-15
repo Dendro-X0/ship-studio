@@ -721,8 +721,19 @@ fn decide_now(
         } else {
             ""
         };
+        let cut = publish
+            .current_id
+            .as_deref()
+            .map(|id| {
+                if id.starts_with("sign.") || id == "trust.pack" || id == "ship.desktop_cut" {
+                    " Final-mile cut — Open/Run Signet, then Confirm."
+                } else {
+                    ""
+                }
+            })
+            .unwrap_or("");
         let detail = format!(
-            "Publish step {}/{}{mins}.{linked} Open/Run on the vendor UI, Confirm, Next.",
+            "Publish step {}/{}{mins}.{linked}{cut} Open/Run on the vendor UI or local CLI, Confirm, Next.",
             publish.current_index + 1,
             publish.total
         );

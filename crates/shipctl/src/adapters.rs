@@ -193,6 +193,28 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
     notes.push("Full checklist: `shipctl guide` · one-shot prep: `shipctl ship`".into());
     notes.extend(detected.hints.iter().cloned());
 
+    // Final-mile readiness (shipping hub band #11).
+    if signet.found {
+        notes.push("Cut ready: Signet on PATH — Publish can Run build / release / graduate.".into());
+    }
+    if orbit.found {
+        notes.push("Cut ready: Orbit on PATH — Publish can Run Web/API deploy.".into());
+    }
+    if detected.graduate_sign {
+        notes.push(
+            "Graduate opted in — Advanced sign.graduate runs `signet graduate notes` (then apply/ov-sign/notarize)."
+                .into(),
+        );
+    }
+    if (detected.tauri || detected.signet_toml)
+        && !(detected.wrangler || detected.vercel || detected.netlify)
+    {
+        notes.push(
+            "Desktop-only layout — final-mile cut is Signet release (+ marketing), not Orbit deploy."
+                .into(),
+        );
+    }
+
     let ok = exists && signet.found && orbit.found;
     Ok(DoctorReport {
         ok,

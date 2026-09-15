@@ -10,6 +10,7 @@
 - **Marketing deploy** (Advanced) — `marketing.deploy` for `apps/website` / GitHub Pages / HOOK preview / markets opt-in
 - **Graduate signing + commerce** (Advanced) — `sign.graduate` · `listing.gumroad` · `listing.lemon` via markets/env opt-in (honesty: no verified-publisher claims)
 - **Graduate / commerce secret catalog** — `shipctl secrets` name-only hints for SIGNET_*/WIN_CERT_*/GUMROAD_*/LEMON_* (never stored in `.ship/`)
+- **Shipping hub final-mile** — cut order build→trust→graduate→release; `signet graduate notes` Run; `ship.desktop_cut` for desktop-only; doctor “can I cut?” notes
 - **Publish portal** (`shipctl publish` / open / verify / confirm / next) — minute wizard through the full manual ship path
 - Desktop **Publish** view (primary) + TUI Publish screen (`P`) + MCP `ship_publish`
 - Assist `--start` loads the publish portal; Assist remains the checklist overview

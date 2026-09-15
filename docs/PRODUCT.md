@@ -4,13 +4,13 @@
 **Updated:** 2026-09-15  
 
 ```text
-GOAL:     Local shipping portal: publish wizard, scopes, self+official sign, ENV/tokens, multi-provider assist
-NOT:      Replace Cloudflare/Vercel/Netlify/GitHub · finish OAuth without the human · invent cloud secrets
+GOAL:     Local shipping hub — final-mile sign → release → deploy (Adaptive Publish spine)
+NOT:      Product docs/demo authoring · replace vendor UIs · store secrets · finish OAuth/store review without the human
 RUNTIME:  Local + offline-first (bridge never requires network; open/login/put/verify are operator-initiated)
 SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri sidebar dashboard + Ctrl+K search)
 PROOF:    cargo test -p shipctl · scripts/dogfood-advanced-*.sh · Desktop Publish Advanced
-DONE:     Publish portal + scopes + env + dual sign + graduate/commerce listings + stores/npm/crates + DB/CI/container + legal/trust/GH Release + marketing.deploy + assist + desktop shell
-NOT YET:  Operator must complete paste / live release / marketplace / deploy / graduate certs / SKU creation on vendor platforms (see OPERATOR-NEXT)
+DONE:     Publish portal + final-mile cut order + graduate Run + desktop_cut honesty + scopes/env/listings/commerce + assist + desktop shell
+NOT YET:  Operator completes paste / graduate certs / live release / marketplace / deploy on vendor platforms (see OPERATOR-NEXT)
 ```
 
 ## UX principle — minimal actions, one spine
@@ -32,7 +32,7 @@ DO NOT: make operators reassemble the release from eight peer nav destinations �
          guide · portal · secrets · configure · signet · orbit
 ```
 
-Design: `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-portal-design.md` · `specs/backend/paste-secret-assist-design.md` · `specs/backend/vault-export-design.md` · `specs/backend/guided-launch-design.md` · `specs/backend/studio-scopes-design.md` · `specs/backend/publish-portal-design.md` · `specs/backend/release-surface-map.md`
+Design: `specs/backend/shipping-hub-north-star.md` · `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-portal-design.md` · `specs/backend/paste-secret-assist-design.md` · `specs/backend/vault-export-design.md` · `specs/backend/guided-launch-design.md` · `specs/backend/studio-scopes-design.md` · `specs/backend/publish-portal-design.md` · `specs/backend/release-surface-map.md`
 
 ## Commands
 
@@ -98,6 +98,9 @@ shipctl vault list --file ./ship-secrets.km
 
 ## Non-goals (v0)
 
-- Rewriting provider CLIs inside this repo
-- Completing OAuth without the human
-- Multi-root portfolio hub / paid unlock bands
+- Authoring product docs, feature demos, or marketing GIFs inside Ship Studio  
+- Rewriting provider CLIs inside this repo  
+- Completing OAuth / store review / DNS without the human  
+- Multi-root portfolio hub / paid unlock bands  
+
+Charter: `specs/backend/shipping-hub-north-star.md` · surface map: `specs/backend/release-surface-map.md`
