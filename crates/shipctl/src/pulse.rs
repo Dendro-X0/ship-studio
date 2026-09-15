@@ -972,7 +972,7 @@ pub fn for_project(project: &Path) -> Result<ProjectPulse> {
     }
     if detected.container {
         notes.push(format!(
-            "Container layout — {} (build/push stays local)",
+            "Container layout — Run local build, then push yourself · {}",
             config::container_docs_url(&project)
         ));
     }

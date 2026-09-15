@@ -200,6 +200,20 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
     if orbit.found {
         notes.push("Cut ready: Orbit on PATH — Publish can Run Web/API deploy.".into());
     }
+    if detected.container {
+        let docker_ok = which("docker").is_ok() || which("docker.exe").is_ok();
+        if docker_ok {
+            notes.push(
+                "Cut ready: docker on PATH — Advanced Publish can Run container.build (push stays Confirm)."
+                    .into(),
+            );
+        } else {
+            notes.push(
+                "Container layout detected but docker missing — install Docker so container.build can Run."
+                    .into(),
+            );
+        }
+    }
     if detected.graduate_sign {
         notes.push(
             "Graduate opted in — Advanced sign.graduate runs `signet graduate notes` (then apply/ov-sign/notarize)."
@@ -258,6 +272,12 @@ fn provider_cli_status(detected: &crate::config::Detected) -> Vec<ProviderCliSta
             detected.github,
             "gh",
             "install GitHub CLI: https://cli.github.com/",
+        ),
+        (
+            "container",
+            detected.container,
+            "docker",
+            "install Docker Desktop / engine so Publish can Run `docker build`",
         ),
     ];
     for (provider, needed, bin, fix) in checks {

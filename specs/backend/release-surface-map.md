@@ -28,7 +28,7 @@ Ship Studio stays a **local sequencing portal**: detect → adaptive plan → Op
 | **Docs** | docs dir + vercel | Often companion to Api |
 | **Root** | fallback node package | Weak deploy defaults |
 | **Mobile** | `android/` / `ios/` / Expo / Flutter / Capacitor | Play + App Store Connect listing (Advanced) |
-| **Container** | `Dockerfile` / Compose | Portal docs + Advanced `container.deploy` (no remote build/k8s) |
+| **Container** | `Dockerfile` / Compose | Advanced `container.build` (Run local docker) + `container.deploy` (push docs + Confirm; no bridge push) |
 | **Db** | Neon / Supabase / D1 / Turso markers | Portal + env hints + Advanced `db.provision` (no migrate automation) |
 | **Ci** | `.github/workflows/*release*` | Pulse note + Advanced `ci.release` (Actions URL) |
 
@@ -64,7 +64,7 @@ Legend: **I** = implemented step/UI · **U** = URL / open-only · **G** = gap ·
 
 | Mode | Keeps | Omits |
 |------|-------|-------|
-| **General** | doctor, scopes, env, configure, `sign.self.build`, dry_run, deploy*, live_check | oauth.*, official sign, Polar / store listing, `submit.*`, `db.provision`, `ci.release`, `container.deploy`, sign scan/release dry/live |
+| **General** | doctor, scopes, env, configure, `sign.self.build`, dry_run, deploy*, live_check | oauth.*, official sign, Polar / store listing, `submit.*`, `db.provision`, `ci.release`, `container.build`, `container.deploy`, sign scan/release dry/live |
 | **Advanced** | Full adaptive plan | — |
 
 See `studio-modes-design.md`.
@@ -97,7 +97,7 @@ See `studio-modes-design.md`.
 12. Backend / API — Cloudflare Workers, Vercel, Netlify (Orbit)  
 13. Frontend / docs — same providers  
 14. **Database hosting** — provision, migrate, connection secrets — **gap**  
-15. **Containers / k8s** — build, registry, deploy — **gap**  
+15. **Containers / k8s** — local build Run (**I Adv** `container.build`); registry push Confirm; k8s still gap  
 16. Dry-run plan → live deploy → live smoke URL  
 16b. Marketing / landing cutover — **I Adv** (`marketing.deploy`)  
 16c. Suite URL sync to siblings — **I Adv** (`suite.url_sync`) 
@@ -116,7 +116,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 2 | **Official store submission steps** | ✅ Split certs vs listing vs `submit.*` (ASC / Play / MS) on Sign + Advanced publish | Mobile + Tauri fixtures; General omits `submit.*` |
 | 3 | **DB hosting lane** | ✅ Neon/Supabase/D1/Turso portal + secrets hints; Advanced `db.provision` | Env portal create URLs; General omits `db.provision` |
 | 4 | **CI release checklist** | ✅ Detect `*release*` workflows; pulse note; Advanced `ci.release` + Assist step | Fixture pulse/publish/assist |
-| 5 | **Container deploy** | ✅ Detect Dockerfile/Compose; `ScopeKind::Container`; portal docs; Advanced `container.deploy` | Fixture scope + publish; General omits |
+| 5 | **Container deploy** | ✅ Detect + portal; band #13 adds `container.build` Run | Fixture scope + publish; General omits |
 | 6 | **Steam / extra marketplaces** | ✅ Opt-in markers + `.ship/markets`; Advanced `listing.steam` / `itch` / `epic` | Fixture steam_appid + markets.json; General omits |
 | 7 | **Professional launch baseline** | ✅ Detect LICENSE / SECURITY / TRUST / CHANGELOG; Advanced `legal.baseline` · `trust.pack` · `release.github` (non-Signet-self) | Fixture missing legal + signet.toml; General omits |
 | 8 | **Package registries** | ✅ Detect publishable npm / crates.io (+ markets opt-in); Advanced `listing.npm` / `listing.crates` | Fixture markets npm+crates; General omits |
@@ -124,6 +124,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 10 | **Graduate signing + commerce** | ✅ Markets/env opt-in; Advanced `sign.graduate` · `listing.gumroad` · `listing.lemon` (+ Sign portal checklist) | Fixture markets; General omits |
 | 11 | **Final-mile run depth** | ✅ Cut order build→trust→graduate→release_dry→release; `signet graduate notes` run; `ship.desktop_cut`; doctor readiness | Unit cut-order test; dogfood green |
 | 12 | **Suite URL sync** | ✅ `.ship/suite.json` siblings + Advanced `suite.url_sync` (never writes sibling env) | Fixture suite.json; General omits |
+| 13 | **Container final-mile run** | ✅ Advanced `container.build` Run (`docker build` / `compose build`); `container.deploy` push Confirm; doctor docker PATH | Unit + dogfood; no `docker push` |
 
 ## Change protocol
 
@@ -145,8 +146,9 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 - `package-registries-design.md` — gap #8 (done)  
 - `marketing-deploy-design.md` — gap #9 (done)  
 - `graduate-commerce-design.md` — gap #10 (done)  
-- `shipping-hub-north-star.md` — mission + bands #11–#12  
+- `shipping-hub-north-star.md` — mission + bands #11–#13  
 - `suite-url-sync-design.md` — band #12 (done)  
+- `container-final-mile-design.md` — band #13 (done)  
 - `publish-portal-design.md` — live stepper  
 - `studio-scopes-design.md` — Web/Api/Desktop/Docs/Mobile  
 - `studio-modes-design.md` — General / Advanced  
@@ -156,10 +158,10 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Gaps #1–#12 first slices cleared.**  
+**Gaps #1–#13 first slices cleared** (mobile store API upload still deferred).  
 
 Suggested follow-ups (not parallel wizards):
 
 1. Live Desktop L3 Open/Run on a Signet subject (final-mile cut).  
-2. Container/mobile depth (band #13) only when a real ship needs it.  
-3. Keep `OPERATOR-NEXT.md` as the human-gate checklist.
+2. Keep `OPERATOR-NEXT.md` as the human-gate checklist.  
+3. Mobile store API upload only when a real ship needs it.

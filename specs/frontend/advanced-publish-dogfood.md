@@ -26,7 +26,8 @@ Operator in **Advanced** mode can walk every new adaptive step with: **Open** (U
 | `listing.gumroad` / `listing.lemon` | Open Portal | Portal | Vendor dashboard |
 | `marketing.deploy` | Open Portal | Portal | Host dashboard (Pages/Vercel/Netlify) |
 | `suite.url_sync` | Dashboard | Dashboard | Canonical hint / marketing URL |
-| `container.deploy` | Open Portal | Portal (container filter) | Registry docs URL |
+| `container.build` | Open Portal | Portal (container filter) | Registry docs URL · **Run** `docker build` / `compose build` |
+| `container.deploy` | Open Portal | Portal (container filter) | Registry docs URL (push Confirm only) |
 
 Invariants: General mode still omits these steps; Advanced rebuilds via mode toggle; **Back to Publish** returns from Related.
 

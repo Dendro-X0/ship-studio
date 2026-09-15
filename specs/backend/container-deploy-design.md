@@ -18,7 +18,8 @@ Repos with a `Dockerfile` / Compose file get no Ship Studio cue for registry pus
 
 ## Non-goals
 
-- Running `docker build` / `docker push` from the bridge  
+- ~~Running `docker build` from the bridge~~ → superseded by band #13 (`container-final-mile-design.md`)
+- Running `docker push` / registry login from the bridge  
 - Kubernetes / Helm controllers  
 - Choosing a cloud host (Fly, Railway, ECS) beyond docs links  
 

@@ -78,6 +78,7 @@ NEED=(
   submit.app_store
   db.provision
   ci.release
+  container.build
   container.deploy
   legal.baseline
   trust.pack
@@ -97,7 +98,7 @@ for id in "${NEED[@]}"; do
   fi
 done
 # Related desktop_view samples
-for pair in "listing.steam:portal" "listing.npm:portal" "listing.crates:portal" "listing.gumroad:portal" "listing.lemon:portal" "db.provision:env" "ci.release:dashboard" "container.deploy:portal" "submit.play:sign" "legal.baseline:dashboard" "trust.pack:sign" "sign.graduate:sign" "marketing.deploy:portal" "suite.url_sync:dashboard"; do
+for pair in "listing.steam:portal" "listing.npm:portal" "listing.crates:portal" "listing.gumroad:portal" "listing.lemon:portal" "db.provision:env" "ci.release:dashboard" "container.build:portal" "container.deploy:portal" "submit.play:sign" "legal.baseline:dashboard" "trust.pack:sign" "sign.graduate:sign" "marketing.deploy:portal" "suite.url_sync:dashboard"; do
   id="${pair%%:*}"
   view="${pair##*:}"
   if echo "$OUT" | tr '\n' ' ' | grep -q "\"id\": \"$id\".*\"desktop_view\": \"$view\""; then

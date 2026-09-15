@@ -4,9 +4,23 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT="${1:?usage: $0 <project-path>}"
-SHIPCTL="${SHIPCTL_PATH:-$ROOT/target/release/shipctl.exe}"
-[[ -x "$SHIPCTL" ]] || SHIPCTL="$ROOT/target/debug/shipctl.exe"
-[[ -x "$SHIPCTL" ]] || { echo "shipctl not found"; exit 1; }
+SHIPCTL="${SHIPCTL_PATH:-}"
+if [[ -z "$SHIPCTL" ]]; then
+  # Prefer debug (matches dogfood-advanced-publish) so a stale release binary cannot hide new steps.
+  if [[ -x "$ROOT/target/debug/shipctl.exe" ]]; then
+    SHIPCTL="$ROOT/target/debug/shipctl.exe"
+  elif [[ -x "$ROOT/target/debug/shipctl" ]]; then
+    SHIPCTL="$ROOT/target/debug/shipctl"
+  elif [[ -x "$ROOT/target/release/shipctl.exe" ]]; then
+    SHIPCTL="$ROOT/target/release/shipctl.exe"
+  elif [[ -x "$ROOT/target/release/shipctl" ]]; then
+    SHIPCTL="$ROOT/target/release/shipctl"
+  else
+    echo "shipctl not found — run cargo build -p shipctl"; exit 1
+  fi
+fi
+[[ -x "$SHIPCTL" ]] || { echo "shipctl not found: $SHIPCTL"; exit 1; }
+echo "shipctl: $SHIPCTL"
 
 echo "==> reset advanced · $PROJECT"
 "$SHIPCTL" publish --mode advanced --project "$PROJECT" reset >/dev/null

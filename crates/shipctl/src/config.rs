@@ -384,7 +384,7 @@ pub fn probe(project: &Path) -> Detected {
             bits.push("Compose");
         }
         d.hints.push(format!(
-            "Container layout ({}) — Advanced publish opens registry/host docs; build/push stays on your machine.",
+            "Container layout ({}) — Advanced `container.build` Runs local docker; `container.deploy` is push docs + Confirm (never auto-push).",
             if bits.is_empty() {
                 "docker".into()
             } else {

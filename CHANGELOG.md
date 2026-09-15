@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Container final-mile** (Advanced) — `container.build` Runs local `docker build` / `compose build`; `container.deploy` stays push docs + Confirm (never auto-push); doctor docker PATH notes
 - Desktop **Dashboard Launch CTA** — emerald Start/Continue publishing button with hint + breathe; Assist matches
 - **Professional launch baseline** (Advanced) — `legal.baseline` · `trust.pack` · `release.github` when LICENSE/SECURITY/TRUST or GitHub origin signals match
 - **Package registries** (Advanced) — `listing.npm` / `listing.crates` for publishable packages or `.ship/markets` opt-in

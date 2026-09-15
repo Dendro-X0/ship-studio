@@ -63,4 +63,4 @@ After `marketing.deploy`, sibling products (e.g. Strata / Truss / Velocity) stil
 ## Follow-ups
 
 - Optional verify: sibling path exists on disk (warn in detail)  
-- Band #13 container/mobile depth (deferred)  
+- Band #13 container final-mile (done first slice; mobile store API still deferred)  

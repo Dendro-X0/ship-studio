@@ -178,6 +178,29 @@ fn step(
     }
 }
 
+fn container_local_tag(project: &Path) -> String {
+    let raw = project
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("app");
+    let sanitized: String = raw
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.' {
+                c.to_ascii_lowercase()
+            } else {
+                '-'
+            }
+        })
+        .collect();
+    let name = if sanitized.is_empty() {
+        "app".into()
+    } else {
+        sanitized
+    };
+    format!("{name}:local")
+}
+
 fn auto_done_after_run(step: &PubStep) -> bool {
     match step.kind {
         PubKind::Deploy | PubKind::List | PubKind::Human | PubKind::Oauth | PubKind::Check => false,
@@ -404,16 +427,58 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
     }
 
     if detected.container {
-        let detail = if detected.compose {
-            "Compose + image layout detected. Build/tag/push locally; open registry docs, then Confirm."
+        let tag = container_local_tag(project);
+        let (build_run, build_detail) = if detected.dockerfile {
+            (
+                Some(vec![
+                    "docker".into(),
+                    "build".into(),
+                    "-t".into(),
+                    tag.clone(),
+                    ".".into(),
+                ]),
+                format!(
+                    "Run `docker build -t {tag} .` locally. Confirm when the image builds. Push stays on the next step."
+                ),
+            )
         } else {
-            "Dockerfile detected. Build/tag/push locally; open registry docs, then Confirm."
+            (
+                Some(vec![
+                    "docker".into(),
+                    "compose".into(),
+                    "build".into(),
+                ]),
+                "Run `docker compose build` locally. Confirm when images build. Push stays on the next step."
+                    .into(),
+            )
+        };
+        steps.push(step(
+            "container.build",
+            "Container — local build",
+            PubKind::Deploy,
+            build_detail,
+            5,
+            Some(config::container_docs_url(project).into()),
+            build_run,
+            Some("portal"),
+        ));
+        let push_detail = if detected.compose && detected.dockerfile {
+            format!(
+                "After `{tag}` (or compose images) exist locally: `docker login` / `gh auth`, then `docker push` on your machine. Open registry docs, Confirm when the image is published. Bridge never pushes."
+            )
+        } else if detected.compose {
+            "After compose images build: `docker login` / `gh auth`, then push tags on your machine. Open registry docs, Confirm when published. Bridge never pushes."
+                .into()
+        } else {
+            format!(
+                "After `{tag}` builds: `docker login` / `gh auth`, then `docker push` on your machine. Open registry docs, Confirm when published. Bridge never pushes."
+            )
         };
         steps.push(step(
             "container.deploy",
-            "Container — build / push (docs)",
+            "Container — registry push (docs)",
             PubKind::Human,
-            detail,
+            push_detail,
             4,
             Some(config::container_docs_url(project).into()),
             None,
@@ -1587,16 +1652,65 @@ mod tests {
         fs::create_dir_all(&dir).unwrap();
         fs::write(dir.join("Dockerfile"), "FROM alpine\n").unwrap();
         let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(advanced.steps.iter().any(|s| s.id == "container.build"));
         assert!(advanced.steps.iter().any(|s| s.id == "container.deploy"));
-        let step = advanced
+        let build_idx = advanced
             .steps
             .iter()
-            .find(|s| s.id == "container.deploy")
+            .position(|s| s.id == "container.build")
             .unwrap();
-        assert!(step.entry_url.is_some());
-        assert_eq!(step.desktop_view.as_deref(), Some("portal"));
+        let deploy_idx = advanced
+            .steps
+            .iter()
+            .position(|s| s.id == "container.deploy")
+            .unwrap();
+        assert!(build_idx < deploy_idx);
+        let build = &advanced.steps[build_idx];
+        assert_eq!(build.kind, PubKind::Deploy);
+        assert_eq!(build.desktop_view.as_deref(), Some("portal"));
+        let run = build.run.as_ref().expect("docker build run");
+        assert_eq!(run[0], "docker");
+        assert_eq!(run[1], "build");
+        assert!(run.iter().any(|a| a.ends_with(":local")));
+        let deploy = &advanced.steps[deploy_idx];
+        assert!(deploy.entry_url.is_some());
+        assert!(deploy.run.is_none());
+        assert_eq!(deploy.desktop_view.as_deref(), Some("portal"));
+        assert!(deploy.detail.contains("Bridge never pushes"));
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "container.build"));
         assert!(!general.steps.iter().any(|s| s.id == "container.deploy"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn container_compose_only_runs_compose_build() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-compose-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("docker-compose.yml"),
+            "services:\n  web:\n    image: alpine\n",
+        )
+        .unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let build = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "container.build")
+            .expect("container.build");
+        let run = build.run.as_ref().expect("compose build run");
+        assert_eq!(
+            run.as_slice(),
+            ["docker", "compose", "build"]
+        );
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]

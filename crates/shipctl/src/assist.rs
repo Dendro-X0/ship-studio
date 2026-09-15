@@ -142,7 +142,7 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
     }
     if detected.container {
         notes.push(
-            "Container Dockerfile/Compose detected — Advanced publish opens registry docs; no remote build."
+            "Container Dockerfile/Compose — Advanced Run `container.build`; push is Confirm-only (no docker push from bridge)."
                 .into(),
         );
     }

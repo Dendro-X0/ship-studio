@@ -35,7 +35,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | 1–10 | Release-surface Adaptive lanes | Done (first slices) |
 | **11** | **Final-mile run depth** — real Signet graduate/release runs, cut order, desktop-deploy honesty, doctor readiness | Done (first slice) |
 | **12** | **Suite URL sync** after marketing.deploy | Done (first slice) |
-| 13 | Container build/push · mobile store API upload | Deferred / mostly non-goal |
+| **13** | **Container final-mile** — local `docker build` / `compose build` Run; push stays Confirm | Done (first slice; mobile store API still deferred) |
 
 ## Band #11 acceptance
 
@@ -48,3 +48,10 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 ## Proof
 
 `cargo test -p shipctl` · `bash scripts/dogfood-advanced-publish.sh` · Desktop Advanced Open/Run on a Signet subject (L3 optional)
+
+## Band #13 acceptance
+
+- Advanced `container.build` has a local `docker build` / `compose build` `run` when Dockerfile/Compose detected  
+- `container.deploy` remains push docs + Confirm (no `docker push` from the bridge)  
+- Doctor notes whether `docker` is on PATH for container layouts  
+- Mobile store API upload remains deferred  
