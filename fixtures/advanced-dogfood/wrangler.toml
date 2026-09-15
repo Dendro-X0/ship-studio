@@ -1,0 +1,5 @@
+name = "dogfood"
+[[d1_databases]]
+binding = "DB"
+database_name = "x"
+database_id = "…"

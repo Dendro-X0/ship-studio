@@ -24,6 +24,7 @@ use std::time::Duration;
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Screen {
     Home,
+    Publish,
     Launch,
     Providers,
     Portal,
@@ -53,13 +54,19 @@ struct App {
     plan: Option<PortalPlan>,
     secrets_plan: Option<SecretsPlan>,
     launch_view: Option<crate::launch::LaunchView>,
+    publish_view: Option<crate::publish::PublishView>,
     wizard: Option<WizardPhase>,
     status: String,
     log: Vec<String>,
 }
 
 const HOME_ITEMS: &[&str] = &[
+    "Publish (minute wizard → ship)",
     "Launch (open → verify → next)",
+    "Assist (full-stack checklist)",
+    "Scopes (Web / API / Desktop)",
+    "ENV & tokens portal",
+    "Sign paths (self / official)",
     "Ship wizard (guided)",
     "Ship (one-shot offline prep)",
     "Human portal (open → paste)",
@@ -113,6 +120,7 @@ pub fn run(project: &Path) -> Result<()> {
         plan: None,
         secrets_plan: None,
         launch_view: None,
+        publish_view: None,
         wizard: None,
         status: format!("project: {}", project.display()),
         log: vec![
@@ -185,6 +193,21 @@ fn event_loop(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) 
                     }
                 }
                 KeyCode::Char('L') => open_launch(app),
+                KeyCode::Char('P') => open_publish(app),
+                _ => {}
+            },
+            Screen::Publish => match key.code {
+                KeyCode::Esc | KeyCode::Char('b') => {
+                    app.screen = Screen::Home;
+                    app.status = "back".into();
+                }
+                KeyCode::Char('q') => return Ok(()),
+                KeyCode::Char('o') | KeyCode::Enter => publish_open(app),
+                KeyCode::Char('v') => publish_verify(app),
+                KeyCode::Char('c') => publish_confirm(app),
+                KeyCode::Char('n') => publish_next(app, false),
+                KeyCode::Char('N') => publish_next(app, true),
+                KeyCode::Char('r') => open_publish(app),
                 _ => {}
             },
             Screen::Launch => match key.code {
@@ -347,61 +370,208 @@ fn selected_providers(app: &App) -> Vec<ProviderId> {
 fn home_action(app: &mut App) -> Result<bool> {
     match app.home_idx {
         0 => {
-            open_launch(app);
+            open_publish(app);
             Ok(true)
         }
         1 => {
-            start_wizard(app);
+            open_launch(app);
             Ok(true)
         }
         2 => {
-            do_ship_prep(app, false);
+            match crate::assist::plan_for(&app.project) {
+                Ok(p) => {
+                    app.push(format!("assist · {} steps · sign={}", p.steps.len(), p.sign_path));
+                    for s in &p.steps {
+                        app.push(format!("  {} · {}", s.id, s.title));
+                    }
+                    app.status = "assist printed — P for publish".into();
+                }
+                Err(e) => app.push(format!("assist failed: {e:#}")),
+            }
             Ok(true)
         }
         3 => {
-            do_human(app, true, false);
+            let plan = crate::scopes::plan_for(&app.project);
+            app.push(format!("scopes · {} · active {:?}", plan.scopes.len(), plan.active));
+            for s in &plan.scopes {
+                app.push(format!("  {} · {} · {}", s.id, s.label, s.relative));
+            }
             Ok(true)
         }
         4 => {
-            show_guide(app);
+            match crate::envx::plan_for(&app.project) {
+                Ok(p) => {
+                    app.push(format!("env · {} actions", p.actions.len()));
+                    for a in p.actions.iter().take(12) {
+                        app.push(format!("  {} · {}", a.kind, a.title));
+                    }
+                }
+                Err(e) => app.push(format!("env failed: {e:#}")),
+            }
             Ok(true)
         }
         5 => {
-            run_doctor(app);
+            let p = crate::signpath::plan_for(&app.project);
+            app.push(format!("sign-paths · {}", p.recommended));
+            for x in &p.paths {
+                app.push(format!("  {} · {}", x.kind, x.title));
+            }
             Ok(true)
         }
         6 => {
+            start_wizard(app);
+            Ok(true)
+        }
+        7 => {
+            do_ship_prep(app, false);
+            Ok(true)
+        }
+        8 => {
+            do_human(app, true, false);
+            Ok(true)
+        }
+        9 => {
+            show_guide(app);
+            Ok(true)
+        }
+        10 => {
+            run_doctor(app);
+            Ok(true)
+        }
+        11 => {
             app.wizard = None;
             app.screen = Screen::Providers;
             app.status = "Space toggle · Enter open portal".into();
             Ok(true)
         }
-        7 => {
+        12 => {
             open_portal_auto(app);
             Ok(true)
         }
-        8 => {
+        13 => {
             open_secrets(app);
             Ok(true)
         }
-        9 => {
+        14 => {
             do_configure(app);
             Ok(true)
         }
-        10 => {
+        15 => {
             do_dry_run(app);
             Ok(true)
         }
-        11 => {
+        16 => {
             do_flow(app);
             Ok(true)
         }
-        12 => {
+        17 => {
             do_status(app);
             Ok(true)
         }
-        13 => Ok(false),
+        18 => Ok(false),
         _ => Ok(true),
+    }
+}
+
+fn open_publish(app: &mut App) {
+    match crate::publish::load_or_build(&app.project) {
+        Ok(state) => {
+            let view = crate::publish::view(&state);
+            app.push(format!(
+                "publish · {}/{} · ~{}m left · done={}",
+                view.current_index + 1,
+                view.total,
+                view.minutes_remaining,
+                view.done_count
+            ));
+            if let Some(cur) = &view.current {
+                app.push(format!("current · {} · {}", cur.id, cur.title));
+            }
+            app.publish_view = Some(view);
+            app.screen = Screen::Publish;
+            app.status = "publish — o open · v verify · c confirm · n next".into();
+        }
+        Err(e) => {
+            app.push(format!("publish failed: {e:#}"));
+            app.status = "publish failed".into();
+        }
+    }
+}
+
+fn publish_open(app: &mut App) {
+    let _ = disable_raw_mode();
+    let _ = execute!(io::stdout(), LeaveAlternateScreen);
+    let result = crate::publish::open_current(&app.project);
+    let _ = execute!(io::stdout(), EnterAlternateScreen);
+    let _ = enable_raw_mode();
+    match result {
+        Ok(view) => {
+            app.push("publish open ok");
+            app.publish_view = Some(view);
+            app.status = "opened/ran — verify or confirm".into();
+        }
+        Err(e) => {
+            app.push(format!("publish open failed: {e:#}"));
+            app.status = "open failed".into();
+        }
+    }
+}
+
+fn publish_verify(app: &mut App) {
+    let _ = disable_raw_mode();
+    let _ = execute!(io::stdout(), LeaveAlternateScreen);
+    let result = crate::publish::verify_current(&app.project);
+    let _ = execute!(io::stdout(), EnterAlternateScreen);
+    let _ = enable_raw_mode();
+    match result {
+        Ok((ok, msg, view)) => {
+            app.push(format!("verify · {msg}"));
+            app.publish_view = Some(view);
+            app.status = if ok {
+                "verified — press n for next".into()
+            } else {
+                "verify failed — confirm or retry".into()
+            };
+        }
+        Err(e) => {
+            app.push(format!("verify failed: {e:#}"));
+            app.status = "verify failed".into();
+        }
+    }
+}
+
+fn publish_confirm(app: &mut App) {
+    match crate::publish::confirm_current(&app.project) {
+        Ok(view) => {
+            app.push("confirmed");
+            app.publish_view = Some(view);
+            app.status = "confirmed — press n for next".into();
+        }
+        Err(e) => {
+            app.push(format!("confirm failed: {e:#}"));
+            app.status = "confirm failed".into();
+        }
+    }
+}
+
+fn publish_next(app: &mut App, force: bool) {
+    match crate::publish::next(&app.project, force) {
+        Ok(view) => {
+            if let Some(cur) = &view.current {
+                app.push(format!("next · {}", cur.id));
+            }
+            let finished = view.finished;
+            app.publish_view = Some(view);
+            app.status = if finished {
+                "publish finished".into()
+            } else {
+                "advanced — o open · v verify".into()
+            };
+        }
+        Err(e) => {
+            app.push(format!("next failed: {e:#}"));
+            app.status = "next failed".into();
+        }
     }
 }
 
@@ -504,6 +674,74 @@ fn launch_next(app: &mut App, force: bool) {
             app.status = "next failed".into();
         }
     }
+}
+
+fn draw_publish(f: &mut ratatui::Frame, app: &App, area: Rect) {
+    let Some(view) = &app.publish_view else {
+        f.render_widget(
+            Paragraph::new("no publish plan").block(Block::default().borders(Borders::ALL)),
+            area,
+        );
+        return;
+    };
+    let mut lines: Vec<Line> = Vec::new();
+    lines.push(Line::from(format!(
+        "progress {}/{} · done {} · ~{}m left · {}",
+        view.current_index + 1,
+        view.total,
+        view.done_count,
+        view.minutes_remaining,
+        if view.finished {
+            "FINISHED"
+        } else {
+            "in progress"
+        }
+    )));
+    if let Some(cur) = &view.current {
+        lines.push(Line::from(""));
+        lines.push(Line::from(Span::styled(
+            format!("▶ {} (~{}m)", cur.title, cur.minutes),
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        )));
+        lines.push(Line::from(cur.detail.as_str()));
+        if let Some(url) = &cur.entry_url {
+            lines.push(Line::from(format!("entry: {url}")));
+        }
+        if let Some(run) = &cur.run {
+            lines.push(Line::from(format!("run: {}", run.join(" "))));
+        }
+        lines.push(Line::from(format!(
+            "kind: {:?} · status: {:?}",
+            cur.kind, cur.status
+        )));
+    }
+    lines.push(Line::from(""));
+    for (i, s) in view.steps.iter().enumerate() {
+        let mark = match s.status {
+            crate::publish::PubStatus::Done => "✓",
+            crate::publish::PubStatus::Skipped => "–",
+            crate::publish::PubStatus::Pending => {
+                if i == view.current_index {
+                    "→"
+                } else {
+                    "·"
+                }
+            }
+        };
+        lines.push(Line::from(format!("{mark} {}", s.title)));
+    }
+    f.render_widget(
+        Paragraph::new(lines)
+            .wrap(Wrap { trim: true })
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("publish portal"),
+            ),
+        area,
+    );
 }
 
 fn draw_launch(f: &mut ratatui::Frame, app: &App, area: Rect) {
@@ -1020,6 +1258,7 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
 
     match app.screen {
         Screen::Home => draw_home(f, app, chunks[1]),
+        Screen::Publish => draw_publish(f, app, chunks[1]),
         Screen::Launch => draw_launch(f, app, chunks[1]),
         Screen::Providers => draw_providers(f, app, chunks[1]),
         Screen::Portal => draw_portal(f, app, chunks[1]),
@@ -1041,7 +1280,8 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
     f.render_widget(log, chunks[2]);
 
     let help = match app.screen {
-        Screen::Home => "↑↓ · Enter · L launch · w wizard · d doctor · p portal · q quit",
+        Screen::Home => "↑↓ · Enter · P publish · L launch · w wizard · d doctor · p portal · q quit",
+        Screen::Publish => "o/Enter open/run · v verify · c confirm · n next · N force-next · r refresh · Esc back",
         Screen::Launch => "o/Enter open/run · v verify · c confirm · n next · N force-next · r refresh · Esc back",
         Screen::Providers => "↑↓ · Space toggle · Enter continue · Esc back",
         Screen::Portal => "↑↓ · Enter/o open · l login · a all · n next · Esc back",

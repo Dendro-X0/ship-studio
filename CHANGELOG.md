@@ -1,9 +1,21 @@
 # Changelog
 
-## 0.1.0 — 2026-09-13
+## 0.1.0 — 2026-09-14
 
 ### Added
 
+- **Publish portal** (`shipctl publish` / open / verify / confirm / next) — minute wizard through the full manual ship path
+- Desktop **Publish** view (primary) + TUI Publish screen (`P`) + MCP `ship_publish`
+- Assist `--start` loads the publish portal; Assist remains the checklist overview
+- **Deploy assist** (`shipctl assist`) + Desktop Assist view — scopes → env → sign → publish
+- **Scopes** (`shipctl scopes` / `set --ids`) — Web / API / Desktop / Mobile / Container directories drive per-scope deploy
+- **ENV portal** (`shipctl env`) — configure / retrieve / create (no secret values)
+- **Sign paths** (`shipctl sign-paths`) — self-sign vs official certs vs store **submit** (ASC / Play / MS)
+- **General / Advanced modes** — short spine vs full OAuth / listing / submit / DB / CI / container plan
+- **Release surface lanes** — mobile Play/ASC listing, Steam/itch/Epic (opt-in), DB provision (Neon/Supabase/D1/Turso), CI release check, container docs
+- **Project pulse** (`shipctl pulse`) — Dashboard Now from git + `.ship` + deploy signals (skip when already live)
+- Desktop project switcher (titlebar recents) + custom frameless chrome + logo
+- Dogfood: `fixtures/advanced-dogfood` + `scripts/dogfood-advanced-*.sh`
 - **Guided launch** (`shipctl launch` / `open` / `run`): adaptive plan through Signet build→release, Polar listing, Orbit deploy
 - **TUI Launch** screen (`L` / home item): o open/run · v verify · c confirm · n next
 - Desktop Launch **Open / Run** opens a terminal for Sign/OAuth/Deploy steps

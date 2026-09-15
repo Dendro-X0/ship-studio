@@ -13,11 +13,14 @@
     "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "Ship Studio",
-        "width": 960,
-        "height": 720,
+        "width": 1180,
+        "height": 780,
         "resizable": true,
-        "backgroundColor": "#0c0c0e"
+        "decorations": false,
+        "shadow": true,
+        "backgroundColor": "#0e1210"
       }
     ],
     "security": {

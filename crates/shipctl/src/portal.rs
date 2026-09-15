@@ -14,6 +14,11 @@ pub enum ProviderId {
     Netlify,
     Github,
     Polar,
+    Neon,
+    Supabase,
+    D1,
+    Turso,
+    Container,
 }
 
 impl ProviderId {
@@ -24,6 +29,11 @@ impl ProviderId {
             Self::Netlify => "netlify",
             Self::Github => "github",
             Self::Polar => "polar",
+            Self::Neon => "neon",
+            Self::Supabase => "supabase",
+            Self::D1 => "d1",
+            Self::Turso => "turso",
+            Self::Container => "container",
         }
     }
 
@@ -31,13 +41,18 @@ impl ProviderId {
         catalog_entry(self).label
     }
 
-    pub fn all() -> [ProviderId; 5] {
+    pub fn all() -> [ProviderId; 10] {
         [
             ProviderId::Cloudflare,
             ProviderId::Vercel,
             ProviderId::Netlify,
             ProviderId::Github,
             ProviderId::Polar,
+            ProviderId::Neon,
+            ProviderId::Supabase,
+            ProviderId::D1,
+            ProviderId::Turso,
+            ProviderId::Container,
         ]
     }
 
@@ -48,10 +63,24 @@ impl ProviderId {
             "netlify" => Ok(Self::Netlify),
             "github" | "gh" => Ok(Self::Github),
             "polar" => Ok(Self::Polar),
+            "neon" => Ok(Self::Neon),
+            "supabase" => Ok(Self::Supabase),
+            "d1" | "cloudflare-d1" => Ok(Self::D1),
+            "turso" | "libsql" => Ok(Self::Turso),
+            "container" | "docker" | "ghcr" => Ok(Self::Container),
             other => {
-                bail!("unknown provider '{other}' (cloudflare|vercel|netlify|github|polar)")
+                bail!(
+                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container)"
+                )
             }
         }
+    }
+
+    pub fn is_db(self) -> bool {
+        matches!(
+            self,
+            Self::Neon | Self::Supabase | Self::D1 | Self::Turso
+        )
     }
 }
 
@@ -83,6 +112,11 @@ pub fn catalog_entry(id: ProviderId) -> &'static ProviderCatalog {
         ProviderId::Netlify => &NETLIFY,
         ProviderId::Github => &GITHUB,
         ProviderId::Polar => &POLAR,
+        ProviderId::Neon => &NEON,
+        ProviderId::Supabase => &SUPABASE,
+        ProviderId::D1 => &D1,
+        ProviderId::Turso => &TURSO,
+        ProviderId::Container => &CONTAINER,
     }
 }
 
@@ -166,6 +200,71 @@ static POLAR: ProviderCatalog = ProviderCatalog {
     once_hint: "Checkout URL is usually visible again in the product settings. Webhook secrets may need regeneration if lost — check Polar webhook settings.",
 };
 
+static NEON: ProviderCatalog = ProviderCatalog {
+    label: "Neon",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://console.neon.tech",
+    create_url: "https://console.neon.tech",
+    docs_url: "https://neon.tech/docs/get-started-with-neon/connect-neon",
+    oauth_hint: "Open Neon Console — create a project and copy the connection string.",
+    env_hint: "Put DATABASE_URL (or NEON_DATABASE_URL) on the deploy target via wrangler/vercel/netlify env.",
+    secret_shown_once: false,
+    once_hint: "Neon connection strings stay visible in the console. Rotate the password if leaked.",
+};
+
+static SUPABASE: ProviderCatalog = ProviderCatalog {
+    label: "Supabase",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://supabase.com/dashboard",
+    create_url: "https://supabase.com/dashboard",
+    docs_url: "https://supabase.com/docs/guides/database/connecting-to-postgres",
+    oauth_hint: "Open Supabase dashboard — create a project and copy URL + anon/service keys.",
+    env_hint: "Put SUPABASE_URL / SUPABASE_ANON_KEY / DATABASE_URL on the deploy target.",
+    secret_shown_once: true,
+    once_hint: "Service role keys are sensitive — copy once from Project Settings → API. Rotate if lost.",
+};
+
+static D1: ProviderCatalog = ProviderCatalog {
+    label: "Cloudflare D1",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://dash.cloudflare.com",
+    create_url: "https://dash.cloudflare.com/?to=/:account/workers/d1",
+    docs_url: "https://developers.cloudflare.com/d1/get-started/",
+    oauth_hint: "Open Cloudflare D1 — create a database and bind it in wrangler.toml ([[d1_databases]]).",
+    env_hint: "D1 uses Wrangler bindings; optional connection secrets go via wrangler secret put on the Worker.",
+    secret_shown_once: false,
+    once_hint: "D1 is usually binding-based. Account API tokens (if used) show once at create — prefer wrangler login.",
+};
+
+static TURSO: ProviderCatalog = ProviderCatalog {
+    label: "Turso",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://turso.tech/app",
+    create_url: "https://turso.tech/app",
+    docs_url: "https://docs.turso.tech/sdk/ts/quickstart",
+    oauth_hint: "Open Turso — create a database and copy URL + auth token.",
+    env_hint: "Put TURSO_DATABASE_URL and TURSO_AUTH_TOKEN on the deploy target.",
+    secret_shown_once: true,
+    once_hint: "Turso auth tokens may be shown once — create a new token if lost.",
+};
+
+static CONTAINER: ProviderCatalog = ProviderCatalog {
+    label: "Container registry",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://hub.docker.com/",
+    create_url: "https://hub.docker.com/",
+    docs_url: "https://docs.docker.com/get-started/docker-concepts/building-images/build-tag-and-publish-an-image/",
+    oauth_hint: "Build/tag locally, then push to Docker Hub or GHCR. Ship Studio only opens docs — no remote build.",
+    env_hint: "Registry credentials stay in docker login / gh auth — never in .ship/.",
+    secret_shown_once: false,
+    once_hint: "Use `docker login` or `gh auth token` for GHCR. Rotate registry tokens if leaked.",
+};
+
 /// Where to copy the *value* for a named secret (not where to put it).
 pub fn source_url_for_secret_name(name: &str) -> &'static str {
     let upper = name.to_ascii_uppercase();
@@ -174,6 +273,19 @@ pub fn source_url_for_secret_name(name: &str) -> &'static str {
     }
     if upper.starts_with("POLAR_") {
         return POLAR.token_url;
+    }
+    if upper.starts_with("NEON_") || upper.contains("NEON") {
+        return NEON.create_url;
+    }
+    if upper.starts_with("SUPABASE_") {
+        return SUPABASE.create_url;
+    }
+    if upper.starts_with("TURSO_") || upper.starts_with("LIBSQL_") {
+        return TURSO.create_url;
+    }
+    if upper == "DATABASE_URL" || upper.ends_with("_DATABASE_URL") {
+        // Prefer Neon console as a common Postgres host; operator may use another vendor.
+        return NEON.create_url;
     }
     if upper.contains("CLOUDFLARE") || upper == "CF_API_TOKEN" || upper == "CF_API_KEY" {
         return CLOUDFLARE.create_url;
@@ -194,6 +306,15 @@ pub fn once_hint_for_secret_name(name: &str) -> &'static str {
     }
     if upper.starts_with("POLAR_") {
         return POLAR.once_hint;
+    }
+    if upper.starts_with("NEON_") || upper == "DATABASE_URL" {
+        return NEON.once_hint;
+    }
+    if upper.starts_with("SUPABASE_") {
+        return SUPABASE.once_hint;
+    }
+    if upper.starts_with("TURSO_") || upper.starts_with("LIBSQL_") {
+        return TURSO.once_hint;
     }
     if upper.contains("CLOUDFLARE") || upper == "CF_API_TOKEN" {
         return CLOUDFLARE.once_hint;
@@ -217,6 +338,21 @@ pub fn detected_providers(detected: &Detected) -> Vec<ProviderId> {
     }
     if detected.polar {
         out.push(ProviderId::Polar);
+    }
+    if detected.neon {
+        out.push(ProviderId::Neon);
+    }
+    if detected.supabase {
+        out.push(ProviderId::Supabase);
+    }
+    if detected.d1 {
+        out.push(ProviderId::D1);
+    }
+    if detected.turso {
+        out.push(ProviderId::Turso);
+    }
+    if detected.container {
+        out.push(ProviderId::Container);
     }
     out
 }
@@ -316,6 +452,20 @@ pub fn plan_for_providers(project: &Path, providers: &[ProviderId]) -> Result<Po
             cli: None,
             detail: cat.env_hint.into(),
         });
+    }
+
+    // Prefer GHCR docs when the project looks GitHub-backed.
+    let container_docs = config::container_docs_url(&project);
+    for step in &mut steps {
+        if step.provider == "container" {
+            step.entry_url = Some(container_docs.into());
+            if step.kind == "dashboard" {
+                step.detail = format!(
+                    "{} Preferred docs: {container_docs}",
+                    catalog_entry(ProviderId::Container).oauth_hint
+                );
+            }
+        }
     }
 
     let notes = vec![
@@ -515,5 +665,51 @@ mod tests {
             .steps
             .iter()
             .any(|s| s.entry_url.as_deref() == Some(POLAR.token_url)));
+    }
+
+    #[test]
+    fn d1_fixture_includes_create_url() {
+        let dir = tempfile_dir();
+        std::fs::write(
+            dir.join("wrangler.toml"),
+            "name = \"x\"\n[[d1_databases]]\nbinding = \"DB\"\ndatabase_name = \"x\"\ndatabase_id = \"…\"\n",
+        )
+        .unwrap();
+        let detected = config::probe(&dir);
+        assert!(detected.d1);
+        let plan = plan_for(&dir, None).unwrap();
+        assert!(plan.providers.iter().any(|p| p == "d1"));
+        assert!(plan.steps.iter().any(|s| {
+            s.provider == "d1"
+                && s.entry_url
+                    .as_deref()
+                    .is_some_and(|u| u.contains("d1") || u.contains("cloudflare"))
+        }));
+    }
+
+    #[test]
+    fn container_fixture_in_portal() {
+        let dir = tempfile_dir();
+        std::fs::write(dir.join("Dockerfile"), "FROM alpine\n").unwrap();
+        let detected = config::probe(&dir);
+        assert!(detected.container);
+        let plan = plan_for(&dir, None).unwrap();
+        assert!(plan.providers.iter().any(|p| p == "container"));
+        assert!(plan.steps.iter().any(|s| s.provider == "container"));
+    }
+
+    #[test]
+    fn neon_empty_database_url_in_secrets() {
+        let dir = tempfile_dir();
+        std::fs::write(dir.join(".env"), "DATABASE_URL=\nNEON_API_KEY=\n").unwrap();
+        let detected = config::probe(&dir);
+        assert!(detected.neon);
+        let secrets = crate::secrets::plan_for(&dir, Some(ProviderId::Neon)).unwrap();
+        assert!(secrets.hints.iter().any(|h| h.name == "DATABASE_URL"));
+        assert!(secrets.hints.iter().any(|h| {
+            h.entry_url
+                .as_deref()
+                .is_some_and(|u| u.contains("neon.tech"))
+        }));
     }
 }

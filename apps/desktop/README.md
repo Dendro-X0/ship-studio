@@ -18,17 +18,18 @@ cargo build -p shipctl --release
 cd apps/desktop && npm install && npm run tauri dev
 ```
 
+Shell: sidebar dashboard · Ctrl+K command search · Launch / Portal / Ritual / Tools views.
+
 Bare `cargo build -p ship-studio-desktop` keeps `cfg(dev)` → localhost refused. Use `tauri build` / `tauri dev` / `stage-desktop.sh`.
 
 Optional env: `SHIPCTL_PATH`, `SIGNET_PATH`, `ORBIT_PATH`.
 
 ## UI
 
-- Open folder (one window = one repo); last + recent projects
-- Auto Doctor on open; title shows project name
-- Offline / Include deploy (persisted)
-- Workflow stepper + tool cards + detect chips + last run
-- Live streamed output; **Cancel** kills process tree
+- Sidebar nav + topbar search (Ctrl+K)
+- One window = one repo; project bind in sidebar
+- Dashboard health + quick actions; Launch / Portal / Ritual / Tools / Output views
+- Auto Doctor on open; Offline / Include deploy toggles
+- Live streamed output dock; **Cancel** kills process tree
 - Ritual presets + editable `sign_args` / `deploy_args`
-- Footer: resolved shipctl path + shortcuts
-- Shortcuts: Esc · Ctrl+D · Ctrl+S · Ctrl+Enter · Ctrl+Shift+Enter
+- Shortcuts: Esc · Ctrl+K · Ctrl+D · Ctrl+S · Ctrl+Enter · Ctrl+Shift+Enter

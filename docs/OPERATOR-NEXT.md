@@ -1,55 +1,55 @@
 # Operator next — manual gates only
 
-**Updated:** 2026-09-13  
+**Updated:** 2026-09-15  
 **Repo:** https://github.com/Dendro-X0/ship-studio  
 **Local path:** `E:/Web Projects/ship-studio`
 
-## Guided launch (preferred)
+## Publish portal (preferred)
 
-Semi-automated path: **official platform for the work**, Ship Studio for sequence + verify.
+Minute-oriented path: **official platform for the work**, Ship Studio for sequence + verify.
 
 ```bash
 cd "E:/Web Projects/ship-studio"
-./target/release/shipctl.exe launch --project "E:/Web Projects/assess-api"
-./target/release/shipctl.exe launch --project "E:/Web Projects/assess-api" open
-./target/release/shipctl.exe launch --project "E:/Web Projects/assess-api" verify
-# paste steps: after wrangler secret put…
-./target/release/shipctl.exe launch --project "E:/Web Projects/assess-api" confirm
-./target/release/shipctl.exe launch --project "E:/Web Projects/assess-api" next
+./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api"
+./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" open
+./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" verify
+# after paste / listing / live release / deploy on vendor UIs…
+./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" confirm
+./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" next
 ```
 
-Desktop: open project → **Launch** → Open/Run · Verify · Confirm · Next.  
-TUI: `shipctl tui` → **Launch** (`L`) → o / v / c / n.
+Desktop: topbar **Advanced** · **Publish** (spine) · Related opens Env / Sign / Portal / Scopes / Dashboard · **Back to Publish**.  
+TUI: Publish (`P`) → o / v / c / n.
 
-Progress: project `.ship/launch.json` (no secret values).
+Progress: project `.ship/publish.json` (no secret values).
 
-**Adaptive plan:** Tauri/`signet.toml` adds Signet build → ship plan → release dry-run → live release; Polar adds listing; always ends in Orbit deploy.
+**Adaptive plan (Advanced):** doctor → scopes → oauth* → env sprint → **db.provision** (if D1/Neon/…) → configure → sign* → **listing.*** (Polar / Play / ASC / Steam / itch / Epic) → **submit.*** → **ci.release** → **container.deploy** → dry-run → deploy* → live check.
 
-**assess-api now:** past doctor/oauth; on paste secrets (Polar/GitHub values still need you). Worker-only → no Signet desktop steps unless you add `signet.toml`.
+**General** keeps the short spine (doctor, scopes, env, configure, sign.self.build, dry-run, deploy*, live_check).
+
+## Dogfood
+
+```bash
+bash scripts/dogfood-advanced-publish.sh
+bash scripts/dogfood-advanced-walk.sh fixtures/advanced-dogfood
+# Desktop: Advanced → bind E:/Web Projects/ship-studio/fixtures/advanced-dogfood
+```
+
+Real repo example: `assess-api` surfaces **db.provision** (D1) + **listing.polar** + oauth/env; deploy steps auto-skip when already live.
+
+## Guided launch (legacy companion)
+
+Same open → verify → confirm → next pattern; state in `.ship/launch.json`. Prefer **Publish** for the full minute-oriented path.
 
 ## Remaining human work
 
 | Step | You do |
 |------|--------|
-| Paste | Create GitHub PAT / Polar values on their sites; `launch open` → put → `confirm` → `next` |
-| Sign / release | On desktop projects: Open/Run Signet steps; Confirm live `signet release` |
-| Listing | Polar dashboard paste (marketplace is human) |
-| Deploy | Allow network deploy when Launch reaches deploy |
-
-If `verify` times out on wrangler/vercel: `shipctl launch confirm` when you know the step is done.
-
-## Optional vault backup
-
-```bash
-./target/release/shipctl.exe vault export --out "E:/Web Projects/assess-api/ship-secrets.km" \
-  --from-hints --project "E:/Web Projects/assess-api"
-```
-
-## Already done
-
-| Step | Evidence |
-|------|----------|
-| GitHub repo | https://github.com/Dendro-X0/ship-studio |
-| Guided launch engine | `shipctl launch` |
-| Portal / human / vault | `cargo test -p shipctl` |
-| Wrangler OAuth on this machine | logged in |
+| Paste | Create tokens / DB URLs on vendor sites; Open → put → Confirm → Next |
+| Scopes | Pick Web / API / Desktop / Mobile / Container, then Save |
+| Sign | Self-sign locally; official certs vs **Submit** store review on vendor sites |
+| Listing | Polar · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced) |
+| DB | Provision on Neon/Supabase/D1/Turso console; put connection on deploy target |
+| CI | After tag/Signet release, confirm GitHub Actions |
+| Container | Build/push locally; registry docs are open-only |
+| Deploy | Allow network deploy when Publish reaches deploy (skip if already live) |

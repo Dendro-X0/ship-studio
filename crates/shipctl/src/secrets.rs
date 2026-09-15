@@ -95,6 +95,53 @@ fn hints_for_provider(project: &Path, id: ProviderId) -> Result<Vec<SecretHint>>
                 }
             }
         }
+        ProviderId::Neon => {
+            names.push(("DATABASE_URL".into(), "catalog".into()));
+            names.push(("NEON_DATABASE_URL".into(), "catalog".into()));
+            for (n, src) in empty_env_keys(project, &[".env", ".env.local", ".dev.vars"]) {
+                if (n.starts_with("NEON_") || n == "DATABASE_URL")
+                    && !names.iter().any(|(x, _)| x == &n)
+                {
+                    names.push((n, src));
+                }
+            }
+        }
+        ProviderId::Supabase => {
+            names.push(("SUPABASE_URL".into(), "catalog".into()));
+            names.push(("SUPABASE_ANON_KEY".into(), "catalog".into()));
+            names.push(("SUPABASE_SERVICE_ROLE_KEY".into(), "catalog".into()));
+            names.push(("DATABASE_URL".into(), "catalog".into()));
+            for (n, src) in empty_env_keys(project, &[".env", ".env.local", ".dev.vars"]) {
+                if (n.starts_with("SUPABASE_") || n == "DATABASE_URL")
+                    && !names.iter().any(|(x, _)| x == &n)
+                {
+                    names.push((n, src));
+                }
+            }
+        }
+        ProviderId::D1 => {
+            names.push(("DATABASE_URL".into(), "catalog · optional (D1 is usually a binding)".into()));
+            for (n, src) in empty_env_keys(project, &[".dev.vars", ".env", ".env.local"]) {
+                if (n == "DATABASE_URL" || n.contains("D1")) && !names.iter().any(|(x, _)| x == &n)
+                {
+                    names.push((n, src));
+                }
+            }
+        }
+        ProviderId::Turso => {
+            names.push(("TURSO_DATABASE_URL".into(), "catalog".into()));
+            names.push(("TURSO_AUTH_TOKEN".into(), "catalog".into()));
+            for (n, src) in empty_env_keys(project, &[".env", ".env.local", ".dev.vars"]) {
+                if (n.starts_with("TURSO_") || n.starts_with("LIBSQL_"))
+                    && !names.iter().any(|(x, _)| x == &n)
+                {
+                    names.push((n, src));
+                }
+            }
+        }
+        ProviderId::Container => {
+            // First slice: docs/portal only — no forced registry secret names.
+        }
     }
 
     let work = match id {
@@ -113,6 +160,11 @@ fn hints_for_provider(project: &Path, id: ProviderId) -> Result<Vec<SecretHint>>
             }
             ProviderId::Polar => {
                 format!("{once} Then put on Cloudflare/Vercel with secrets put.")
+            }
+            ProviderId::Neon | ProviderId::Supabase | ProviderId::D1 | ProviderId::Turso => {
+                format!(
+                    "{once} Create/copy on the vendor dashboard, then put on Cloudflare/Vercel/Netlify. Source: {source}"
+                )
             }
             _ => format!(
                 "Put destination: {}. Value source: {source_url}. {once} Source: {source}",
@@ -155,11 +207,16 @@ fn put_cli_for(id: ProviderId, name: &str) -> Vec<String> {
         ProviderId::Vercel => vec!["vercel".into(), "env".into(), "add".into(), name.into()],
         ProviderId::Netlify => vec!["netlify".into(), "env:set".into(), name.into()],
         ProviderId::Github => vec!["gh".into(), "auth".into(), "login".into()],
-        ProviderId::Polar => vec![
+        ProviderId::Polar
+        | ProviderId::Neon
+        | ProviderId::Supabase
+        | ProviderId::D1
+        | ProviderId::Turso
+        | ProviderId::Container => vec![
             "shipctl".into(),
             "portal".into(),
             "--provider".into(),
-            "polar".into(),
+            id.as_str().into(),
             "--open".into(),
         ],
     }
@@ -175,6 +232,15 @@ pub fn put_secret(project: &Path, provider: ProviderId, name: &str) -> Result<i3
     }
     if provider == ProviderId::Polar {
         bail!("Polar has no secret put CLI — open polar.sh dashboard, then `shipctl secrets put --provider cloudflare --name POLAR_…`");
+    }
+    if provider.is_db() {
+        bail!(
+            "{} has no secret put CLI — open the vendor console, then `shipctl secrets put --provider cloudflare|vercel|netlify --name …`",
+            provider.label()
+        );
+    }
+    if provider == ProviderId::Container {
+        bail!("Container has no secret put CLI — use docker login / gh auth, then push locally");
     }
     let project = fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
     let work = match provider {
@@ -371,6 +437,7 @@ fn dedupe_hints(hints: &mut Vec<SecretHint>) {
             "netlify" => 2,
             "github" => 3,
             "polar" => 4,
+            "neon" | "supabase" | "d1" | "turso" | "container" => 5,
             _ => 9,
         }
     }
@@ -395,10 +462,17 @@ fn dedupe_hints(hints: &mut Vec<SecretHint>) {
                 0
             } else if n.starts_with("POLAR_") {
                 1
-            } else if n == "API_KEY_PEPPER" {
-                3
-            } else {
+            } else if n == "DATABASE_URL"
+                || n.starts_with("NEON_")
+                || n.starts_with("SUPABASE_")
+                || n.starts_with("TURSO_")
+                || n.starts_with("LIBSQL_")
+            {
                 2
+            } else if n == "API_KEY_PEPPER" {
+                4
+            } else {
+                3
             }
         };
         rank_name(a).cmp(&rank_name(b)).then(a.cmp(b))

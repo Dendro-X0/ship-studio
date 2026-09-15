@@ -1,14 +1,20 @@
 //! Minimal stdio MCP server for Ship tools.
 
 use crate::adapters;
+use crate::assist;
 use crate::config;
+use crate::envx;
 use crate::flow;
 use crate::guide;
 use crate::human;
 use crate::launch;
 use crate::portal;
+use crate::publish;
+use crate::pulse;
+use crate::scopes;
 use crate::secrets;
 use crate::ship;
+use crate::signpath;
 use crate::vault_km;
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
@@ -89,6 +95,31 @@ fn tools() -> Vec<Value> {
             false,
         ),
         tool(
+            "ship_publish",
+            "Publish portal status (minute wizard). Use CLI for open/verify/confirm/next mutations.",
+            false,
+        ),
+        tool(
+            "ship_scopes",
+            "Detect Web/API/Desktop deploy scopes (directories + providers)",
+            false,
+        ),
+        tool(
+            "ship_env",
+            "ENV/token portal: configure, retrieve, create URLs (no secret values)",
+            false,
+        ),
+        tool(
+            "ship_sign_paths",
+            "Self-sign (Signet) vs official vendor signing wizards",
+            false,
+        ),
+        tool(
+            "ship_assist",
+            "Full-stack deploy assist checklist",
+            false,
+        ),
+        tool(
             "ship_flow_dry_run",
             "Print configure→sign→deploy plan",
             true,
@@ -109,6 +140,11 @@ fn tools() -> Vec<Value> {
             false,
         ),
         tool("ship_status", "Read .ship/last-run.json", false),
+        tool(
+            "ship_pulse",
+            "Project pulse: git, publish/launch progress, deploy signals, next action (local only)",
+            false,
+        ),
     ]
 }
 
@@ -412,6 +448,14 @@ fn call_tool(params: Value) -> Result<Value> {
             let state = launch::load_or_build(&project)?;
             serde_json::to_value(launch::view(&state))?
         }
+        "ship_publish" => {
+            let state = publish::load_or_build(&project)?;
+            serde_json::to_value(publish::view(&state))?
+        }
+        "ship_scopes" => serde_json::to_value(scopes::plan_for(&project))?,
+        "ship_env" => serde_json::to_value(envx::plan_for(&project)?)?,
+        "ship_sign_paths" => serde_json::to_value(signpath::plan_for(&project))?,
+        "ship_assist" => serde_json::to_value(assist::plan_for(&project)?)?,
         "ship_flow_dry_run" => {
             serde_json::to_value(flow::plan(&project, skip_sign, skip_deploy, offline)?)?
         }
@@ -436,6 +480,7 @@ fn call_tool(params: Value) -> Result<Value> {
             json!({ "ok": code == 0, "exit_code": code, "args": deploy_args })
         }
         "ship_status" => config::read_last_run(&project)?,
+        "ship_pulse" => serde_json::to_value(pulse::for_project(&project)?)?,
         other => anyhow::bail!("unknown tool: {other}"),
     };
 

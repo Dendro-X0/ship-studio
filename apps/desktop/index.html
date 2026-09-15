@@ -2,247 +2,547 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/src/styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ship Studio</title>
     <script type="module" src="/src/main.ts" defer></script>
   </head>
-  <body>
-    <div class="shell">
-      <header class="top">
-        <div class="brand-row">
-          <div class="brand">
-            <span class="mark" aria-hidden="true"></span>
-            <div>
-              <div class="name-line">
-                <span class="name">Ship Studio</span>
-                <span class="badge">LOCAL</span>
-              </div>
-              <p class="sub">CLI · TUI · Desktop · shipping portal · one window = one repo</p>
+  <body class="chrome" data-mode="general">
+    <div class="titlebar" data-tauri-drag-region>
+      <div class="titlebar-brand" data-tauri-drag-region>
+        <img class="logo" src="/src/assets/logo.svg" width="22" height="22" alt="" />
+        <span class="titlebar-name" data-tauri-drag-region>Ship Studio</span>
+        <span class="titlebar-sep" aria-hidden="true">·</span>
+        <button type="button" class="titlebar-project" id="chrome-project" title="Switch project">
+          <span class="chrome-name" id="chrome-name">Choose a project</span>
+          <span class="chrome-path" id="chrome-path">Open a folder to start shipping</span>
+        </button>
+        <div class="project-switcher" id="project-switcher" hidden>
+          <p class="switcher-label">Recent projects</p>
+          <div id="switcher-list"></div>
+          <button type="button" id="btn-open-switch" class="primary">Open folder…</button>
+        </div>
+      </div>
+      <div class="window-controls">
+        <button type="button" id="win-min" class="win-btn" title="Minimize" aria-label="Minimize">
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
+        <button type="button" id="win-max" class="win-btn" title="Maximize" aria-label="Maximize">
+          <svg viewBox="0 0 12 12" aria-hidden="true" id="win-max-icon"><rect x="2.2" y="2.2" width="7.6" height="7.6" rx="1.1" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+        </button>
+        <button type="button" id="win-close" class="win-btn win-close" title="Close" aria-label="Close">
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 3l6 6M9 3L3 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="app" id="app">
+      <aside class="sidebar" aria-label="Primary">
+        <div class="sidebar-brand">
+          <img class="logo logo-lg" src="/src/assets/logo.svg" width="36" height="36" alt="Ship Studio" />
+          <div>
+            <div class="name-line">
+              <span class="name">Ship Studio</span>
+              <span class="badge">LOCAL</span>
             </div>
+            <p class="sub" id="sidebar-session">No project bound</p>
           </div>
-          <div class="toggles">
+        </div>
+
+        <nav class="nav" aria-label="Sections">
+          <p class="nav-label">Ship</p>
+          <button type="button" class="nav-item active" data-nav="dashboard">
+            <span class="nav-ico" aria-hidden="true">◈</span>
+            Dashboard
+          </button>
+          <button type="button" class="nav-item" data-nav="publish">
+            <span class="nav-ico" aria-hidden="true">◆</span>
+            Publish
+          </button>
+          <button type="button" class="nav-item nav-advanced" data-nav="assist">
+            <span class="nav-ico" aria-hidden="true">◎</span>
+            Assist
+          </button>
+          <button type="button" class="nav-item nav-advanced" data-nav="launch">
+            <span class="nav-ico" aria-hidden="true">↗</span>
+            Launch
+          </button>
+          <button type="button" class="nav-item nav-advanced" data-nav="portal">
+            <span class="nav-ico" aria-hidden="true">◇</span>
+            Portal
+          </button>
+          <button type="button" class="nav-item" data-nav="env">
+            <span class="nav-ico" aria-hidden="true">⌘</span>
+            Env / tokens
+          </button>
+          <button type="button" class="nav-item" data-nav="sign">
+            <span class="nav-ico" aria-hidden="true">✦</span>
+            Sign
+          </button>
+
+          <p class="nav-label nav-advanced">Config</p>
+          <button type="button" class="nav-item" data-nav="scopes">
+            <span class="nav-ico" aria-hidden="true">▤</span>
+            Scopes
+          </button>
+          <button type="button" class="nav-item nav-advanced" data-nav="ritual">
+            <span class="nav-ico" aria-hidden="true">⚙</span>
+            Ritual
+          </button>
+          <button type="button" class="nav-item nav-advanced" data-nav="tools">
+            <span class="nav-ico" aria-hidden="true">▣</span>
+            Tools
+          </button>
+
+          <p class="nav-label">Run</p>
+          <button type="button" class="nav-item" data-nav="output">
+            <span class="nav-ico" aria-hidden="true">≡</span>
+            Output
+          </button>
+        </nav>
+
+        <div class="sidebar-project">
+          <p class="project-kicker">Working in</p>
+          <p class="project-bound-name" id="sidebar-project-name">No project</p>
+          <label class="sr-only" for="project-path">Project path</label>
+          <input id="project-path" type="text" readonly placeholder="Open a folder…" />
+          <div class="sidebar-project-actions">
+            <button type="button" id="btn-open" class="primary">Open</button>
+            <button type="button" id="btn-reveal" disabled title="Open .ship in Explorer">.ship</button>
+          </div>
+          <div class="recent" id="recent-list" hidden></div>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <header class="topbar">
+          <div class="topbar-left">
+            <h1 class="view-title" id="view-title">Dashboard</h1>
+            <p class="view-desc" id="view-desc">Bind a repo — then pick up where you left off.</p>
+            <p class="session-crumb" id="session-crumb" hidden>
+              <span id="crumb-name">No project</span>
+              <span id="crumb-path"></span>
+            </p>
+          </div>
+          <div class="topbar-right">
+            <button type="button" id="btn-back-publish" class="back-publish" hidden title="Return to the publish spine">
+              Back to Publish
+            </button>
+            <div class="mode-switch" role="group" aria-label="Studio mode">
+              <button type="button" id="mode-general" class="mode-btn active" data-mode="general" title="Minimal publish spine">
+                General
+              </button>
+              <button type="button" id="mode-advanced" class="mode-btn" data-mode="advanced" title="Full configuration path">
+                Advanced
+              </button>
+            </div>
+            <button type="button" id="btn-search" class="search-trigger" title="Search (Ctrl+K)">
+              <span>Search actions…</span>
+              <kbd>Ctrl K</kbd>
+            </button>
             <label class="toggle" title="Refuse deploy; prefer offline-safe sign">
               <input type="checkbox" id="opt-offline" checked />
               <span>Offline</span>
             </label>
-            <label class="toggle" title="Include orbit ship in Flow">
+            <label class="toggle advanced-only" title="Include orbit ship in Flow">
               <input type="checkbox" id="opt-deploy" />
-              <span>Include deploy</span>
+              <span>Deploy</span>
             </label>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <section class="project">
-        <label>Project</label>
-        <div class="row">
-          <input id="project-path" type="text" readonly placeholder="Open a folder…" />
-          <button type="button" id="btn-open" class="primary">Open folder…</button>
-          <button type="button" id="btn-reveal" disabled title="Open .ship in Explorer">Reveal .ship</button>
-        </div>
-        <div class="recent" id="recent-list" hidden></div>
-        <div class="chips" id="detect-chips" hidden></div>
-        <p class="hint">CodaCtrl rule: this window binds one repo. Open another window for a second project.</p>
-      </section>
+        <main class="main" id="main">
+          <section class="view active" data-view="dashboard" aria-label="Dashboard">
+            <section class="session" id="session" aria-label="Current project">
+              <div class="session-empty" id="session-empty">
+                <p class="session-kicker">Session</p>
+                <h2>Bind the repo you’re shipping</h2>
+                <p class="session-lead">
+                  Ship Studio keeps you on official platforms. Open the folder, then we’ll show where you left off.
+                </p>
+                <button type="button" id="dash-open" class="primary">Open folder…</button>
+                <div class="dash-recents" id="dash-recents" hidden></div>
+              </div>
+              <div class="session-bound" id="session-bound" hidden>
+                <p class="session-kicker">Working in</p>
+                <h2 id="session-name">—</h2>
+                <p class="session-path" id="session-path"></p>
+                <p class="session-kind" id="session-kind"></p>
+                <div class="chips" id="detect-chips" hidden></div>
+              </div>
+            </section>
 
-      <section class="workflow" aria-label="Workflow">
-        <div class="step" data-step="doctor">
-          <span class="step-id">1</span>
-          <div>
-            <strong>Doctor</strong>
-            <span class="step-desc">Find Signet + Orbit</span>
-          </div>
-        </div>
-        <div class="step-sep" aria-hidden="true"></div>
-        <div class="step" data-step="portal">
-          <span class="step-id">2</span>
-          <div>
-            <strong>Portal</strong>
-            <span class="step-desc">Open entry points</span>
-          </div>
-        </div>
-        <div class="step-sep" aria-hidden="true"></div>
-        <div class="step" data-step="paste">
-          <span class="step-id">3</span>
-          <div>
-            <strong>Paste</strong>
-            <span class="step-desc">Human portal secrets</span>
-          </div>
-        </div>
-        <div class="step-sep" aria-hidden="true"></div>
-        <div class="step" data-step="sign">
-          <span class="step-id">4</span>
-          <div>
-            <strong>Sign</strong>
-            <span class="step-desc">Signet ritual</span>
-          </div>
-        </div>
-        <div class="step-sep" aria-hidden="true"></div>
-        <div class="step" data-step="deploy">
-          <span class="step-id">5</span>
-          <div>
-            <strong>Deploy</strong>
-            <span class="step-desc">Orbit ship</span>
-          </div>
-        </div>
-      </section>
+            <section class="status-bar" id="status-bar" hidden aria-label="Project status checklist">
+              <div class="status-headline" id="status-headline">
+                <span class="status-badge" id="status-badge" data-state="idle">—</span>
+                <div class="status-headline-text">
+                  <p class="status-overall" id="status-overall">No status yet</p>
+                  <p class="status-overall-detail" id="status-overall-detail"></p>
+                </div>
+              </div>
+              <ul class="status-check" id="status-check"></ul>
+            </section>
 
-      <section class="portal-panel" id="launch-panel" hidden>
-        <div class="ritual-head">
-          <div>
-            <label>Guided launch</label>
-            <p class="hint" id="launch-hint">One step at a time — Open/Run (vendor UI or Signet/Orbit) → Verify/Confirm → Next through sign, release, listing, deploy.</p>
-          </div>
-          <div class="portal-actions">
-            <button type="button" id="btn-launch-open" disabled>Open / Run</button>
-            <button type="button" id="btn-launch-verify" disabled>Verify</button>
-            <button type="button" id="btn-launch-confirm" disabled>Confirm</button>
-            <button type="button" id="btn-launch-next" class="primary" disabled>Next</button>
-          </div>
-        </div>
-        <div class="launch-current" id="launch-current"></div>
-        <ul class="portal-steps" id="launch-steps"></ul>
-      </section>
+            <section class="now" id="now" aria-label="What to do next">
+              <p class="now-kicker">Now</p>
+              <h3 id="now-title">Open a project to see what’s next</h3>
+              <p class="now-detail" id="now-detail">
+                One human action at a time — paste, sign, list, or deploy on the vendor UI. Confirm here when you’re done.
+              </p>
+              <div class="now-actions">
+                <button type="button" id="now-primary" class="primary">Open folder…</button>
+                <button type="button" id="now-switch">Switch project</button>
+              </div>
+              <div class="now-extra" id="now-extra" hidden></div>
+            </section>
 
-      <section class="portal-panel" id="human-panel" hidden>
-        <div class="ritual-head">
-          <div>
-            <label>Human portal</label>
-            <p class="hint" id="human-hint">Open 2–3 source tabs → copy → paste into wrangler. This is the shipping-portal sprint.</p>
-          </div>
-          <div class="portal-actions">
-            <button type="button" id="btn-human-open" disabled title="Open Polar/GitHub source pages only">Open sources</button>
-            <button type="button" id="btn-human-put" class="primary" disabled title="Launch terminal for interactive paste">Paste in terminal</button>
-          </div>
-        </div>
-        <ul class="portal-steps" id="human-queue"></ul>
-      </section>
+            <section class="health advanced-only" id="health" hidden>
+              <div class="tool-card" id="card-signet">
+                <div class="tool-head">
+                  <span class="tool-name">Signet</span>
+                  <span class="pill muted" id="pill-signet">—</span>
+                </div>
+                <p class="tool-meta" id="meta-signet">Pulse after bind</p>
+              </div>
+              <div class="tool-card" id="card-orbit">
+                <div class="tool-head">
+                  <span class="tool-name">Orbit</span>
+                  <span class="pill muted" id="pill-orbit">—</span>
+                </div>
+                <p class="tool-meta" id="meta-orbit">Pulse after bind</p>
+              </div>
+              <div class="tool-card" id="card-git">
+                <div class="tool-head">
+                  <span class="tool-name">Git</span>
+                  <span class="pill muted" id="pill-git">—</span>
+                </div>
+                <p class="tool-meta" id="meta-git">No repo signal yet</p>
+              </div>
+              <div class="tool-card" id="card-deploy">
+                <div class="tool-head">
+                  <span class="tool-name">Deploy</span>
+                  <span class="pill muted" id="pill-deploy">—</span>
+                </div>
+                <p class="tool-meta" id="meta-deploy">No local deploy signal</p>
+              </div>
+            </section>
+          </section>
 
-      <section class="portal-panel" id="portal-panel" hidden>
-        <div class="ritual-head">
-          <div>
-            <label>Portal steps</label>
-            <p class="hint">Open the entry — OAuth and env values stay manual. Same plan as <code>shipctl portal</code> / TUI.</p>
-          </div>
-          <div class="portal-actions">
-            <button type="button" id="btn-portal-refresh" disabled>Refresh</button>
-            <button type="button" id="btn-portal-open-all" disabled>Open all URLs</button>
-          </div>
-        </div>
-        <div class="provider-filters" id="provider-filters" hidden></div>
-        <ul class="portal-steps" id="portal-steps"></ul>
-        <div class="secrets-block" id="secrets-block" hidden>
-          <div class="ritual-head">
-            <div>
-              <label>Secret hints</label>
-              <p class="hint">Names only — paste values in a terminal with <code>shipctl secrets put</code> or TUI. Optional: encrypt a Clavis-compatible <code>.km</code> backup.</p>
-            </div>
-            <div class="portal-actions">
-              <button type="button" id="btn-vault-export" disabled title="Encrypt secrets into a .km vault file">Export vault</button>
-            </div>
-          </div>
-          <ul class="portal-steps" id="secrets-steps"></ul>
-        </div>
-      </section>
+          <section class="view" data-view="publish" aria-label="Publish" hidden>
+            <section class="portal-panel" id="publish-panel">
+              <div class="ritual-head">
+                <div>
+                  <label>Publish portal</label>
+                  <p class="hint" id="publish-hint">
+                    Minute-oriented path — Open/Run on official platforms or local CLIs, Confirm, Next.
+                  </p>
+                </div>
+                <div class="portal-actions">
+                  <button type="button" id="btn-publish" class="primary" disabled title="Refresh publish plan">
+                    Refresh
+                  </button>
+                  <button type="button" id="btn-publish-related" disabled hidden>Related</button>
+                  <button type="button" id="btn-publish-open" disabled>Open / Run</button>
+                  <button type="button" id="btn-publish-verify" disabled>Verify</button>
+                  <button type="button" id="btn-publish-confirm" disabled>Confirm</button>
+                  <button type="button" id="btn-publish-next" class="primary" disabled>Next</button>
+                </div>
+              </div>
+              <div class="minutes-strip" id="publish-minutes" hidden></div>
+              <div class="launch-current" id="publish-current">
+                <p class="detail empty-hint">Refresh Publish to build the adaptive plan for this repo.</p>
+              </div>
+              <ul class="portal-steps" id="publish-steps"></ul>
+            </section>
+          </section>
 
-      <section class="health" id="health">
-        <div class="tool-card" id="card-signet">
-          <div class="tool-head">
-            <span class="tool-name">Signet</span>
-            <span class="pill muted" id="pill-signet">—</span>
-          </div>
-          <p class="tool-meta" id="meta-signet">Run Doctor</p>
-        </div>
-        <div class="tool-card" id="card-orbit">
-          <div class="tool-head">
-            <span class="tool-name">Orbit</span>
-            <span class="pill muted" id="pill-orbit">—</span>
-          </div>
-          <p class="tool-meta" id="meta-orbit">Run Doctor</p>
-        </div>
-        <div class="tool-card" id="card-lastrun">
-          <div class="tool-head">
-            <span class="tool-name">Last run</span>
-            <span class="pill muted" id="pill-lastrun">None</span>
-          </div>
-          <p class="tool-meta" id="meta-lastrun">No .ship/last-run.json yet</p>
-        </div>
-        <div class="tool-card wide" id="card-notes">
-          <div class="tool-head">
-            <span class="tool-name">Notes</span>
-            <span class="pill muted" id="pill-doctor">Ready</span>
-          </div>
-          <ul class="notes" id="notes-list">
-            <li>Open a project, then Doctor.</li>
-          </ul>
-        </div>
-      </section>
+          <section class="view" data-view="assist" aria-label="Assist" hidden>
+            <section class="portal-panel">
+              <div class="ritual-head">
+                <div>
+                  <label>Deploy assist</label>
+                  <p class="hint" id="assist-hint">
+                    Overview checklist — Start publish for the live spine. Other views are detail panels, not a second workflow.
+                  </p>
+                </div>
+                <div class="portal-actions">
+                  <button type="button" id="btn-assist" class="primary" disabled>Refresh assist</button>
+                  <button type="button" id="btn-assist-start" disabled>Start publish</button>
+                </div>
+              </div>
+              <ul class="portal-steps" id="assist-steps"></ul>
+            </section>
+          </section>
 
-      <section class="ritual" id="ritual">
-        <div class="ritual-head">
-          <div>
-            <label>Ritual args</label>
-            <p class="hint">Saved into <code>.ship/studio.json</code> — used by Sign / Flow / Deploy</p>
+          <section class="view" data-view="scopes" aria-label="Scopes" hidden>
+            <section class="portal-panel">
+              <div class="ritual-head">
+                <div>
+                  <label>Deploy scopes</label>
+                  <p class="hint">
+                    Detail panel for Web / API / Desktop directories. Save, then return to Publish → Confirm.
+                  </p>
+                </div>
+                <div class="portal-actions">
+                  <button type="button" id="btn-scopes" disabled>Detect</button>
+                  <button type="button" id="btn-scopes-save" class="primary" disabled>Save selection</button>
+                </div>
+              </div>
+              <div class="scope-grid" id="scope-grid">
+                <p class="detail empty-hint">Open a project, then Detect scopes.</p>
+              </div>
+            </section>
+          </section>
+
+          <section class="view" data-view="env" aria-label="Env" hidden>
+            <section class="portal-panel">
+              <div class="ritual-head">
+                <div>
+                  <label>ENV &amp; tokens</label>
+                  <p class="hint">
+                    Configure local files · retrieve (copy + put) · create on official dashboards. Values never stored here.
+                  </p>
+                </div>
+                <div class="portal-actions">
+                  <button type="button" id="btn-env" class="primary" disabled>Load env portal</button>
+                </div>
+              </div>
+              <ul class="portal-steps" id="env-actions"></ul>
+            </section>
+          </section>
+
+          <section class="view" data-view="sign" aria-label="Sign" hidden>
+            <section class="portal-panel">
+              <div class="ritual-head">
+                <div>
+                  <label>Signing paths</label>
+                  <p class="hint" id="sign-hint">
+                    Self-sign locally with Signet, then finish official Apple / Windows / Play / GitHub when you ship stores.
+                  </p>
+                </div>
+                <div class="portal-actions">
+                  <button type="button" id="btn-sign-paths" class="primary" disabled>Load paths</button>
+                </div>
+              </div>
+              <ul class="portal-steps" id="sign-paths"></ul>
+            </section>
+          </section>
+
+          <section class="view" data-view="launch" aria-label="Launch" hidden>
+            <section class="portal-panel" id="launch-panel">
+              <div class="ritual-head">
+                <div>
+                  <label>Guided launch</label>
+                  <p class="hint" id="launch-hint">
+                    Companion stepper — prefer Publish for the full minute path. Same Open → Confirm → Next pattern.
+                  </p>
+                </div>
+                <div class="portal-actions">
+                  <button type="button" id="btn-launch" class="primary" disabled title="Refresh launch plan">
+                    Refresh
+                  </button>
+                  <button type="button" id="btn-launch-open" disabled>Open / Run</button>
+                  <button type="button" id="btn-launch-verify" disabled>Verify</button>
+                  <button type="button" id="btn-launch-confirm" disabled>Confirm</button>
+                  <button type="button" id="btn-launch-next" class="primary" disabled>Next</button>
+                </div>
+              </div>
+              <div class="launch-current" id="launch-current">
+                <p class="detail empty-hint">Refresh Launch to build the adaptive plan for this repo.</p>
+              </div>
+              <ul class="portal-steps" id="launch-steps"></ul>
+            </section>
+          </section>
+
+          <section class="view" data-view="portal" aria-label="Portal" hidden>
+            <section class="portal-panel" id="human-panel">
+              <div class="ritual-head">
+                <div>
+                  <label>Human portal</label>
+                  <p class="hint" id="human-hint">
+                    Open 2–3 source tabs → copy → paste into wrangler. This is the shipping-portal sprint.
+                  </p>
+                </div>
+                <div class="portal-actions">
+                  <button
+                    type="button"
+                    id="btn-human"
+                    class="primary"
+                    disabled
+                    title="Open Polar/GitHub then paste secrets"
+                  >
+                    Start sprint
+                  </button>
+                  <button type="button" id="btn-human-open" disabled title="Open Polar/GitHub source pages only">
+                    Open sources
+                  </button>
+                  <button
+                    type="button"
+                    id="btn-human-put"
+                    class="primary"
+                    disabled
+                    title="Launch terminal for interactive paste"
+                  >
+                    Paste in terminal
+                  </button>
+                </div>
+              </div>
+              <ul class="portal-steps" id="human-queue"></ul>
+            </section>
+
+            <section class="portal-panel" id="portal-panel">
+              <div class="ritual-head">
+                <div>
+                  <label>Portal steps</label>
+                  <p class="hint">
+                    Open the entry — OAuth and env values stay manual. Same plan as
+                    <code>shipctl portal</code> / TUI.
+                  </p>
+                </div>
+                <div class="portal-actions">
+                  <button type="button" id="btn-portal" disabled title="Provider entry points">Load portal</button>
+                  <button type="button" id="btn-portal-refresh" disabled>Refresh</button>
+                  <button type="button" id="btn-portal-open" disabled title="Open token pages in browser">
+                    Portal open
+                  </button>
+                  <button type="button" id="btn-portal-open-all" disabled>Open all URLs</button>
+                </div>
+              </div>
+              <div class="provider-filters" id="provider-filters" hidden></div>
+              <ul class="portal-steps" id="portal-steps"></ul>
+              <div class="secrets-block" id="secrets-block" hidden>
+                <div class="ritual-head">
+                  <div>
+                    <label>Secret hints</label>
+                    <p class="hint">
+                      Names only — paste values in a terminal with <code>shipctl secrets put</code> or TUI.
+                      Optional: encrypt a Clavis-compatible <code>.km</code> backup.
+                    </p>
+                  </div>
+                  <div class="portal-actions">
+                    <button type="button" id="btn-secrets" disabled title="Paste-secret assist">Secrets</button>
+                    <button
+                      type="button"
+                      id="btn-vault-export"
+                      disabled
+                      title="Encrypt secrets into a .km vault file"
+                    >
+                      Export vault
+                    </button>
+                  </div>
+                </div>
+                <ul class="portal-steps" id="secrets-steps"></ul>
+              </div>
+            </section>
+          </section>
+
+          <section class="view" data-view="ritual" aria-label="Ritual" hidden>
+            <section class="ritual" id="ritual">
+              <div class="ritual-head">
+                <div>
+                  <label>Ritual args</label>
+                  <p class="hint">Saved into <code>.ship/studio.json</code> — used by Sign / Flow / Deploy</p>
+                </div>
+                <button type="button" id="btn-save-args" disabled>Save args</button>
+              </div>
+              <div class="presets" id="sign-presets">
+                <button type="button" class="preset" data-sign="doctor --json" disabled>doctor</button>
+                <button type="button" class="preset" data-sign="scan --json" disabled>scan</button>
+                <button type="button" class="preset" data-sign="build" disabled>build</button>
+                <button type="button" class="preset" data-deploy="status" disabled>deploy: status</button>
+                <button type="button" class="preset" data-deploy="deploy --provider cloudflare" disabled>
+                  deploy: cf
+                </button>
+                <button type="button" class="preset" data-deploy="deploy --provider vercel" disabled>
+                  deploy: vercel
+                </button>
+                <button type="button" class="preset" data-deploy="deploy --provider netlify" disabled>
+                  deploy: netlify
+                </button>
+                <button type="button" class="preset" data-deploy="ship" disabled>deploy: ship (TUI)</button>
+              </div>
+              <div class="ritual-grid">
+                <label class="field">
+                  <span>sign_args</span>
+                  <input id="sign-args" type="text" placeholder="doctor --json" disabled />
+                </label>
+                <label class="field">
+                  <span>deploy_args</span>
+                  <input id="deploy-args" type="text" placeholder="status" disabled />
+                </label>
+              </div>
+            </section>
+          </section>
+
+          <section class="view" data-view="tools" aria-label="Tools" hidden>
+            <section class="actions" id="actions">
+              <button type="button" id="btn-doctor" class="primary" disabled>Doctor</button>
+              <button type="button" id="btn-wizard" disabled title="Guide → Portal → Secrets → Configure → dry-run">
+                Wizard
+              </button>
+              <button type="button" id="btn-ship" disabled title="shipctl ship — one-shot offline prep">Ship</button>
+              <button type="button" id="btn-guide" disabled>Guide</button>
+              <button type="button" id="btn-configure" disabled>Configure</button>
+              <button type="button" id="btn-vault" disabled title="Export encrypted .km vault (Clavis)">
+                Export vault
+              </button>
+              <button type="button" id="btn-sign" disabled>Sign</button>
+              <button type="button" id="btn-deploy" disabled>Deploy</button>
+              <button type="button" id="btn-flow-dry" disabled>Flow dry-run</button>
+              <button type="button" id="btn-flow" disabled>Run flow</button>
+              <button type="button" id="btn-status" disabled>Status</button>
+              <button type="button" id="btn-cancel" class="danger" disabled>Cancel</button>
+              <button type="button" id="btn-copy" disabled>Copy output</button>
+              <button type="button" id="btn-clear" disabled>Clear output</button>
+            </section>
+            <p class="hint tools-hint">
+              Prefer <strong>Launch</strong> for the guided ship path. Tools are pass-throughs to
+              <code>shipctl</code>.
+            </p>
+          </section>
+
+          <section class="view" data-view="output" aria-label="Output focus" hidden>
+            <p class="hint">Full-height console. The dock below mirrors the same stream.</p>
+            <pre id="output-focus" class="output-mirror" aria-hidden="true"></pre>
+          </section>
+        </main>
+
+        <section class="output-dock" aria-label="Output">
+          <div class="output-head">
+            <span>Output</span>
+            <span id="run-state" class="ready">Ready</span>
           </div>
-          <button type="button" id="btn-save-args" disabled>Save args</button>
-        </div>
-        <div class="presets" id="sign-presets">
-          <button type="button" class="preset" data-sign="doctor --json" disabled>doctor</button>
-          <button type="button" class="preset" data-sign="scan --json" disabled>scan</button>
-          <button type="button" class="preset" data-sign="build" disabled>build</button>
-          <button type="button" class="preset" data-deploy="status" disabled>deploy: status</button>
-          <button type="button" class="preset" data-deploy="deploy --provider cloudflare" disabled>deploy: cf</button>
-          <button type="button" class="preset" data-deploy="deploy --provider vercel" disabled>deploy: vercel</button>
-          <button type="button" class="preset" data-deploy="deploy --provider netlify" disabled>deploy: netlify</button>
-          <button type="button" class="preset" data-deploy="ship" disabled>deploy: ship (TUI)</button>
-        </div>
-        <div class="ritual-grid">
-          <label class="field">
-            <span>sign_args</span>
-            <input id="sign-args" type="text" placeholder="doctor --json" disabled />
-          </label>
-          <label class="field">
-            <span>deploy_args</span>
-            <input id="deploy-args" type="text" placeholder="status" disabled />
-          </label>
-        </div>
-      </section>
+          <pre id="output">Open a folder to bind a project — or press Ctrl+K.</pre>
+        </section>
 
-      <section class="actions" id="actions">
-        <button type="button" id="btn-doctor" class="primary" disabled>Doctor</button>
-        <button type="button" id="btn-wizard" disabled title="Guide → Portal → Secrets → Configure → dry-run">Wizard</button>
-        <button type="button" id="btn-ship" disabled title="shipctl ship — one-shot offline prep">Ship</button>
-        <button type="button" id="btn-human" class="primary" disabled title="Open Polar/GitHub then paste secrets">Human portal</button>
-        <button type="button" id="btn-launch" class="primary" disabled title="Guided launch: open → verify → next">Launch</button>
-        <button type="button" id="btn-guide" disabled>Guide</button>
-        <button type="button" id="btn-configure" disabled>Configure</button>
-        <button type="button" id="btn-portal" disabled title="Provider entry points">Portal</button>
-        <button type="button" id="btn-portal-open" disabled title="Open token pages in browser">Portal open</button>
-        <button type="button" id="btn-secrets" disabled title="Paste-secret assist">Secrets</button>
-        <button type="button" id="btn-vault" disabled title="Export encrypted .km vault (Clavis)">Export vault</button>
-        <button type="button" id="btn-sign" disabled>Sign</button>
-        <button type="button" id="btn-deploy" disabled>Deploy</button>
-        <button type="button" id="btn-flow-dry" disabled>Flow dry-run</button>
-        <button type="button" id="btn-flow" disabled>Run flow</button>
-        <button type="button" id="btn-status" disabled>Status</button>
-        <button type="button" id="btn-cancel" class="danger" disabled>Cancel</button>
-        <button type="button" id="btn-copy" disabled>Copy output</button>
-        <button type="button" id="btn-clear" disabled>Clear output</button>
-      </section>
-
-      <section class="output-wrap">
-        <div class="output-head">
-          <span>Output</span>
-          <span id="run-state" class="ready">Ready</span>
-        </div>
-        <pre id="output">Open a project, then run Doctor.</pre>
-      </section>
-
-      <footer class="foot">
-        <span id="shipctl-path" title="Resolved shipctl">shipctl: …</span>
-        <span class="keys">Esc cancel · Ctrl+D doctor · Ctrl+S sign · Ctrl+Enter flow dry-run · Ctrl+Shift+Enter flow</span>
-      </footer>
+        <footer class="statusbar">
+          <span id="shipctl-path" title="Resolved shipctl">shipctl: …</span>
+          <span class="keys">Esc · Ctrl+K search · Ctrl+D doctor · Ctrl+S sign · Ctrl+Enter flow</span>
+        </footer>
+      </div>
     </div>
+
+    <div class="cmdk" id="cmdk" hidden>
+      <div class="cmdk-backdrop" data-cmdk-close></div>
+      <div class="cmdk-panel" role="dialog" aria-modal="true" aria-label="Search actions">
+        <input
+          id="cmdk-input"
+          type="text"
+          placeholder="Search Launch, Portal, Doctor, Deploy…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <ul id="cmdk-list" class="cmdk-list" role="listbox"></ul>
+        <p class="cmdk-foot">↑↓ navigate · Enter run · Esc close</p>
+      </div>
+    </div>
+
+    <div class="toast-host" id="toast-host" aria-live="polite" aria-relevant="additions"></div>
   </body>
 </html>

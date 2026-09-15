@@ -109,7 +109,99 @@ type LaunchView = {
   notes?: string[];
 };
 
+type PublishView = {
+  current_index?: number;
+  total?: number;
+  done_count?: number;
+  minutes_remaining?: number;
+  minutes_total?: number;
+  finished?: boolean;
+  current?: {
+    id?: string;
+    title?: string;
+    kind?: string;
+    detail?: string;
+    entry_url?: string | null;
+    status?: string;
+    minutes?: number;
+    run?: string[] | null;
+    desktop_view?: string | null;
+  } | null;
+  steps?: Array<{
+    id?: string;
+    title?: string;
+    status?: string;
+    kind?: string;
+    minutes?: number;
+  }>;
+  notes?: string[];
+};
+
+type PulseAction = {
+  id?: string;
+  label?: string;
+  kind?: string;
+  view?: string | null;
+  cmd?: string[] | null;
+};
+
+type ProjectPulse = {
+  name?: string;
+  kind?: string;
+  git?: {
+    is_repo?: boolean;
+    branch?: string | null;
+    dirty?: boolean;
+    dirty_count?: number;
+    committed?: boolean;
+    ahead?: number | null;
+    behind?: number | null;
+    last_commit?: { hash?: string; subject?: string; when?: string | null } | null;
+    notes?: string[];
+  };
+  publish?: {
+    present?: boolean;
+    finished?: boolean;
+    current_index?: number;
+    total?: number;
+    done_count?: number;
+    current_id?: string | null;
+    current_title?: string | null;
+    minutes_remaining?: number | null;
+  };
+  launch?: {
+    present?: boolean;
+    finished?: boolean;
+    current_index?: number;
+    total?: number;
+    current_title?: string | null;
+  };
+  deploy?: {
+    signal?: string;
+    detail?: string;
+    urls?: string[];
+    last_run_ok?: boolean | null;
+  };
+  tools?: {
+    signet_found?: boolean;
+    orbit_found?: boolean;
+    signet_version?: string | null;
+    orbit_version?: string | null;
+  };
+  scopes_active?: string[];
+  now?: {
+    title?: string;
+    detail?: string;
+    primary?: PulseAction;
+    actions?: PulseAction[];
+  };
+  notes?: string[];
+};
+
 let lastLaunch: LaunchView | null = null;
+let lastPublish: PublishView | null = null;
+let lastPulse: ProjectPulse | null = null;
+let lastDetected: Detected | undefined;
 let lastHuman: HumanSprint | null = null;
 let lastPortal: PortalPlan | null = null;
 let lastSecrets: SecretsPlan | null = null;
@@ -137,7 +229,45 @@ const LAST_PROJECT_KEY = "ship-studio.last-project";
 const RECENT_KEY = "ship-studio.recent-projects";
 const OFFLINE_KEY = "ship-studio.offline";
 const DEPLOY_KEY = "ship-studio.include-deploy";
+const MODE_KEY = "ship-studio.mode";
 const MAX_RECENT = 6;
+
+type StudioMode = "general" | "advanced";
+
+function studioMode(): StudioMode {
+  return localStorage.getItem(MODE_KEY) === "advanced" ? "advanced" : "general";
+}
+
+function publishArgs(extra: string[] = []): string[] {
+  return ["publish", "--mode", studioMode(), "--project", projectPath(), ...extra];
+}
+
+function applyStudioMode(mode: StudioMode, opts?: { rebuild?: boolean }) {
+  localStorage.setItem(MODE_KEY, mode);
+  document.body.dataset.mode = mode;
+  document.querySelectorAll<HTMLButtonElement>(".mode-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mode === mode);
+  });
+  syncDeployToggle();
+  const advancedViews = new Set(["assist", "launch", "portal", "ritual", "tools"]);
+  if (mode === "general" && advancedViews.has(activeViewId)) {
+    setView("dashboard");
+  }
+  if (opts?.rebuild && projectPath()) {
+    void (async () => {
+      const result = await run(publishArgs(["reset"]), { quietHeader: true });
+      if (result?.stdout) {
+        try {
+          applyPublishView(JSON.parse(result.stdout) as PublishView);
+        } catch {
+          /* ignore */
+        }
+      }
+      toast(mode === "general" ? "General mode — minimal publish" : "Advanced mode — full path", "ok");
+      await refreshSessionNow();
+    })();
+  }
+}
 
 const pathEl = () => document.querySelector<HTMLInputElement>("#project-path");
 const outputEl = () => document.querySelector<HTMLPreElement>("#output");
@@ -159,6 +289,12 @@ const ACTION_IDS = [
   "btn-launch-verify",
   "btn-launch-confirm",
   "btn-launch-next",
+  "btn-publish",
+  "btn-publish-related",
+  "btn-publish-open",
+  "btn-publish-verify",
+  "btn-publish-confirm",
+  "btn-publish-next",
   "btn-guide",
   "btn-configure",
   "btn-portal",
@@ -178,6 +314,12 @@ const ACTION_IDS = [
   "btn-clear",
   "btn-reveal",
   "btn-save-args",
+  "btn-assist",
+  "btn-assist-start",
+  "btn-scopes",
+  "btn-scopes-save",
+  "btn-env",
+  "btn-sign-paths",
 ] as const;
 
 let running = false;
@@ -228,7 +370,13 @@ function setProjectUi(on: boolean) {
   document.querySelectorAll<HTMLButtonElement>(".preset").forEach((btn) => {
     btn.disabled = !on || running;
   });
+  const nowP = document.querySelector<HTMLButtonElement>("#now-primary");
+  if (nowP) nowP.disabled = running;
+  const dashOpen = document.querySelector<HTMLButtonElement>("#dash-open");
+  if (dashOpen) dashOpen.disabled = running;
   syncDeployToggle();
+  syncPublishRelated();
+  syncBackToPublish();
 }
 
 function syncDeployToggle() {
@@ -273,6 +421,15 @@ function isTypingTarget(t: EventTarget | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || t.isContentEditable;
 }
 
+function syncOutputMirror() {
+  const mirror = document.querySelector<HTMLPreElement>("#output-focus");
+  const out = outputEl();
+  if (mirror && out) {
+    mirror.textContent = out.textContent ?? "";
+    mirror.scrollTop = mirror.scrollHeight;
+  }
+}
+
 function show(text: string) {
   streamBuf = text;
   const out = outputEl();
@@ -280,6 +437,27 @@ function show(text: string) {
     out.textContent = text;
     out.scrollTop = out.scrollHeight;
   }
+  syncOutputMirror();
+}
+
+type ToastKind = "ok" | "err" | "info";
+
+function toast(message: string, kind: ToastKind = "info", ms = 3200) {
+  const host = document.querySelector<HTMLElement>("#toast-host");
+  if (!host || !message.trim()) return;
+  const el = document.createElement("button");
+  el.type = "button";
+  el.className = `toast ${kind}`;
+  el.setAttribute("role", "status");
+  el.innerHTML = `<span class="toast-mark" aria-hidden="true"></span><p class="toast-msg">${escapeHtml(message)}</p>`;
+  const dismiss = () => {
+    if (el.dataset.leaving === "1") return;
+    el.dataset.leaving = "1";
+    window.setTimeout(() => el.remove(), 170);
+  };
+  el.addEventListener("click", dismiss);
+  host.appendChild(el);
+  window.setTimeout(dismiss, ms);
 }
 
 function appendStream(line: StreamLine) {
@@ -291,6 +469,408 @@ function appendStream(line: StreamLine) {
     out.textContent = streamBuf;
     out.scrollTop = out.scrollHeight;
   }
+  syncOutputMirror();
+}
+
+const VIEW_META: Record<string, { title: string; desc: string }> = {
+  dashboard: {
+    title: "Dashboard",
+    desc: "The repo you’re shipping, and the next human action.",
+  },
+  assist: {
+    title: "Assist",
+    desc: "Checklist overview — Start publish for the live spine.",
+  },
+  publish: {
+    title: "Publish",
+    desc: "Minute spine — Open/Run → Confirm → Next; Related opens detail panels.",
+  },
+  scopes: {
+    title: "Scopes",
+    desc: "Detail panel — Web / API / Desktop / Mobile / Container directories for the current publish step.",
+  },
+  env: {
+    title: "ENV & tokens",
+    desc: "Detail panel — configure, retrieve, create on official dashboards (incl. DB hosts).",
+  },
+  sign: {
+    title: "Sign",
+    desc: "Detail panel — self-sign, official certificates, or store submit portals for this step.",
+  },
+  launch: {
+    title: "Launch",
+    desc: "Companion stepper — prefer Publish for the full minute path.",
+  },
+  portal: {
+    title: "Portal",
+    desc: "Detail panel — human paste sprint, provider entry, markets & container docs.",
+  },
+  ritual: {
+    title: "Ritual",
+    desc: "Detail panel — sign_args / deploy_args in .ship/studio.json.",
+  },
+  tools: {
+    title: "Tools",
+    desc: "Pass-through doctor / sign / deploy / flow — not the primary start.",
+  },
+  output: {
+    title: "Output",
+    desc: "Full console for the active shipctl stream.",
+  },
+};
+
+const RELATED_VIEW_LABELS: Record<string, string> = {
+  scopes: "Open Scopes",
+  env: "Open Env",
+  sign: "Open Sign",
+  portal: "Open Portal",
+  ritual: "Open Ritual",
+  tools: "Open Tools",
+  launch: "Open Launch",
+  dashboard: "Open Dashboard",
+};
+
+let activeViewId = "dashboard";
+
+function publishMidFlight(): boolean {
+  return Boolean(lastPublish?.steps?.length && !lastPublish.finished);
+}
+
+function syncBackToPublish() {
+  const btn = document.querySelector<HTMLButtonElement>("#btn-back-publish");
+  if (!btn) return;
+  const show = publishMidFlight() && activeViewId !== "publish" && Boolean(projectPath());
+  btn.hidden = !show;
+  btn.disabled = !show;
+}
+
+function setView(id: string) {
+  if (!VIEW_META[id]) return;
+  activeViewId = id;
+  document.querySelectorAll<HTMLElement>(".view").forEach((el) => {
+    const on = el.dataset.view === id;
+    el.classList.toggle("active", on);
+    el.hidden = !on;
+  });
+  document.querySelectorAll<HTMLButtonElement>(".nav-item").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.nav === id);
+  });
+  const meta = VIEW_META[id];
+  const title = document.querySelector("#view-title");
+  const desc = document.querySelector("#view-desc");
+  if (title) title.textContent = meta.title;
+  if (desc) {
+    const path = projectPath();
+    desc.textContent = path ? `${projectName(path)} · ${meta.desc}` : meta.desc;
+  }
+  syncProjectIdentity();
+  syncBackToPublish();
+  if (id === "output") syncOutputMirror();
+}
+
+type CmdItem = {
+  id: string;
+  title: string;
+  keywords: string;
+  group: string;
+  run: () => void;
+};
+
+function commandItems(): CmdItem[] {
+  return [
+    {
+      id: "nav-dashboard",
+      title: "Go to Dashboard",
+      keywords: "home overview health",
+      group: "Navigate",
+      run: () => setView("dashboard"),
+    },
+    {
+      id: "nav-publish",
+      title: "Go to Publish",
+      keywords: "publish wizard portal minute ship",
+      group: "Navigate",
+      run: () => setView("publish"),
+    },
+    {
+      id: "nav-assist",
+      title: "Go to Assist",
+      keywords: "wizard fullstack deploy help checklist",
+      group: "Navigate",
+      run: () => setView("assist"),
+    },
+    {
+      id: "nav-scopes",
+      title: "Go to Scopes",
+      keywords: "web api desktop directory",
+      group: "Navigate",
+      run: () => setView("scopes"),
+    },
+    {
+      id: "nav-env",
+      title: "Go to ENV / tokens",
+      keywords: "secrets env put create retrieve",
+      group: "Navigate",
+      run: () => setView("env"),
+    },
+    {
+      id: "nav-sign",
+      title: "Go to Sign",
+      keywords: "self-sign official apple windows play",
+      group: "Navigate",
+      run: () => setView("sign"),
+    },
+    {
+      id: "nav-launch",
+      title: "Go to Launch",
+      keywords: "guided ship release deploy",
+      group: "Navigate",
+      run: () => setView("launch"),
+    },
+    {
+      id: "nav-portal",
+      title: "Go to Portal",
+      keywords: "human secrets oauth paste",
+      group: "Navigate",
+      run: () => setView("portal"),
+    },
+    {
+      id: "nav-ritual",
+      title: "Go to Ritual",
+      keywords: "sign_args deploy_args configure",
+      group: "Navigate",
+      run: () => setView("ritual"),
+    },
+    {
+      id: "nav-tools",
+      title: "Go to Tools",
+      keywords: "doctor sign deploy flow vault",
+      group: "Navigate",
+      run: () => setView("tools"),
+    },
+    {
+      id: "nav-output",
+      title: "Go to Output",
+      keywords: "console log",
+      group: "Navigate",
+      run: () => setView("output"),
+    },
+    {
+      id: "act-open",
+      title: "Open folder",
+      keywords: "project bind",
+      group: "Project",
+      run: () => document.querySelector<HTMLButtonElement>("#btn-open")?.click(),
+    },
+    {
+      id: "act-switch",
+      title: "Switch project",
+      keywords: "recent directory bind",
+      group: "Project",
+      run: () => toggleProjectSwitcher(true),
+    },
+    {
+      id: "act-publish",
+      title: "Refresh Publish portal",
+      keywords: "publish wizard minute",
+      group: "Ship",
+      run: () => {
+        setView("publish");
+        document.querySelector<HTMLButtonElement>("#btn-publish")?.click();
+      },
+    },
+    {
+      id: "act-assist",
+      title: "Refresh deploy assist",
+      keywords: "wizard fullstack",
+      group: "Ship",
+      run: () => {
+        setView("assist");
+        document.querySelector<HTMLButtonElement>("#btn-assist")?.click();
+      },
+    },
+    {
+      id: "act-launch",
+      title: "Refresh Launch plan",
+      keywords: "guided launch",
+      group: "Ship",
+      run: () => {
+        setView("launch");
+        document.querySelector<HTMLButtonElement>("#btn-launch")?.click();
+      },
+    },
+    {
+      id: "act-human",
+      title: "Start Human portal",
+      keywords: "paste polar github secrets",
+      group: "Ship",
+      run: () => {
+        setView("portal");
+        document.querySelector<HTMLButtonElement>("#btn-human")?.click();
+      },
+    },
+    {
+      id: "act-doctor",
+      title: "Run Doctor",
+      keywords: "signet orbit health",
+      group: "Tools",
+      run: () => {
+        setView("tools");
+        document.querySelector<HTMLButtonElement>("#btn-doctor")?.click();
+      },
+    },
+    {
+      id: "act-wizard",
+      title: "Run Wizard",
+      keywords: "offline prep",
+      group: "Tools",
+      run: () => {
+        setView("tools");
+        document.querySelector<HTMLButtonElement>("#btn-wizard")?.click();
+      },
+    },
+    {
+      id: "act-configure",
+      title: "Configure studio.json",
+      keywords: "configure ritual",
+      group: "Tools",
+      run: () => {
+        setView("tools");
+        document.querySelector<HTMLButtonElement>("#btn-configure")?.click();
+      },
+    },
+    {
+      id: "act-sign",
+      title: "Sign",
+      keywords: "signet build",
+      group: "Tools",
+      run: () => {
+        setView("tools");
+        document.querySelector<HTMLButtonElement>("#btn-sign")?.click();
+      },
+    },
+    {
+      id: "act-deploy",
+      title: "Deploy",
+      keywords: "orbit ship network",
+      group: "Tools",
+      run: () => {
+        setView("tools");
+        document.querySelector<HTMLButtonElement>("#btn-deploy")?.click();
+      },
+    },
+    {
+      id: "act-flow-dry",
+      title: "Flow dry-run",
+      keywords: "offline plan",
+      group: "Tools",
+      run: () => {
+        setView("tools");
+        document.querySelector<HTMLButtonElement>("#btn-flow-dry")?.click();
+      },
+    },
+    {
+      id: "act-flow",
+      title: "Run flow",
+      keywords: "sign deploy pipeline",
+      group: "Tools",
+      run: () => {
+        setView("tools");
+        document.querySelector<HTMLButtonElement>("#btn-flow")?.click();
+      },
+    },
+    {
+      id: "act-vault",
+      title: "Export vault",
+      keywords: "km clavis secrets backup",
+      group: "Tools",
+      run: () => {
+        setView("portal");
+        document.querySelector<HTMLButtonElement>("#btn-vault")?.click();
+      },
+    },
+    {
+      id: "act-portal",
+      title: "Load portal steps",
+      keywords: "providers oauth",
+      group: "Ship",
+      run: () => {
+        setView("portal");
+        document.querySelector<HTMLButtonElement>("#btn-portal")?.click();
+      },
+    },
+    {
+      id: "act-secrets",
+      title: "Load secret hints",
+      keywords: "paste hints",
+      group: "Ship",
+      run: () => {
+        setView("portal");
+        document.querySelector<HTMLButtonElement>("#btn-secrets")?.click();
+      },
+    },
+  ];
+}
+
+let cmdkIndex = 0;
+let cmdkFiltered: CmdItem[] = [];
+
+function cmdkOpen() {
+  const root = document.querySelector<HTMLElement>("#cmdk");
+  const input = document.querySelector<HTMLInputElement>("#cmdk-input");
+  if (!root || !input) return;
+  root.hidden = false;
+  input.value = "";
+  cmdkIndex = 0;
+  renderCmdk("");
+  queueMicrotask(() => input.focus());
+}
+
+function cmdkClose() {
+  const root = document.querySelector<HTMLElement>("#cmdk");
+  if (root) root.hidden = true;
+}
+
+function cmdkVisible(): boolean {
+  const root = document.querySelector<HTMLElement>("#cmdk");
+  return !!root && !root.hidden;
+}
+
+function renderCmdk(query: string) {
+  const list = document.querySelector<HTMLElement>("#cmdk-list");
+  if (!list) return;
+  const q = query.trim().toLowerCase();
+  cmdkFiltered = commandItems().filter((item) => {
+    if (!q) return true;
+    const hay = `${item.title} ${item.keywords} ${item.group}`.toLowerCase();
+    return hay.includes(q);
+  });
+  if (cmdkIndex >= cmdkFiltered.length) cmdkIndex = Math.max(0, cmdkFiltered.length - 1);
+  list.innerHTML = cmdkFiltered.length
+    ? cmdkFiltered
+        .map(
+          (item, i) => `<li>
+      <button type="button" class="cmdk-item${i === cmdkIndex ? " active" : ""}" data-cmd-idx="${i}">
+        <span>${escapeHtml(item.title)}</span>
+        <span class="meta">${escapeHtml(item.group)}</span>
+      </button>
+    </li>`,
+        )
+        .join("")
+    : `<li><button type="button" class="cmdk-item" disabled><span>No matches</span></button></li>`;
+  list.querySelectorAll<HTMLButtonElement>(".cmdk-item[data-cmd-idx]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.cmdIdx);
+      runCmdk(idx);
+    });
+  });
+}
+
+function runCmdk(idx: number) {
+  const item = cmdkFiltered[idx];
+  if (!item) return;
+  cmdkClose();
+  item.run();
 }
 
 function prettyMaybe(raw: string): string {
@@ -345,13 +925,757 @@ function projectName(path: string): string {
   return parts[parts.length - 1] || path;
 }
 
+function parentPath(path: string): string {
+  const clean = path.replace(/[\\/]+$/, "");
+  const parts = clean.split(/[\\/]/);
+  if (parts.length < 2) return "";
+  return parts.slice(0, -1).join("/") || clean;
+}
+
+function describeKind(detected?: Detected): string {
+  if (!detected) return "";
+  const bits: string[] = [];
+  if (detected.tauri) bits.push("Desktop (Tauri)");
+  else if (detected.wrangler) bits.push("API / Cloudflare Worker");
+  else if (detected.vercel) bits.push("Web (Vercel)");
+  else if (detected.netlify) bits.push("Web (Netlify)");
+  else if (detected.package_json) bits.push("Node project");
+  if (detected.polar) bits.push("Polar listing");
+  if (detected.github) bits.push("GitHub");
+  if (detected.signet_toml && !detected.tauri) bits.push("Signet");
+  return bits.join(" · ");
+}
+
+function syncProjectIdentity() {
+  const path = projectPath();
+  const bound = Boolean(path);
+  const name = bound ? projectName(path) : "Choose a project";
+  const parent = bound ? parentPath(path) : "Open a folder to start shipping";
+  document.body.classList.toggle("bound", bound);
+
+  const chromeName = document.querySelector("#chrome-name");
+  const chromePath = document.querySelector("#chrome-path");
+  if (chromeName) chromeName.textContent = name;
+  if (chromePath) chromePath.textContent = parent;
+  const chrome = document.querySelector<HTMLButtonElement>("#chrome-project");
+  if (chrome) {
+    chrome.title = bound ? `Switch project · ${path}` : "Open or switch project";
+  }
+
+  const sideName = document.querySelector("#sidebar-project-name");
+  if (sideName) sideName.textContent = bound ? name : "No project";
+  const sideSession = document.querySelector("#sidebar-session");
+  if (sideSession) sideSession.textContent = bound ? name : "No project bound";
+
+  const crumb = document.querySelector<HTMLElement>("#session-crumb");
+  const crumbName = document.querySelector("#crumb-name");
+  const crumbPath = document.querySelector("#crumb-path");
+  if (crumb) crumb.hidden = !bound;
+  if (crumbName) crumbName.textContent = name;
+  if (crumbPath) crumbPath.textContent = path;
+
+  const empty = document.querySelector<HTMLElement>("#session-empty");
+  const boundEl = document.querySelector<HTMLElement>("#session-bound");
+  if (empty) empty.hidden = bound;
+  if (boundEl) boundEl.hidden = !bound;
+  const sessionName = document.querySelector("#session-name");
+  const sessionPath = document.querySelector("#session-path");
+  const sessionKind = document.querySelector("#session-kind");
+  if (sessionName) sessionName.textContent = name;
+  if (sessionPath) sessionPath.textContent = path;
+  if (sessionKind) sessionKind.textContent = describeKind(lastDetected);
+
+  const health = document.querySelector<HTMLElement>("#health");
+  if (health) health.hidden = !bound;
+
+  const nowPrimary = document.querySelector<HTMLButtonElement>("#now-primary");
+  const nowSwitch = document.querySelector<HTMLButtonElement>("#now-switch");
+  if (nowSwitch) nowSwitch.disabled = false;
+  if (nowPrimary) {
+    nowPrimary.disabled = running;
+    if (!bound) {
+      nowPrimary.textContent = "Open folder…";
+      nowPrimary.dataset.pulseId = "open";
+      nowPrimary.dataset.pulseView = "";
+    } else if (lastPulse?.now?.primary?.label) {
+      nowPrimary.textContent = lastPulse.now.primary.label;
+      nowPrimary.dataset.pulseId = lastPulse.now.primary.id ?? "publish_start";
+      nowPrimary.dataset.pulseView = lastPulse.now.primary.view || "publish";
+    } else {
+      nowPrimary.textContent = lastPublish?.finished
+        ? "Review publish"
+        : lastPublish?.current
+          ? "Continue publish"
+          : "Start publish";
+      nowPrimary.dataset.pulseId = "publish_start";
+      nowPrimary.dataset.pulseView = "publish";
+    }
+  }
+}
+
+function applyNow(view: PublishView | null) {
+  // Prefer pulse when available; fall back to publish view titles.
+  if (lastPulse?.now) {
+    applyPulseNow(lastPulse);
+    return;
+  }
+  const title = document.querySelector("#now-title");
+  const detail = document.querySelector("#now-detail");
+  if (!title || !detail) return;
+  const path = projectPath();
+  if (!path) {
+    title.textContent = "Open a project to see what’s next";
+    detail.textContent =
+      "Bind the folder you’re shipping. Then we sequence vendor UIs — you paste, sign, list, and deploy.";
+    return;
+  }
+  if (view?.finished) {
+    title.textContent = "Live check is done for this pass";
+    detail.textContent = `${projectName(path)} finished the publish portal. Switch project or start another pass from Publish.`;
+    return;
+  }
+  const cur = view?.current;
+  if (cur?.title) {
+    const n = (view?.current_index ?? 0) + 1;
+    const total = view?.total ?? 0;
+    const mins = view?.minutes_remaining != null ? ` · ~${view.minutes_remaining} min left` : "";
+    title.textContent = cur.title;
+    detail.textContent = `${cur.detail ?? "Open/Run on the official platform, then Confirm."} (${n}/${total}${mins})`;
+    return;
+  }
+  title.textContent = `Pick up ${projectName(path)}`;
+  detail.textContent =
+    "Start the publish portal — doctor, env, sign, listing, deploy. You finish the vendor UIs; Ship Studio keeps the sequence.";
+}
+
+function applyPulseNow(pulse: ProjectPulse) {
+  const title = document.querySelector("#now-title");
+  const detail = document.querySelector("#now-detail");
+  const primary = document.querySelector<HTMLButtonElement>("#now-primary");
+  const extra = document.querySelector<HTMLElement>("#now-extra");
+  if (title) title.textContent = pulse.now?.title ?? "Ready";
+  if (detail) detail.textContent = pulse.now?.detail ?? "";
+  if (primary) {
+    primary.textContent = pulse.now?.primary?.label ?? "Start publish";
+    primary.dataset.pulseId = pulse.now?.primary?.id ?? "publish_start";
+    primary.dataset.pulseView = pulse.now?.primary?.view || "publish";
+    primary.disabled = running;
+  }
+  if (extra) {
+    const acts = (pulse.now?.actions ?? []).filter((a) => a.id && a.id !== pulse.now?.primary?.id);
+    if (!acts.length) {
+      extra.hidden = true;
+      extra.innerHTML = "";
+    } else {
+      extra.hidden = false;
+      extra.innerHTML = acts
+        .slice(0, 6)
+        .map(
+          (a) =>
+            `<button type="button" data-pulse-action="${escapeHtml(a.id ?? "")}" data-pulse-view="${escapeHtml(a.view ?? "")}">${escapeHtml(a.label ?? a.id ?? "")}</button>`,
+        )
+        .join("");
+      extra.querySelectorAll<HTMLButtonElement>("[data-pulse-action]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          void runPulseAction(btn.dataset.pulseAction ?? "", btn.dataset.pulseView ?? "");
+        });
+      });
+    }
+  }
+}
+
+type StatusItem = {
+  id: string;
+  state: "done" | "active" | "warn" | "blocked" | "idle";
+  icon: string;
+  title: string;
+  detail: string;
+};
+
+function classifyOverall(pulse: ProjectPulse): {
+  state: string;
+  badge: string;
+  title: string;
+  detail: string;
+} {
+  const wantsSignet = (pulse.kind ?? "").toLowerCase().includes("desktop")
+    || (pulse.kind ?? "").toLowerCase().includes("tauri");
+  const signet = !!pulse.tools?.signet_found;
+  const orbit = !!pulse.tools?.orbit_found;
+  const deployOk =
+    pulse.deploy?.last_run_ok === true ||
+    pulse.deploy?.signal === "last_run_ok" ||
+    pulse.deploy?.signal === "orbit_deployed" ||
+    (pulse.deploy?.urls?.length ?? 0) > 0;
+  const linked =
+    pulse.deploy?.signal === "vercel_linked" ||
+    pulse.deploy?.signal === "orbit_configured";
+  const localOnly = pulse.deploy?.signal === "wrangler_local";
+  const pub = pulse.publish;
+  const launch = pulse.launch;
+  const stepId = (pub?.current_id || launch?.current_title || "").toLowerCase();
+  const midWizard =
+    (pub?.present && !pub.finished) || (launch?.present && !launch.finished);
+
+  // Mid-wizard / prior Cloudflare·Vercel deploy never hard-block on Orbit.
+  const toolsBlocked =
+    wantsSignet && (!signet || (!orbit && !linked && !deployOk && !midWizard));
+
+  if (toolsBlocked) {
+    return {
+      state: "blocked",
+      badge: "Blocked",
+      title: "Tools missing",
+      detail: "Signet and/or Orbit not on PATH — run Doctor before shipping desktop.",
+    };
+  }
+  if (deployOk) {
+    return {
+      state: "deployed",
+      badge: "Deployed",
+      title:
+        pulse.deploy?.signal === "orbit_deployed"
+          ? "Already live (Orbit)"
+          : "Already deployed",
+      detail:
+        pulse.deploy?.urls?.[0] ||
+        pulse.deploy?.detail ||
+        "Prior successful deploy — redeploy only if you intend to.",
+    };
+  }
+  if (linked && !midWizard) {
+    return {
+      state: "ready",
+      badge: "Linked",
+      title: "Provider linked",
+      detail: pulse.deploy?.detail || "Configured locally — deploy when you need a new release.",
+    };
+  }
+  if (localOnly && !midWizard) {
+    return {
+      state: "ready",
+      badge: "Local only",
+      title: "Wrangler local state",
+      detail: "Dev/miniflare cache — not proof of a remote Workers deploy.",
+    };
+  }
+  if (
+    midWizard &&
+    (stepId.includes("list") ||
+      stepId.includes("polar") ||
+      stepId.includes("paste") ||
+      stepId.includes("env") ||
+      stepId.includes("secret"))
+  ) {
+    return {
+      state: "pending",
+      badge: "Pending submission",
+      title: pub?.current_title || launch?.current_title || "Human gate open",
+      detail: "Finish this step on the vendor UI, then Confirm → Next.",
+    };
+  }
+  if (midWizard) {
+    return {
+      state: "progress",
+      badge: "In progress",
+      title: pub?.current_title || launch?.current_title || "Wizard in flight",
+      detail: pub?.present
+        ? `Publish ${(pub.current_index ?? 0) + 1}/${pub.total ?? 0}`
+        : `Launch ${(launch?.current_index ?? 0) + 1}/${launch?.total ?? 0}`,
+    };
+  }
+  if (pulse.git?.dirty) {
+    return {
+      state: "warn",
+      badge: "Dirty tree",
+      title: `${pulse.git.dirty_count ?? "?"} uncommitted change(s)`,
+      detail: "Commit or stash when you care about provenance before live deploy.",
+    };
+  }
+  return {
+    state: "ready",
+    badge: "Ready",
+    title: "Ready to ship",
+    detail: "Start the publish portal when you are.",
+  };
+}
+
+function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
+  const items: StatusItem[] = [];
+  const signet = !!pulse.tools?.signet_found;
+  const orbit = !!pulse.tools?.orbit_found;
+  const linked =
+    pulse.deploy?.signal === "orbit_deployed" ||
+    pulse.deploy?.signal === "last_run_ok" ||
+    pulse.deploy?.signal === "vercel_linked" ||
+    pulse.deploy?.signal === "orbit_configured" ||
+    (pulse.deploy?.urls?.length ?? 0) > 0;
+  const wantsSignet = (pulse.kind ?? "").toLowerCase().includes("desktop")
+    || (pulse.kind ?? "").toLowerCase().includes("tauri");
+  if (signet && orbit) {
+    items.push({
+      id: "tools",
+      state: "done",
+      icon: "✓",
+      title: "Tools ready",
+      detail: "Signet + Orbit on PATH",
+    });
+  } else if (!wantsSignet && linked) {
+    items.push({
+      id: "tools",
+      state: "done",
+      icon: "✓",
+      title: "Worker tooling OK",
+      detail: "Prior live deploy evidence — Orbit optional for this stack",
+    });
+  } else if (!wantsSignet) {
+    items.push({
+      id: "tools",
+      state: "idle",
+      icon: "○",
+      title: "Orbit optional",
+      detail: `${signet ? "Signet ok" : "Signet n/a"} · ${orbit ? "Orbit ok" : "Orbit not required for Workers"}`,
+    });
+  } else {
+    items.push({
+      id: "tools",
+      state: "blocked",
+      icon: "!",
+      title: "Tools incomplete",
+      detail: `${signet ? "Signet ok" : "Signet missing"} · ${orbit ? "Orbit ok" : "Orbit missing"}`,
+    });
+  }
+
+  const git = pulse.git;
+  if (!git?.is_repo) {
+    items.push({
+      id: "git",
+      state: "idle",
+      icon: "○",
+      title: "No git repo",
+      detail: "Optional — status is local-folder only",
+    });
+  } else if (git.dirty) {
+    items.push({
+      id: "git",
+      state: "warn",
+      icon: "!",
+      title: "Uncommitted changes",
+      detail: `${git.dirty_count ?? "?"} dirty on ${git.branch ?? "branch"}`,
+    });
+  } else {
+    items.push({
+      id: "git",
+      state: "done",
+      icon: "✓",
+      title: "Git clean",
+      detail: git.last_commit
+        ? `${git.last_commit.hash} — ${git.last_commit.subject}`
+        : (git.branch ?? "clean tree"),
+    });
+  }
+
+  const pub = pulse.publish;
+  const launch = pulse.launch;
+  if (pub?.present && !pub.finished) {
+    items.push({
+      id: "ship",
+      state: "active",
+      icon: "→",
+      title: "Publish in progress",
+      detail: `${pub.current_title ?? "Step"} · ${(pub.current_index ?? 0) + 1}/${pub.total ?? 0}`,
+    });
+  } else if (pub?.finished) {
+    items.push({
+      id: "ship",
+      state: "done",
+      icon: "✓",
+      title: "Publish pass finished",
+      detail: "Live check confirmed for this pass",
+    });
+  } else if (launch?.present && !launch.finished) {
+    items.push({
+      id: "ship",
+      state: "active",
+      icon: "→",
+      title: "Launch in progress",
+      detail: `${launch.current_title ?? "Step"} · ${(launch.current_index ?? 0) + 1}/${launch.total ?? 0}`,
+    });
+  } else {
+    items.push({
+      id: "ship",
+      state: "idle",
+      icon: "○",
+      title: "Ship not started",
+      detail: "Open Publish when you are ready",
+    });
+  }
+
+  const stepHint = (
+    pub?.current_id ||
+    pub?.current_title ||
+    launch?.current_title ||
+    ""
+  ).toLowerCase();
+  const pendingSubmission =
+    ((pub?.present && !pub.finished) || (launch?.present && !launch.finished)) &&
+    (stepHint.includes("list") ||
+      stepHint.includes("polar") ||
+      stepHint.includes("paste") ||
+      stepHint.includes("env") ||
+      stepHint.includes("secret") ||
+      stepHint.includes("oauth"));
+
+  if (pendingSubmission) {
+    items.push({
+      id: "submit",
+      state: "warn",
+      icon: "…",
+      title: "Pending submission",
+      detail: "Human gate — finish on the official platform, then Confirm",
+    });
+  } else if (pub?.finished || pulse.deploy?.last_run_ok) {
+    items.push({
+      id: "submit",
+      state: "done",
+      icon: "✓",
+      title: "Submission clear",
+      detail: "No open paste/listing gate in the current plan",
+    });
+  } else {
+    items.push({
+      id: "submit",
+      state: "idle",
+      icon: "○",
+      title: "No submission gate yet",
+      detail: "Appears when env, listing, or OAuth is the current step",
+    });
+  }
+
+  const dep = pulse.deploy;
+  const live =
+    dep?.last_run_ok === true ||
+    dep?.signal === "last_run_ok" ||
+    dep?.signal === "orbit_deployed" ||
+    (dep?.urls?.length ?? 0) > 0;
+  if (live) {
+    items.push({
+      id: "deploy",
+      state: "done",
+      icon: "✓",
+      title: "Already live",
+      detail: dep?.urls?.[0] || dep?.detail || "Prior successful deploy — skip redundant ship",
+    });
+  } else if (dep?.signal === "vercel_linked" || dep?.signal === "orbit_configured") {
+    items.push({
+      id: "deploy",
+      state: "active",
+      icon: "◇",
+      title: "Provider linked",
+      detail: dep.detail || "Configured — deploy when you need a new release",
+    });
+  } else if (dep?.signal === "wrangler_local") {
+    items.push({
+      id: "deploy",
+      state: "idle",
+      icon: "○",
+      title: "Local Wrangler only",
+      detail: "Dev/miniflare state — not a remote Workers deploy",
+    });
+  } else {
+    items.push({
+      id: "deploy",
+      state: "idle",
+      icon: "○",
+      title: "Not deployed yet",
+      detail: "No Orbit summary or last-run deploy signal",
+    });
+  }
+
+  return items;
+}
+
+function applyStatusBar(pulse: ProjectPulse | null) {
+  const bar = document.querySelector<HTMLElement>("#status-bar");
+  const badge = document.querySelector<HTMLElement>("#status-badge");
+  const overall = document.querySelector("#status-overall");
+  const detail = document.querySelector("#status-overall-detail");
+  const list = document.querySelector("#status-check");
+  if (!bar || !list) return;
+  if (!pulse || !projectPath()) {
+    bar.hidden = true;
+    list.innerHTML = "";
+    return;
+  }
+  bar.hidden = false;
+  const head = classifyOverall(pulse);
+  if (badge) {
+    badge.textContent = head.badge;
+    badge.dataset.state = head.state === "warn" ? "pending" : head.state;
+  }
+  if (overall) overall.textContent = head.title;
+  if (detail) detail.textContent = head.detail;
+  const items = buildStatusChecklist(pulse);
+  list.innerHTML = items
+    .map(
+      (it) => `<li data-state="${it.state}">
+        <span class="ico" aria-hidden="true">${escapeHtml(it.icon)}</span>
+        <div class="check-body"><strong>${escapeHtml(it.title)}</strong><span>${escapeHtml(it.detail)}</span></div>
+      </li>`,
+    )
+    .join("");
+}
+
+function applyPulseHealth(pulse: ProjectPulse) {
+  const signetOk = !!pulse.tools?.signet_found;
+  const orbitOk = !!pulse.tools?.orbit_found;
+  setPill("pill-signet", signetOk ? "ok" : "bad", signetOk ? "Found" : "Missing");
+  setPill("pill-orbit", orbitOk ? "ok" : "bad", orbitOk ? "Found" : "Missing");
+  const metaSignet = document.querySelector("#meta-signet");
+  const metaOrbit = document.querySelector("#meta-orbit");
+  if (metaSignet) {
+    metaSignet.textContent = signetOk
+      ? pulse.tools?.signet_version ?? "on PATH"
+      : "Not on PATH (SIGNET_PATH)";
+  }
+  if (metaOrbit) {
+    metaOrbit.textContent = orbitOk
+      ? pulse.tools?.orbit_version ?? "on PATH"
+      : "Not on PATH (ORBIT_PATH)";
+  }
+
+  const git = pulse.git;
+  if (!git?.is_repo) {
+    setPill("pill-git", "muted", "No repo");
+    const meta = document.querySelector("#meta-git");
+    if (meta) meta.textContent = "Not a git repository";
+  } else if (git.dirty) {
+    setPill("pill-git", "bad", `${git.dirty_count ?? "?"} dirty`);
+    const meta = document.querySelector("#meta-git");
+    const branch = git.branch ? `${git.branch} · ` : "";
+    const last = git.last_commit
+      ? `${git.last_commit.hash} — ${git.last_commit.subject}`
+      : "uncommitted changes";
+    if (meta) meta.textContent = `${branch}${last}`;
+  } else {
+    setPill("pill-git", "ok", "Clean");
+    const meta = document.querySelector("#meta-git");
+    const branch = git.branch ? `${git.branch} · ` : "";
+    const last = git.last_commit
+      ? `${git.last_commit.hash} — ${git.last_commit.subject}`
+      : "clean tree";
+    const ab =
+      git.ahead != null || git.behind != null
+        ? ` · ↑${git.ahead ?? 0} ↓${git.behind ?? 0}`
+        : "";
+    if (meta) meta.textContent = `${branch}${last}${ab}`;
+  }
+
+  const dep = pulse.deploy;
+  const signal = dep?.signal ?? "unknown";
+  if (
+    dep?.last_run_ok === true ||
+    signal === "last_run_ok" ||
+    signal === "orbit_deployed" ||
+    (dep?.urls?.length ?? 0) > 0
+  ) {
+    setPill("pill-deploy", "ok", "Live");
+  } else if (signal === "vercel_linked" || signal === "orbit_configured") {
+    setPill("pill-deploy", "ok", "Linked");
+  } else if (signal === "wrangler_local") {
+    setPill("pill-deploy", "muted", "Local");
+  } else {
+    setPill("pill-deploy", "muted", "None");
+  }
+  const metaDep = document.querySelector("#meta-deploy");
+  if (metaDep) metaDep.textContent = dep?.detail ?? "No local deploy signal";
+}
+
+async function openRelatedStudioView(view: string): Promise<boolean> {
+  const id = view.trim();
+  if (!id || !VIEW_META[id] || id === "publish") return false;
+  setView(id);
+  const project = projectPath();
+  if (!project) return true;
+  if (id === "scopes") {
+    applyScopes((await loadJsonCmd(["scopes", "--project", project])) as ScopePlan | null);
+  } else if (id === "env") {
+    applyEnv((await loadJsonCmd(["env", "--project", project])) as EnvPortal | null);
+  } else if (id === "sign") {
+    applySignPaths((await loadJsonCmd(["sign-paths", "--project", project])) as SignPortal | null);
+  } else if (id === "portal") {
+    document.querySelector<HTMLButtonElement>("#btn-portal")?.click();
+  } else if (id === "launch") {
+    await refreshLaunch();
+  } else if (id === "tools") {
+    /* stay — doctor available on Tools */
+  } else if (id === "dashboard") {
+    await refreshSessionNow();
+  }
+  return true;
+}
+
+function syncPublishRelated() {
+  const btn = document.querySelector<HTMLButtonElement>("#btn-publish-related");
+  if (!btn) return;
+  const related = (lastPublish?.current?.desktop_view ?? "").trim();
+  const label = RELATED_VIEW_LABELS[related];
+  const show = Boolean(label) && !lastPublish?.finished;
+  btn.hidden = !show;
+  btn.disabled = !show || running || !projectPath();
+  if (label) {
+    btn.textContent = label;
+    btn.dataset.relatedView = related;
+  } else {
+    delete btn.dataset.relatedView;
+  }
+}
+
+async function runPulseAction(id: string, view: string) {
+  if (id === "git_status") {
+    await showGitStatus();
+    return;
+  }
+  if (id === "open") {
+    document.querySelector<HTMLButtonElement>("#btn-open")?.click();
+    return;
+  }
+  if (id === "doctor") {
+    // Stay on current surface — Tools is a detail panel, not the start.
+    void run(["doctor", "--project", projectPath()], { step: "doctor" });
+    return;
+  }
+  const target = view || "publish";
+  setView(target);
+  if (target === "publish") {
+    await refreshPublish();
+    return;
+  }
+  if (target === "launch") {
+    await refreshLaunch();
+    return;
+  }
+  if (target === "env") {
+    applyEnv((await loadJsonCmd(["env", "--project", projectPath()])) as EnvPortal | null);
+    return;
+  }
+  if (target === "scopes") {
+    applyScopes((await loadJsonCmd(["scopes", "--project", projectPath()])) as ScopePlan | null);
+    return;
+  }
+  if (target === "tools") {
+    void run(["doctor", "--project", projectPath()], { step: "doctor" });
+  }
+}
+
+async function showGitStatus() {
+  const project = projectPath();
+  if (!project) return;
+  setView("output");
+  try {
+    const result = await invoke<CmdResult>("run_git", {
+      project,
+      args: ["status", "-sb"],
+    });
+    const log = await invoke<CmdResult>("run_git", {
+      project,
+      args: ["log", "-3", "--oneline"],
+    });
+    show(
+      `git status -sb · exit ${result.code}\n\n${result.stdout || result.stderr}\n\ngit log -3 --oneline\n\n${log.stdout || log.stderr}`,
+    );
+  } catch (e) {
+    show(String(e));
+  }
+}
+
+function applyPulse(pulse: ProjectPulse | null) {
+  lastPulse = pulse;
+  if (!pulse) {
+    applyNow(null);
+    return;
+  }
+  if (pulse.kind) {
+    const sessionKind = document.querySelector("#session-kind");
+    if (sessionKind) sessionKind.textContent = pulse.kind;
+  }
+  applyPulseHealth(pulse);
+  applyStatusBar(pulse);
+  applyPulseNow(pulse);
+  syncProjectIdentity();
+}
+
+async function refreshSessionNow() {
+  const path = projectPath();
+  if (!path) {
+    lastPublish = null;
+    lastPulse = null;
+    applyNow(null);
+    applyStatusBar(null);
+    syncProjectIdentity();
+    return;
+  }
+  const pulse = (await loadJsonCmd(["pulse", "--project", path])) as ProjectPulse | null;
+  if (pulse) {
+    applyPulse(pulse);
+    return;
+  }
+  // Fallback if pulse unavailable
+  const view = (await loadJsonCmd(publishArgs())) as PublishView | null;
+  if (view?.steps?.length) lastPublish = view;
+  applyNow(lastPublish);
+  syncProjectIdentity();
+}
+
 async function setTitle(path: string | null) {
+  const name = path ? projectName(path) : "No project";
+  syncProjectIdentity();
   try {
     const win = getCurrentWindow();
-    await win.setTitle(path ? `Ship Studio — ${projectName(path)}` : "Ship Studio");
+    await win.setTitle(path ? `Ship Studio — ${name}` : "Ship Studio");
   } catch {
     /* ignore in browser preview */
   }
+}
+
+async function refreshMaxIcon() {
+  const btn = document.querySelector<HTMLButtonElement>("#win-max");
+  const icon = document.querySelector("#win-max-icon");
+  if (!btn || !icon) return;
+  try {
+    const maxed = await getCurrentWindow().isMaximized();
+    btn.title = maxed ? "Restore" : "Maximize";
+    btn.setAttribute("aria-label", btn.title);
+    icon.innerHTML = maxed
+      ? '<path d="M3.2 4.2h5.2v5.2H3.2z" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M4.6 2.6h5.2v5.2" stroke="currentColor" stroke-width="1.2" fill="none"/>'
+      : '<rect x="2.2" y="2.2" width="7.6" height="7.6" rx="1.1" stroke="currentColor" stroke-width="1.2" fill="none"/>';
+  } catch {
+    /* ignore */
+  }
+}
+
+function wireWindowChrome() {
+  document.querySelector("#win-min")?.addEventListener("click", () => {
+    void getCurrentWindow().minimize();
+  });
+  document.querySelector("#win-max")?.addEventListener("click", () => {
+    void getCurrentWindow()
+      .toggleMaximize()
+      .then(() => refreshMaxIcon());
+  });
+  document.querySelector("#win-close")?.addEventListener("click", () => {
+    void getCurrentWindow().close();
+  });
+  document.querySelector(".titlebar")?.addEventListener("dblclick", (ev) => {
+    if ((ev.target as HTMLElement).closest(".window-controls")) return;
+    void getCurrentWindow()
+      .toggleMaximize()
+      .then(() => refreshMaxIcon());
+  });
+  void refreshMaxIcon();
+  void getCurrentWindow().onResized(() => {
+    void refreshMaxIcon();
+  });
 }
 
 function loadRecent(): string[] {
@@ -373,43 +1697,333 @@ function saveRecent(path: string) {
 
 function renderRecent(list: string[]) {
   const host = document.querySelector<HTMLElement>("#recent-list");
-  if (!host) return;
+  const dash = document.querySelector<HTMLElement>("#dash-recents");
   const current = projectPath();
   const others = list.filter((p) => p !== current);
-  if (others.length === 0) {
-    host.hidden = true;
-    host.innerHTML = "";
-    return;
-  }
-  host.hidden = false;
-  host.innerHTML = others
+  const html = others
     .map(
       (p) =>
         `<button type="button" data-recent="${escapeHtml(p)}" title="${escapeHtml(p)}">${escapeHtml(projectName(p))}</button>`,
     )
     .join("");
-  host.querySelectorAll<HTMLButtonElement>("button[data-recent]").forEach((btn) => {
+  if (host) {
+    if (others.length === 0) {
+      host.hidden = true;
+      host.innerHTML = "";
+    } else {
+      host.hidden = false;
+      host.innerHTML = html;
+      host.querySelectorAll<HTMLButtonElement>("button[data-recent]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const p = btn.getAttribute("data-recent");
+          if (p) void bindProject(p, true);
+        });
+      });
+    }
+  }
+  if (dash) {
+    if (others.length === 0 && current) {
+      dash.hidden = true;
+      dash.innerHTML = "";
+    } else {
+      const show = list.filter((p) => p !== current);
+      dash.hidden = show.length === 0;
+      dash.innerHTML = show
+        .map(
+          (p) =>
+            `<button type="button" data-recent="${escapeHtml(p)}" title="${escapeHtml(p)}">${escapeHtml(projectName(p))}</button>`,
+        )
+        .join("");
+      dash.querySelectorAll<HTMLButtonElement>("button[data-recent]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const p = btn.getAttribute("data-recent");
+          if (p) void bindProject(p, true);
+        });
+      });
+    }
+  }
+  renderSwitcher(list);
+}
+
+function toggleProjectSwitcher(force?: boolean) {
+  const el = document.querySelector<HTMLElement>("#project-switcher");
+  if (!el) return;
+  if (typeof force === "boolean") el.hidden = !force;
+  else el.hidden = !el.hidden;
+  if (!el.hidden) renderSwitcher(loadRecent());
+}
+
+function renderSwitcher(list: string[]) {
+  const host = document.querySelector<HTMLElement>("#switcher-list");
+  if (!host) return;
+  const current = projectPath();
+  const items = list.length ? list : [];
+  host.innerHTML = items.length
+    ? items
+        .map((p) => {
+          const on = p === current ? " active" : "";
+          return `<button type="button" class="switcher-item${on}" data-switch="${escapeHtml(p)}">${escapeHtml(projectName(p))}<span>${escapeHtml(p)}</span></button>`;
+        })
+        .join("")
+    : `<p class="detail empty-hint">No recents yet — Open folder.</p>`;
+  host.querySelectorAll<HTMLButtonElement>("[data-switch]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const p = btn.getAttribute("data-recent");
+      const p = btn.getAttribute("data-switch");
+      toggleProjectSwitcher(false);
       if (p) void bindProject(p, true);
+    });
+  });
+}
+
+type ScopePlan = {
+  scopes?: Array<{
+    id?: string;
+    kind?: string;
+    label?: string;
+    relative?: string;
+    provider?: string | null;
+    signals?: string[];
+  }>;
+  active?: string[];
+};
+
+type AssistPlan = {
+  sign_path?: string;
+  steps?: Array<{
+    id?: string;
+    title?: string;
+    detail?: string;
+    view?: string;
+    ready?: boolean;
+  }>;
+};
+
+type EnvPortal = {
+  actions?: Array<{
+    id?: string;
+    kind?: string;
+    title?: string;
+    detail?: string;
+    entry_url?: string | null;
+    put_cli?: string[] | null;
+    provider?: string | null;
+    name?: string | null;
+  }>;
+};
+
+type SignPortal = {
+  recommended?: string;
+  paths?: Array<{
+    id?: string;
+    kind?: string;
+    title?: string;
+    detail?: string;
+    entry_url?: string | null;
+    run?: string[] | null;
+  }>;
+};
+
+async function loadJsonCmd(args: string[], opts?: { silent?: boolean }): Promise<unknown | null> {
+  const result = await run(args, { quietHeader: true, silent: opts?.silent !== false });
+  if (!result?.ok || !result.stdout) return null;
+  try {
+    return JSON.parse(result.stdout);
+  } catch {
+    return null;
+  }
+}
+
+function applyAssist(plan: AssistPlan | null) {
+  const list = document.querySelector("#assist-steps");
+  const hint = document.querySelector("#assist-hint");
+  if (!list) return;
+  if (hint && plan?.sign_path) {
+    hint.textContent = `Signing path: ${plan.sign_path}. Prefer Start publish — detail Open jumps are optional panels.`;
+  }
+  const steps = plan?.steps ?? [];
+  list.innerHTML = steps.length
+    ? steps
+        .map(
+          (s) => `<li class="portal-step">
+        <div class="meta">
+          <div class="title"><span class="kind">${s.ready ? "ready" : "todo"}</span>${escapeHtml(s.title ?? "")}</div>
+          <p class="detail">${escapeHtml(s.detail ?? "")}</p>
+        </div>
+        <div class="btns">
+          <button type="button" class="assist-go" data-view="${escapeHtml(s.view ?? "dashboard")}">Detail</button>
+        </div>
+      </li>`,
+        )
+        .join("")
+    : `<li class="portal-step"><div class="meta"><p class="detail empty-hint">Refresh assist after binding a project — or Start publish.</p></div></li>`;
+  list.querySelectorAll<HTMLButtonElement>(".assist-go").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const view = btn.getAttribute("data-view");
+      if (view) setView(view);
+      if (view === "publish") document.querySelector<HTMLButtonElement>("#btn-publish")?.click();
+      if (view === "launch") document.querySelector<HTMLButtonElement>("#btn-launch")?.click();
+      if (view === "env") document.querySelector<HTMLButtonElement>("#btn-env")?.click();
+      if (view === "sign") document.querySelector<HTMLButtonElement>("#btn-sign-paths")?.click();
+      if (view === "scopes") document.querySelector<HTMLButtonElement>("#btn-scopes")?.click();
+      if (view === "portal") document.querySelector<HTMLButtonElement>("#btn-portal")?.click();
+      if (publishMidFlight() && view && view !== "publish") {
+        toast("Detail panel — use Back to Publish when done", "info");
+      }
+    });
+  });
+}
+
+function applyScopes(plan: ScopePlan | null) {
+  const grid = document.querySelector("#scope-grid");
+  if (!grid) return;
+  const scopes = plan?.scopes ?? [];
+  const active = new Set(plan?.active ?? []);
+  grid.innerHTML = scopes.length
+    ? scopes
+        .map((s) => {
+          const id = s.id ?? "";
+          const on = active.has(id) ? "checked" : "";
+          return `<label class="scope-card">
+            <input type="checkbox" data-scope-id="${escapeHtml(id)}" ${on} />
+            <div>
+              <strong>${escapeHtml(s.label ?? id)}</strong>
+              <span>${escapeHtml(s.kind ?? "")} · ${escapeHtml(s.relative ?? ".")}${
+                s.provider ? ` · ${escapeHtml(s.provider)}` : ""
+              }</span>
+            </div>
+          </label>`;
+        })
+        .join("")
+    : `<p class="detail empty-hint">No scopes detected.</p>`;
+}
+
+async function saveScopes() {
+  const ids = Array.from(
+    document.querySelectorAll<HTMLInputElement>("[data-scope-id]:checked"),
+  ).map((el) => el.dataset.scopeId ?? "");
+  if (!ids.length) {
+    show("Select at least one scope.");
+    toast("Select at least one scope", "err");
+    return;
+  }
+  const result = await run(
+    ["scopes", "--project", projectPath(), "set", "--ids", ids.join(",")],
+    { quietHeader: true },
+  );
+  if (result?.stdout) {
+    try {
+      applyScopes(JSON.parse(result.stdout) as ScopePlan);
+    } catch {
+      /* ignore */
+    }
+  }
+  if (result?.ok) {
+    if (publishMidFlight()) {
+      setView("publish");
+      toast("Scopes saved — Confirm on Publish", "ok");
+    } else {
+      toast("Scopes saved", "ok");
+    }
+  }
+}
+
+function applyEnv(plan: EnvPortal | null) {
+  const list = document.querySelector("#env-actions");
+  if (!list) return;
+  const actions = plan?.actions ?? [];
+  list.innerHTML = actions.length
+    ? actions
+        .map((a) => {
+          const url = a.entry_url ?? "";
+          const cmd = (a.put_cli ?? []).join(" ");
+          const put =
+            a.kind === "retrieve" && a.provider && a.name
+              ? `<button type="button" class="env-put" data-provider="${escapeHtml(a.provider)}" data-name="${escapeHtml(a.name)}">Put</button>`
+              : "";
+          return `<li class="portal-step">
+            <div class="meta">
+              <div class="title"><span class="kind">${escapeHtml(a.kind ?? "")}</span>${escapeHtml(a.title ?? "")}</div>
+              <p class="detail">${escapeHtml(a.detail ?? "")}${cmd ? ` · ${escapeHtml(cmd)}` : ""}</p>
+            </div>
+            <div class="btns">
+              <button type="button" class="env-open" data-url="${escapeHtml(url)}" ${url ? "" : "disabled"}>Open</button>
+              ${put}
+            </div>
+          </li>`;
+        })
+        .join("")
+    : `<li class="portal-step"><div class="meta"><p class="detail empty-hint">Load env portal.</p></div></li>`;
+  list.querySelectorAll<HTMLButtonElement>(".env-open").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-url");
+      if (url) await openUrl(url);
+    });
+  });
+  list.querySelectorAll<HTMLButtonElement>(".env-put").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const provider = btn.getAttribute("data-provider");
+      const name = btn.getAttribute("data-name");
+      if (!provider || !name) return;
+      void run(["env", "--project", projectPath(), "--provider", provider, "--put", name]);
+    });
+  });
+}
+
+function applySignPaths(plan: SignPortal | null) {
+  const list = document.querySelector("#sign-paths");
+  const hint = document.querySelector("#sign-hint");
+  if (!list) return;
+  if (hint && plan?.recommended) {
+    const hasSubmit = (plan.paths ?? []).some((p) => p.kind === "submit");
+    hint.textContent = hasSubmit
+      ? `Recommended: ${plan.recommended.split("_").join(" ")}. Official = certificates; Submit = store review — confirm each separately.`
+      : `Recommended: ${plan.recommended.split("_").join(" ")}. Self-sign is local; official stays on vendor UIs.`;
+  }
+  const paths = plan?.paths ?? [];
+  // Show submit paths after official certs for clearer dogfood order.
+  const ordered = [...paths].sort((a, b) => {
+    const rank = (k: string | undefined) =>
+      k === "self" ? 0 : k === "official" ? 1 : k === "submit" ? 2 : 3;
+    return rank(a.kind) - rank(b.kind);
+  });
+  list.innerHTML = ordered.length
+    ? ordered
+        .map((p) => {
+          const url = p.entry_url ?? "";
+          const runCmd = (p.run ?? []).join(" ");
+          const kind = p.kind ?? "";
+          return `<li class="portal-step">
+            <div class="meta">
+              <div class="title"><span class="kind kind-${escapeHtml(kind)}">${escapeHtml(kind)}</span>${escapeHtml(p.title ?? "")}</div>
+              <p class="detail">${escapeHtml(p.detail ?? "")}${runCmd ? ` · ${escapeHtml(runCmd)}` : ""}</p>
+            </div>
+            <div class="btns">
+              <button type="button" class="sign-open" data-url="${escapeHtml(url)}" ${url ? "" : "disabled"}>Open vendor</button>
+            </div>
+          </li>`;
+        })
+        .join("")
+    : `<li class="portal-step"><div class="meta"><p class="detail empty-hint">Load signing paths.</p></div></li>`;
+  list.querySelectorAll<HTMLButtonElement>(".sign-open").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-url");
+      if (url) await openUrl(url);
     });
   });
 }
 
 function applyPortalPlan(plan: PortalPlan | null) {
   lastPortal = plan;
-  const panel = document.querySelector<HTMLElement>("#portal-panel");
   const list = document.querySelector<HTMLElement>("#portal-steps");
   const filters = document.querySelector<HTMLElement>("#provider-filters");
-  if (!panel || !list || !filters) return;
+  if (!list || !filters) return;
   if (!plan?.steps?.length) {
-    panel.hidden = true;
-    list.innerHTML = "";
+    list.innerHTML = `<li class="portal-step"><div class="meta"><p class="detail empty-hint">Load portal to see provider entry steps.</p></div></li>`;
     filters.hidden = true;
     filters.innerHTML = "";
     return;
   }
-  panel.hidden = false;
+  setView("portal");
   const providers = plan.providers ?? [];
   filters.hidden = providers.length <= 1;
   filters.innerHTML = [
@@ -490,9 +2104,8 @@ async function loadSecrets() {
     lastSecrets = plan;
     const block = document.querySelector<HTMLElement>("#secrets-block");
     const list = document.querySelector<HTMLElement>("#secrets-steps");
-    const panel = document.querySelector<HTMLElement>("#portal-panel");
-    if (!block || !list || !panel) return;
-    panel.hidden = false;
+    if (!block || !list) return;
+    setView("portal");
     if (!plan.hints?.length) {
       block.hidden = true;
       list.innerHTML = "";
@@ -544,16 +2157,14 @@ async function loadSecrets() {
 
 function applyHumanSprint(sprint: HumanSprint | null) {
   lastHuman = sprint;
-  const panel = document.querySelector<HTMLElement>("#human-panel");
   const list = document.querySelector<HTMLElement>("#human-queue");
   const hint = document.querySelector<HTMLElement>("#human-hint");
-  if (!panel || !list) return;
+  if (!list) return;
   if (!sprint?.put_queue?.length && !sprint?.open_order?.length) {
-    panel.hidden = true;
-    list.innerHTML = "";
+    list.innerHTML = `<li class="portal-step"><div class="meta"><p class="detail empty-hint">Start a human sprint to build the paste queue.</p></div></li>`;
     return;
   }
-  panel.hidden = false;
+  setView("portal");
   if (hint && sprint.minutes_hint) hint.textContent = sprint.minutes_hint;
   const queue = sprint.put_queue ?? [];
   list.innerHTML = queue
@@ -621,19 +2232,117 @@ async function runHumanPortal(opts?: { openSources?: boolean }) {
   }
 }
 
+function applyPublishView(view: PublishView | null) {
+  lastPublish = view;
+  const currentEl = document.querySelector<HTMLElement>("#publish-current");
+  const list = document.querySelector<HTMLElement>("#publish-steps");
+  const hint = document.querySelector<HTMLElement>("#publish-hint");
+  const mins = document.querySelector<HTMLElement>("#publish-minutes");
+  if (!currentEl || !list) return;
+  if (!view?.steps?.length) {
+    currentEl.innerHTML =
+      '<p class="detail empty-hint">Refresh Publish to build the adaptive plan for this repo.</p>';
+    list.innerHTML = "";
+    if (mins) mins.hidden = true;
+    syncPublishRelated();
+    syncBackToPublish();
+    applyNow(view);
+    return;
+  }
+  setView("publish");
+  const cur = view.current;
+  if (hint) {
+    const modeLabel = studioMode() === "general" ? "General" : "Advanced";
+    hint.textContent = view.finished
+      ? "Publish workflow finished — live check confirmed."
+      : `${modeLabel} · Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ~${view.minutes_remaining ?? 0} min left · ${view.done_count ?? 0} done — Related opens detail panels without leaving the spine.`;
+  }
+  if (mins) {
+    mins.hidden = false;
+    mins.textContent = `~${view.minutes_remaining ?? 0} min remaining · ${view.minutes_total ?? 0} min total`;
+  }
+  currentEl.innerHTML = cur
+    ? `<div class="title"><span class="kind">${escapeHtml(cur.kind ?? "")}</span>${escapeHtml(cur.title ?? "")}${
+        cur.minutes ? ` · ~${cur.minutes}m` : ""
+      }</div>
+       <p class="detail">${escapeHtml(cur.detail ?? "")}${
+         cur.run?.length ? ` · run: ${escapeHtml(cur.run.join(" "))}` : ""
+       }${
+         cur.desktop_view && RELATED_VIEW_LABELS[cur.desktop_view]
+           ? ` · studio: ${escapeHtml(RELATED_VIEW_LABELS[cur.desktop_view])}`
+           : ""
+       }</p>`
+    : "<p class=\"detail\">No current step</p>";
+  list.innerHTML = (view.steps ?? [])
+    .map((s, i) => {
+      const active = i === view.current_index ? " active-step" : "";
+      return `<li class="portal-step${active}">
+        <div class="meta">
+          <div class="title"><span class="kind">${escapeHtml(s.status ?? "")}</span>${escapeHtml(s.title ?? s.id ?? "")}</div>
+        </div>
+      </li>`;
+    })
+    .join("");
+  syncPublishRelated();
+  syncBackToPublish();
+  applyNow(view);
+}
+
+async function refreshPublish() {
+  const result = await run(publishArgs(), {
+    step: "paste",
+    quietHeader: true,
+  });
+  if (!result?.ok || !result.stdout) {
+    toast(result?.cancelled ? "Publish cancelled" : "Could not load publish plan", "err");
+    return;
+  }
+  try {
+    applyPublishView(JSON.parse(result.stdout) as PublishView);
+    toast("Publish plan ready", "ok");
+  } catch {
+    /* shown in output */
+    toast("Publish output was not JSON", "err");
+  }
+}
+
+async function publishAction(sub: string[]) {
+  const ordered =
+    sub.length === 0 ? publishArgs() : publishArgs(sub);
+  const result = await run(ordered, { step: "paste" });
+  if (!result?.stdout) return;
+  try {
+    const parsed = JSON.parse(result.stdout) as PublishView & {
+      publish?: PublishView;
+      ok?: boolean;
+      message?: string;
+    };
+    applyPublishView(parsed.publish ?? parsed);
+    if (parsed.message) {
+      appendStream({ stream: "meta", text: parsed.message });
+      toast(parsed.message, parsed.ok === false ? "err" : "ok");
+    }
+    // Keep Dashboard Now honest after Confirm / Next / Open / Verify.
+    await refreshSessionNow();
+  } catch {
+    /* raw output shown */
+  }
+}
+
 function applyLaunchView(view: LaunchView | null) {
   lastLaunch = view;
   void lastLaunch;
-  const panel = document.querySelector<HTMLElement>("#launch-panel");
   const currentEl = document.querySelector<HTMLElement>("#launch-current");
   const list = document.querySelector<HTMLElement>("#launch-steps");
   const hint = document.querySelector<HTMLElement>("#launch-hint");
-  if (!panel || !currentEl || !list) return;
+  if (!currentEl || !list) return;
   if (!view?.steps?.length) {
-    panel.hidden = true;
+    currentEl.innerHTML =
+      '<p class="detail empty-hint">Refresh Launch to build the adaptive plan for this repo.</p>';
+    list.innerHTML = "";
     return;
   }
-  panel.hidden = false;
+  setView("launch");
   const cur = view.current;
   if (hint) {
     hint.textContent = view.finished
@@ -825,11 +2534,13 @@ async function loadPortal(openAll = false) {
 }
 
 function applyDetected(detected?: Detected) {
+  lastDetected = detected;
   const host = document.querySelector<HTMLElement>("#detect-chips");
   if (!host) return;
   if (!detected) {
     host.hidden = true;
     host.innerHTML = "";
+    syncProjectIdentity();
     return;
   }
   const flags: Array<[string, boolean | undefined]> = [
@@ -844,12 +2555,16 @@ function applyDetected(detected?: Detected) {
     ["orbit", detected.orbit_configured],
   ];
   host.hidden = false;
-  host.innerHTML = flags
-    .map(
-      ([label, on]) =>
-        `<span class="chip ${on ? "on" : "off"}">${escapeHtml(label)}</span>`,
-    )
-    .join("");
+  const onFlags = flags.filter(([, on]) => on);
+  if (!onFlags.length) {
+    host.hidden = true;
+    host.innerHTML = "";
+  } else {
+    host.innerHTML = onFlags
+      .map(([label]) => `<span class="chip on">${escapeHtml(label)}</span>`)
+      .join("");
+  }
+  syncProjectIdentity();
 }
 
 function applyDoctor(report: DoctorReport) {
@@ -882,23 +2597,29 @@ function applyDoctor(report: DoctorReport) {
 
   applyDetected(report.detected);
   setStep("doctor", report.ok ? "done" : "fail");
+  applyNow(lastPublish);
 }
 
 function applyLastRun(last: ShipState["last_run"]) {
-  const meta = document.querySelector("#meta-lastrun");
+  // Deploy card is driven by pulse; keep this for refreshShipState compatibility.
+  if (!document.querySelector("#pill-deploy")) return;
   if (!last) {
-    setPill("pill-lastrun", "muted", "None");
-    if (meta) meta.textContent = "No .ship/last-run.json yet";
+    setPill("pill-deploy", "muted", "None");
+    const meta = document.querySelector("#meta-deploy");
+    if (meta && !lastPulse) meta.textContent = "No .ship/last-run.json yet";
     return;
   }
   const ok = !!last.ok;
-  setPill("pill-lastrun", ok ? "ok" : "bad", ok ? "OK" : "Failed");
-  const steps = (last.steps ?? [])
-    .map((s) => `${s.id ?? "?"}${s.ok === false ? "✗" : "✓"}`)
-    .join(" → ");
-  const when = last.finished_at ? ` · ${last.finished_at}` : "";
-  if (meta) {
-    meta.textContent = `${last.message ?? "last run"}${steps ? ` · ${steps}` : ""}${when}`;
+  if (!lastPulse) {
+    setPill("pill-deploy", ok ? "ok" : "bad", ok ? "Shipped" : "Failed");
+    const meta = document.querySelector("#meta-deploy");
+    const steps = (last.steps ?? [])
+      .map((s) => `${s.id ?? "?"}${s.ok === false ? "✗" : "✓"}`)
+      .join(" → ");
+    const when = last.finished_at ? ` · ${last.finished_at}` : "";
+    if (meta) {
+      meta.textContent = `${last.message ?? "last run"}${steps ? ` · ${steps}` : ""}${when}`;
+    }
   }
   for (const s of last.steps ?? []) {
     if (s.id === "configure" || s.id === "sign" || s.id === "deploy") {
@@ -943,7 +2664,7 @@ function parseDoctor(stdout: string): DoctorReport | null {
   }
 }
 
-async function run(args: string[], opts?: { step?: string; quietHeader?: boolean }): Promise<CmdResult | undefined> {
+async function run(args: string[], opts?: { step?: string; quietHeader?: boolean; silent?: boolean }): Promise<CmdResult | undefined> {
   const project = projectPath();
   if (!project) {
     show("Open a project folder first.");
@@ -956,23 +2677,32 @@ async function run(args: string[], opts?: { step?: string; quietHeader?: boolean
   if (opts?.step) setStep(opts.step, "active");
   setBusy(true, "Running…");
   setProjectUi(true);
-  streamBuf = opts?.quietHeader ? "" : `shipctl ${args[0]}\n`;
-  show(streamBuf);
+  if (!opts?.silent) {
+    streamBuf = opts?.quietHeader ? "" : `shipctl ${args[0]}\n`;
+    show(streamBuf);
+  }
 
   try {
     const result = await invoke<CmdResult>("run_shipctl", { project, args });
     // Final pretty pass for JSON-heavy commands
     if (
-      args[0] === "doctor" ||
-      args[0] === "configure" ||
-      args[0] === "portal" ||
-      args[0] === "secrets" ||
-      args[0] === "guide" ||
-      args[0] === "ship" ||
-      args[0] === "human" ||
-      args[0] === "launch" ||
-      args[0] === "status" ||
-      args[0] === "flow"
+      !opts?.silent &&
+      (args[0] === "doctor" ||
+        args[0] === "configure" ||
+        args[0] === "portal" ||
+        args[0] === "secrets" ||
+        args[0] === "guide" ||
+        args[0] === "ship" ||
+        args[0] === "human" ||
+        args[0] === "launch" ||
+        args[0] === "publish" ||
+        args[0] === "pulse" ||
+        args[0] === "scopes" ||
+        args[0] === "env" ||
+        args[0] === "sign-paths" ||
+        args[0] === "assist" ||
+        args[0] === "status" ||
+        args[0] === "flow")
     ) {
       const pretty = prettyMaybe(result.stdout);
       if (pretty) {
@@ -999,12 +2729,19 @@ async function run(args: string[], opts?: { step?: string; quietHeader?: boolean
     }
     setBusy(false, result.cancelled ? "Cancelled" : result.ok ? "Ready" : "Failed", !result.ok && !result.cancelled);
     setProjectUi(true);
+    if (!opts?.quietHeader && !opts?.silent) {
+      const cmd = args[0] ?? "shipctl";
+      if (result.cancelled) toast(`${cmd} cancelled`, "err");
+      else if (result.ok) toast(`${cmd} · done`, "ok");
+      else toast(`${cmd} failed`, "err");
+    }
     return result;
   } catch (err) {
-    appendStream({ stream: "stderr", text: String(err) });
+    if (!opts?.silent) appendStream({ stream: "stderr", text: String(err) });
     if (opts?.step) setStep(opts.step, "fail");
     setBusy(false, "Failed", true);
     setProjectUi(true);
+    if (!opts?.quietHeader && !opts?.silent) toast(String(err), "err");
   }
 }
 
@@ -1019,14 +2756,24 @@ function flowArgs(dryRun: boolean): string[] {
 async function bindProject(path: string, autoDoctor = true) {
   const input = pathEl();
   if (input) input.value = path;
+  lastPublish = null;
+  lastPulse = null;
+  lastDetected = undefined;
   saveRecent(path);
   await setTitle(path);
   resetSteps();
   setProjectUi(true);
-  show(`Project: ${path}\n`);
+  applyNow(null);
+  show(`Working in ${projectName(path)}\n${path}\n`);
+  toast(`Bound ${projectName(path)}`, "ok");
   await refreshShipState();
+  // Serial only — parallel loadJsonCmd races the global running lock and drops pulse.
+  await refreshSessionNow();
+  const scopes = (await loadJsonCmd(["scopes", "--project", path])) as ScopePlan | null;
+  applyScopes(scopes);
   if (autoDoctor) {
     await run(["doctor", "--project", path], { step: "doctor", quietHeader: true });
+    await refreshSessionNow();
   }
 }
 
@@ -1039,8 +2786,82 @@ window.addEventListener("DOMContentLoaded", () => {
   offlineEl()?.addEventListener("change", syncDeployToggle);
   deployEl()?.addEventListener("change", syncDeployToggle);
   syncDeployToggle();
+  applyStudioMode(studioMode());
+  document.querySelectorAll<HTMLButtonElement>(".mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = btn.dataset.mode === "advanced" ? "advanced" : "general";
+      if (next === studioMode()) return;
+      applyStudioMode(next, { rebuild: Boolean(projectPath()) });
+    });
+  });
   renderRecent(loadRecent());
   void refreshShipctlPath();
+  setView("dashboard");
+  setTitle(null);
+  wireWindowChrome();
+
+  document.querySelectorAll<HTMLButtonElement>(".nav-item[data-nav]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.nav;
+      if (!id) return;
+      setView(id);
+      if (id === "publish" && projectPath() && !lastPublish?.steps?.length) {
+        void refreshPublish();
+      }
+    });
+  });
+
+  document.querySelector("#btn-back-publish")?.addEventListener("click", () => {
+    setView("publish");
+    if (!lastPublish?.steps?.length) void refreshPublish();
+    else toast("Back on Publish", "info", 1800);
+  });
+  document.querySelector("#btn-search")?.addEventListener("click", () => cmdkOpen());
+  document.querySelector("[data-cmdk-close]")?.addEventListener("click", () => cmdkClose());
+  document.querySelector("#cmdk-input")?.addEventListener("input", (ev) => {
+    const value = (ev.target as HTMLInputElement).value;
+    cmdkIndex = 0;
+    renderCmdk(value);
+  });
+  document.querySelector("#cmdk-input")?.addEventListener("keydown", (ev) => {
+    const kev = ev as KeyboardEvent;
+    if (kev.key === "ArrowDown") {
+      kev.preventDefault();
+      cmdkIndex = Math.min(cmdkIndex + 1, Math.max(0, cmdkFiltered.length - 1));
+      renderCmdk((kev.target as HTMLInputElement).value);
+    } else if (kev.key === "ArrowUp") {
+      kev.preventDefault();
+      cmdkIndex = Math.max(cmdkIndex - 1, 0);
+      renderCmdk((kev.target as HTMLInputElement).value);
+    } else if (kev.key === "Enter") {
+      kev.preventDefault();
+      runCmdk(cmdkIndex);
+    } else if (kev.key === "Escape") {
+      kev.preventDefault();
+      cmdkClose();
+    }
+  });
+
+  document.querySelector("#dash-open")?.addEventListener("click", () => {
+    document.querySelector<HTMLButtonElement>("#btn-open")?.click();
+  });
+  document.querySelector("#now-primary")?.addEventListener("click", () => {
+    if (!projectPath()) {
+      document.querySelector<HTMLButtonElement>("#btn-open")?.click();
+      return;
+    }
+    const id = document.querySelector<HTMLButtonElement>("#now-primary")?.dataset.pulseId ?? "";
+    const view =
+      document.querySelector<HTMLButtonElement>("#now-primary")?.dataset.pulseView || "publish";
+    void runPulseAction(id || "publish_start", view);
+  });
+  document.querySelector("#now-switch")?.addEventListener("click", (ev) => {
+    // Same-click document listener would close the switcher without this.
+    ev.stopPropagation();
+    toggleProjectSwitcher(true);
+    document.querySelector<HTMLButtonElement>("#chrome-project")?.focus();
+    toast("Choose a project", "info");
+  });
 
   void listen<StreamLine>("shipctl-line", (event) => {
     appendStream(event.payload);
@@ -1048,14 +2869,25 @@ window.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("keydown", (ev) => {
     if (ev.key === "Escape") {
+      if (cmdkVisible()) {
+        ev.preventDefault();
+        cmdkClose();
+        return;
+      }
       if (running) {
         ev.preventDefault();
         void invoke<boolean>("cancel_shipctl");
       }
       return;
     }
-    if (isTypingTarget(ev.target)) return;
     const ctrl = ev.ctrlKey || ev.metaKey;
+    if (ctrl && (ev.key === "k" || ev.key === "K")) {
+      ev.preventDefault();
+      if (cmdkVisible()) cmdkClose();
+      else cmdkOpen();
+      return;
+    }
+    if (isTypingTarget(ev.target)) return;
     if (!ctrl || !projectPath()) return;
     if (ev.key === "d" || ev.key === "D") {
       ev.preventDefault();
@@ -1077,6 +2909,56 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  document.querySelector("#chrome-project")?.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    toggleProjectSwitcher();
+  });
+  document.querySelector("#btn-open-switch")?.addEventListener("click", () => {
+    toggleProjectSwitcher(false);
+    document.querySelector<HTMLButtonElement>("#btn-open")?.click();
+  });
+  document.addEventListener("click", (ev) => {
+    const sw = document.querySelector<HTMLElement>("#project-switcher");
+    const trig = document.querySelector<HTMLElement>("#chrome-project");
+    if (!sw || sw.hidden) return;
+    const t = ev.target as Node;
+    if (sw.contains(t) || trig?.contains(t)) return;
+    toggleProjectSwitcher(false);
+  });
+
+  document.querySelector("#btn-assist")?.addEventListener("click", async () => {
+    setView("assist");
+    const plan = (await loadJsonCmd(["assist", "--project", projectPath()])) as AssistPlan | null;
+    applyAssist(plan);
+  });
+  document.querySelector("#btn-assist-start")?.addEventListener("click", async () => {
+    setView("publish");
+    const raw = await loadJsonCmd(["assist", "--project", projectPath(), "--start"]);
+    if (raw && typeof raw === "object" && "assist" in raw) {
+      applyAssist((raw as { assist: AssistPlan }).assist);
+    }
+    if (raw && typeof raw === "object" && "publish" in raw) {
+      applyPublishView((raw as { publish: PublishView }).publish);
+    } else {
+      document.querySelector<HTMLButtonElement>("#btn-publish")?.click();
+    }
+  });
+  document.querySelector("#btn-scopes")?.addEventListener("click", async () => {
+    const plan = (await loadJsonCmd(["scopes", "--project", projectPath()])) as ScopePlan | null;
+    applyScopes(plan);
+  });
+  document.querySelector("#btn-scopes-save")?.addEventListener("click", () => {
+    void saveScopes();
+  });
+  document.querySelector("#btn-env")?.addEventListener("click", async () => {
+    const plan = (await loadJsonCmd(["env", "--project", projectPath()])) as EnvPortal | null;
+    applyEnv(plan);
+  });
+  document.querySelector("#btn-sign-paths")?.addEventListener("click", async () => {
+    const plan = (await loadJsonCmd(["sign-paths", "--project", projectPath()])) as SignPortal | null;
+    applySignPaths(plan);
+  });
+
   const saved = localStorage.getItem(LAST_PROJECT_KEY);
   if (saved) {
     void bindProject(saved, true);
@@ -1096,11 +2978,14 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!project) return;
     try {
       await openPath(`${project}\\.ship`);
+      toast("Opened .ship folder", "ok");
     } catch {
       try {
         await openPath(project);
+        toast("Opened project folder", "ok");
       } catch (err) {
         show(String(err));
+        toast(String(err), "err");
       }
     }
   });
@@ -1128,9 +3013,11 @@ window.addEventListener("DOMContentLoaded", () => {
       show(`Saved .ship/studio.json\n\n${JSON.stringify(studio, null, 2)}`);
       setStep("configure", "done");
       setBusy(false, "Ready");
+      toast("Ritual args saved", "ok");
     } catch (err) {
       show(String(err));
       setBusy(false, "Failed", true);
+      toast(String(err), "err");
     }
   });
 
@@ -1138,9 +3025,11 @@ window.addEventListener("DOMContentLoaded", () => {
     try {
       await navigator.clipboard.writeText(streamBuf || outputEl()?.textContent || "");
       setBusy(false, "Copied");
+      toast("Copied output", "ok", 1800);
       setTimeout(() => setBusy(false, "Ready"), 800);
     } catch (err) {
       show(String(err));
+      toast(String(err), "err");
     }
   });
 
@@ -1213,6 +3102,75 @@ async function runWizard() {
   });
   document.querySelector("#btn-launch")?.addEventListener("click", () => {
     void refreshLaunch();
+  });
+  document.querySelector("#btn-publish")?.addEventListener("click", () => {
+    void refreshPublish();
+  });
+  document.querySelector("#btn-publish-related")?.addEventListener("click", () => {
+    void (async () => {
+      const view =
+        document.querySelector<HTMLButtonElement>("#btn-publish-related")?.dataset.relatedView ||
+        lastPublish?.current?.desktop_view ||
+        "";
+      if (!view) return;
+      const ok = await openRelatedStudioView(view);
+      if (ok) toast(`${RELATED_VIEW_LABELS[view] ?? view} — then Back to Publish`, "info");
+    })();
+  });
+  document.querySelector("#btn-publish-open")?.addEventListener("click", () => {
+    void (async () => {
+      const project = projectPath();
+      if (!project) return;
+      const cur = lastPublish?.current;
+      const related = (cur?.desktop_view ?? "").trim();
+      const studioDetail =
+        Boolean(related && RELATED_VIEW_LABELS[related]) &&
+        (cur?.id === "env.sprint" ||
+          related === "scopes" ||
+          related === "env" ||
+          related === "sign" ||
+          related === "portal" ||
+          related === "ritual");
+      if (studioDetail) {
+        await openRelatedStudioView(related);
+        toast(`${RELATED_VIEW_LABELS[related] ?? related} — finish, then Confirm`, "info");
+      }
+      const needsTerminal =
+        Boolean(cur?.run?.length) ||
+        cur?.kind === "oauth" ||
+        cur?.kind === "sign" ||
+        cur?.kind === "deploy";
+      if (needsTerminal) {
+        try {
+          await invoke("open_publish_open_terminal", { project });
+          appendStream({
+            stream: "meta",
+            text: "Launched terminal: shipctl publish open — complete the step, then Verify/Confirm here.",
+          });
+          toast("Terminal opened for this step", "ok");
+          window.setTimeout(() => {
+            void refreshPublish();
+          }, 1500);
+        } catch (e) {
+          appendStream({
+            stream: "stderr",
+            text: `open terminal failed: ${String(e)} — falling back to in-app open`,
+          });
+          void publishAction(["open"]);
+        }
+      } else {
+        void publishAction(["open"]);
+      }
+    })();
+  });
+  document.querySelector("#btn-publish-verify")?.addEventListener("click", () => {
+    void publishAction(["verify"]);
+  });
+  document.querySelector("#btn-publish-confirm")?.addEventListener("click", () => {
+    void publishAction(["confirm"]);
+  });
+  document.querySelector("#btn-publish-next")?.addEventListener("click", () => {
+    void publishAction(["next"]);
   });
   document.querySelector("#btn-launch-open")?.addEventListener("click", () => {
     void (async () => {

@@ -1,15 +1,21 @@
 //! Local Ship bridge — Signet + Orbit adapters, offline-first.
 
 mod adapters;
+mod assist;
 mod config;
+mod envx;
 mod flow;
 mod guide;
 mod human;
 mod launch;
 mod mcp;
 mod portal;
+mod publish;
+mod pulse;
+mod scopes;
 mod secrets;
 mod ship;
+mod signpath;
 mod tui;
 mod vault_km;
 
@@ -108,6 +114,46 @@ enum Commands {
         #[arg(long, default_value = ".")]
         project: PathBuf,
     },
+    /// Publish portal: minute-oriented wizard through the full manual ship path.
+    Publish {
+        #[command(subcommand)]
+        action: Option<PublishCmd>,
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+        /// general = minimal spine · advanced = full OAuth / official / listing path
+        #[arg(long, default_value = "general")]
+        mode: String,
+    },
+    /// Detect / select Web·API·Desktop deploy scopes.
+    Scopes {
+        #[command(subcommand)]
+        action: Option<ScopesCmd>,
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+    },
+    /// ENV & token portal (configure / retrieve / create — never stores values).
+    Env {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+        #[arg(long)]
+        provider: Option<String>,
+        #[arg(long)]
+        put: Option<String>,
+    },
+    /// Dual signing paths: self-sign (Signet) + official vendor wizards.
+    #[command(name = "sign-paths")]
+    SignPaths {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+    },
+    /// Full-stack deploy assist checklist.
+    Assist {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+        /// Also load / print publish portal plan.
+        #[arg(long, default_value_t = false)]
+        start: bool,
+    },
     /// Encrypted vault.km export (Clavis / Keys Manager compatible).
     Vault {
         #[command(subcommand)]
@@ -149,6 +195,11 @@ enum Commands {
         #[arg(long, default_value = ".")]
         project: PathBuf,
     },
+    /// Project pulse: git · ship wizards · deploy signals · next action (local only).
+    Pulse {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+    },
     /// Stdio MCP server (tools: doctor, configure, portal, sign, deploy, flow, status).
     Mcp,
 }
@@ -172,6 +223,38 @@ enum LaunchCmd {
     },
     /// Clear launch progress and rebuild the plan.
     Reset,
+}
+
+#[derive(Subcommand, Debug)]
+enum PublishCmd {
+    /// Show current publish step and minutes remaining (default).
+    Status,
+    /// Open entry URL / OAuth / run CLI for the current step.
+    Open,
+    /// Alias for Open.
+    Run,
+    /// Automatic verify for the current step when supported.
+    Verify,
+    /// Mark current step done (operator attestation).
+    Confirm,
+    /// Advance to the next pending step (requires done, or --force).
+    Next {
+        #[arg(long, default_value_t = false)]
+        force: bool,
+    },
+    /// Clear publish progress and rebuild the plan.
+    Reset,
+}
+
+#[derive(Subcommand, Debug)]
+enum ScopesCmd {
+    /// Show detected scopes (default).
+    Status,
+    /// Persist active scope ids (comma-separated).
+    Set {
+        #[arg(long)]
+        ids: String,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -360,6 +443,112 @@ fn main() -> Result<()> {
                 }
             }
         }
+        Commands::Publish {
+            action,
+            project,
+            mode,
+        } => {
+            let mode = publish::StudioMode::parse(&mode);
+            let action = action.unwrap_or(PublishCmd::Status);
+            match action {
+                PublishCmd::Status => {
+                    let state = publish::load_or_build_with_mode(&project, mode)?;
+                    println!("{}", serde_json::to_string_pretty(&publish::view(&state))?);
+                }
+                PublishCmd::Open | PublishCmd::Run => {
+                    let _ = publish::load_or_build_with_mode(&project, mode)?;
+                    let view = publish::open_current(&project)?;
+                    println!("{}", serde_json::to_string_pretty(&view)?);
+                }
+                PublishCmd::Verify => {
+                    let _ = publish::load_or_build_with_mode(&project, mode)?;
+                    let (ok, msg, view) = publish::verify_current(&project)?;
+                    eprintln!("{msg}");
+                    println!("{}", serde_json::to_string_pretty(&serde_json::json!({
+                        "ok": ok,
+                        "message": msg,
+                        "publish": view,
+                    }))?);
+                    if !ok {
+                        bail!("verify failed");
+                    }
+                }
+                PublishCmd::Confirm => {
+                    let _ = publish::load_or_build_with_mode(&project, mode)?;
+                    let view = publish::confirm_current(&project)?;
+                    println!("{}", serde_json::to_string_pretty(&view)?);
+                }
+                PublishCmd::Next { force } => {
+                    let _ = publish::load_or_build_with_mode(&project, mode)?;
+                    let view = publish::next(&project, force)?;
+                    println!("{}", serde_json::to_string_pretty(&view)?);
+                }
+                PublishCmd::Reset => {
+                    let view = publish::reset_with_mode(&project, mode)?;
+                    println!("{}", serde_json::to_string_pretty(&view)?);
+                }
+            }
+        }
+        Commands::Scopes { action, project } => {
+            match action.unwrap_or(ScopesCmd::Status) {
+                ScopesCmd::Status => {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&scopes::plan_for(&project))?
+                    );
+                }
+                ScopesCmd::Set { ids } => {
+                    let ids: Vec<String> = ids
+                        .split(',')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                    let plan = scopes::set_active(&project, ids)?;
+                    println!("{}", serde_json::to_string_pretty(&plan)?);
+                }
+            }
+        }
+        Commands::Env {
+            project,
+            provider,
+            put,
+        } => {
+            if let Some(name) = put {
+                let p = provider.context("--put requires --provider")?;
+                let code = envx::put(&project, &p, &name)?;
+                if code != 0 {
+                    bail!("env put exited {code}");
+                }
+            } else {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&envx::plan_for(&project)?)?
+                );
+            }
+        }
+        Commands::SignPaths { project } => {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&signpath::plan_for(&project))?
+            );
+        }
+        Commands::Assist { project, start } => {
+            let plan = assist::plan_for(&project)?;
+            if start {
+                let publish = assist::start_publish(&project)?;
+                let launch = assist::start_launch(&project)?;
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&serde_json::json!({
+                        "assist": plan,
+                        "publish": publish,
+                        "launch": launch,
+                    }))?
+                );
+            } else {
+                println!("{}", serde_json::to_string_pretty(&plan)?);
+            }
+        }
         Commands::Vault { action } => match action {
             VaultCmd::Export {
                 project,
@@ -493,6 +682,31 @@ fn main() -> Result<()> {
                 args
             };
             let code = adapters::run_orbit(&project, &args)?;
+            let urls = pulse::latest_live_urls(&project);
+            let now = config::now_rfc3339();
+            let _ = config::write_last_run(
+                &project,
+                &config::LastRun {
+                    finished: true,
+                    ok: code == 0,
+                    started_at: now.clone(),
+                    finished_at: now,
+                    dry_run: false,
+                    offline: false,
+                    steps: vec![config::StepResult {
+                        id: "deploy".into(),
+                        ok: code == 0,
+                        exit_code: code,
+                        detail: format!("orbit {}", args.join(" ")),
+                    }],
+                    message: if code == 0 {
+                        "shipctl deploy succeeded".into()
+                    } else {
+                        format!("shipctl deploy exited {code}")
+                    },
+                    urls,
+                },
+            );
             if code != 0 {
                 bail!("orbit exited {code}");
             }
@@ -514,6 +728,12 @@ fn main() -> Result<()> {
         Commands::Status { project } => {
             let status = config::read_last_run(&project)?;
             println!("{}", serde_json::to_string_pretty(&status)?);
+        }
+        Commands::Pulse { project } => {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&pulse::for_project(&project)?)?
+            );
         }
         Commands::Mcp => mcp::serve()?,
     }

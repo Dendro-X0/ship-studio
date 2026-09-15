@@ -5,7 +5,9 @@ use crate::config;
 use crate::flow;
 use crate::human;
 use crate::portal::{self, ProviderId};
+use crate::scopes;
 use crate::secrets;
+use crate::signpath;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -242,7 +244,40 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         None,
     ));
 
-    if wants_signet {
+    let selected = scopes::selected(project);
+    if selected.len() > 1 || selected.iter().any(|s| s.relative != "." && !s.relative.is_empty())
+    {
+        steps.push(step(
+            "scopes",
+            "Scopes — Web / API / Desktop directories",
+            StepKind::Auto,
+            "Confirm which directories to ship. `shipctl scopes set --ids …` then Verify.",
+            None,
+            Some("active scopes saved".into()),
+            Some(vec![
+                "shipctl".into(),
+                "scopes".into(),
+                "--project".into(),
+                ".".into(),
+            ]),
+        ));
+    }
+
+    let sign_mode = config::read_studio(project)
+        .ok()
+        .flatten()
+        .map(|s| s.sign_path)
+        .unwrap_or_else(|| {
+            if wants_signet {
+                "self_then_official".into()
+            } else {
+                "official_listing_only".into()
+            }
+        });
+    let include_self = wants_signet && sign_mode != "official";
+    let include_official = sign_mode != "self";
+
+    if include_self {
         if !detected.signet_toml {
             steps.push(step(
                 "signet.scan",
@@ -312,6 +347,23 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         ));
     }
 
+    if include_official && wants_signet {
+        for p in signpath::plan_for(project).paths {
+            if p.kind != "official" {
+                continue;
+            }
+            steps.push(step(
+                &format!("sign.{}", p.id),
+                &p.title,
+                StepKind::Sign,
+                &p.detail,
+                p.entry_url.clone(),
+                Some("confirm after vendor UI, or skip with next --force".into()),
+                p.run.clone(),
+            ));
+        }
+    }
+
     if detected.polar {
         steps.push(step(
             "listing.polar",
@@ -342,20 +394,46 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         ]),
     ));
 
-    steps.push(step(
-        "deploy",
-        "Deploy — Orbit (network)",
-        StepKind::Deploy,
-        "Run Orbit deploy with studio.json deploy_args. Confirm or check last-run.",
-        None,
-        Some("shipctl deploy / last-run ok, or confirm".into()),
-        Some(vec![
-            "shipctl".into(),
-            "deploy".into(),
-            "--project".into(),
-            ".".into(),
-        ]),
-    ));
+    let deploy_scopes: Vec<_> = selected
+        .iter()
+        .filter(|s| s.provider.is_some())
+        .cloned()
+        .collect();
+    if deploy_scopes.is_empty() {
+        steps.push(step(
+            "deploy",
+            "Deploy — Orbit (network)",
+            StepKind::Deploy,
+            "Run Orbit deploy with studio.json deploy_args. Confirm or check last-run.",
+            None,
+            Some("shipctl deploy / last-run ok, or confirm".into()),
+            Some(vec![
+                "shipctl".into(),
+                "deploy".into(),
+                "--project".into(),
+                ".".into(),
+            ]),
+        ));
+    } else {
+        for s in deploy_scopes {
+            let mut run = vec![
+                "shipctl".into(),
+                "deploy".into(),
+                "--project".into(),
+                s.relative.clone(),
+            ];
+            run.extend(s.deploy_args.clone());
+            steps.push(step(
+                &format!("deploy.{}", s.id),
+                &format!("Deploy — {} ({})", s.label, s.provider.as_deref().unwrap_or("orbit")),
+                StepKind::Deploy,
+                &format!("Orbit deploy in `{}`.", s.relative),
+                None,
+                Some("last-run ok, or confirm after deploy".into()),
+                Some(run),
+            ));
+        }
+    }
 
     Ok(steps)
 }
@@ -645,13 +723,20 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, LaunchView)> {
                     Some(s) => (
                         true,
                         format!(
-                            "intent ok · sign_args={:?} · deploy_args={:?}",
-                            s.sign_args, s.deploy_args
+                            "intent ok · sign_args={:?} · deploy_args={:?} · sign_path={}",
+                            s.sign_args, s.deploy_args, s.sign_path
                         ),
                     ),
                     None => (false, "studio.json unreadable".into()),
                 }
             }
+        }
+        StepKind::Auto if step.id == "scopes" => {
+            let plan = scopes::plan_for(project);
+            (
+                !plan.active.is_empty(),
+                format!("{} active scope(s)", plan.active.len()),
+            )
         }
         StepKind::Oauth if step.id.contains("cloudflare") => {
             let (code, text) = run_capture("wrangler", &["whoami"], project)?;
@@ -839,11 +924,15 @@ mod tests {
         fs::write(dir.join("wrangler.toml"), "name = \"x\"\n# Secrets\n# - GITHUB_TOKEN\n").unwrap();
         let state = load_or_build(&dir).unwrap();
         assert!(state.steps.iter().any(|s| s.id == "doctor"));
-        assert!(state.steps.iter().any(|s| s.id == "deploy"));
+        assert!(state.steps.iter().any(|s| s.id == "deploy" || s.id.starts_with("deploy.")));
         assert!(state.steps.iter().any(|s| s.id == "intent"));
         assert!(state.steps.iter().any(|s| s.id.starts_with("paste.")));
         assert!(!state.steps.iter().any(|s| s.id.starts_with("signet.")));
-        let deploy = state.steps.iter().find(|s| s.id == "deploy").unwrap();
+        let deploy = state
+            .steps
+            .iter()
+            .find(|s| s.id == "deploy" || s.id.starts_with("deploy."))
+            .unwrap();
         assert!(deploy.run.is_some());
         let v = view(&state);
         assert!(!v.finished);
@@ -867,7 +956,7 @@ mod tests {
         assert!(state.steps.iter().any(|s| s.id == "signet.build"));
         assert!(state.steps.iter().any(|s| s.id == "signet.release_dry"));
         assert!(state.steps.iter().any(|s| s.id == "signet.release"));
-        assert!(state.steps.iter().any(|s| s.id == "deploy"));
+        assert!(state.steps.iter().any(|s| s.id == "deploy" || s.id.starts_with("deploy.")));
         let build = state.steps.iter().find(|s| s.id == "signet.build").unwrap();
         assert_eq!(build.kind, StepKind::Sign);
         assert_eq!(build.run.as_ref().unwrap()[0], "signet");

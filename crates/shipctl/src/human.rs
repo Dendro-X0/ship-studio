@@ -187,16 +187,24 @@ fn prioritize_urls(urls: &[String]) -> Vec<String> {
         .map(|u| {
             let score = if u.contains("polar.sh") {
                 0
-            } else if u.contains("github.com") {
+            } else if u.contains("neon.tech") {
                 1
-            } else if u.contains("vercel.com") {
+            } else if u.contains("supabase.com") {
                 2
-            } else if u.contains("cloudflare.com") {
+            } else if u.contains("turso.tech") {
                 3
-            } else if u.contains("netlify.com") {
+            } else if u.contains("/workers/d1") || (u.contains("d1") && u.contains("cloudflare")) {
                 4
-            } else {
+            } else if u.contains("github.com") {
                 5
+            } else if u.contains("vercel.com") {
+                6
+            } else if u.contains("cloudflare.com") {
+                7
+            } else if u.contains("netlify.com") {
+                8
+            } else {
+                9
             };
             (score, u)
         })
@@ -225,8 +233,11 @@ fn put_queue_from_hints(hints: &[SecretHint]) -> Vec<SecretHint> {
         if h.name == "<NAME>" || h.name == "API_KEY_PEPPER" {
             continue;
         }
-        // Skip polar/github "catalog" put stubs — real put is cloudflare/vercel/netlify.
-        if h.provider == "polar" || h.provider == "github" {
+        // Skip catalog-only put stubs — real put is cloudflare/vercel/netlify.
+        if matches!(
+            h.provider.as_str(),
+            "polar" | "github" | "neon" | "supabase" | "d1" | "turso" | "container"
+        ) {
             continue;
         }
         if h.provider == "cloudflare" {

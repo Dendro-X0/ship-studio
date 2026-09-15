@@ -58,45 +58,47 @@ fn resolve_shipctl() -> Result<PathBuf, String> {
         }
     }
 
-    // Portable: shipctl next to this desktop exe (after stage-desktop).
+    let mut candidates: Vec<PathBuf> = Vec::new();
+
+    // Portable sidecar (stage-desktop) — still competed by mtime vs repo builds.
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             for name in ["shipctl.exe", "shipctl"] {
                 let cand = dir.join(name);
                 if cand.is_file() {
-                    return Ok(cand);
+                    candidates.push(cand);
                 }
             }
         }
     }
 
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let candidates = [
-        manifest_dir
-            .join("../../..")
-            .join("target")
-            .join("release")
-            .join("shipctl.exe"),
-        manifest_dir
-            .join("../../..")
-            .join("target")
-            .join("debug")
-            .join("shipctl.exe"),
-        manifest_dir
-            .join("../../..")
-            .join("target")
-            .join("release")
-            .join("shipctl"),
-        manifest_dir
-            .join("../../..")
-            .join("target")
-            .join("debug")
-            .join("shipctl"),
-    ];
-    for c in candidates {
+    let repo = manifest_dir.join("../../..");
+    for c in [
+        repo.join("target/release/shipctl.exe"),
+        repo.join("target/debug/shipctl.exe"),
+        repo.join("target/release/shipctl"),
+        repo.join("target/debug/shipctl"),
+    ] {
         if c.is_file() {
-            return Ok(c);
+            candidates.push(c);
         }
+    }
+
+    // Prefer the newest binary so a stale sidecar cannot hide a fresh `cargo build -p shipctl`.
+    let mut best: Option<(PathBuf, std::time::SystemTime)> = None;
+    for c in candidates {
+        let modified = std::fs::metadata(&c)
+            .and_then(|m| m.modified())
+            .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+        match &best {
+            None => best = Some((c, modified)),
+            Some((_, prev)) if modified > *prev => best = Some((c, modified)),
+            _ => {}
+        }
+    }
+    if let Some((path, _)) = best {
+        return Ok(path);
     }
     which::which("shipctl")
         .or_else(|_| which::which("shipctl.exe"))
@@ -217,6 +219,54 @@ fn open_launch_open_terminal(project: String) -> Result<(), String> {
     {
         let _ = (&shipctl, &project_path);
         Err("open_launch_open_terminal is implemented for Windows in this build".into())
+    }
+}
+
+/// Open an interactive terminal for `shipctl publish open`.
+#[tauri::command]
+fn open_publish_open_terminal(project: String) -> Result<(), String> {
+    let shipctl = resolve_shipctl()?;
+    let project_path = PathBuf::from(&project);
+    if !project_path.is_dir() {
+        return Err(format!("not a directory: {project}"));
+    }
+
+    #[cfg(windows)]
+    {
+        let wt = Command::new("wt")
+            .args([
+                "-d",
+                &project,
+                shipctl.to_str().unwrap_or("shipctl"),
+                "publish",
+                "--project",
+                &project,
+                "open",
+            ])
+            .spawn();
+        if wt.is_ok() {
+            return Ok(());
+        }
+        Command::new("cmd")
+            .args([
+                "/C",
+                "start",
+                "Ship Studio publish",
+                shipctl.to_str().unwrap_or("shipctl"),
+                "publish",
+                "--project",
+                &project,
+                "open",
+            ])
+            .spawn()
+            .map_err(|e| format!("spawn terminal: {e}"))?;
+        return Ok(());
+    }
+
+    #[cfg(not(windows))]
+    {
+        let _ = (&shipctl, &project_path);
+        Err("open_publish_open_terminal is implemented for Windows in this build".into())
     }
 }
 
@@ -608,6 +658,32 @@ fn delete_path(path: String) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn run_git(project: String, args: Vec<String>) -> Result<CmdResult, String> {
+    let project_path = PathBuf::from(&project);
+    if !project_path.is_dir() {
+        return Err(format!("not a directory: {project}"));
+    }
+    let argv = if args.is_empty() {
+        vec!["status".into(), "-sb".into()]
+    } else {
+        args
+    };
+    let output = Command::new("git")
+        .args(&argv)
+        .current_dir(&project_path)
+        .output()
+        .map_err(|e| format!("git: {e}"))?;
+    Ok(CmdResult {
+        ok: output.status.success(),
+        code: output.status.code().unwrap_or(1),
+        stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+        shipctl: "git".into(),
+        cancelled: false,
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -618,6 +694,8 @@ pub fn run() {
             pick_vault_save,
             open_human_put_terminal,
             open_launch_open_terminal,
+            open_publish_open_terminal,
+            run_git,
             run_shipctl,
             run_shipctl_env,
             cancel_shipctl,

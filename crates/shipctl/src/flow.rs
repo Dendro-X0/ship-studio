@@ -121,6 +121,7 @@ pub fn execute(project: &Path, plan: &FlowPlan) -> Result<()> {
             offline: plan.offline,
             steps: results.clone(),
             message: format!("completed steps: {}", ids.join(" → ")),
+            urls: crate::pulse::latest_live_urls(project),
         },
     )?;
     Ok(())
@@ -144,6 +145,7 @@ fn write_failure(
             offline: plan.offline,
             steps: results,
             message: message.into(),
+            urls: vec![],
         },
     )
 }

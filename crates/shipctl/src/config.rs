@@ -21,6 +21,16 @@ pub struct StudioIntent {
     pub detected: Detected,
     #[serde(default)]
     pub notes: Vec<String>,
+    /// Selected deploy scopes (`web.*` / `api.*` / `desktop.*`).
+    #[serde(default)]
+    pub active_scopes: Vec<String>,
+    /// `self` | `official` | `self_then_official`
+    #[serde(default = "default_sign_path")]
+    pub sign_path: String,
+}
+
+fn default_sign_path() -> String {
+    "self_then_official".into()
 }
 
 fn default_true() -> bool {
@@ -95,6 +105,43 @@ pub struct Detected {
     pub polar: bool,
     #[serde(default)]
     pub orbit_configured: bool,
+    /// Any mobile layout (Android / iOS / Expo / Flutter / Capacitor).
+    #[serde(default)]
+    pub mobile: bool,
+    #[serde(default)]
+    pub android: bool,
+    #[serde(default)]
+    pub ios: bool,
+    #[serde(default)]
+    pub expo: bool,
+    /// Cloudflare D1 binding in wrangler.
+    #[serde(default)]
+    pub d1: bool,
+    #[serde(default)]
+    pub neon: bool,
+    #[serde(default)]
+    pub supabase: bool,
+    #[serde(default)]
+    pub turso: bool,
+    /// GitHub Actions workflow filename(s) matching `*release*`.
+    #[serde(default)]
+    pub ci_release: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub release_workflows: Vec<String>,
+    /// Dockerfile / Compose present.
+    #[serde(default)]
+    pub container: bool,
+    #[serde(default)]
+    pub dockerfile: bool,
+    #[serde(default)]
+    pub compose: bool,
+    /// Opt-in extra marketplaces (Steam / itch / Epic).
+    #[serde(default)]
+    pub steam: bool,
+    #[serde(default)]
+    pub itch: bool,
+    #[serde(default)]
+    pub epic: bool,
     pub hints: Vec<String>,
 }
 
@@ -116,6 +163,9 @@ pub struct LastRun {
     pub offline: bool,
     pub steps: Vec<StepResult>,
     pub message: String,
+    /// Known live URLs from Orbit summaries / operator confirm (no secrets).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub urls: Vec<String>,
 }
 
 pub fn ship_dir(project: &Path) -> PathBuf {
@@ -195,6 +245,11 @@ pub fn probe(project: &Path) -> Detected {
     d.github = project.join(".git").is_dir() || project.join(".git").is_file();
     d.polar = detect_polar(project);
     d.orbit_configured = project.join(".orbit/state.json").is_file();
+    detect_mobile(project, &mut d);
+    detect_db(project, &mut d);
+    detect_ci_release(project, &mut d);
+    detect_container(project, &mut d);
+    detect_markets(project, &mut d);
     let orbit_configured = d.orbit_configured;
 
     if d.signet_toml {
@@ -228,6 +283,84 @@ pub fn probe(project: &Path) -> Detected {
         d.hints
             .push("Polar markers detected — portal opens polar.sh dashboard for checkout/webhook.".into());
     }
+    if d.mobile {
+        let mut bits = Vec::new();
+        if d.android {
+            bits.push("Android");
+        }
+        if d.ios {
+            bits.push("iOS");
+        }
+        if d.expo {
+            bits.push("Expo");
+        }
+        d.hints.push(format!(
+            "Mobile layout detected ({}) — Advanced publish can open Play / App Store Connect listing.",
+            if bits.is_empty() {
+                "native".to_string()
+            } else {
+                bits.join(" · ")
+            }
+        ));
+    }
+    if d.d1 || d.neon || d.supabase || d.turso {
+        let mut bits = Vec::new();
+        if d.d1 {
+            bits.push("D1");
+        }
+        if d.neon {
+            bits.push("Neon");
+        }
+        if d.supabase {
+            bits.push("Supabase");
+        }
+        if d.turso {
+            bits.push("Turso");
+        }
+        d.hints.push(format!(
+            "Database hosting markers ({}) — portal opens create URLs; put connection strings on the deploy target.",
+            bits.join(" · ")
+        ));
+    }
+    if d.ci_release {
+        d.hints.push(format!(
+            "CI release workflow(s): {} — open GitHub Actions after tagging / Signet release.",
+            d.release_workflows.join(", ")
+        ));
+    }
+    if d.container {
+        let mut bits = Vec::new();
+        if d.dockerfile {
+            bits.push("Dockerfile");
+        }
+        if d.compose {
+            bits.push("Compose");
+        }
+        d.hints.push(format!(
+            "Container layout ({}) — Advanced publish opens registry/host docs; build/push stays on your machine.",
+            if bits.is_empty() {
+                "docker".into()
+            } else {
+                bits.join(" · ")
+            }
+        ));
+    }
+    if d.steam || d.itch || d.epic {
+        let mut bits = Vec::new();
+        if d.steam {
+            bits.push("Steam");
+        }
+        if d.itch {
+            bits.push("itch.io");
+        }
+        if d.epic {
+            bits.push("Epic");
+        }
+        d.hints.push(format!(
+            "Extra marketplace(s) ({}) — Advanced listing steps open partner dashboards (URL + confirm).",
+            bits.join(" · ")
+        ));
+    }
     if orbit_configured {
         d.hints
             .push(".orbit/state.json found — Orbit already configured for this repo.".into());
@@ -240,6 +373,404 @@ pub fn probe(project: &Path) -> Detected {
             .push("Run `shipctl portal` to open OAuth / token entry points for detected providers.".into());
     }
     d
+}
+
+fn detect_mobile(project: &Path, d: &mut Detected) {
+    d.android = project.join("android").is_dir()
+        || project.join("apps/android").is_dir()
+        || project.join("build.gradle").is_file()
+        || project.join("build.gradle.kts").is_file()
+        || any_named(project, &["build.gradle", "build.gradle.kts"]);
+    d.ios = project.join("ios").is_dir()
+        || project.join("apps/ios").is_dir()
+        || project.join("ios/Podfile").is_file();
+    d.expo = file_mentions_any(
+        project,
+        &["app.json", "app.config.js", "app.config.ts"],
+        "expo",
+    ) || nested_file_mentions(project, &["app.json", "app.config.js", "app.config.ts"], "expo");
+    let flutter = project.join("pubspec.yaml").is_file()
+        || any_named(project, &["pubspec.yaml"]);
+    let capacitor = any_named(
+        project,
+        &[
+            "capacitor.config.json",
+            "capacitor.config.ts",
+            "capacitor.config.js",
+        ],
+    );
+    d.mobile = d.android || d.ios || d.expo || flutter || capacitor;
+}
+
+fn detect_db(project: &Path, d: &mut Detected) {
+    d.d1 = wrangler_mentions(project, &["[[d1_databases]]", "d1_databases"]);
+    d.neon = env_key_prefix(project, "NEON_")
+        || env_value_contains(project, "neon.tech")
+        || package_mentions(project, &["@neondatabase"]);
+    d.supabase = project.join("supabase/config.toml").is_file()
+        || env_key_prefix(project, "SUPABASE_")
+        || env_value_contains(project, "supabase.co");
+    d.turso = env_key_prefix(project, "TURSO_")
+        || env_key_prefix(project, "LIBSQL_")
+        || package_mentions(project, &["@libsql", "@tursodatabase"]);
+}
+
+fn detect_ci_release(project: &Path, d: &mut Detected) {
+    let dir = project.join(".github").join("workflows");
+    let Ok(entries) = fs::read_dir(&dir) else {
+        return;
+    };
+    let mut names = Vec::new();
+    for ent in entries.flatten() {
+        let path = ent.path();
+        if !path.is_file() {
+            continue;
+        }
+        let name = ent.file_name().to_string_lossy().to_string();
+        let lower = name.to_ascii_lowercase();
+        if !(lower.ends_with(".yml") || lower.ends_with(".yaml")) {
+            continue;
+        }
+        if lower.contains("release") {
+            names.push(name);
+        }
+    }
+    names.sort();
+    d.ci_release = !names.is_empty();
+    d.release_workflows = names;
+}
+
+fn detect_container(project: &Path, d: &mut Detected) {
+    d.dockerfile = has_dockerfile(project);
+    d.compose = has_compose(project);
+    d.container = d.dockerfile || d.compose;
+}
+
+fn detect_markets(project: &Path, d: &mut Detected) {
+    let opted = read_markets_opt_in(project);
+    d.steam = opted.iter().any(|m| m == "steam")
+        || project.join("steam_appid.txt").is_file()
+        || env_key_prefix(project, "STEAM_");
+    d.itch = opted.iter().any(|m| m == "itch" || m == "itch.io")
+        || project.join("itch.toml").is_file()
+        || project.join(".itch").is_dir();
+    d.epic = opted.iter().any(|m| m == "epic" || m == "egs");
+}
+
+/// Opt-in list from `.ship/markets` (one id per line) or `.ship/markets.json` (array of strings).
+fn read_markets_opt_in(project: &Path) -> Vec<String> {
+    let ship = ship_dir(project);
+    let json_path = ship.join("markets.json");
+    if json_path.is_file() {
+        if let Ok(raw) = fs::read_to_string(&json_path) {
+            if let Ok(arr) = serde_json::from_str::<Vec<String>>(&raw) {
+                return arr
+                    .into_iter()
+                    .map(|s| s.trim().to_ascii_lowercase())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+            }
+        }
+    }
+    let txt_path = ship.join("markets");
+    if txt_path.is_file() {
+        if let Ok(raw) = fs::read_to_string(&txt_path) {
+            return raw
+                .lines()
+                .map(|l| l.trim())
+                .filter(|l| !l.is_empty() && !l.starts_with('#'))
+                .map(|l| l.to_ascii_lowercase())
+                .collect();
+        }
+    }
+    Vec::new()
+}
+
+fn has_dockerfile(project: &Path) -> bool {
+    for name in ["Dockerfile", "Containerfile", "dockerfile"] {
+        if project.join(name).is_file() {
+            return true;
+        }
+    }
+    // Nested: apps/*/Dockerfile or one-level */
+    if let Ok(entries) = fs::read_dir(project) {
+        for ent in entries.flatten() {
+            let p = ent.path();
+            if !p.is_dir() {
+                continue;
+            }
+            let name = ent.file_name().to_string_lossy().to_lowercase();
+            if name == "node_modules" || name == ".git" || name == "target" || name == "dist" {
+                continue;
+            }
+            for fname in ["Dockerfile", "Containerfile", "dockerfile"] {
+                if p.join(fname).is_file() {
+                    return true;
+                }
+            }
+            if name == "apps" {
+                if let Ok(apps) = fs::read_dir(&p) {
+                    for app in apps.flatten() {
+                        let ap = app.path();
+                        if !ap.is_dir() {
+                            continue;
+                        }
+                        for fname in ["Dockerfile", "Containerfile", "dockerfile"] {
+                            if ap.join(fname).is_file() {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+fn has_compose(project: &Path) -> bool {
+    for name in [
+        "docker-compose.yml",
+        "docker-compose.yaml",
+        "compose.yml",
+        "compose.yaml",
+    ] {
+        if project.join(name).is_file() {
+            return true;
+        }
+    }
+    any_named(
+        project,
+        &[
+            "docker-compose.yml",
+            "docker-compose.yaml",
+            "compose.yml",
+            "compose.yaml",
+        ],
+    )
+}
+
+/// Docs / registry entry for container projects (no vendor HTTPS from bridge).
+pub fn container_docs_url(project: &Path) -> &'static str {
+    if github_repo_web_url(project).is_some() || project.join(".git").exists() {
+        "https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry"
+    } else {
+        "https://docs.docker.com/get-started/docker-concepts/building-images/build-tag-and-publish-an-image/"
+    }
+}
+
+/// Best-effort GitHub Actions URL from `origin` (no network).
+pub fn github_actions_url(project: &Path) -> Option<String> {
+    github_repo_web_url(project).map(|base| format!("{base}/actions"))
+}
+
+/// `https://github.com/owner/repo` from `git remote get-url origin`, if parseable.
+pub fn github_repo_web_url(project: &Path) -> Option<String> {
+    let out = std::process::Command::new("git")
+        .args(["remote", "get-url", "origin"])
+        .current_dir(project)
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let raw = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    parse_github_remote(&raw)
+}
+
+fn parse_github_remote(raw: &str) -> Option<String> {
+    let s = raw.trim().trim_end_matches('/').trim_end_matches(".git");
+    if let Some(rest) = s.strip_prefix("https://github.com/") {
+        let rest = rest.trim_end_matches('/');
+        if rest.split('/').count() >= 2 {
+            return Some(format!("https://github.com/{rest}"));
+        }
+    }
+    if let Some(rest) = s.strip_prefix("http://github.com/") {
+        let rest = rest.trim_end_matches('/');
+        if rest.split('/').count() >= 2 {
+            return Some(format!("https://github.com/{rest}"));
+        }
+    }
+    if let Some(rest) = s.strip_prefix("git@github.com:") {
+        let rest = rest.trim_end_matches('/');
+        if rest.split('/').count() >= 2 {
+            return Some(format!("https://github.com/{rest}"));
+        }
+    }
+    if let Some(rest) = s.strip_prefix("ssh://git@github.com/") {
+        let rest = rest.trim_end_matches('/');
+        if rest.split('/').count() >= 2 {
+            return Some(format!("https://github.com/{rest}"));
+        }
+    }
+    None
+}
+
+fn wrangler_mentions(project: &Path, needles: &[&str]) -> bool {
+    let names = ["wrangler.toml", "wrangler.json", "wrangler.jsonc"];
+    let check = |dir: &Path| -> bool {
+        for name in names {
+            let Ok(raw) = fs::read_to_string(dir.join(name)) else {
+                continue;
+            };
+            let lower = raw.to_ascii_lowercase();
+            if needles
+                .iter()
+                .any(|n| lower.contains(&n.to_ascii_lowercase()))
+            {
+                return true;
+            }
+        }
+        false
+    };
+    if check(project) {
+        return true;
+    }
+    if let Ok(entries) = fs::read_dir(project) {
+        for ent in entries.flatten() {
+            let p = ent.path();
+            if !p.is_dir() {
+                continue;
+            }
+            let name = ent.file_name().to_string_lossy().to_lowercase();
+            if name == "node_modules" || name == ".git" || name == "target" || name == "dist" {
+                continue;
+            }
+            if check(&p) {
+                return true;
+            }
+            if name == "apps" {
+                if let Ok(apps) = fs::read_dir(&p) {
+                    for app in apps.flatten() {
+                        let ap = app.path();
+                        if ap.is_dir() && check(&ap) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+fn env_files(project: &Path) -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    for name in [".env", ".env.local", ".dev.vars"] {
+        let p = project.join(name);
+        if p.is_file() {
+            out.push(p);
+        }
+    }
+    if let Ok(entries) = fs::read_dir(project) {
+        for ent in entries.flatten() {
+            let p = ent.path();
+            if !p.is_dir() {
+                continue;
+            }
+            for name in [".env", ".env.local", ".dev.vars"] {
+                let f = p.join(name);
+                if f.is_file() {
+                    out.push(f);
+                }
+            }
+        }
+    }
+    out
+}
+
+fn env_key_prefix(project: &Path, prefix: &str) -> bool {
+    let pref = prefix.to_ascii_uppercase();
+    for path in env_files(project) {
+        let Ok(raw) = fs::read_to_string(&path) else {
+            continue;
+        };
+        for line in raw.lines() {
+            let t = line.trim();
+            if t.is_empty() || t.starts_with('#') {
+                continue;
+            }
+            let key = t.split_once('=').map(|(k, _)| k.trim()).unwrap_or(t);
+            if key.to_ascii_uppercase().starts_with(&pref) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn env_value_contains(project: &Path, needle: &str) -> bool {
+    let n = needle.to_ascii_lowercase();
+    for path in env_files(project) {
+        let Ok(raw) = fs::read_to_string(&path) else {
+            continue;
+        };
+        if raw.to_ascii_lowercase().contains(&n) {
+            return true;
+        }
+    }
+    false
+}
+
+fn package_mentions(project: &Path, needles: &[&str]) -> bool {
+    let check = |path: &Path| -> bool {
+        let Ok(raw) = fs::read_to_string(path) else {
+            return false;
+        };
+        let lower = raw.to_ascii_lowercase();
+        needles
+            .iter()
+            .any(|n| lower.contains(&n.to_ascii_lowercase()))
+    };
+    if check(&project.join("package.json")) {
+        return true;
+    }
+    let apps = project.join("apps");
+    if apps.is_dir() {
+        if let Ok(entries) = fs::read_dir(&apps) {
+            for ent in entries.flatten() {
+                let p = ent.path().join("package.json");
+                if p.is_file() && check(&p) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+fn file_mentions_any(project: &Path, names: &[&str], needle: &str) -> bool {
+    let n = needle.to_ascii_lowercase();
+    for name in names {
+        let Ok(raw) = fs::read_to_string(project.join(name)) else {
+            continue;
+        };
+        if raw.to_ascii_lowercase().contains(&n) {
+            return true;
+        }
+    }
+    false
+}
+
+fn nested_file_mentions(project: &Path, names: &[&str], needle: &str) -> bool {
+    let apps = project.join("apps");
+    if !apps.is_dir() {
+        return false;
+    }
+    let Ok(entries) = fs::read_dir(&apps) else {
+        return false;
+    };
+    for ent in entries.flatten() {
+        let p = ent.path();
+        if !p.is_dir() {
+            continue;
+        }
+        if file_mentions_any(&p, names, needle) {
+            return true;
+        }
+    }
+    false
 }
 
 fn detect_polar(project: &Path) -> bool {
@@ -346,6 +877,8 @@ pub fn intent_for(project: &Path) -> Result<StudioIntent> {
         "Then: shipctl flow --project .   (add --skip-deploy while offline)".into(),
     ];
     notes.extend(detected.hints.clone());
+    let wants_signet = detected.tauri || detected.signet_toml;
+    let existing_path = existing.as_ref().map(|e| e.sign_path.clone());
 
     Ok(StudioIntent {
         schema: "ship-studio/v0".into(),
@@ -362,6 +895,16 @@ pub fn intent_for(project: &Path) -> Result<StudioIntent> {
         deploy_args,
         detected,
         notes,
+        active_scopes: crate::scopes::plan_for(&project).active,
+        sign_path: if wants_signet {
+            existing_path
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| "self_then_official".into())
+        } else {
+            existing_path
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| "official_listing_only".into())
+        },
     })
 }
 
@@ -400,4 +943,95 @@ pub fn now_rfc3339() -> String {
     time::OffsetDateTime::now_utc()
         .format(&time::format_description::well_known::Rfc3339)
         .unwrap_or_else(|_| "unknown".into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_github_remote_https_and_ssh() {
+        assert_eq!(
+            parse_github_remote("https://github.com/acme/app.git"),
+            Some("https://github.com/acme/app".into())
+        );
+        assert_eq!(
+            parse_github_remote("git@github.com:acme/app.git"),
+            Some("https://github.com/acme/app".into())
+        );
+        assert_eq!(
+            parse_github_remote("ssh://git@github.com/acme/app"),
+            Some("https://github.com/acme/app".into())
+        );
+        assert_eq!(parse_github_remote("https://gitlab.com/acme/app.git"), None);
+    }
+
+    #[test]
+    fn detects_release_workflow_filename() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-ci-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".github/workflows")).unwrap();
+        fs::write(dir.join(".github/workflows/ci.yml"), "name: ci\n").unwrap();
+        fs::write(
+            dir.join(".github/workflows/release.yml"),
+            "name: release\non: push\n",
+        )
+        .unwrap();
+        fs::write(
+            dir.join(".github/workflows/Release-Publish.yaml"),
+            "name: publish\n",
+        )
+        .unwrap();
+        let d = probe(&dir);
+        assert!(d.ci_release);
+        assert!(d.release_workflows.iter().any(|n| n == "release.yml"));
+        assert!(d
+            .release_workflows
+            .iter()
+            .any(|n| n == "Release-Publish.yaml"));
+        assert!(!d.release_workflows.iter().any(|n| n == "ci.yml"));
+    }
+
+    #[test]
+    fn detects_dockerfile() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-docker-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("Dockerfile"), "FROM scratch\n").unwrap();
+        let d = probe(&dir);
+        assert!(d.container);
+        assert!(d.dockerfile);
+        assert!(!d.compose);
+    }
+
+    #[test]
+    fn detects_steam_appid_and_markets_file() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-markets-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join("steam_appid.txt"), "480\n").unwrap();
+        fs::write(dir.join(".ship/markets"), "itch\nepic\n").unwrap();
+        let d = probe(&dir);
+        assert!(d.steam);
+        assert!(d.itch);
+        assert!(d.epic);
+    }
 }

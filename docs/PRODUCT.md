@@ -1,18 +1,25 @@
 # Ship Studio — product contract
 
 **Status:** Active — CLI + TUI + desktop  
-**Updated:** 2026-09-13  
+**Updated:** 2026-09-15  
 
 ```text
-GOAL:     Guided launch through sign → release → listing → deploy (CLI · TUI · Desktop)
+GOAL:     Local shipping portal: publish wizard, scopes, self+official sign, ENV/tokens, multi-provider assist
 NOT:      Replace Cloudflare/Vercel/Netlify/GitHub · finish OAuth without the human · invent cloud secrets
 RUNTIME:  Local + offline-first (bridge never requires network; open/login/put/verify are operator-initiated)
-SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri)
-PROOF:    cargo test -p shipctl · shipctl launch · Desktop Launch panel
-DONE:     Adaptive launch plan (Signet when Tauri/signet.toml; Polar listing; Orbit deploy)
+SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri sidebar dashboard + Ctrl+K search)
+PROOF:    cargo test -p shipctl · scripts/dogfood-advanced-*.sh · Desktop Publish Advanced
+DONE:     Publish portal + scopes (incl. Mobile/Container) + env + dual sign + submit/listing/DB/CI/container lanes + assist + desktop shell
 NOT YET:  Operator must complete paste / live release / marketplace / deploy on vendor platforms (see OPERATOR-NEXT)
 ```
 
+## UX principle — minimal actions, one spine
+
+Access a wide range of shipping functions through **few deliberate actions**. Publish is the integrated workflow: Open/Run → (vendor UI) → Confirm → Next. Scopes, Env, Sign, Portal, Ritual, and Tools are **detail panels** opened from the current publish step (`desktop_view`), not competing start points. Assist is a checklist overview; Launch is a companion stepper — prefer Publish for the full minute path.
+
+**Modes:** **General** (default) — shortest publish plan + focused nav. **Advanced** — full OAuth/official-sign/listing plan + Assist/Launch/Portal/Ritual/Tools. See `specs/backend/studio-modes-design.md`.
+
+DO NOT: make operators reassemble the release from eight peer nav destinations · force Assist → Scopes → Env → Sign → Portal → Publish as the happy path.
 ## Architecture
 
 ```text
@@ -25,7 +32,7 @@ NOT YET:  Operator must complete paste / live release / marketplace / deploy on 
          guide · portal · secrets · configure · signet · orbit
 ```
 
-Design: `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-portal-design.md` · `specs/backend/paste-secret-assist-design.md` · `specs/backend/vault-export-design.md` · `specs/backend/guided-launch-design.md`
+Design: `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-portal-design.md` · `specs/backend/paste-secret-assist-design.md` · `specs/backend/vault-export-design.md` · `specs/backend/guided-launch-design.md` · `specs/backend/studio-scopes-design.md` · `specs/backend/publish-portal-design.md` · `specs/backend/release-surface-map.md`
 
 ## Commands
 
@@ -34,7 +41,13 @@ Design: `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-p
 | `doctor` | Check Signet/Orbit; includes portal providers + secret hint count |
 | `guide` | Unified offline checklist; `--open` entry URLs |
 | `ship` | One-shot offline prep → `.ship/last-guide.json` |
-| `launch` | **Guided launch:** open/run → verify/confirm → next (sign · release · list · deploy) |
+| `publish` | **Publish portal:** minute wizard open/run → verify/confirm → next |
+| `pulse` | **Project pulse:** git · wizards · deploy signals · next action (local) |
+| `launch` | Guided launch: open/run → verify/confirm → next (sign · release · list · deploy) |
+| `scopes` | Detect / select Web · API · Desktop directories |
+| `env` | ENV & token portal (configure / retrieve / create URLs) |
+| `sign-paths` | Self-sign (Signet) vs official Apple/Windows/Play/GitHub |
+| `assist` | Full-stack checklist; `--start` loads publish portal |
 | `human` | Portal sprint: open Polar→GitHub, then `--put` paste queue |
 | `configure` | Write `.ship/studio.json` |
 | `portal` | Provider entry plan; `--open` / `--login` |
@@ -42,7 +55,7 @@ Design: `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-p
 | `vault` | **Encrypted `.km` export** (Clavis-compatible); `export` / `add` / `list` / `show` |
 | `tui` | Interactive terminal wizard |
 | `sign` / `deploy` / `flow` / `status` | Signet / Orbit / pipeline / last-run |
-| `mcp` | Stdio MCP (`ship_guide`, `ship_portal`, `ship_secrets`, `ship_vault`, …) |
+| `mcp` | Stdio MCP (`ship_publish`, `ship_guide`, `ship_portal`, …) |
 
 ## Providers (portal)
 
@@ -61,7 +74,7 @@ bash scripts/stage-desktop.sh
 ./target/release/ship-studio-desktop.exe
 ```
 
-Buttons: **Launch** (open/run · verify · confirm · next through ship) · **Human portal** · Wizard · Ship · Guide · Portal · Secrets · Export vault · …
+Buttons: **Publish** (minute wizard) · **Assist** checklist · **Launch** · **Human portal** · Wizard · Ship · Guide · Portal · Secrets · Export vault · …
 
 ## TUI
 
