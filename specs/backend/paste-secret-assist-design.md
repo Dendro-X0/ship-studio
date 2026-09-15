@@ -1,7 +1,7 @@
 # Paste-secret assist — design
 
 **Status:** Active  
-**Updated:** 2026-09-13  
+**Updated:** 2026-09-15  
 **Owner:** `crates/shipctl` (`secrets` module)
 
 ## Goal
@@ -24,15 +24,26 @@ shipctl secrets put --project . --provider cloudflare --name GITHUB_TOKEN
 1. `wrangler.toml` / nested: `# Secrets …` comment block (Orbit-compatible)
 2. Empty keys in `.dev.vars` / `.env` / `.env.local` (name only, never values)
 3. Catalog fallbacks when provider detected but no names found (optional generic note)
+4. **Graduate / commerce catalog** (when `detected.graduate_sign` / `gumroad` / `lemon`): name-only rows — open dashboard URL; no real put CLI (CI / vendor consoles only; never `.ship/`)
+
+### Graduate catalog names
+
+`SIGNET_OV_CERT`, `SIGNET_AZURE_CLIENT_ID`, `SIGNET_AZURE_CLIENT_SECRET`, `SIGNET_AZURE_TENANT_ID`, `SIGNET_NOTARY_PROFILE`, `WIN_CERT_PFX_PASS`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER_ID`
+
+### Commerce catalog names
+
+- Gumroad: `GUMROAD_ACCESS_TOKEN`, `GUMROAD_PRODUCT_ID`, `GUMROAD_CHECKOUT_URL`
+- Lemon: `LEMON_API_KEY`, `LEMONSQUEEZY_WEBHOOK_SECRET`, `LEMON_CHECKOUT_URL`
 
 ## Put mapping
 
-| Provider   | Put command                          |
-|------------|--------------------------------------|
-| Cloudflare | `wrangler secret put <NAME>` (cwd = wrangler dir) |
-| Vercel     | `vercel env add <NAME>`              |
-| Netlify    | `netlify env:set <NAME>` (prompts)   |
-| GitHub     | no put — open tokens page + remind to set on deploy target |
+| Provider | Put command |
+|----------|-------------|
+| Cloudflare | `wrangler secret put <NAME>` |
+| Vercel | `vercel env add <NAME>` |
+| Netlify | `netlify env:set <NAME>` |
+| GitHub | no put — open tokens page |
+| graduate / gumroad / lemon | no put — open docs/dashboard |
 
 ## Invariants
 
@@ -43,5 +54,6 @@ shipctl secrets put --project . --provider cloudflare --name GITHUB_TOKEN
 ## Proof
 
 - L1: parse secrets comment + empty `.dev.vars` keys unit tests
+- L1b: markets `graduate`+`gumroad` → secrets plan includes catalog names
 - L2: `shipctl secrets --project <fixture>` JSON
 - TUI/Desktop: Secrets action surfaces same plan

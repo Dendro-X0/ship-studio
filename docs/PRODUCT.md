@@ -9,8 +9,8 @@ NOT:      Replace Cloudflare/Vercel/Netlify/GitHub · finish OAuth without the h
 RUNTIME:  Local + offline-first (bridge never requires network; open/login/put/verify are operator-initiated)
 SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri sidebar dashboard + Ctrl+K search)
 PROOF:    cargo test -p shipctl · scripts/dogfood-advanced-*.sh · Desktop Publish Advanced
-DONE:     Publish portal + scopes (incl. Mobile/Container) + env + dual sign + submit/listing/DB/CI/container lanes + assist + desktop shell
-NOT YET:  Operator must complete paste / live release / marketplace / deploy on vendor platforms (see OPERATOR-NEXT)
+DONE:     Publish portal + scopes + env + dual sign + graduate/commerce listings + stores/npm/crates + DB/CI/container + legal/trust/GH Release + marketing.deploy + assist + desktop shell
+NOT YET:  Operator must complete paste / live release / marketplace / deploy / graduate certs / SKU creation on vendor platforms (see OPERATOR-NEXT)
 ```
 
 ## UX principle — minimal actions, one spine

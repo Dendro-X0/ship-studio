@@ -731,7 +731,7 @@ fn decide_now(
             detail,
             primary: action(
                 "publish_continue",
-                "Continue publish",
+                "Continue publishing",
                 "nav",
                 Some("publish"),
                 Some(vec!["publish".into(), "--project".into(), ".".into()]),
@@ -754,7 +754,7 @@ fn decide_now(
             ),
             primary: action(
                 "publish_start",
-                "Start publish",
+                "Start publishing",
                 "nav",
                 Some("publish"),
                 Some(vec!["publish".into(), "--project".into(), ".".into()]),
@@ -866,12 +866,12 @@ fn decide_now(
         return NowPulse {
             title: format!("{name} is provider-linked"),
             detail: format!(
-                "{}. Start publish for env/listing — deploy only when you need a new release.",
+                "{}. Start publishing for env/listing — deploy only when you need a new release.",
                 deploy.detail
             ),
             primary: action(
                 "publish_start",
-                "Start publish",
+                "Start publishing",
                 "nav",
                 Some("publish"),
                 Some(vec!["publish".into(), "--project".into(), ".".into()]),
@@ -900,7 +900,7 @@ fn decide_now(
         ),
         primary: action(
             "publish_start",
-            "Start publish",
+            "Start publishing",
             "nav",
             Some("publish"),
             Some(vec!["publish".into(), "--project".into(), ".".into()]),
@@ -978,6 +978,64 @@ pub fn for_project(project: &Path) -> Result<ProjectPulse> {
         }
         notes.push(format!(
             "Extra marketplace(s): {} — Advanced listing opens partner dashboards.",
+            m.join(", ")
+        ));
+    }
+    if !detected.license || !detected.security_md {
+        let mut miss = Vec::new();
+        if !detected.license {
+            miss.push("LICENSE");
+        }
+        if !detected.security_md {
+            miss.push("SECURITY.md");
+        }
+        notes.push(format!(
+            "Launch baseline missing: {} — Advanced legal.baseline.",
+            miss.join(" · ")
+        ));
+    }
+    if (detected.tauri || detected.signet_toml) && !detected.trust_md {
+        notes.push("Desktop/Signet without TRUST.md — Advanced trust.pack.".into());
+    }
+    if detected.npm_publish || detected.crates_publish {
+        let mut m = Vec::new();
+        if detected.npm_publish {
+            m.push("npm");
+        }
+        if detected.crates_publish {
+            m.push("crates.io");
+        }
+        notes.push(format!(
+            "Package registry: {} — Advanced listing opens publisher dashboards.",
+            m.join(", ")
+        ));
+    }
+    if detected.marketing_site {
+        notes.push(format!(
+            "Marketing site ({}) — Advanced marketing.deploy.",
+            if detected.marketing_host.is_empty() {
+                "unknown"
+            } else {
+                detected.marketing_host.as_str()
+            }
+        ));
+    }
+    if detected.graduate_sign {
+        notes.push(
+            "Graduate signing opted in — Advanced sign.graduate (no verified-publisher claims)."
+                .into(),
+        );
+    }
+    if detected.gumroad || detected.lemon {
+        let mut m = Vec::new();
+        if detected.gumroad {
+            m.push("Gumroad");
+        }
+        if detected.lemon {
+            m.push("Lemon");
+        }
+        notes.push(format!(
+            "Commerce ({}) — Advanced listing opens SKU dashboards.",
             m.join(", ")
         ));
     }

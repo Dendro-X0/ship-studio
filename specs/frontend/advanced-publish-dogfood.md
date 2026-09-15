@@ -1,7 +1,7 @@
 # Frontend Spec — Advanced publish dogfood (Desktop)
 
 - **Product:** Ship Studio Desktop  
-- **Depends on:** release-surface gaps #1–#6 (`shipctl` Advanced plan)  
+- **Depends on:** release-surface gaps #1–#10 (`shipctl` Advanced plan)  
 - **Spec status:** implement  
 - **Stack:** existing vanilla Tauri UI  
 
@@ -14,10 +14,16 @@ Operator in **Advanced** mode can walk every new adaptive step with: **Open** (U
 | Step id | Related label | Panel | Open primary |
 |---------|---------------|-------|--------------|
 | `listing.play` / `listing.app_store` | Open Sign | Sign | Vendor URL |
-| `listing.steam` / `itch` / `epic` / `polar` | Open Portal | Portal | Vendor URL |
+| `listing.steam` / `itch` / `epic` / `polar` / `npm` / `crates` | Open Portal | Portal | Vendor URL |
 | `submit.*` | Open Sign | Sign (kind=`submit`) | Vendor URL |
 | `db.provision` | Open Env | Env | Neon/Supabase/… URL |
 | `ci.release` | Dashboard | Dashboard | GitHub Actions URL |
+| `legal.baseline` | Dashboard | Dashboard | — |
+| `trust.pack` | Open Sign | Sign | — |
+| `release.github` | Dashboard | Dashboard | GitHub Releases/new |
+| `sign.graduate` | Open Sign | Sign | Azure Trusted Signing docs |
+| `listing.gumroad` / `listing.lemon` | Open Portal | Portal | Vendor dashboard |
+| `marketing.deploy` | Open Portal | Portal | Host dashboard (Pages/Vercel/Netlify) |
 | `container.deploy` | Open Portal | Portal (container filter) | Registry docs URL |
 
 Invariants: General mode still omits these steps; Advanced rebuilds via mode toggle; **Back to Publish** returns from Related.

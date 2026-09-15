@@ -479,7 +479,7 @@ const VIEW_META: Record<string, { title: string; desc: string }> = {
   },
   assist: {
     title: "Assist",
-    desc: "Checklist overview — Start publish for the live spine.",
+    desc: "Checklist overview — Start publishing for the live spine.",
   },
   publish: {
     title: "Publish",
@@ -994,22 +994,77 @@ function syncProjectIdentity() {
   if (nowPrimary) {
     nowPrimary.disabled = running;
     if (!bound) {
-      nowPrimary.textContent = "Open folder…";
+      setCtaLabel(nowPrimary, "Open folder…");
       nowPrimary.dataset.pulseId = "open";
       nowPrimary.dataset.pulseView = "";
+      setNowCtaState("open");
     } else if (lastPulse?.now?.primary?.label) {
-      nowPrimary.textContent = lastPulse.now.primary.label;
+      setCtaLabel(nowPrimary, polishCtaLabel(lastPulse.now.primary.label));
       nowPrimary.dataset.pulseId = lastPulse.now.primary.id ?? "publish_start";
       nowPrimary.dataset.pulseView = lastPulse.now.primary.view || "publish";
+      setNowCtaState(ctaStateFromPulseId(lastPulse.now.primary.id, lastPulse.now.primary.label));
     } else {
-      nowPrimary.textContent = lastPublish?.finished
+      const label = lastPublish?.finished
         ? "Review publish"
         : lastPublish?.current
-          ? "Continue publish"
-          : "Start publish";
+          ? "Continue publishing"
+          : "Start publishing";
+      setCtaLabel(nowPrimary, label);
       nowPrimary.dataset.pulseId = "publish_start";
       nowPrimary.dataset.pulseView = "publish";
+      setNowCtaState(
+        lastPublish?.finished ? "review" : lastPublish?.current ? "continue" : "start",
+      );
     }
+  }
+}
+
+function setCtaLabel(btn: HTMLButtonElement, label: string) {
+  const span = btn.querySelector<HTMLElement>(".cta-label");
+  if (span) span.textContent = label;
+  else btn.textContent = label;
+}
+
+function polishCtaLabel(raw: string): string {
+  const t = raw.trim();
+  if (t === "Start publish") return "Start publishing";
+  if (t === "Continue publish") return "Continue publishing";
+  return t;
+}
+
+function ctaStateFromPulseId(id: string | undefined, label: string): string {
+  if (id === "open") return "open";
+  if (id === "publish_continue" || /continue/i.test(label)) return "continue";
+  if (/review/i.test(label)) return "review";
+  if (id === "publish_start" || /start publish/i.test(label)) return "start";
+  return "other";
+}
+
+function setNowCtaState(state: string) {
+  const now = document.querySelector<HTMLElement>("#now");
+  const primary = document.querySelector<HTMLButtonElement>("#now-primary");
+  const hint = document.querySelector("#now-cta-hint");
+  if (now) now.dataset.ready = state === "start" || state === "continue" ? state : "";
+  if (primary) primary.dataset.cta = state;
+  if (!hint) return;
+  const mins = lastPublish?.minutes_remaining;
+  const minsNote = mins != null ? ` · ~${mins} min left` : "";
+  switch (state) {
+    case "open":
+      hint.textContent = "Bind a repo — then one click starts the publish workflow.";
+      break;
+    case "start":
+      hint.textContent =
+        "One click — we open the right portals; you confirm each step.";
+      break;
+    case "continue":
+      hint.textContent = `Pick up the current step${minsNote}. Confirm when the vendor UI is done.`;
+      break;
+    case "review":
+      hint.textContent = "Open Publish to scan the completed pass or start another.";
+      break;
+    default:
+      hint.textContent = "Follow the primary action — vendor UIs stay in your browser.";
   }
 }
 
@@ -1027,11 +1082,13 @@ function applyNow(view: PublishView | null) {
     title.textContent = "Open a project to see what’s next";
     detail.textContent =
       "Bind the folder you’re shipping. Then we sequence vendor UIs — you paste, sign, list, and deploy.";
+    setNowCtaState("open");
     return;
   }
   if (view?.finished) {
     title.textContent = "Live check is done for this pass";
     detail.textContent = `${projectName(path)} finished the publish portal. Switch project or start another pass from Publish.`;
+    setNowCtaState("review");
     return;
   }
   const cur = view?.current;
@@ -1041,11 +1098,13 @@ function applyNow(view: PublishView | null) {
     const mins = view?.minutes_remaining != null ? ` · ~${view.minutes_remaining} min left` : "";
     title.textContent = cur.title;
     detail.textContent = `${cur.detail ?? "Open/Run on the official platform, then Confirm."} (${n}/${total}${mins})`;
+    setNowCtaState("continue");
     return;
   }
   title.textContent = `Pick up ${projectName(path)}`;
   detail.textContent =
     "Start the publish portal — doctor, env, sign, listing, deploy. You finish the vendor UIs; Ship Studio keeps the sequence.";
+  setNowCtaState("start");
 }
 
 function applyPulseNow(pulse: ProjectPulse) {
@@ -1056,10 +1115,12 @@ function applyPulseNow(pulse: ProjectPulse) {
   if (title) title.textContent = pulse.now?.title ?? "Ready";
   if (detail) detail.textContent = pulse.now?.detail ?? "";
   if (primary) {
-    primary.textContent = pulse.now?.primary?.label ?? "Start publish";
+    const raw = pulse.now?.primary?.label ?? "Start publishing";
+    setCtaLabel(primary, polishCtaLabel(raw));
     primary.dataset.pulseId = pulse.now?.primary?.id ?? "publish_start";
     primary.dataset.pulseView = pulse.now?.primary?.view || "publish";
     primary.disabled = running;
+    setNowCtaState(ctaStateFromPulseId(pulse.now?.primary?.id, raw));
   }
   if (extra) {
     const acts = (pulse.now?.actions ?? []).filter((a) => a.id && a.id !== pulse.now?.primary?.id);
@@ -1838,7 +1899,7 @@ function applyAssist(plan: AssistPlan | null) {
   const hint = document.querySelector("#assist-hint");
   if (!list) return;
   if (hint && plan?.sign_path) {
-    hint.textContent = `Signing path: ${plan.sign_path}. Prefer Start publish — detail Open jumps are optional panels.`;
+    hint.textContent = `Signing path: ${plan.sign_path}. Prefer Start publishing — detail Open jumps are optional panels.`;
   }
   const steps = plan?.steps ?? [];
   list.innerHTML = steps.length
@@ -1855,7 +1916,7 @@ function applyAssist(plan: AssistPlan | null) {
       </li>`,
         )
         .join("")
-    : `<li class="portal-step"><div class="meta"><p class="detail empty-hint">Refresh assist after binding a project — or Start publish.</p></div></li>`;
+    : `<li class="portal-step"><div class="meta"><p class="detail empty-hint">Refresh assist after binding a project — or Start publishing.</p></div></li>`;
   list.querySelectorAll<HTMLButtonElement>(".assist-go").forEach((btn) => {
     btn.addEventListener("click", () => {
       const view = btn.getAttribute("data-view");

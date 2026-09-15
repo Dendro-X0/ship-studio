@@ -85,6 +85,18 @@ pub fn plan_for(project: &Path) -> SignPortal {
             run: None,
         });
     }
+    if detected.graduate_sign {
+        paths.push(SignPath {
+            id: "graduate.checklist".into(),
+            kind: "official".into(),
+            title: "Graduate — OV / notarization checklist".into(),
+            detail: "Azure Trusted Signing or OV Authenticode + Apple notarization secrets. Do not claim verified publisher until real. Optional: `signet graduate` locally.".into(),
+            entry_url: Some(
+                "https://learn.microsoft.com/en-us/azure/trusted-signing/".into(),
+            ),
+            run: Some(vec!["signet".into(), "graduate".into(), "--help".into()]),
+        });
+    }
     if wants_play {
         paths.push(SignPath {
             id: "official.android".into(),

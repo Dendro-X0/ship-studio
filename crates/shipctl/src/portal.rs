@@ -296,6 +296,24 @@ pub fn source_url_for_secret_name(name: &str) -> &'static str {
     if upper.starts_with("NETLIFY_") {
         return NETLIFY.create_url;
     }
+    if upper.starts_with("SIGNET_AZURE_")
+        || upper.starts_with("WIN_CERT_")
+        || upper == "SIGNET_OV_CERT"
+    {
+        return "https://learn.microsoft.com/en-us/azure/trusted-signing/";
+    }
+    if upper.starts_with("SIGNET_NOTARY_")
+        || upper.starts_with("APPLE_API_")
+        || upper.starts_with("NOTARY_")
+    {
+        return "https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution";
+    }
+    if upper.starts_with("GUMROAD_") {
+        return "https://app.gumroad.com/";
+    }
+    if upper.starts_with("LEMON_") || upper.starts_with("LEMONSQUEEZY_") {
+        return "https://app.lemonsqueezy.com/";
+    }
     CLOUDFLARE.token_url
 }
 
@@ -318,6 +336,16 @@ pub fn once_hint_for_secret_name(name: &str) -> &'static str {
     }
     if upper.contains("CLOUDFLARE") || upper == "CF_API_TOKEN" {
         return CLOUDFLARE.once_hint;
+    }
+    if upper.starts_with("SIGNET_")
+        || upper.starts_with("WIN_CERT_")
+        || upper.starts_with("APPLE_API_")
+        || upper.starts_with("NOTARY_")
+    {
+        return "Store only in CI / Signet env — never commit private keys or .ship/.";
+    }
+    if upper.starts_with("GUMROAD_") || upper.starts_with("LEMON") {
+        return "Create on the commerce dashboard; paste checkout URL into marketing CTA only.";
     }
     "Copy the value when the provider shows it — many platforms never display it again."
 }

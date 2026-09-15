@@ -190,14 +190,22 @@
             </section>
 
             <section class="now" id="now" aria-label="What to do next">
-              <p class="now-kicker">Now</p>
+              <p class="now-kicker">Launch</p>
               <h3 id="now-title">Open a project to see what’s next</h3>
               <p class="now-detail" id="now-detail">
                 One human action at a time — paste, sign, list, or deploy on the vendor UI. Confirm here when you’re done.
               </p>
+              <div class="now-cta">
+                <button type="button" id="now-primary" class="primary cta-launch" data-cta="open">
+                  <span class="cta-label">Open folder…</span>
+                  <span class="cta-arrow" aria-hidden="true">→</span>
+                </button>
+                <p class="now-cta-hint" id="now-cta-hint">
+                  Bind a repo — then one click starts the publish workflow.
+                </p>
+              </div>
               <div class="now-actions">
-                <button type="button" id="now-primary" class="primary">Open folder…</button>
-                <button type="button" id="now-switch">Switch project</button>
+                <button type="button" id="now-switch" class="now-switch">Switch project</button>
               </div>
               <div class="now-extra" id="now-extra" hidden></div>
             </section>
@@ -268,12 +276,15 @@
                 <div>
                   <label>Deploy assist</label>
                   <p class="hint" id="assist-hint">
-                    Overview checklist — Start publish for the live spine. Other views are detail panels, not a second workflow.
+                    Overview checklist — Start publishing for the live spine. Other views are detail panels, not a second workflow.
                   </p>
                 </div>
                 <div class="portal-actions">
                   <button type="button" id="btn-assist" class="primary" disabled>Refresh assist</button>
-                  <button type="button" id="btn-assist-start" disabled>Start publish</button>
+                  <button type="button" id="btn-assist-start" class="primary cta-launch cta-compact" disabled>
+                    <span class="cta-label">Start publishing</span>
+                    <span class="cta-arrow" aria-hidden="true">→</span>
+                  </button>
                 </div>
               </div>
               <ul class="portal-steps" id="assist-steps"></ul>

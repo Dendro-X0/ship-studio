@@ -23,7 +23,7 @@ TUI: Publish (`P`) → o / v / c / n.
 
 Progress: project `.ship/publish.json` (no secret values).
 
-**Adaptive plan (Advanced):** doctor → scopes → oauth* → env sprint → **db.provision** (if D1/Neon/…) → configure → sign* → **listing.*** (Polar / Play / ASC / Steam / itch / Epic) → **submit.*** → **ci.release** → **container.deploy** → dry-run → deploy* → live check.
+**Adaptive plan (Advanced):** doctor → scopes → **legal.baseline** → oauth* → env → **db.provision** → configure → sign* → **trust.pack** → **sign.graduate** (opt-in) → **listing.*** (Polar / Gumroad / Lemon / npm / crates / stores / Steam…) → **submit.*** → **ci.release** → **release.github** → **container.deploy** → **marketing.deploy** → dry-run → deploy* → live check.
 
 **General** keeps the short spine (doctor, scopes, env, configure, sign.self.build, dry-run, deploy*, live_check).
 
@@ -47,9 +47,11 @@ Same open → verify → confirm → next pattern; state in `.ship/launch.json`.
 |------|--------|
 | Paste | Create tokens / DB URLs on vendor sites; Open → put → Confirm → Next |
 | Scopes | Pick Web / API / Desktop / Mobile / Container, then Save |
-| Sign | Self-sign locally; official certs vs **Submit** store review on vendor sites |
-| Listing | Polar · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced) |
+| Sign | Self-sign locally; official certs · **graduate** OV/notarization · **Submit** store review on vendor sites |
+| Listing | Polar · Gumroad · Lemon · npm · crates.io · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced) |
 | DB | Provision on Neon/Supabase/D1/Turso console; put connection on deploy target |
 | CI | After tag/Signet release, confirm GitHub Actions |
+| Legal / trust | Add LICENSE + SECURITY.md; TRUST.md + checksums for desktop/Signet; cut GitHub Release when prompted |
+| Marketing | Deploy landing / HOOK / download site; confirm canonical URL (DNS stays manual) |
 | Container | Build/push locally; registry docs are open-only |
 | Deploy | Allow network deploy when Publish reaches deploy (skip if already live) |

@@ -12,9 +12,23 @@ printf '%s\n' '// stub' >"$FIX/android/build.gradle"
 printf '%s\n' 'FROM alpine' >"$FIX/Dockerfile"
 printf '%s\n' 'name: release' 'on: push' >"$FIX/.github/workflows/release.yml"
 printf '%s\n' '480' >"$FIX/steam_appid.txt"
-printf '%s\n' '["itch","epic"]' >"$FIX/.ship/markets.json"
+printf '%s\n' '["itch","epic","npm","crates","marketing","graduate","gumroad","lemon"]' >"$FIX/.ship/markets.json"
+mkdir -p "$FIX/apps/website"
+printf '%s\n' '<!doctype html><title>dogfood</title>' >"$FIX/apps/website/index.html"
 printf '%s\n' 'NEON_DATABASE_URL=' >"$FIX/.env.local"
+# Gap #7: leave LICENSE/SECURITY/TRUST absent; add Signet marker for trust.pack.
+printf '%s\n' 'name = "dogfood"' >"$FIX/signet.toml"
+rm -f "$FIX/LICENSE" "$FIX/LICENSE.md" "$FIX/SECURITY.md" "$FIX/TRUST.md" "$FIX/CHANGELOG.md"
 rm -f "$FIX/.ship/publish.json" "$FIX/.ship/scopes.json" "$FIX/.ship/studio.json"
+# Optional GH Release step when origin is GitHub (non-Signet-self path still uses release.github).
+if command -v git >/dev/null 2>&1; then
+  if [[ ! -d "$FIX/.git" ]]; then
+    git -C "$FIX" init -q || true
+  fi
+  if ! git -C "$FIX" remote get-url origin >/dev/null 2>&1; then
+    git -C "$FIX" remote add origin "https://github.com/example/ship-studio-dogfood.git" 2>/dev/null || true
+  fi
+fi
 
 SHIPCTL="${SHIPCTL_PATH:-}"
 EXPLICIT_SHIPCTL=0
@@ -57,11 +71,19 @@ NEED=(
   listing.steam
   listing.itch
   listing.epic
+  listing.npm
+  listing.crates
   submit.play
   submit.app_store
   db.provision
   ci.release
   container.deploy
+  legal.baseline
+  trust.pack
+  marketing.deploy
+  sign.graduate
+  listing.gumroad
+  listing.lemon
 )
 MISS=0
 for id in "${NEED[@]}"; do
@@ -73,7 +95,7 @@ for id in "${NEED[@]}"; do
   fi
 done
 # Related desktop_view samples
-for pair in "listing.steam:portal" "db.provision:env" "ci.release:dashboard" "container.deploy:portal" "submit.play:sign"; do
+for pair in "listing.steam:portal" "listing.npm:portal" "listing.crates:portal" "listing.gumroad:portal" "listing.lemon:portal" "db.provision:env" "ci.release:dashboard" "container.deploy:portal" "submit.play:sign" "legal.baseline:dashboard" "trust.pack:sign" "sign.graduate:sign" "marketing.deploy:portal"; do
   id="${pair%%:*}"
   view="${pair##*:}"
   if echo "$OUT" | tr '\n' ' ' | grep -q "\"id\": \"$id\".*\"desktop_view\": \"$view\""; then

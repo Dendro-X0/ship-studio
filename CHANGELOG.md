@@ -4,6 +4,12 @@
 
 ### Added
 
+- Desktop **Dashboard Launch CTA** — emerald Start/Continue publishing button with hint + breathe; Assist matches
+- **Professional launch baseline** (Advanced) — `legal.baseline` · `trust.pack` · `release.github` when LICENSE/SECURITY/TRUST or GitHub origin signals match
+- **Package registries** (Advanced) — `listing.npm` / `listing.crates` for publishable packages or `.ship/markets` opt-in
+- **Marketing deploy** (Advanced) — `marketing.deploy` for `apps/website` / GitHub Pages / HOOK preview / markets opt-in
+- **Graduate signing + commerce** (Advanced) — `sign.graduate` · `listing.gumroad` · `listing.lemon` via markets/env opt-in (honesty: no verified-publisher claims)
+- **Graduate / commerce secret catalog** — `shipctl secrets` name-only hints for SIGNET_*/WIN_CERT_*/GUMROAD_*/LEMON_* (never stored in `.ship/`)
 - **Publish portal** (`shipctl publish` / open / verify / confirm / next) — minute wizard through the full manual ship path
 - Desktop **Publish** view (primary) + TUI Publish screen (`P`) + MCP `ship_publish`
 - Assist `--start` loads the publish portal; Assist remains the checklist overview

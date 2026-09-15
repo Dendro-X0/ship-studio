@@ -45,6 +45,7 @@ pub fn plan_for(project: &Path, filter: Option<ProviderId>) -> Result<SecretsPla
     for id in &providers {
         hints.extend(hints_for_provider(&project, *id)?);
     }
+    hints.extend(graduate_commerce_catalog_hints(&project, &detected));
     dedupe_hints(&mut hints);
 
     Ok(SecretsPlan {
@@ -55,9 +56,129 @@ pub fn plan_for(project: &Path, filter: Option<ProviderId>) -> Result<SecretsPla
             "Paste values into the provider CLI — shipctl never stores secret values.".into(),
             "Run: shipctl secrets put --project . --provider cloudflare --name <NAME>".into(),
             "Or use TUI → Secrets → Enter to put the selected hint.".into(),
+            "Graduate / Gumroad / Lemon rows are name-only catalogs — set in CI or vendor dashboards, not .ship/.".into(),
             "Optional backup: shipctl vault export --out ship-secrets.km --from-hints".into(),
         ],
     })
+}
+
+fn graduate_commerce_catalog_hints(
+    project: &Path,
+    detected: &config::Detected,
+) -> Vec<SecretHint> {
+    let mut out = Vec::new();
+    let work = project.display().to_string();
+
+    if detected.graduate_sign {
+        let names = [
+            ("SIGNET_OV_CERT", "OV / code-signing cert material (CI secret)"),
+            ("SIGNET_AZURE_CLIENT_ID", "Azure Trusted Signing app id"),
+            ("SIGNET_AZURE_CLIENT_SECRET", "Azure Trusted Signing secret"),
+            ("SIGNET_AZURE_TENANT_ID", "Azure tenant id"),
+            ("SIGNET_NOTARY_PROFILE", "Apple notarytool profile name"),
+            ("WIN_CERT_PFX_PASS", "Windows PFX password if using local cert"),
+            ("APPLE_API_KEY_ID", "App Store Connect API key id"),
+            ("APPLE_API_ISSUER_ID", "App Store Connect issuer id"),
+        ];
+        for (name, why) in names {
+            out.push(SecretHint {
+                provider: "graduate".into(),
+                name: name.into(),
+                source: "catalog · graduate".into(),
+                put_cli: vec![
+                    "shipctl".into(),
+                    "portal".into(),
+                    "--provider".into(),
+                    "github".into(),
+                    "--open".into(),
+                ],
+                work_dir: work.clone(),
+                entry_url: Some(portal::source_url_for_secret_name(name).into()),
+                detail: format!(
+                    "{why}. Set as GitHub Actions / local Signet env — never commit. {}",
+                    portal::once_hint_for_secret_name(name)
+                ),
+            });
+        }
+        for (n, src) in empty_env_keys(
+            project,
+            &[".env", ".env.local", ".dev.vars"],
+        ) {
+            if (n.starts_with("SIGNET_OV_")
+                || n.starts_with("SIGNET_AZURE_")
+                || n.starts_with("SIGNET_NOTARY_")
+                || n.starts_with("WIN_CERT_")
+                || n.starts_with("APPLE_API_")
+                || n.starts_with("NOTARY_"))
+                && !out.iter().any(|h| h.name == n)
+            {
+                out.push(SecretHint {
+                    provider: "graduate".into(),
+                    name: n,
+                    source: src,
+                    put_cli: vec![
+                        "shipctl".into(),
+                        "portal".into(),
+                        "--provider".into(),
+                        "github".into(),
+                        "--open".into(),
+                    ],
+                    work_dir: work.clone(),
+                    entry_url: Some(
+                        "https://learn.microsoft.com/en-us/azure/trusted-signing/".into(),
+                    ),
+                    detail: "Empty env key for graduate signing — fill in CI secrets, not .ship/."
+                        .into(),
+                });
+            }
+        }
+    }
+
+    if detected.gumroad {
+        for (name, why) in [
+            ("GUMROAD_ACCESS_TOKEN", "Gumroad API / access token"),
+            ("GUMROAD_PRODUCT_ID", "Product permalink or id"),
+            ("GUMROAD_CHECKOUT_URL", "Public checkout CTA URL"),
+        ] {
+            out.push(SecretHint {
+                provider: "gumroad".into(),
+                name: name.into(),
+                source: "catalog · gumroad".into(),
+                put_cli: vec![
+                    "shipctl".into(),
+                    "portal".into(),
+                    "--open".into(),
+                ],
+                work_dir: work.clone(),
+                entry_url: Some("https://app.gumroad.com/".into()),
+                detail: format!("{why}. Create on Gumroad; put checkout URL into the marketing CTA."),
+            });
+        }
+    }
+
+    if detected.lemon {
+        for (name, why) in [
+            ("LEMON_API_KEY", "Lemon Squeezy API key"),
+            ("LEMONSQUEEZY_WEBHOOK_SECRET", "Webhook signing secret"),
+            ("LEMON_CHECKOUT_URL", "Public checkout / buy URL"),
+        ] {
+            out.push(SecretHint {
+                provider: "lemon".into(),
+                name: name.into(),
+                source: "catalog · lemon".into(),
+                put_cli: vec![
+                    "shipctl".into(),
+                    "portal".into(),
+                    "--open".into(),
+                ],
+                work_dir: work.clone(),
+                entry_url: Some("https://app.lemonsqueezy.com/".into()),
+                detail: format!("{why}. Create on Lemon; wire fulfillment webhook separately."),
+            });
+        }
+    }
+
+    out
 }
 
 fn hints_for_provider(project: &Path, id: ProviderId) -> Result<Vec<SecretHint>> {
@@ -438,6 +559,7 @@ fn dedupe_hints(hints: &mut Vec<SecretHint>) {
             "github" => 3,
             "polar" => 4,
             "neon" | "supabase" | "d1" | "turso" | "container" => 5,
+            "graduate" | "gumroad" | "lemon" => 6,
             _ => 9,
         }
     }
@@ -469,6 +591,14 @@ fn dedupe_hints(hints: &mut Vec<SecretHint>) {
                 || n.starts_with("LIBSQL_")
             {
                 2
+            } else if n.starts_with("SIGNET_")
+                || n.starts_with("WIN_CERT_")
+                || n.starts_with("APPLE_API_")
+                || n.starts_with("NOTARY_")
+            {
+                5
+            } else if n.starts_with("GUMROAD_") || n.starts_with("LEMON") {
+                6
             } else if n == "API_KEY_PEPPER" {
                 4
             } else {
@@ -586,5 +716,24 @@ name = "x"
             .collect();
         assert_eq!(gh.len(), 1, "expected one GITHUB_TOKEN hint, got {gh:?}");
         assert_eq!(gh[0].provider, "cloudflare");
+    }
+
+    #[test]
+    fn graduate_commerce_catalog_hints_when_opted_in() {
+        let dir = tempfile_dir();
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(
+            dir.join(".ship/markets.json"),
+            r#"["graduate","gumroad","lemon"]"#,
+        )
+        .unwrap();
+        let plan = plan_for(&dir, None).unwrap();
+        let names: Vec<_> = plan.hints.iter().map(|h| h.name.as_str()).collect();
+        assert!(names.contains(&"SIGNET_AZURE_CLIENT_ID"));
+        assert!(names.contains(&"GUMROAD_CHECKOUT_URL"));
+        assert!(names.contains(&"LEMON_API_KEY"));
+        assert!(plan.hints.iter().any(|h| h.provider == "graduate"));
+        assert!(plan.hints.iter().any(|h| h.provider == "gumroad"));
+        assert!(plan.hints.iter().any(|h| h.provider == "lemon"));
     }
 }

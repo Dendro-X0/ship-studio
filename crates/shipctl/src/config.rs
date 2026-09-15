@@ -142,6 +142,39 @@ pub struct Detected {
     pub itch: bool,
     #[serde(default)]
     pub epic: bool,
+    /// Root LICENSE / COPYING present.
+    #[serde(default)]
+    pub license: bool,
+    /// Root TRUST.md (Signet-style honesty).
+    #[serde(default)]
+    pub trust_md: bool,
+    /// Root SECURITY.md.
+    #[serde(default)]
+    pub security_md: bool,
+    /// Root CHANGELOG*.
+    #[serde(default)]
+    pub changelog: bool,
+    /// Publishable npm package (not private app).
+    #[serde(default)]
+    pub npm_publish: bool,
+    /// Publishable crates.io package.
+    #[serde(default)]
+    pub crates_publish: bool,
+    /// Marketing / landing / GitHub Pages site present.
+    #[serde(default)]
+    pub marketing_site: bool,
+    /// Hint for marketing host (pages | vercel | netlify | unknown).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub marketing_host: String,
+    /// Graduate / OV / notarization signing path opted in.
+    #[serde(default)]
+    pub graduate_sign: bool,
+    /// Gumroad commerce markers.
+    #[serde(default)]
+    pub gumroad: bool,
+    /// Lemon Squeezy commerce markers.
+    #[serde(default)]
+    pub lemon: bool,
     pub hints: Vec<String>,
 }
 
@@ -250,6 +283,10 @@ pub fn probe(project: &Path) -> Detected {
     detect_ci_release(project, &mut d);
     detect_container(project, &mut d);
     detect_markets(project, &mut d);
+    detect_launch_baseline(project, &mut d);
+    detect_package_registries(project, &mut d);
+    detect_marketing_site(project, &mut d);
+    detect_graduate_commerce(project, &mut d);
     let orbit_configured = d.orbit_configured;
 
     if d.signet_toml {
@@ -361,6 +398,65 @@ pub fn probe(project: &Path) -> Detected {
             bits.join(" · ")
         ));
     }
+    if !d.license || !d.security_md {
+        let mut miss = Vec::new();
+        if !d.license {
+            miss.push("LICENSE");
+        }
+        if !d.security_md {
+            miss.push("SECURITY.md");
+        }
+        d.hints.push(format!(
+            "Launch baseline missing ({}) — Advanced legal.baseline before a public cut.",
+            miss.join(" · ")
+        ));
+    }
+    if (d.tauri || d.signet_toml) && !d.trust_md {
+        d.hints
+            .push("Desktop/Signet without TRUST.md — Advanced trust.pack for checksum honesty.".into());
+    }
+    if d.npm_publish || d.crates_publish {
+        let mut bits = Vec::new();
+        if d.npm_publish {
+            bits.push("npm");
+        }
+        if d.crates_publish {
+            bits.push("crates.io");
+        }
+        d.hints.push(format!(
+            "Package registry ({}) — Advanced listing opens publisher dashboards (URL + confirm).",
+            bits.join(" · ")
+        ));
+    }
+    if d.marketing_site {
+        let host = if d.marketing_host.is_empty() {
+            "host dashboard".into()
+        } else {
+            d.marketing_host.clone()
+        };
+        d.hints.push(format!(
+            "Marketing / landing site detected — Advanced marketing.deploy opens {host} (URL + confirm)."
+        ));
+    }
+    if d.graduate_sign {
+        d.hints.push(
+            "Graduate signing opted in — Advanced sign.graduate for OV / Authenticode / notarization (no verified-publisher claims)."
+                .into(),
+        );
+    }
+    if d.gumroad || d.lemon {
+        let mut bits = Vec::new();
+        if d.gumroad {
+            bits.push("Gumroad");
+        }
+        if d.lemon {
+            bits.push("Lemon");
+        }
+        d.hints.push(format!(
+            "Commerce ({}) — Advanced listing opens SKU dashboards (URL + confirm).",
+            bits.join(" · ")
+        ));
+    }
     if orbit_configured {
         d.hints
             .push(".orbit/state.json found — Orbit already configured for this repo.".into());
@@ -455,6 +551,238 @@ fn detect_markets(project: &Path, d: &mut Detected) {
         || project.join("itch.toml").is_file()
         || project.join(".itch").is_dir();
     d.epic = opted.iter().any(|m| m == "epic" || m == "egs");
+}
+
+fn detect_launch_baseline(project: &Path, d: &mut Detected) {
+    d.license = root_has_any(
+        project,
+        &[
+            "license",
+            "license.md",
+            "license.txt",
+            "copying",
+            "license-mit",
+            "license-apache",
+            "license-mit.md",
+            "license-apache.md",
+        ],
+    );
+    d.trust_md = root_has_any(project, &["trust.md"]);
+    d.security_md = root_has_any(project, &["security.md"]);
+    d.changelog = root_has_any(
+        project,
+        &["changelog.md", "changelog", "changes.md", "history.md"],
+    );
+}
+
+fn detect_package_registries(project: &Path, d: &mut Detected) {
+    let opted = read_markets_opt_in(project);
+    let npm_opt = opted.iter().any(|m| m == "npm");
+    let crates_opt = opted
+        .iter()
+        .any(|m| m == "crates" || m == "crates.io" || m == "cargo");
+
+    d.npm_publish = npm_opt || npm_looks_publishable(project);
+    d.crates_publish = crates_opt || crates_looks_publishable(project);
+}
+
+fn npm_looks_publishable(project: &Path) -> bool {
+    let path = project.join("package.json");
+    let Ok(raw) = fs::read_to_string(&path) else {
+        return false;
+    };
+    let Ok(v) = serde_json::from_str::<serde_json::Value>(&raw) else {
+        return false;
+    };
+    let Some(obj) = v.as_object() else {
+        return false;
+    };
+    if obj.get("private").and_then(|p| p.as_bool()) == Some(true) {
+        return false;
+    }
+    if obj.get("private").and_then(|p| p.as_bool()) == Some(false) {
+        return true;
+    }
+    if obj.get("publishConfig").map(|p| p.is_object()).unwrap_or(false) {
+        return true;
+    }
+    obj.get("name")
+        .and_then(|n| n.as_str())
+        .map(|n| n.starts_with('@'))
+        .unwrap_or(false)
+}
+
+fn crates_looks_publishable(project: &Path) -> bool {
+    let path = project.join("Cargo.toml");
+    let Ok(raw) = fs::read_to_string(&path) else {
+        return false;
+    };
+    let mut in_package = false;
+    let mut saw_package = false;
+    let mut publish_blocked = false;
+    for line in raw.lines() {
+        let t = line.trim();
+        if t.starts_with('[') {
+            in_package = t == "[package]";
+            if in_package {
+                saw_package = true;
+            }
+            continue;
+        }
+        if !in_package {
+            continue;
+        }
+        let lower = t.to_ascii_lowercase();
+        if lower.starts_with("publish") {
+            // publish = false | publish = [] | publish = ["restricted"]
+            if lower.contains("false") || lower.contains('[') {
+                publish_blocked = true;
+            }
+        }
+    }
+    saw_package && !publish_blocked
+}
+
+fn detect_marketing_site(project: &Path, d: &mut Detected) {
+    let opted = read_markets_opt_in(project);
+    let opt_in = opted.iter().any(|m| {
+        matches!(
+            m.as_str(),
+            "marketing" | "site" | "pages" | "hook" | "landing"
+        )
+    });
+
+    let dir_hit = [
+        "apps/website",
+        "website",
+        "apps/marketing",
+        "marketing",
+    ]
+    .iter()
+    .any(|rel| project.join(rel).is_dir());
+
+    let pages_file = project.join("CNAME").is_file() || project.join(".nojekyll").is_file();
+    let pages_workflow = marketing_pages_workflow(project);
+    let preview = project
+        .join("docs/launch/preview/index.html")
+        .is_file();
+
+    d.marketing_site = opt_in || dir_hit || pages_file || pages_workflow || preview;
+    if !d.marketing_site {
+        d.marketing_host.clear();
+        return;
+    }
+
+    if pages_file || pages_workflow || preview || opted.iter().any(|m| m == "pages" || m == "hook")
+    {
+        d.marketing_host = "pages".into();
+    } else if d.vercel
+        || project.join("apps/website/vercel.json").is_file()
+        || project.join("website/vercel.json").is_file()
+    {
+        d.marketing_host = "vercel".into();
+    } else if d.netlify {
+        d.marketing_host = "netlify".into();
+    } else {
+        d.marketing_host = "unknown".into();
+    }
+}
+
+fn marketing_pages_workflow(project: &Path) -> bool {
+    let dir = project.join(".github").join("workflows");
+    let Ok(entries) = fs::read_dir(&dir) else {
+        return false;
+    };
+    for ent in entries.flatten() {
+        let name = ent.file_name().to_string_lossy().to_ascii_lowercase();
+        if !(name.ends_with(".yml") || name.ends_with(".yaml")) {
+            continue;
+        }
+        if name.contains("pages") || name.contains("gh-pages") {
+            return true;
+        }
+    }
+    false
+}
+
+/// Best-effort marketing host dashboard URL (no network).
+pub fn marketing_deploy_url(project: &Path) -> String {
+    let d = probe(project);
+    match d.marketing_host.as_str() {
+        "pages" => github_repo_web_url(project)
+            .map(|base| format!("{base}/settings/pages"))
+            .unwrap_or_else(|| "https://docs.github.com/pages".into()),
+        "netlify" => "https://app.netlify.com/".into(),
+        "vercel" => "https://vercel.com/dashboard".into(),
+        _ => {
+            if d.vercel {
+                "https://vercel.com/dashboard".into()
+            } else if d.netlify {
+                "https://app.netlify.com/".into()
+            } else {
+                github_repo_web_url(project)
+                    .map(|base| format!("{base}/settings/pages"))
+                    .unwrap_or_else(|| "https://vercel.com/dashboard".into())
+            }
+        }
+    }
+}
+
+fn detect_graduate_commerce(project: &Path, d: &mut Detected) {
+    let opted = read_markets_opt_in(project);
+    d.graduate_sign = opted.iter().any(|m| {
+        matches!(
+            m.as_str(),
+            "graduate" | "authenticode" | "notarize" | "notarisation"
+        )
+    }) || project.join(".ship/graduate").is_file()
+        || env_key_prefix(project, "SIGNET_OV_")
+        || env_key_prefix(project, "SIGNET_AZURE_")
+        || env_key_prefix(project, "SIGNET_NOTARY_")
+        || env_key_prefix(project, "WIN_CERT_")
+        || env_key_prefix(project, "APPLE_API_KEY")
+        || env_key_prefix(project, "NOTARY_")
+        || signet_toml_mentions_graduate(project);
+
+    d.gumroad = opted.iter().any(|m| m == "gumroad")
+        || env_key_prefix(project, "GUMROAD_");
+
+    d.lemon = opted
+        .iter()
+        .any(|m| m == "lemon" || m == "lemonsqueezy" || m == "lemon_squeezy")
+        || env_key_prefix(project, "LEMON_")
+        || env_key_prefix(project, "LEMONSQUEEZY_");
+}
+
+fn signet_toml_mentions_graduate(project: &Path) -> bool {
+    let path = project.join("signet.toml");
+    let Ok(raw) = fs::read_to_string(&path) else {
+        return false;
+    };
+    let lower = raw.to_ascii_lowercase();
+    lower.contains("graduate")
+        || (lower.contains("ship.path") && lower.contains("official"))
+        || (lower.contains("declared_tier") && lower.contains("graduate"))
+}
+
+/// Case-insensitive match of a root file's name (not recursive).
+fn root_has_any(project: &Path, names_lower: &[&str]) -> bool {
+    let Ok(entries) = fs::read_dir(project) else {
+        return false;
+    };
+    for ent in entries.flatten() {
+        let Ok(ft) = ent.file_type() else {
+            continue;
+        };
+        if !ft.is_file() {
+            continue;
+        }
+        let name = ent.file_name().to_string_lossy().to_ascii_lowercase();
+        if names_lower.iter().any(|n| *n == name) {
+            return true;
+        }
+    }
+    false
 }
 
 /// Opt-in list from `.ship/markets` (one id per line) or `.ship/markets.json` (array of strings).
@@ -562,6 +890,11 @@ pub fn container_docs_url(project: &Path) -> &'static str {
 /// Best-effort GitHub Actions URL from `origin` (no network).
 pub fn github_actions_url(project: &Path) -> Option<String> {
     github_repo_web_url(project).map(|base| format!("{base}/actions"))
+}
+
+/// Best-effort “create release” URL from `origin` (no network).
+pub fn github_releases_new_url(project: &Path) -> Option<String> {
+    github_repo_web_url(project).map(|base| format!("{base}/releases/new"))
 }
 
 /// `https://github.com/owner/repo` from `git remote get-url origin`, if parseable.
@@ -1033,5 +1366,139 @@ mod tests {
         assert!(d.steam);
         assert!(d.itch);
         assert!(d.epic);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_launch_baseline_files() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-legal-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let empty = probe(&dir);
+        assert!(!empty.license);
+        assert!(!empty.trust_md);
+        assert!(!empty.security_md);
+        assert!(!empty.changelog);
+
+        fs::write(dir.join("LICENSE"), "MIT\n").unwrap();
+        fs::write(dir.join("TRUST.md"), "# trust\n").unwrap();
+        fs::write(dir.join("SECURITY.md"), "# sec\n").unwrap();
+        fs::write(dir.join("CHANGELOG.md"), "# changes\n").unwrap();
+        let d = probe(&dir);
+        assert!(d.license);
+        assert!(d.trust_md);
+        assert!(d.security_md);
+        assert!(d.changelog);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_npm_and_crates_publishable() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-pkg-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+
+        fs::write(
+            dir.join("package.json"),
+            r#"{"name":"app","private":true}"#,
+        )
+        .unwrap();
+        assert!(!probe(&dir).npm_publish);
+
+        fs::write(
+            dir.join("package.json"),
+            r#"{"name":"@acme/lib","version":"1.0.0"}"#,
+        )
+        .unwrap();
+        assert!(probe(&dir).npm_publish);
+
+        fs::write(
+            dir.join("Cargo.toml"),
+            "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+        )
+        .unwrap();
+        assert!(probe(&dir).crates_publish);
+
+        fs::write(
+            dir.join("Cargo.toml"),
+            "[package]\nname = \"demo\"\nversion = \"0.1.0\"\npublish = false\n",
+        )
+        .unwrap();
+        assert!(!probe(&dir).crates_publish);
+
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".ship/markets"), "npm\ncrates\n").unwrap();
+        fs::write(dir.join("package.json"), r#"{"name":"x","private":true}"#).unwrap();
+        fs::write(dir.join("Cargo.toml"), "[workspace]\nmembers = []\n").unwrap();
+        let opted = probe(&dir);
+        assert!(opted.npm_publish);
+        assert!(opted.crates_publish);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_marketing_website_and_pages() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-mkt-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("apps/website")).unwrap();
+        fs::write(dir.join("apps/website/index.html"), "<h1>hi</h1>\n").unwrap();
+        let d = probe(&dir);
+        assert!(d.marketing_site);
+        assert!(!d.marketing_host.is_empty());
+
+        let dir2 = std::env::temp_dir().join(format!(
+            "shipctl-mkt2-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir2);
+        fs::create_dir_all(dir2.join(".ship")).unwrap();
+        fs::write(dir2.join(".ship/markets"), "marketing\n").unwrap();
+        assert!(probe(&dir2).marketing_site);
+        let _ = fs::remove_dir_all(&dir);
+        let _ = fs::remove_dir_all(&dir2);
+    }
+
+    #[test]
+    fn detects_graduate_and_commerce_opt_in() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-grad-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(
+            dir.join(".ship/markets"),
+            "graduate\ngumroad\nlemon\n",
+        )
+        .unwrap();
+        let d = probe(&dir);
+        assert!(d.graduate_sign);
+        assert!(d.gumroad);
+        assert!(d.lemon);
+        let _ = fs::remove_dir_all(&dir);
     }
 }

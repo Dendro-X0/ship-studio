@@ -98,12 +98,26 @@ Switching mode rebuilds the publish plan (`publish reset` semantics) and toasts.
 
 **Advanced Related dogfood** (gaps #1–#6): see `specs/frontend/advanced-publish-dogfood.md` — listing / submit / db / CI / container steps open Sign, Env, Portal, or Dashboard via Related; Open still fires `entry_url`.
 
+### Dashboard Now CTA
+
+Hero action for the publish spine — not a quiet peer of “Switch project”.
+
+| State | Label | Hint |
+|-------|-------|------|
+| Unbound | Open folder… | Bind a repo to launch the minute publish path |
+| Bound, no pass | Start publishing | One click — we open the right portals; you confirm each step |
+| Mid-flight | Continue publishing | Pick up the current step (~N min left when known) |
+| Finished | Review publish | Open Publish to scan the completed pass |
+
+Visual: large emerald CTA (`.cta-launch`) with arrow, soft breathe when ready to start/continue; secondary Switch stays muted. `#now-primary` id preserved.
+
 ## Motion (≥2 intentional)
 
 1. Active nav accent bar slide / fade
 2. View content fade-in on switch
 3. Command palette backdrop + panel enter
 4. Toast stack — slide up from bottom-right after operator actions
+5. Now CTA breathe (bound + Start/Continue) — presence, not noise
 
 ## Toasts (bottom-right)
 

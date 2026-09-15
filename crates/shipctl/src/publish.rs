@@ -267,6 +267,32 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
         ));
     }
 
+    if !detected.license || !detected.security_md {
+        let mut miss = Vec::new();
+        if !detected.license {
+            miss.push("LICENSE");
+        }
+        if !detected.security_md {
+            miss.push("SECURITY.md");
+        }
+        if !detected.changelog {
+            miss.push("CHANGELOG");
+        }
+        steps.push(step(
+            "legal.baseline",
+            "Launch — legal / security baseline",
+            PubKind::Human,
+            format!(
+                "Missing at repo root: {}. Add LICENSE + SECURITY.md (CHANGELOG recommended), then Confirm. No legal advice — just the ship checklist.",
+                miss.join(" · ")
+            ),
+            2,
+            None,
+            None,
+            Some("dashboard"),
+        ));
+    }
+
     for id in &portal.providers {
         let Ok(pid) = ProviderId::parse(id) else {
             continue;
@@ -360,6 +386,23 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
         ));
     }
 
+    // Non-Signet (or official-only) projects still cut GitHub Releases by hand.
+    // Signet self path already has `sign.self.release`.
+    if config::github_releases_new_url(project).is_some()
+        && !(wants_signet && sign_mode != "official")
+    {
+        steps.push(step(
+            "release.github",
+            "Release — GitHub Release cut",
+            PubKind::Human,
+            "Open Releases → create tag/assets (installers, checksums). Confirm after the draft is published. Does not claim verified publisher.",
+            3,
+            config::github_releases_new_url(project),
+            None,
+            Some("dashboard"),
+        ));
+    }
+
     if detected.container {
         let detail = if detected.compose {
             "Compose + image layout detected. Build/tag/push locally; open registry docs, then Confirm."
@@ -435,6 +478,35 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
         ));
     }
 
+    if (detected.tauri || detected.signet_toml) && !detected.trust_md {
+        steps.push(step(
+            "trust.pack",
+            "Trust — TRUST.md + checksums",
+            PubKind::Human,
+            "Add TRUST.md (honesty: self-signed / SmartScreen expected). Attach SHA256SUMS (± minisign) with the release. Confirm when the pack exists.",
+            2,
+            None,
+            None,
+            Some("sign"),
+        ));
+    }
+
+    if detected.graduate_sign {
+        steps.push(step(
+            "sign.graduate",
+            "Graduate — OV / notarization",
+            PubKind::Sign,
+            "Provision Authenticode (Azure Trusted Signing / OV) and/or Apple notarization. Confirm when identities exist in CI secrets. Do not claim verified publisher or SmartScreen silence until true.",
+            4,
+            Some(
+                "https://learn.microsoft.com/en-us/azure/trusted-signing/"
+                    .into(),
+            ),
+            None,
+            Some("sign"),
+        ));
+    }
+
     if wants_signet && sign_mode != "self" {
         for p in signpath::plan_for(project).paths {
             if p.kind != "official" {
@@ -482,6 +554,58 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
             "Update product, pricing, checkout URL on polar.sh — then Confirm.",
             3,
             Some("https://polar.sh/dashboard".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+
+    if detected.gumroad {
+        steps.push(step(
+            "listing.gumroad",
+            "Listing — Gumroad SKU",
+            PubKind::List,
+            "Create/update product, price, and checkout URL on Gumroad. Confirm after the live CTA works. Bridge does not create SKUs.",
+            3,
+            Some("https://app.gumroad.com/".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+
+    if detected.lemon {
+        steps.push(step(
+            "listing.lemon",
+            "Listing — Lemon Squeezy SKU",
+            PubKind::List,
+            "Create/update product + checkout on Lemon Squeezy. Confirm after fulfillment email works. Bridge does not create SKUs.",
+            3,
+            Some("https://app.lemonsqueezy.com/".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+
+    if detected.npm_publish {
+        steps.push(step(
+            "listing.npm",
+            "Listing — npm publish",
+            PubKind::List,
+            "Bump version, npm login / OTP, npm publish. Confirm after the version is live. Bridge does not run npm publish.",
+            3,
+            Some("https://www.npmjs.com/login".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+
+    if detected.crates_publish {
+        steps.push(step(
+            "listing.crates",
+            "Listing — crates.io publish",
+            PubKind::List,
+            "cargo login · cargo publish (or --dry-run first). Confirm after crates.io shows the version. Bridge does not run cargo publish.",
+            3,
+            Some("https://crates.io/me".into()),
             None,
             Some("portal"),
         ));
@@ -587,6 +711,26 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
             Some("https://partner.microsoft.com/dashboard/products".into()),
             None,
             Some("sign"),
+        ));
+    }
+
+    if detected.marketing_site {
+        let host = if detected.marketing_host.is_empty() {
+            "your host".into()
+        } else {
+            detected.marketing_host.clone()
+        };
+        steps.push(step(
+            "marketing.deploy",
+            "Marketing — public landing deploy",
+            PubKind::Human,
+            format!(
+                "Deploy or cut over the download / HOOK / docs landing ({host}). Confirm when the canonical URL serves this build. Bridge does not touch DNS."
+            ),
+            3,
+            Some(config::marketing_deploy_url(project)),
+            None,
+            Some("portal"),
         ));
     }
 
@@ -1445,5 +1589,201 @@ mod tests {
         );
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id.starts_with("listing.")));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn legal_and_trust_baseline_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-legal-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("signet.toml"), "name = \"dog\"\n").unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(
+            advanced.steps.iter().any(|s| s.id == "legal.baseline"),
+            "missing LICENSE/SECURITY should add legal.baseline"
+        );
+        assert!(
+            advanced.steps.iter().any(|s| s.id == "trust.pack"),
+            "signet without TRUST.md should add trust.pack"
+        );
+        let legal = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "legal.baseline")
+            .unwrap();
+        assert_eq!(legal.desktop_view.as_deref(), Some("dashboard"));
+        let trust = advanced.steps.iter().find(|s| s.id == "trust.pack").unwrap();
+        assert_eq!(trust.desktop_view.as_deref(), Some("sign"));
+
+        fs::write(dir.join("LICENSE"), "MIT\n").unwrap();
+        fs::write(dir.join("SECURITY.md"), "#\n").unwrap();
+        fs::write(dir.join("TRUST.md"), "#\n").unwrap();
+        let _ = fs::remove_file(dir.join(".ship/publish.json"));
+        let filled = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(!filled.steps.iter().any(|s| s.id == "legal.baseline"));
+        assert!(!filled.steps.iter().any(|s| s.id == "trust.pack"));
+
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "legal.baseline"));
+        assert!(!general.steps.iter().any(|s| s.id == "trust.pack"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn release_github_when_origin_and_not_signet_self() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-ghrel-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("package.json"), r#"{"name":"x"}"#).unwrap();
+        let st = std::process::Command::new("git")
+            .args(["init"])
+            .current_dir(&dir)
+            .status();
+        if !st.map(|s| s.success()).unwrap_or(false) {
+            return;
+        }
+        let _ = std::process::Command::new("git")
+            .args(["remote", "add", "origin", "https://github.com/acme/app.git"])
+            .current_dir(&dir)
+            .status();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(
+            advanced.steps.iter().any(|s| s.id == "release.github"),
+            "web package with GitHub origin should get release.github"
+        );
+        let step = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "release.github")
+            .unwrap();
+        assert_eq!(
+            step.entry_url.as_deref(),
+            Some("https://github.com/acme/app/releases/new")
+        );
+        assert_eq!(step.desktop_view.as_deref(), Some("dashboard"));
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "release.github"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn npm_and_crates_listing_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-pkg-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("package.json"),
+            r#"{"name":"@demo/pkg","version":"0.1.0","publishConfig":{"access":"public"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            dir.join("Cargo.toml"),
+            "[package]\nname = \"demo_pkg\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+        )
+        .unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(advanced.steps.iter().any(|s| s.id == "listing.npm"));
+        assert!(advanced.steps.iter().any(|s| s.id == "listing.crates"));
+        let npm = advanced.steps.iter().find(|s| s.id == "listing.npm").unwrap();
+        assert_eq!(npm.desktop_view.as_deref(), Some("portal"));
+        assert_eq!(
+            npm.entry_url.as_deref(),
+            Some("https://www.npmjs.com/login")
+        );
+        let crates = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "listing.crates")
+            .unwrap();
+        assert_eq!(crates.desktop_view.as_deref(), Some("portal"));
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "listing.npm"));
+        assert!(!general.steps.iter().any(|s| s.id == "listing.crates"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn marketing_deploy_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-mkt-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("apps/website")).unwrap();
+        fs::write(dir.join("apps/website/index.html"), "<h1>site</h1>\n").unwrap();
+        fs::write(dir.join("vercel.json"), "{}\n").unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(advanced.steps.iter().any(|s| s.id == "marketing.deploy"));
+        let step = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "marketing.deploy")
+            .unwrap();
+        assert_eq!(step.desktop_view.as_deref(), Some("portal"));
+        assert!(step.entry_url.as_ref().is_some_and(|u| u.contains("vercel") || u.contains("pages") || u.contains("netlify")));
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "marketing.deploy"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn graduate_and_commerce_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-grad-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(
+            dir.join(".ship/markets.json"),
+            r#"["graduate","gumroad","lemon"]"#,
+        )
+        .unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(advanced.steps.iter().any(|s| s.id == "sign.graduate"));
+        assert!(advanced.steps.iter().any(|s| s.id == "listing.gumroad"));
+        assert!(advanced.steps.iter().any(|s| s.id == "listing.lemon"));
+        let g = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "sign.graduate")
+            .unwrap();
+        assert_eq!(g.desktop_view.as_deref(), Some("sign"));
+        let gum = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "listing.gumroad")
+            .unwrap();
+        assert_eq!(gum.desktop_view.as_deref(), Some("portal"));
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "sign.graduate"));
+        assert!(!general.steps.iter().any(|s| s.id == "listing.gumroad"));
+        assert!(!general.steps.iter().any(|s| s.id == "listing.lemon"));
+        let _ = fs::remove_dir_all(&dir);
     }
 }
