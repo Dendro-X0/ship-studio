@@ -214,6 +214,38 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
             );
         }
     }
+    if detected.ci_release {
+        let gh_ok = which("gh").is_ok() || which("gh.exe").is_ok();
+        if gh_ok {
+            notes.push(
+                "Cut ready: gh on PATH — Advanced ci.release can Run `gh run list` (read-only)."
+                    .into(),
+            );
+        } else {
+            notes.push(
+                "Release workflow(s) detected but gh missing — install GitHub CLI for ci.release Run."
+                    .into(),
+            );
+        }
+    }
+    if detected.npm_publish {
+        let npm_ok = which("npm").is_ok() || which("npm.cmd").is_ok() || which("npm.exe").is_ok();
+        if npm_ok {
+            notes.push(
+                "Cut ready: npm on PATH — Advanced listing.npm can Run `npm publish --dry-run`."
+                    .into(),
+            );
+        }
+    }
+    if detected.crates_publish {
+        let cargo_ok = which("cargo").is_ok() || which("cargo.exe").is_ok();
+        if cargo_ok {
+            notes.push(
+                "Cut ready: cargo on PATH — Advanced listing.crates can Run `cargo publish --dry-run`."
+                    .into(),
+            );
+        }
+    }
     if detected.graduate_sign {
         notes.push(
             "Graduate opted in — Advanced sign.graduate runs `signet graduate notes` (then apply/ov-sign/notarize)."

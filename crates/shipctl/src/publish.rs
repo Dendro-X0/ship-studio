@@ -392,100 +392,6 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
         ));
     }
 
-    if detected.ci_release {
-        let files = detected.release_workflows.join(", ");
-        steps.push(step(
-            "ci.release",
-            "CI — GitHub Actions release",
-            PubKind::Check,
-            format!(
-                "Workflow(s): {files}. After tag/Signet release, confirm the Actions run looks green."
-            ),
-            2,
-            config::github_actions_url(project)
-                .or_else(|| Some("https://github.com/actions".into())),
-            None,
-            Some("dashboard"),
-        ));
-    }
-
-    // Non-Signet (or official-only) projects still cut GitHub Releases by hand.
-    // Signet self path already has `sign.self.release`.
-    if config::github_releases_new_url(project).is_some()
-        && !(wants_signet && sign_mode != "official")
-    {
-        steps.push(step(
-            "release.github",
-            "Release — GitHub Release cut",
-            PubKind::Human,
-            "Open Releases → create tag/assets (installers, checksums). Confirm after the draft is published. Does not claim verified publisher.",
-            3,
-            config::github_releases_new_url(project),
-            None,
-            Some("dashboard"),
-        ));
-    }
-
-    if detected.container {
-        let tag = container_local_tag(project);
-        let (build_run, build_detail) = if detected.dockerfile {
-            (
-                Some(vec![
-                    "docker".into(),
-                    "build".into(),
-                    "-t".into(),
-                    tag.clone(),
-                    ".".into(),
-                ]),
-                format!(
-                    "Run `docker build -t {tag} .` locally. Confirm when the image builds. Push stays on the next step."
-                ),
-            )
-        } else {
-            (
-                Some(vec![
-                    "docker".into(),
-                    "compose".into(),
-                    "build".into(),
-                ]),
-                "Run `docker compose build` locally. Confirm when images build. Push stays on the next step."
-                    .into(),
-            )
-        };
-        steps.push(step(
-            "container.build",
-            "Container — local build",
-            PubKind::Deploy,
-            build_detail,
-            5,
-            Some(config::container_docs_url(project).into()),
-            build_run,
-            Some("portal"),
-        ));
-        let push_detail = if detected.compose && detected.dockerfile {
-            format!(
-                "After `{tag}` (or compose images) exist locally: `docker login` / `gh auth`, then `docker push` on your machine. Open registry docs, Confirm when the image is published. Bridge never pushes."
-            )
-        } else if detected.compose {
-            "After compose images build: `docker login` / `gh auth`, then push tags on your machine. Open registry docs, Confirm when published. Bridge never pushes."
-                .into()
-        } else {
-            format!(
-                "After `{tag}` builds: `docker login` / `gh auth`, then `docker push` on your machine. Open registry docs, Confirm when published. Bridge never pushes."
-            )
-        };
-        steps.push(step(
-            "container.deploy",
-            "Container — registry push (docs)",
-            PubKind::Human,
-            push_detail,
-            4,
-            Some(config::container_docs_url(project).into()),
-            None,
-            Some("portal"),
-        ));
-    }
-
     steps.push(step(
         "configure",
         "Configure — write .ship/studio.json",
@@ -618,6 +524,23 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
         ));
     }
 
+    // Non-Signet (or official-only) projects still cut GitHub Releases by hand.
+    // Signet self path already has `sign.self.release`.
+    if config::github_releases_new_url(project).is_some()
+        && !(wants_signet && sign_mode != "official")
+    {
+        steps.push(step(
+            "release.github",
+            "Release — GitHub Release cut",
+            PubKind::Human,
+            "Open Releases → create tag/assets (installers, checksums). Confirm after the draft is published. Does not claim verified publisher.",
+            3,
+            config::github_releases_new_url(project),
+            None,
+            Some("dashboard"),
+        ));
+    }
+
     // Desktop-only cut: Orbit deploy does not ship the Tauri/Signet binary.
     let orbit_host = detected.wrangler || detected.vercel || detected.netlify;
     if wants_signet && !orbit_host {
@@ -678,10 +601,14 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
             "listing.npm",
             "Listing — npm publish",
             PubKind::List,
-            "Bump version, npm login / OTP, npm publish. Confirm after the version is live. Bridge does not run npm publish.",
+            "Run `npm publish --dry-run` first. Live `npm publish` (OTP) stays on your machine — Confirm when the version is live. Bridge never publishes.",
             3,
             Some("https://www.npmjs.com/login".into()),
-            None,
+            Some(vec![
+                "npm".into(),
+                "publish".into(),
+                "--dry-run".into(),
+            ]),
             Some("portal"),
         ));
     }
@@ -691,10 +618,14 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
             "listing.crates",
             "Listing — crates.io publish",
             PubKind::List,
-            "cargo login · cargo publish (or --dry-run first). Confirm after crates.io shows the version. Bridge does not run cargo publish.",
+            "Run `cargo publish --dry-run` first. Live `cargo publish` stays on your machine — Confirm when crates.io shows the version. Bridge never publishes.",
             3,
             Some("https://crates.io/me".into()),
-            None,
+            Some(vec![
+                "cargo".into(),
+                "publish".into(),
+                "--dry-run".into(),
+            ]),
             Some("portal"),
         ));
     }
@@ -799,6 +730,96 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
             Some("https://partner.microsoft.com/dashboard/products".into()),
             None,
             Some("sign"),
+        ));
+    }
+
+    if detected.ci_release {
+        let files = detected.release_workflows.join(", ");
+        let workflow = detected
+            .release_workflows
+            .first()
+            .cloned()
+            .unwrap_or_else(|| "release.yml".into());
+        steps.push(step(
+            "ci.release",
+            "CI — GitHub Actions release",
+            PubKind::Check,
+            format!(
+                "Workflow(s): {files}. After tag/Signet release, Run `gh run list` (read-only) and Confirm when the Actions run looks green."
+            ),
+            2,
+            config::github_actions_url(project)
+                .or_else(|| Some("https://github.com/actions".into())),
+            Some(vec![
+                "gh".into(),
+                "run".into(),
+                "list".into(),
+                "--workflow".into(),
+                workflow,
+                "--limit".into(),
+                "5".into(),
+            ]),
+            Some("dashboard"),
+        ));
+    }
+
+    if detected.container {
+        let tag = container_local_tag(project);
+        let (build_run, build_detail) = if detected.dockerfile {
+            (
+                Some(vec![
+                    "docker".into(),
+                    "build".into(),
+                    "-t".into(),
+                    tag.clone(),
+                    ".".into(),
+                ]),
+                format!(
+                    "Run `docker build -t {tag} .` locally. Confirm when the image builds. Push stays on the next step."
+                ),
+            )
+        } else {
+            (
+                Some(vec![
+                    "docker".into(),
+                    "compose".into(),
+                    "build".into(),
+                ]),
+                "Run `docker compose build` locally. Confirm when images build. Push stays on the next step."
+                    .into(),
+            )
+        };
+        steps.push(step(
+            "container.build",
+            "Container — local build",
+            PubKind::Deploy,
+            build_detail,
+            5,
+            Some(config::container_docs_url(project).into()),
+            build_run,
+            Some("portal"),
+        ));
+        let push_detail = if detected.compose && detected.dockerfile {
+            format!(
+                "After `{tag}` (or compose images) exist locally: `docker login` / `gh auth`, then `docker push` on your machine. Open registry docs, Confirm when the image is published. Bridge never pushes."
+            )
+        } else if detected.compose {
+            "After compose images build: `docker login` / `gh auth`, then push tags on your machine. Open registry docs, Confirm when published. Bridge never pushes."
+                .into()
+        } else {
+            format!(
+                "After `{tag}` builds: `docker login` / `gh auth`, then `docker push` on your machine. Open registry docs, Confirm when published. Bridge never pushes."
+            )
+        };
+        steps.push(step(
+            "container.deploy",
+            "Container — registry push (docs)",
+            PubKind::Human,
+            push_detail,
+            4,
+            Some(config::container_docs_url(project).into()),
+            None,
+            Some("portal"),
         ));
     }
 
@@ -1635,8 +1656,14 @@ mod tests {
             .unwrap();
         assert!(step.entry_url.is_some());
         assert_eq!(step.desktop_view.as_deref(), Some("dashboard"));
+        let run = step.run.as_ref().expect("gh run list");
+        assert_eq!(run[0], "gh");
+        assert_eq!(run[1], "run");
+        assert_eq!(run[2], "list");
+        assert!(run.iter().any(|a| a.contains("release.yml")));
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "ci.release"));
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -1866,12 +1893,34 @@ mod tests {
             npm.entry_url.as_deref(),
             Some("https://www.npmjs.com/login")
         );
+        assert_eq!(
+            npm.run.as_ref().map(|r| r.as_slice()),
+            Some(
+                [
+                    "npm".to_string(),
+                    "publish".to_string(),
+                    "--dry-run".to_string()
+                ]
+                .as_slice()
+            )
+        );
         let crates = advanced
             .steps
             .iter()
             .find(|s| s.id == "listing.crates")
             .unwrap();
         assert_eq!(crates.desktop_view.as_deref(), Some("portal"));
+        assert_eq!(
+            crates.run.as_ref().map(|r| r.as_slice()),
+            Some(
+                [
+                    "cargo".to_string(),
+                    "publish".to_string(),
+                    "--dry-run".to_string()
+                ]
+                .as_slice()
+            )
+        );
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "listing.npm"));
         assert!(!general.steps.iter().any(|s| s.id == "listing.crates"));
@@ -1984,6 +2033,41 @@ mod tests {
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "ship.desktop_cut"));
         assert!(!general.steps.iter().any(|s| s.id == "sign.graduate"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn final_mile_ci_and_container_after_release() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-order-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".github/workflows")).unwrap();
+        fs::write(dir.join("signet.toml"), "name = \"order\"\n").unwrap();
+        fs::write(dir.join("TRUST.md"), "# ok\n").unwrap();
+        fs::write(dir.join("LICENSE"), "MIT\n").unwrap();
+        fs::write(dir.join("SECURITY.md"), "#\n").unwrap();
+        fs::write(dir.join("Dockerfile"), "FROM alpine\n").unwrap();
+        fs::write(
+            dir.join(".github/workflows/release.yml"),
+            "name: release\non: push\n",
+        )
+        .unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let ids: Vec<_> = advanced.steps.iter().map(|s| s.id.as_str()).collect();
+        let cfg = ids.iter().position(|id| *id == "configure").unwrap();
+        let live = ids.iter().position(|id| *id == "sign.self.release").unwrap();
+        let ci = ids.iter().position(|id| *id == "ci.release").unwrap();
+        let cbuild = ids.iter().position(|id| *id == "container.build").unwrap();
+        let dry = ids.iter().position(|id| *id == "dry_run").unwrap();
+        assert!(cfg < live, "configure before release: {ids:?}");
+        assert!(live < ci, "release before ci.release: {ids:?}");
+        assert!(ci < cbuild, "ci.release before container.build: {ids:?}");
+        assert!(cbuild < dry, "container before dry_run: {ids:?}");
         let _ = fs::remove_dir_all(&dir);
     }
 

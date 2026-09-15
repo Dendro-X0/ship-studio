@@ -36,6 +36,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **11** | **Final-mile run depth** — real Signet graduate/release runs, cut order, desktop-deploy honesty, doctor readiness | Done (first slice) |
 | **12** | **Suite URL sync** after marketing.deploy | Done (first slice) |
 | **13** | **Container final-mile** — local `docker build` / `compose build` Run; push stays Confirm | Done (first slice; mobile store API still deferred) |
+| **14** | **Cut order + CI/registry Runs** — place ci/container after release; `gh run list` · npm/cargo `--dry-run` | Done (first slice) |
 
 ## Band #11 acceptance
 
@@ -55,3 +56,9 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 - `container.deploy` remains push docs + Confirm (no `docker push` from the bridge)  
 - Doctor notes whether `docker` is on PATH for container layouts  
 - Mobile store API upload remains deferred  
+
+## Band #14 acceptance
+
+- Plan order: configure → sign/release → listings/submit → `ci.release` → `container.*` → marketing → suite → dry_run → deploy  
+- `ci.release` Runs `gh run list` (read-only)  
+- `listing.npm` / `listing.crates` Run `--dry-run` only (live publish stays Confirm)  

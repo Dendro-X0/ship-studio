@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Cut order + CI/registry Runs** (Advanced) — `ci.release` / `container.*` after Signet release; `gh run list` + `npm|cargo publish --dry-run` Runs; live publish stays Confirm
 - **Container final-mile** (Advanced) — `container.build` Runs local `docker build` / `compose build`; `container.deploy` stays push docs + Confirm (never auto-push); doctor docker PATH notes
 - Desktop **Dashboard Launch CTA** — emerald Start/Continue publishing button with hint + breathe; Assist matches
 - **Professional launch baseline** (Advanced) — `legal.baseline` · `trust.pack` · `release.github` when LICENSE/SECURITY/TRUST or GitHub origin signals match

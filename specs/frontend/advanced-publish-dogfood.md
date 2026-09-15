@@ -17,13 +17,14 @@ Operator in **Advanced** mode can walk every new adaptive step with: **Open** (U
 | `listing.steam` / `itch` / `epic` / `polar` / `npm` / `crates` | Open Portal | Portal | Vendor URL |
 | `submit.*` | Open Sign | Sign (kind=`submit`) | Vendor URL |
 | `db.provision` | Open Env | Env | Neon/Supabase/… URL |
-| `ci.release` | Dashboard | Dashboard | GitHub Actions URL |
+| `ci.release` | Dashboard | Dashboard | GitHub Actions URL · **Run** `gh run list` |
 | `legal.baseline` | Dashboard | Dashboard | — |
 | `trust.pack` | Open Sign | Sign | — |
 | `release.github` | Dashboard | Dashboard | GitHub Releases/new |
 | `sign.graduate` | Open Sign | Sign | Azure Trusted Signing docs · Run `signet graduate notes` |
 | `ship.desktop_cut` | Open Sign | Sign | GitHub Releases (desktop-only cue) |
 | `listing.gumroad` / `listing.lemon` | Open Portal | Portal | Vendor dashboard |
+| `listing.npm` / `listing.crates` | Open Portal | Portal | Vendor login · **Run** `npm|cargo publish --dry-run` |
 | `marketing.deploy` | Open Portal | Portal | Host dashboard (Pages/Vercel/Netlify) |
 | `suite.url_sync` | Dashboard | Dashboard | Canonical hint / marketing URL |
 | `container.build` | Open Portal | Portal (container filter) | Registry docs URL · **Run** `docker build` / `compose build` |

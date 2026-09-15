@@ -30,14 +30,14 @@ Crates:
 
 ### Advanced publish (URL + Confirm → portal)
 
-- `listing.npm` → https://www.npmjs.com/login (detail: version bump → `npm publish` / OTP; Confirm after)  
-- `listing.crates` → https://crates.io/me (detail: `cargo login` / `cargo publish`; Confirm after)
+- `listing.npm` → https://www.npmjs.com/login · **Run** `npm publish --dry-run` (live publish Confirm-only)  
+- `listing.crates` → https://crates.io/me · **Run** `cargo publish --dry-run` (live publish Confirm-only)
 
-General omits both. Pulse notes when either detected.
+General omits both. Pulse notes when either detected. Band #14 added the dry-run Runs.
 
 ## Non-goals
 
-- Running `npm publish` / `cargo publish` from the bridge  
+- Live `npm publish` / `cargo publish` from the bridge (dry-run only)  
 - PyPI / NuGet / Go modules  
 - Monorepo member discovery beyond root  
 - Changing package version numbers  
