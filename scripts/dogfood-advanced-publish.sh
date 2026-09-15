@@ -12,9 +12,10 @@ printf '%s\n' '// stub' >"$FIX/android/build.gradle"
 printf '%s\n' 'FROM alpine' >"$FIX/Dockerfile"
 printf '%s\n' 'name: release' 'on: push' >"$FIX/.github/workflows/release.yml"
 printf '%s\n' '480' >"$FIX/steam_appid.txt"
-printf '%s\n' '["itch","epic","npm","crates","marketing","graduate","gumroad","lemon"]' >"$FIX/.ship/markets.json"
+printf '%s\n' '["itch","epic","npm","crates","marketing","graduate","gumroad","lemon","suite"]' >"$FIX/.ship/markets.json"
 mkdir -p "$FIX/apps/website"
 printf '%s\n' '<!doctype html><title>dogfood</title>' >"$FIX/apps/website/index.html"
+printf '%s\n' '{"canonical_hint":"https://example.com/dogfood","siblings":[{"label":"sibling","path":"../sibling","env_keys":["NEXT_PUBLIC_DOGFOOD_URL"]}]}' >"$FIX/.ship/suite.json"
 printf '%s\n' 'NEON_DATABASE_URL=' >"$FIX/.env.local"
 # Gap #7: leave LICENSE/SECURITY/TRUST absent; add Signet marker for trust.pack.
 printf '%s\n' 'name = "dogfood"' >"$FIX/signet.toml"
@@ -84,6 +85,7 @@ NEED=(
   sign.graduate
   listing.gumroad
   listing.lemon
+  suite.url_sync
 )
 MISS=0
 for id in "${NEED[@]}"; do
@@ -95,7 +97,7 @@ for id in "${NEED[@]}"; do
   fi
 done
 # Related desktop_view samples
-for pair in "listing.steam:portal" "listing.npm:portal" "listing.crates:portal" "listing.gumroad:portal" "listing.lemon:portal" "db.provision:env" "ci.release:dashboard" "container.deploy:portal" "submit.play:sign" "legal.baseline:dashboard" "trust.pack:sign" "sign.graduate:sign" "marketing.deploy:portal"; do
+for pair in "listing.steam:portal" "listing.npm:portal" "listing.crates:portal" "listing.gumroad:portal" "listing.lemon:portal" "db.provision:env" "ci.release:dashboard" "container.deploy:portal" "submit.play:sign" "legal.baseline:dashboard" "trust.pack:sign" "sign.graduate:sign" "marketing.deploy:portal" "suite.url_sync:dashboard"; do
   id="${pair%%:*}"
   view="${pair##*:}"
   if echo "$OUT" | tr '\n' ' ' | grep -q "\"id\": \"$id\".*\"desktop_view\": \"$view\""; then

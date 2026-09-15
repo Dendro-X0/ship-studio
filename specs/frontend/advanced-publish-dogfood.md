@@ -25,6 +25,7 @@ Operator in **Advanced** mode can walk every new adaptive step with: **Open** (U
 | `ship.desktop_cut` | Open Sign | Sign | GitHub Releases (desktop-only cue) |
 | `listing.gumroad` / `listing.lemon` | Open Portal | Portal | Vendor dashboard |
 | `marketing.deploy` | Open Portal | Portal | Host dashboard (Pages/Vercel/Netlify) |
+| `suite.url_sync` | Dashboard | Dashboard | Canonical hint / marketing URL |
 | `container.deploy` | Open Portal | Portal (container filter) | Registry docs URL |
 
 Invariants: General mode still omits these steps; Advanced rebuilds via mode toggle; **Back to Publish** returns from Related.

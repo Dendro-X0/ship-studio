@@ -1037,6 +1037,16 @@ pub fn for_project(project: &Path) -> Result<ProjectPulse> {
                 .into(),
         );
     }
+    if detected.suite_sync {
+        notes.push(format!(
+            "Suite URL sync — Advanced suite.url_sync ({})",
+            if detected.suite_detail.is_empty() {
+                "siblings"
+            } else {
+                detected.suite_detail.as_str()
+            }
+        ));
+    }
     if detected.gumroad || detected.lemon {
         let mut m = Vec::new();
         if detected.gumroad {

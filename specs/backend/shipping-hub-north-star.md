@@ -34,7 +34,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 |---|------|--------|
 | 1–10 | Release-surface Adaptive lanes | Done (first slices) |
 | **11** | **Final-mile run depth** — real Signet graduate/release runs, cut order, desktop-deploy honesty, doctor readiness | Done (first slice) |
-| 12 | Suite URL sync after marketing.deploy | Deferred |
+| **12** | **Suite URL sync** after marketing.deploy | Done (first slice) |
 | 13 | Container build/push · mobile store API upload | Deferred / mostly non-goal |
 
 ## Band #11 acceptance

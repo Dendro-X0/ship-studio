@@ -175,6 +175,15 @@ pub struct Detected {
     /// Lemon Squeezy commerce markers.
     #[serde(default)]
     pub lemon: bool,
+    /// Cross-suite URL sync configured (`.ship/suite.json` or markets).
+    #[serde(default)]
+    pub suite_sync: bool,
+    /// Human-readable sibling targets for suite.url_sync detail.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub suite_detail: String,
+    /// Optional canonical URL hint from suite.json.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub suite_canonical: String,
     pub hints: Vec<String>,
 }
 
@@ -287,6 +296,7 @@ pub fn probe(project: &Path) -> Detected {
     detect_package_registries(project, &mut d);
     detect_marketing_site(project, &mut d);
     detect_graduate_commerce(project, &mut d);
+    detect_suite_sync(project, &mut d);
     let orbit_configured = d.orbit_configured;
 
     if d.signet_toml {
@@ -455,6 +465,16 @@ pub fn probe(project: &Path) -> Detected {
         d.hints.push(format!(
             "Commerce ({}) — Advanced listing opens SKU dashboards (URL + confirm).",
             bits.join(" · ")
+        ));
+    }
+    if d.suite_sync {
+        d.hints.push(format!(
+            "Suite URL sync — Advanced suite.url_sync ({})",
+            if d.suite_detail.is_empty() {
+                "add .ship/suite.json siblings".into()
+            } else {
+                d.suite_detail.clone()
+            }
         ));
     }
     if orbit_configured {
@@ -752,6 +772,78 @@ fn detect_graduate_commerce(project: &Path, d: &mut Detected) {
         .any(|m| m == "lemon" || m == "lemonsqueezy" || m == "lemon_squeezy")
         || env_key_prefix(project, "LEMON_")
         || env_key_prefix(project, "LEMONSQUEEZY_");
+}
+
+#[derive(Debug, Deserialize)]
+struct SuiteFile {
+    #[serde(default)]
+    canonical_hint: String,
+    #[serde(default)]
+    siblings: Vec<SuiteSibling>,
+}
+
+#[derive(Debug, Deserialize)]
+struct SuiteSibling {
+    #[serde(default)]
+    label: String,
+    #[serde(default)]
+    path: String,
+    #[serde(default)]
+    env_keys: Vec<String>,
+}
+
+fn detect_suite_sync(project: &Path, d: &mut Detected) {
+    let opted = read_markets_opt_in(project);
+    let markets_suite = opted
+        .iter()
+        .any(|m| m == "suite" || m == "suite-sync" || m == "suite_sync");
+
+    let path = ship_dir(project).join("suite.json");
+    if path.is_file() {
+        if let Ok(raw) = fs::read_to_string(&path) {
+            if let Ok(file) = serde_json::from_str::<SuiteFile>(&raw) {
+                let mut bits = Vec::new();
+                for sib in &file.siblings {
+                    let keys: Vec<_> = sib
+                        .env_keys
+                        .iter()
+                        .map(|k| k.trim())
+                        .filter(|k| !k.is_empty())
+                        .collect();
+                    if sib.path.trim().is_empty() || keys.is_empty() {
+                        continue;
+                    }
+                    let label = if sib.label.trim().is_empty() {
+                        sib.path.trim().to_string()
+                    } else {
+                        sib.label.trim().to_string()
+                    };
+                    bits.push(format!("{label} ← {}", keys.join(", ")));
+                }
+                if !bits.is_empty() {
+                    d.suite_sync = true;
+                    d.suite_detail = bits.join(" · ");
+                    d.suite_canonical = file.canonical_hint.trim().to_string();
+                    return;
+                }
+            }
+        }
+    }
+
+    if markets_suite {
+        d.suite_sync = true;
+        d.suite_detail = "markets suite — add .ship/suite.json with siblings".into();
+    }
+}
+
+/// Best-effort URL for suite sync Open (canonical hint or marketing host).
+pub fn suite_sync_url(project: &Path) -> String {
+    let d = probe(project);
+    let hint = d.suite_canonical.trim();
+    if hint.starts_with("http://") || hint.starts_with("https://") {
+        return hint.to_string();
+    }
+    marketing_deploy_url(project)
 }
 
 fn signet_toml_mentions_graduate(project: &Path) -> bool {
@@ -1499,6 +1591,36 @@ mod tests {
         assert!(d.graduate_sign);
         assert!(d.gumroad);
         assert!(d.lemon);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_suite_json_siblings() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-suite-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(
+            dir.join(".ship/suite.json"),
+            r#"{
+              "canonical_hint": "https://example.com",
+              "siblings": [
+                {"label": "strata", "path": "../strata", "env_keys": ["NEXT_PUBLIC_VELOCITY_URL"]}
+              ]
+            }"#,
+        )
+        .unwrap();
+        let d = probe(&dir);
+        assert!(d.suite_sync);
+        assert!(d.suite_detail.contains("strata"));
+        assert!(d.suite_detail.contains("NEXT_PUBLIC_VELOCITY_URL"));
+        assert_eq!(d.suite_canonical, "https://example.com");
+        assert_eq!(suite_sync_url(&dir), "https://example.com");
         let _ = fs::remove_dir_all(&dir);
     }
 }

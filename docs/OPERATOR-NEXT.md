@@ -23,7 +23,7 @@ TUI: Publish (`P`) → o / v / c / n.
 
 Progress: project `.ship/publish.json` (no secret values).
 
-**Adaptive plan (Advanced):** doctor → scopes → legal.baseline → oauth* → env → db.provision → configure → **sign.self.build → trust.pack → sign.graduate? → sign.self.release_dry → sign.self.release** (or release.github) → **ship.desktop_cut?** → listing.* → submit.* → ci.release → container.deploy → marketing.deploy → dry-run → deploy* → live check.
+**Adaptive plan (Advanced):** doctor → scopes → legal.baseline → oauth* → env → db.provision → configure → **sign.self.build → trust.pack → sign.graduate? → sign.self.release_dry → sign.self.release** (or release.github) → **ship.desktop_cut?** → listing.* → submit.* → ci.release → container.deploy → marketing.deploy → **suite.url_sync** → dry-run → deploy* → live check.
 
 Shipping hub: final-mile is sign → release → deploy. Docs/demos stay outside Studio (`specs/backend/shipping-hub-north-star.md`).
 
@@ -56,5 +56,6 @@ Same open → verify → confirm → next pattern; state in `.ship/launch.json`.
 | CI | After tag/Signet release, confirm GitHub Actions |
 | Legal / trust | Add LICENSE + SECURITY.md; TRUST.md + checksums for desktop/Signet; cut GitHub Release when prompted |
 | Marketing | Deploy landing / HOOK / download site; confirm canonical URL (DNS stays manual) |
+| Suite | After landing is live, paste URL into sibling env keys from `.ship/suite.json` (`suite.url_sync`) |
 | Container | Build/push locally; registry docs are open-only |
 | Deploy | Allow network deploy when Publish reaches deploy (skip if already live) |

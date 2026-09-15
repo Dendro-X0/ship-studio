@@ -757,6 +757,26 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
         ));
     }
 
+    if detected.suite_sync {
+        let targets = if detected.suite_detail.is_empty() {
+            "configured siblings".into()
+        } else {
+            detected.suite_detail.clone()
+        };
+        steps.push(step(
+            "suite.url_sync",
+            "Suite — sync canonical URL to siblings",
+            PubKind::Human,
+            format!(
+                "Paste the live landing URL into sibling env keys ({targets}). Ship Studio never writes sibling .env values — Confirm when keys match."
+            ),
+            2,
+            Some(config::suite_sync_url(project)),
+            None,
+            Some("dashboard"),
+        ));
+    }
+
     steps.push(step(
         "dry_run",
         "Dry-run — configure → sign → deploy plan",
@@ -1850,6 +1870,40 @@ mod tests {
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "ship.desktop_cut"));
         assert!(!general.steps.iter().any(|s| s.id == "sign.graduate"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn suite_url_sync_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-suite-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(
+            dir.join(".ship/suite.json"),
+            r#"{"canonical_hint":"https://ship.example","siblings":[{"label":"truss","path":"../truss","env_keys":["NEXT_PUBLIC_X_URL"]}]}"#,
+        )
+        .unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(advanced.steps.iter().any(|s| s.id == "suite.url_sync"));
+        let step = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "suite.url_sync")
+            .unwrap();
+        assert_eq!(step.desktop_view.as_deref(), Some("dashboard"));
+        assert_eq!(
+            step.entry_url.as_deref(),
+            Some("https://ship.example")
+        );
+        assert!(step.detail.contains("NEXT_PUBLIC_X_URL"));
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "suite.url_sync"));
         let _ = fs::remove_dir_all(&dir);
     }
 }

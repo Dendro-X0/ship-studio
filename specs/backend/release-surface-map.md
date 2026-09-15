@@ -99,7 +99,8 @@ See `studio-modes-design.md`.
 14. **Database hosting** — provision, migrate, connection secrets — **gap**  
 15. **Containers / k8s** — build, registry, deploy — **gap**  
 16. Dry-run plan → live deploy → live smoke URL  
-16b. Marketing / landing cutover — **I Adv** (`marketing.deploy`) 
+16b. Marketing / landing cutover — **I Adv** (`marketing.deploy`)  
+16c. Suite URL sync to siblings — **I Adv** (`suite.url_sync`) 
 
 ### F. Already-live intelligence
 17. Detect prior Orbit success + URLs → skip redundant deploy / live_check  
@@ -122,6 +123,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 9 | **Marketing deploy lane** | ✅ Detect `apps/website` / Pages / preview / markets; Advanced `marketing.deploy` | Fixture website + markets; General omits |
 | 10 | **Graduate signing + commerce** | ✅ Markets/env opt-in; Advanced `sign.graduate` · `listing.gumroad` · `listing.lemon` (+ Sign portal checklist) | Fixture markets; General omits |
 | 11 | **Final-mile run depth** | ✅ Cut order build→trust→graduate→release_dry→release; `signet graduate notes` run; `ship.desktop_cut`; doctor readiness | Unit cut-order test; dogfood green |
+| 12 | **Suite URL sync** | ✅ `.ship/suite.json` siblings + Advanced `suite.url_sync` (never writes sibling env) | Fixture suite.json; General omits |
 
 ## Change protocol
 
@@ -143,7 +145,8 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 - `package-registries-design.md` — gap #8 (done)  
 - `marketing-deploy-design.md` — gap #9 (done)  
 - `graduate-commerce-design.md` — gap #10 (done)  
-- `shipping-hub-north-star.md` — mission + band #11 (done first slice)  
+- `shipping-hub-north-star.md` — mission + bands #11–#12  
+- `suite-url-sync-design.md` — band #12 (done)  
 - `publish-portal-design.md` — live stepper  
 - `studio-scopes-design.md` — Web/Api/Desktop/Docs/Mobile  
 - `studio-modes-design.md` — General / Advanced  
@@ -153,10 +156,10 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Gaps #1–#11 first slices cleared.**  
+**Gaps #1–#12 first slices cleared.**  
 
 Suggested follow-ups (not parallel wizards):
 
 1. Live Desktop L3 Open/Run on a Signet subject (final-mile cut).  
-2. Suite URL sync after marketing.deploy (band #12).  
+2. Container/mobile depth (band #13) only when a real ship needs it.  
 3. Keep `OPERATOR-NEXT.md` as the human-gate checklist.

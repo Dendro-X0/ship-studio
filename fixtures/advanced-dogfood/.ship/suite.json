@@ -1,0 +1,1 @@
+{"canonical_hint":"https://example.com/dogfood","siblings":[{"label":"sibling","path":"../sibling","env_keys":["NEXT_PUBLIC_DOGFOOD_URL"]}]}
