@@ -37,6 +37,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **12** | **Suite URL sync** after marketing.deploy | Done (first slice) |
 | **13** | **Container final-mile** — local `docker build` / `compose build` Run; push stays Confirm | Done (first slice; mobile store API still deferred) |
 | **14** | **Cut order + CI/registry Runs** — place ci/container after release; `gh run list` · npm/cargo `--dry-run` | Done (first slice) |
+| **15** | **Adaptive doctor + Verify honesty** — layout-aware `doctor.ok`; legal/trust/ci/desktop_cut verify | Done (first slice) |
 
 ## Band #11 acceptance
 
@@ -62,3 +63,9 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 - Plan order: configure → sign/release → listings/submit → `ci.release` → `container.*` → marketing → suite → dry_run → deploy  
 - `ci.release` Runs `gh run list` (read-only)  
 - `listing.npm` / `listing.crates` Run `--dry-run` only (live publish stays Confirm)  
+
+## Band #15 acceptance
+
+- `doctor.ok` requires Signet only when Tauri/signet.toml; Orbit or host CLI only when wrangler/vercel/netlify  
+- Verify re-probes `legal.baseline` / `trust.pack`; `ci.release` via `gh`; `ship.desktop_cut` after prior release Done  
+- Pending legal/trust steps stay sticky until Confirm so Verify works after files appear  

@@ -9,7 +9,7 @@ NOT:      Product docs/demo authoring · replace vendor UIs · store secrets · 
 RUNTIME:  Local + offline-first (bridge never requires network; open/login/put/verify are operator-initiated)
 SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri sidebar dashboard + Ctrl+K search)
 PROOF:    cargo test -p shipctl · scripts/dogfood-advanced-*.sh · Desktop Publish Advanced
-DONE:     Publish portal + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut honesty + scopes/env/listings/commerce + assist + desktop shell
+DONE:     Publish portal + adaptive doctor + Verify honesty + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut + scopes/env/listings/commerce + assist + desktop shell
 NOT YET:  Operator completes paste / graduate certs / live release / marketplace / registry push / deploy on vendor platforms (see OPERATOR-NEXT)
 ```
 
@@ -38,7 +38,7 @@ Design: `specs/backend/shipping-hub-north-star.md` · `specs/backend/surfaces-cl
 
 | Command | Meaning |
 |---------|---------|
-| `doctor` | Check Signet/Orbit; includes portal providers + secret hint count |
+| `doctor` | Check tools for **this** layout (Signet if desktop; Orbit or host CLI if Web/API) |
 | `guide` | Unified offline checklist; `--open` entry URLs |
 | `ship` | One-shot offline prep → `.ship/last-guide.json` |
 | `publish` | **Publish portal:** minute wizard open/run → verify/confirm → next |

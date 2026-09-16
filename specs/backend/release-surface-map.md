@@ -126,6 +126,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 12 | **Suite URL sync** | ✅ `.ship/suite.json` siblings + Advanced `suite.url_sync` (never writes sibling env) | Fixture suite.json; General omits |
 | 13 | **Container final-mile run** | ✅ Advanced `container.build` Run (`docker build` / `compose build`); `container.deploy` push Confirm; doctor docker PATH | Unit + dogfood; no `docker push` |
 | 14 | **Cut order + CI/registry Runs** | ✅ Place ci/container after release; `gh run list`; npm/cargo `--dry-run` | Order unit test; dogfood |
+| 15 | **Adaptive doctor + Verify** | ✅ Layout-aware `doctor.ok`; legal/trust/ci/desktop_cut verify; sticky pending baseline | Unit matrix + verify fixtures |
 
 ## Change protocol
 
@@ -150,7 +151,8 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 - `shipping-hub-north-star.md` — mission + bands #11–#13  
 - `suite-url-sync-design.md` — band #12 (done)  
 - `container-final-mile-design.md` — band #13 (done)  
-- `cut-order-ci-registry-design.md` — band #14 (active)  
+- `cut-order-ci-registry-design.md` — band #14 (done)  
+- `adaptive-doctor-verify-design.md` — band #15 (done)  
 - `publish-portal-design.md` — live stepper  
 - `studio-scopes-design.md` — Web/Api/Desktop/Docs/Mobile  
 - `studio-modes-design.md` — General / Advanced  
@@ -160,10 +162,10 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Gaps #1–#14 first slices in flight / cleared** (mobile store API upload still deferred).  
+**Gaps #1–#15 first slices cleared** (mobile store API upload still deferred).  
 
 Suggested follow-ups (not parallel wizards):
 
-1. Adaptive doctor.ok + per-step Verify honesty (band #15 candidate).  
+1. Desktop Open/Related dashboard parity for `ci.release` / `legal.baseline` / `release.github`.  
 2. Live Desktop L3 Open/Run on a Signet subject (final-mile cut).  
 3. Keep `OPERATOR-NEXT.md` as the human-gate checklist.

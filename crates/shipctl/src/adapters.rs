@@ -163,10 +163,20 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
     let mut notes = Vec::new();
     notes.push("Bridge is offline-first: it does not call vendor HTTPS itself.".into());
     if !signet.found {
-        notes.push("signet not on PATH — install Signet or set SIGNET_PATH.".into());
+        let wants_signet = detected.tauri || detected.signet_toml;
+        if wants_signet {
+            notes.push("signet not on PATH — install Signet or set SIGNET_PATH.".into());
+        } else {
+            notes.push("signet not on PATH — optional for this layout (no Tauri/signet.toml).".into());
+        }
     }
     if !orbit.found {
-        notes.push("orbit not on PATH — build Orbit or set ORBIT_PATH.".into());
+        let needs_host = detected.wrangler || detected.vercel || detected.netlify;
+        if needs_host {
+            notes.push("orbit not on PATH — build Orbit or set ORBIT_PATH (or use wrangler/vercel/netlify CLI).".into());
+        } else {
+            notes.push("orbit not on PATH — optional for this layout (no Web/API host detected).".into());
+        }
     }
     if !exists {
         notes.push("project path is not a directory.".into());
@@ -261,7 +271,16 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
         );
     }
 
-    let ok = exists && signet.found && orbit.found;
+    let wants_signet = detected.tauri || detected.signet_toml;
+    let needs_host = detected.wrangler || detected.vercel || detected.netlify;
+    let provider_cli_ok = provider_clis.iter().any(|c| {
+        c.found
+            && matches!(
+                c.provider.as_str(),
+                "cloudflare" | "vercel" | "netlify"
+            )
+    });
+    let ok = doctor_tools_ok(exists, wants_signet, needs_host, signet.found, orbit.found, provider_cli_ok);
     Ok(DoctorReport {
         ok,
         project: project.display().to_string(),
@@ -276,6 +295,27 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
         provider_clis,
         notes,
     })
+}
+
+/// Whether Doctor should report ok for this layout (band #15).
+pub fn doctor_tools_ok(
+    exists: bool,
+    wants_signet: bool,
+    needs_host: bool,
+    signet_found: bool,
+    orbit_found: bool,
+    provider_cli_ok: bool,
+) -> bool {
+    if !exists {
+        return false;
+    }
+    if wants_signet && !signet_found {
+        return false;
+    }
+    if needs_host && !(orbit_found || provider_cli_ok) {
+        return false;
+    }
+    true
 }
 
 fn provider_cli_status(detected: &crate::config::Detected) -> Vec<ProviderCliStatus> {
@@ -372,6 +412,24 @@ mod tests {
         let report = doctor(Path::new(".")).expect("doctor");
         assert!(report.offline_bridge);
         assert!(report.project_exists);
+    }
+
+    #[test]
+    fn doctor_tools_ok_matrix() {
+        // Library-only: no Signet/host tools required.
+        assert!(doctor_tools_ok(true, false, false, false, false, false));
+        assert!(!doctor_tools_ok(false, false, false, false, false, false));
+        // Desktop Signet: needs Signet, not Orbit.
+        assert!(doctor_tools_ok(true, true, false, true, false, false));
+        assert!(!doctor_tools_ok(true, true, false, false, true, false));
+        // Workers host: Orbit or provider CLI.
+        assert!(doctor_tools_ok(true, false, true, false, true, false));
+        assert!(doctor_tools_ok(true, false, true, false, false, true));
+        assert!(!doctor_tools_ok(true, false, true, false, false, false));
+        // Signet + host: both sides.
+        assert!(doctor_tools_ok(true, true, true, true, true, false));
+        assert!(doctor_tools_ok(true, true, true, true, false, true));
+        assert!(!doctor_tools_ok(true, true, true, true, false, false));
     }
 
     #[test]

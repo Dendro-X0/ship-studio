@@ -245,12 +245,12 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
     let mut steps = Vec::new();
     steps.push(step(
         "doctor",
-        "Doctor — Signet + Orbit on PATH",
+        "Doctor — tools for this layout",
         PubKind::Auto,
         if doctor.ok {
-            "Tools found. Confirm and continue."
+            "Required tools for this project are ready. Confirm and continue."
         } else {
-            "Install or PATH-fix Signet/Orbit, then Verify."
+            "Install missing tools for this layout (see doctor notes), then Verify."
         },
         1,
         None,
@@ -969,6 +969,26 @@ fn merge_statuses(fresh: &mut [PubStep], saved: &PublishState) {
     }
 }
 
+/// Keep Pending legal/trust steps until Confirm even after files appear (Verify honesty).
+fn restore_pending_detection_steps(steps: &mut Vec<PubStep>, saved: &PublishState) {
+    for old in &saved.steps {
+        if old.status != PubStatus::Pending {
+            continue;
+        }
+        if !matches!(old.id.as_str(), "legal.baseline" | "trust.pack") {
+            continue;
+        }
+        if steps.iter().any(|s| s.id == old.id) {
+            continue;
+        }
+        let at = steps
+            .iter()
+            .position(|s| s.id == "configure")
+            .unwrap_or(steps.len());
+        steps.insert(at, old.clone());
+    }
+}
+
 /// Mark deploy* + live_check done when Orbit/last-run already prove a live ship.
 fn apply_live_deploy_skips(project: &Path, steps: &mut [PubStep]) {
     let deploy = crate::pulse::inspect_deploy(project);
@@ -1024,8 +1044,15 @@ fn load_state(
     let mut current = 0;
     if let Some(saved) = &saved {
         if !mode_changed {
+            restore_pending_detection_steps(&mut steps, saved);
             merge_statuses(&mut steps, saved);
             current = saved.current.min(steps.len().saturating_sub(1));
+            // Prefer the same step id after sticky restore (indices can shift).
+            if let Some(id) = saved.steps.get(saved.current).map(|s| s.id.as_str()) {
+                if let Some(i) = steps.iter().position(|s| s.id == id) {
+                    current = i;
+                }
+            }
         }
     }
     apply_live_deploy_skips(&project, &mut steps);
@@ -1218,6 +1245,36 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
                 format!("{} active scope(s)", plan.active.len()),
             )
         }
+        PubKind::Human if step.id == "legal.baseline" => {
+            let d = config::probe(project);
+            let ok = d.license && d.security_md;
+            (
+                ok,
+                if ok {
+                    "LICENSE + SECURITY.md present".into()
+                } else {
+                    let mut miss = Vec::new();
+                    if !d.license {
+                        miss.push("LICENSE");
+                    }
+                    if !d.security_md {
+                        miss.push("SECURITY.md");
+                    }
+                    format!("still missing {}", miss.join(" · "))
+                },
+            )
+        }
+        PubKind::Human if step.id == "trust.pack" => {
+            let d = config::probe(project);
+            (
+                d.trust_md,
+                if d.trust_md {
+                    "TRUST.md present".into()
+                } else {
+                    "TRUST.md missing — add honesty + checksums pack".into()
+                },
+            )
+        }
         PubKind::Oauth if step.id.contains("cloudflare") => {
             match run_capture("wrangler", &["whoami"], project) {
                 Ok((code, text)) => (
@@ -1262,6 +1319,87 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
                         false,
                         "No successful deploy yet — Open/Run deploy then Confirm".into(),
                     ),
+                }
+            }
+        }
+        PubKind::Check if step.id == "ci.release" => {
+            let d = config::probe(project);
+            let workflow = d
+                .release_workflows
+                .first()
+                .cloned()
+                .unwrap_or_else(|| "release.yml".into());
+            match run_capture(
+                "gh",
+                &[
+                    "run",
+                    "list",
+                    "--workflow",
+                    workflow.as_str(),
+                    "--limit",
+                    "1",
+                    "--json",
+                    "conclusion,status",
+                ],
+                project,
+            ) {
+                Ok((0, text)) if text.contains("\"conclusion\":\"success\"") => {
+                    (true, "latest workflow run success".into())
+                }
+                Ok((0, text)) if text.trim() == "[]" => {
+                    (false, "no Actions runs yet — tag/Signet release first".into())
+                }
+                Ok((0, _)) => (false, "latest Actions run not success yet".into()),
+                Ok((code, text)) => (
+                    false,
+                    format!(
+                        "gh run list exit {code}: {}",
+                        text.chars().take(120).collect::<String>()
+                    ),
+                ),
+                Err(e) => (false, format!("{e:#}")),
+            }
+        }
+        PubKind::Check if step.id == "ship.desktop_cut" => {
+            let release_done = state.steps.iter().any(|s| {
+                (s.id == "sign.self.release" || s.id == "release.github")
+                    && s.status == PubStatus::Done
+            });
+            if release_done {
+                (
+                    true,
+                    "prior release step Confirmed — Signet/GitHub release is the desktop deploy".into(),
+                )
+            } else {
+                (
+                    false,
+                    "Confirm after Signet/GitHub release is live — this cue replaces Orbit deploy".into(),
+                )
+            }
+        }
+        PubKind::Check if step.id == "live_check" => {
+            let deploy = crate::pulse::inspect_deploy(project);
+            if crate::pulse::deploy_is_live(&deploy) {
+                (
+                    true,
+                    deploy
+                        .urls
+                        .first()
+                        .cloned()
+                        .unwrap_or_else(|| "already live — Confirm to finish".into()),
+                )
+            } else {
+                let d = config::probe(project);
+                if (d.tauri || d.signet_toml) && !(d.wrangler || d.vercel || d.netlify) {
+                    (
+                        false,
+                        "Smoke the GitHub Release / download URL, then Confirm (no Orbit host)".into(),
+                    )
+                } else {
+                    (
+                        false,
+                        "Open the live site/API and Confirm when it looks right".into(),
+                    )
                 }
             }
         }
@@ -2102,6 +2240,91 @@ mod tests {
         assert!(step.detail.contains("NEXT_PUBLIC_X_URL"));
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "suite.url_sync"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn verify_legal_and_trust_reprobe_files() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-verify-legal-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join("signet.toml"), "name = \"v\"\n").unwrap();
+        // Missing LICENSE/SECURITY/TRUST → plan includes legal + trust.
+        let _ = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        // Seek legal.baseline
+        {
+            let mut state = load_state(&dir, true, Some(StudioMode::Advanced)).unwrap();
+            let idx = state
+                .steps
+                .iter()
+                .position(|s| s.id == "legal.baseline")
+                .expect("legal.baseline");
+            state.current = idx;
+            save_state(&dir, &state).unwrap();
+            let (ok, msg, _) = verify_current(&dir).unwrap();
+            assert!(!ok, "missing files should fail verify: {msg}");
+            fs::write(dir.join("LICENSE"), "MIT\n").unwrap();
+            fs::write(dir.join("SECURITY.md"), "#\n").unwrap();
+            let (ok, msg, _) = verify_current(&dir).unwrap();
+            assert!(ok, "LICENSE+SECURITY should pass: {msg}");
+        }
+        // trust.pack
+        {
+            let mut state = load_state(&dir, true, Some(StudioMode::Advanced)).unwrap();
+            let idx = state
+                .steps
+                .iter()
+                .position(|s| s.id == "trust.pack")
+                .expect("trust.pack");
+            state.current = idx;
+            save_state(&dir, &state).unwrap();
+            let (ok, msg, _) = verify_current(&dir).unwrap();
+            assert!(!ok, "missing TRUST should fail: {msg}");
+            fs::write(dir.join("TRUST.md"), "# honesty\n").unwrap();
+            let (ok, msg, _) = verify_current(&dir).unwrap();
+            assert!(ok, "TRUST.md should pass: {msg}");
+        }
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn verify_desktop_cut_after_release_confirmed() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-verify-cut-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join("signet.toml"), "name = \"cut\"\n").unwrap();
+        fs::write(dir.join("LICENSE"), "MIT\n").unwrap();
+        fs::write(dir.join("SECURITY.md"), "#\n").unwrap();
+        fs::write(dir.join("TRUST.md"), "#\n").unwrap();
+        let _ = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let mut state = load_state(&dir, true, Some(StudioMode::Advanced)).unwrap();
+        assert!(state.steps.iter().any(|s| s.id == "ship.desktop_cut"));
+        for s in state.steps.iter_mut() {
+            if s.id == "sign.self.release" {
+                s.status = PubStatus::Done;
+            }
+        }
+        let idx = state
+            .steps
+            .iter()
+            .position(|s| s.id == "ship.desktop_cut")
+            .unwrap();
+        state.current = idx;
+        save_state(&dir, &state).unwrap();
+        let (ok, msg, _) = verify_current(&dir).unwrap();
+        assert!(ok, "desktop_cut should pass after release Done: {msg}");
         let _ = fs::remove_dir_all(&dir);
     }
 }
