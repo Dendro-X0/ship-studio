@@ -1,10 +1,11 @@
 # START HERE — Ship Studio
 
-1. **Product contract:** [docs/PRODUCT.md](./docs/PRODUCT.md)
-2. **Publish portal (preferred):** `shipctl publish` — Open/Run → Confirm → Next ([north star](../specs/backend/shipping-hub-north-star.md))
-3. **Guided launch (companion):** `shipctl launch` — open → verify → next ([design](../specs/backend/guided-launch-design.md))
-4. **What still needs a human:** [docs/OPERATOR-NEXT.md](./docs/OPERATOR-NEXT.md)
-5. **Extend lanes / bands:** [specs/backend/release-surface-map.md](../specs/backend/release-surface-map.md) · [specs/backend/](../specs/backend/)
+1. **Scope of service:** [docs/SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md)
+2. **Product contract:** [docs/PRODUCT.md](./PRODUCT.md)
+3. **Publish portal (preferred):** `shipctl publish` — Open/Run → Confirm → Next ([north star](../specs/backend/shipping-hub-north-star.md))
+4. **Guided launch (companion):** `shipctl launch` — open → verify → next ([design](../specs/backend/guided-launch-design.md))
+5. **What still needs a human:** [docs/OPERATOR-NEXT.md](./OPERATOR-NEXT.md)
+6. **Extend lanes / bands:** [specs/backend/release-surface-map.md](../specs/backend/release-surface-map.md) · [specs/backend/](../specs/backend/)
 
 ## Build
 
@@ -29,4 +30,4 @@ Desktop (Windows): `bash scripts/stage-desktop.sh`
 
 ## Non-goals
 
-Ship Studio does **not** replace Cloudflare/Vercel/GitHub OAuth or store secret values in `.ship/`. It gets you to the right paste surface fast, then optionally encrypts a Clavis-compatible `.km` backup.
+Ship Studio does **not** replace Cloudflare/Vercel/GitHub OAuth or store secret values in `.ship/`. It gets you to the right paste surface fast, then optionally encrypts a Clavis-compatible `.km` backup. Full boundary: [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md).
