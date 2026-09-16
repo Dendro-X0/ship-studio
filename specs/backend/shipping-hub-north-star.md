@@ -39,6 +39,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **14** | **Cut order + CI/registry Runs** — place ci/container after release; `gh run list` · npm/cargo `--dry-run` | Done (first slice) |
 | **15** | **Adaptive doctor + Verify honesty** — layout-aware `doctor.ok`; legal/trust/ci/desktop_cut verify | Done (first slice) |
 | **16** | **Desktop Open/Related parity** — Open navigates Dashboard/Tools/Launch like Related | Done (first slice) |
+| **17** | **Pulse cut hints** — mid-publish cues for CI / registry / container / release.github | Done (first slice) |
 
 ## Band #11 acceptance
 
@@ -75,3 +76,8 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 
 - Desktop Publish **Open** navigates any `RELATED_VIEW_LABELS` target (including `dashboard`) the same as Related  
 - `entry_url` / Run terminal behavior unchanged after navigation  
+
+## Band #17 acceptance
+
+- Mid-publish Now detail includes step-specific cut hints for `ci.release`, `listing.npm`/`crates`, `container.*`, `release.github`, legal/marketing/suite  
+- Continue publishing remains the primary action  

@@ -672,6 +672,25 @@ fn tools_hard_block(wants_signet: bool, tools: &ToolsPulse, deploy: &DeployPulse
     None
 }
 
+/// Step-specific cue appended to mid-publish Now detail (band #17).
+fn publish_cut_hint(id: &str) -> &'static str {
+    if id.starts_with("sign.") || id == "trust.pack" || id == "ship.desktop_cut" {
+        return " Final-mile cut — Open/Run Signet, then Confirm.";
+    }
+    match id {
+        "release.github" => " Cut GitHub Release (tag/assets), then Confirm.",
+        "ci.release" => " After tag/release — Run `gh run list` / confirm Actions green.",
+        "listing.npm" => " Run `npm publish --dry-run`; live publish stays Confirm.",
+        "listing.crates" => " Run `cargo publish --dry-run`; live publish stays Confirm.",
+        "container.build" => " Run local `docker build` / compose build, then Confirm.",
+        "container.deploy" => " Push image on your machine (docs Open); bridge never pushes.",
+        "legal.baseline" => " Add LICENSE + SECURITY.md at repo root, then Confirm.",
+        "marketing.deploy" => " Deploy/cut over the public landing URL, then Confirm.",
+        "suite.url_sync" => " Paste live URL into sibling env keys, then Confirm.",
+        _ => "",
+    }
+}
+
 fn decide_now(
     name: &str,
     git: &GitPulse,
@@ -724,13 +743,7 @@ fn decide_now(
         let cut = publish
             .current_id
             .as_deref()
-            .map(|id| {
-                if id.starts_with("sign.") || id == "trust.pack" || id == "ship.desktop_cut" {
-                    " Final-mile cut — Open/Run Signet, then Confirm."
-                } else {
-                    ""
-                }
-            })
+            .map(publish_cut_hint)
             .unwrap_or("");
         let detail = format!(
             "Publish step {}/{}{mins}.{linked}{cut} Open/Run on the vendor UI or local CLI, Confirm, Next.",
@@ -1173,6 +1186,69 @@ mod tests {
         let now = decide_now("assess-api", &git, &publish, &launch, &deploy, &tools, false);
         assert_eq!(now.primary.id, "publish_continue");
         assert!(now.title.contains("ENV"));
+    }
+
+    #[test]
+    fn publish_cut_hints_for_ci_and_registry() {
+        assert!(publish_cut_hint("ci.release").contains("gh run list"));
+        assert!(publish_cut_hint("listing.npm").contains("dry-run"));
+        assert!(publish_cut_hint("listing.crates").contains("dry-run"));
+        assert!(publish_cut_hint("container.build").contains("docker"));
+        assert!(publish_cut_hint("container.deploy").contains("never pushes"));
+        assert!(publish_cut_hint("release.github").contains("GitHub Release"));
+        assert!(publish_cut_hint("sign.self.release").contains("Final-mile"));
+        assert_eq!(publish_cut_hint("env.sprint"), "");
+
+        let git = GitPulse {
+            is_repo: true,
+            branch: Some("main".into()),
+            dirty: false,
+            dirty_count: 0,
+            committed: true,
+            ahead: Some(0),
+            behind: Some(0),
+            last_commit: None,
+            notes: vec![],
+        };
+        let publish = WizardPulse {
+            present: true,
+            finished: false,
+            current_index: 8,
+            total: 20,
+            done_count: 8,
+            current_id: Some("ci.release".into()),
+            current_title: Some("CI — GitHub Actions release".into()),
+            minutes_remaining: Some(5),
+        };
+        let launch = WizardPulse {
+            present: false,
+            finished: false,
+            current_index: 0,
+            total: 0,
+            done_count: 0,
+            current_id: None,
+            current_title: None,
+            minutes_remaining: None,
+        };
+        let deploy = DeployPulse {
+            signal: "unknown".into(),
+            detail: "".into(),
+            urls: vec![],
+            last_run_ok: None,
+        };
+        let tools = ToolsPulse {
+            signet_found: true,
+            orbit_found: true,
+            signet_version: None,
+            orbit_version: None,
+        };
+        let now = decide_now("dogfood", &git, &publish, &launch, &deploy, &tools, true);
+        assert_eq!(now.primary.id, "publish_continue");
+        assert!(
+            now.detail.contains("gh run list"),
+            "expected ci cut hint in detail: {}",
+            now.detail
+        );
     }
 
     #[test]
