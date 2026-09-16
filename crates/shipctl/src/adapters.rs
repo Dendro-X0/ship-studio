@@ -228,12 +228,20 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
         let gh_ok = which("gh").is_ok() || which("gh.exe").is_ok();
         if gh_ok {
             notes.push(
-                "Cut ready: gh on PATH — Advanced ci.release can Run `gh run list` (read-only)."
+                "Cut ready: gh on PATH — Advanced ci.release / release.github can Run `gh` list commands (read-only)."
                     .into(),
             );
         } else {
             notes.push(
                 "Release workflow(s) detected but gh missing — install GitHub CLI for ci.release Run."
+                    .into(),
+            );
+        }
+    } else if detected.github {
+        let gh_ok = which("gh").is_ok() || which("gh.exe").is_ok();
+        if gh_ok {
+            notes.push(
+                "Cut ready: gh on PATH — Advanced release.github can Run `gh release list` (read-only)."
                     .into(),
             );
         }

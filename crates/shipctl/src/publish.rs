@@ -533,10 +533,16 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
             "release.github",
             "Release — GitHub Release cut",
             PubKind::Human,
-            "Open Releases → create tag/assets (installers, checksums). Confirm after the draft is published. Does not claim verified publisher.",
+            "Run `gh release list` (read-only), then Open Releases → create tag/assets. Confirm after the draft is published. Does not claim verified publisher. Bridge never creates releases.",
             3,
             config::github_releases_new_url(project),
-            None,
+            Some(vec![
+                "gh".into(),
+                "release".into(),
+                "list".into(),
+                "--limit".into(),
+                "5".into(),
+            ]),
             Some("dashboard"),
         ));
     }
@@ -1275,6 +1281,25 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
                 },
             )
         }
+        PubKind::Human if step.id == "release.github" => {
+            match run_capture("gh", &["release", "list", "--limit", "1"], project) {
+                Ok((0, text)) if !text.trim().is_empty() => {
+                    (true, "GitHub Release listed — Confirm when the cut is live".into())
+                }
+                Ok((0, _)) => (
+                    false,
+                    "no releases yet — create on Releases/new, then Verify".into(),
+                ),
+                Ok((code, text)) => (
+                    false,
+                    format!(
+                        "gh release list exit {code}: {}",
+                        text.chars().take(120).collect::<String>()
+                    ),
+                ),
+                Err(e) => (false, format!("{e:#}")),
+            }
+        }
         PubKind::Oauth if step.id.contains("cloudflare") => {
             match run_capture("wrangler", &["whoami"], project) {
                 Ok((code, text)) => (
@@ -1996,6 +2021,11 @@ mod tests {
             Some("https://github.com/acme/app/releases/new")
         );
         assert_eq!(step.desktop_view.as_deref(), Some("dashboard"));
+        let run = step.run.as_ref().expect("gh release list run");
+        assert_eq!(run[0], "gh");
+        assert_eq!(run[1], "release");
+        assert_eq!(run[2], "list");
+        assert!(step.detail.contains("Bridge never creates releases"));
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "release.github"));
         let _ = fs::remove_dir_all(&dir);

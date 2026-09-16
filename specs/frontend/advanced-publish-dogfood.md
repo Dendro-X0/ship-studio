@@ -20,7 +20,7 @@ Operator in **Advanced** mode can walk every new adaptive step with: **Open** (U
 | `ci.release` | Dashboard | Dashboard | GitHub Actions URL · **Run** `gh run list` |
 | `legal.baseline` | Dashboard | Dashboard | — |
 | `trust.pack` | Open Sign | Sign | — |
-| `release.github` | Dashboard | Dashboard | GitHub Releases/new |
+| `release.github` | Dashboard | Dashboard | GitHub Releases/new · **Run** `gh release list` |
 | `sign.graduate` | Open Sign | Sign | Azure Trusted Signing docs · Run `signet graduate notes` |
 | `ship.desktop_cut` | Open Sign | Sign | GitHub Releases (desktop-only cue) |
 | `listing.gumroad` / `listing.lemon` | Open Portal | Portal | Vendor dashboard |

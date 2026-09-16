@@ -678,7 +678,7 @@ fn publish_cut_hint(id: &str) -> &'static str {
         return " Final-mile cut — Open/Run Signet, then Confirm.";
     }
     match id {
-        "release.github" => " Cut GitHub Release (tag/assets), then Confirm.",
+        "release.github" => " Run `gh release list`, then cut Release on GitHub and Confirm.",
         "ci.release" => " After tag/release — Run `gh run list` / confirm Actions green.",
         "listing.npm" => " Run `npm publish --dry-run`; live publish stays Confirm.",
         "listing.crates" => " Run `cargo publish --dry-run`; live publish stays Confirm.",
@@ -1195,7 +1195,7 @@ mod tests {
         assert!(publish_cut_hint("listing.crates").contains("dry-run"));
         assert!(publish_cut_hint("container.build").contains("docker"));
         assert!(publish_cut_hint("container.deploy").contains("never pushes"));
-        assert!(publish_cut_hint("release.github").contains("GitHub Release"));
+        assert!(publish_cut_hint("release.github").contains("gh release list"));
         assert!(publish_cut_hint("sign.self.release").contains("Final-mile"));
         assert_eq!(publish_cut_hint("env.sprint"), "");
 

@@ -40,6 +40,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **15** | **Adaptive doctor + Verify honesty** — layout-aware `doctor.ok`; legal/trust/ci/desktop_cut verify | Done (first slice) |
 | **16** | **Desktop Open/Related parity** — Open navigates Dashboard/Tools/Launch like Related | Done (first slice) |
 | **17** | **Pulse cut hints** — mid-publish cues for CI / registry / container / release.github | Done (first slice) |
+| **18** | **release.github Run** — `gh release list` (read-only); Verify when a release exists | Done (first slice) |
 
 ## Band #11 acceptance
 
@@ -81,3 +82,8 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 
 - Mid-publish Now detail includes step-specific cut hints for `ci.release`, `listing.npm`/`crates`, `container.*`, `release.github`, legal/marketing/suite  
 - Continue publishing remains the primary action  
+
+## Band #18 acceptance
+
+- Advanced `release.github` Runs `gh release list --limit 5` (read-only); never `gh release create`  
+- Verify succeeds when `gh release list --limit 1` is non-empty  

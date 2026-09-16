@@ -129,6 +129,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 15 | **Adaptive doctor + Verify** | ✅ Layout-aware `doctor.ok`; legal/trust/ci/desktop_cut verify; sticky pending baseline | Unit matrix + verify fixtures |
 | 16 | **Desktop Open/Related parity** | ✅ Open navigates Dashboard/Tools/Launch like Related | Code + frontend-spec |
 | 17 | **Pulse cut hints** | ✅ Mid-publish Now cues for CI / registry / container / release | Unit `publish_cut_hints_for_ci_and_registry` |
+| 18 | **release.github Run** | ✅ `gh release list` Run + Verify when a release exists | Unit run vector; no create |
 
 ## Change protocol
 
@@ -157,6 +158,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 - `adaptive-doctor-verify-design.md` — band #15 (done)  
 - `desktop-open-dashboard-parity-design.md` — band #16 (done)  
 - `pulse-cut-hints-design.md` — band #17 (done)  
+- `release-github-list-run-design.md` — band #18 (done)  
 - `publish-portal-design.md` — live stepper  
 - `studio-scopes-design.md` — Web/Api/Desktop/Docs/Mobile  
 - `studio-modes-design.md` — General / Advanced  
@@ -166,10 +168,10 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Gaps #1–#17 first slices cleared** (mobile store API upload still deferred).  
+**Gaps #1–#18 first slices cleared** (mobile store API upload still deferred).  
 
 Suggested follow-ups (not parallel wizards):
 
 1. Live Desktop L3 Open/Run on a Signet subject (final-mile cut).  
 2. Keep `OPERATOR-NEXT.md` as the human-gate checklist.  
-3. Optional: `release.github` Run `gh release list` (read-only) when useful.
+3. Optional Assist notes for new Runs (release.github / dry-run).
