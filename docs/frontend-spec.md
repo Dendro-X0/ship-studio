@@ -96,7 +96,7 @@ Topbar segmented control persists in `localStorage` (`ship-studio.mode`).
 
 Switching mode rebuilds the publish plan (`publish reset` semantics) and toasts.
 
-**Advanced Related dogfood** (gaps #1–#6): see `specs/frontend/advanced-publish-dogfood.md` — listing / submit / db / CI / container steps open Sign, Env, Portal, or Dashboard via Related; Open still fires `entry_url`.
+**Advanced Related dogfood** (gaps #1–#6): see `specs/frontend/advanced-publish-dogfood.md` — listing / submit / db / CI / container steps open Sign, Env, Portal, or Dashboard via Related; **Open** navigates the same Related panel (incl. Dashboard) and still fires `entry_url` / Run terminal.
 
 ### Dashboard Now CTA
 

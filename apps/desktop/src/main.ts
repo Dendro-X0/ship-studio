@@ -3184,14 +3184,8 @@ async function runWizard() {
       if (!project) return;
       const cur = lastPublish?.current;
       const related = (cur?.desktop_view ?? "").trim();
-      const studioDetail =
-        Boolean(related && RELATED_VIEW_LABELS[related]) &&
-        (cur?.id === "env.sprint" ||
-          related === "scopes" ||
-          related === "env" ||
-          related === "sign" ||
-          related === "portal" ||
-          related === "ritual");
+      // Band #16: Open matches Related for every RELATED_VIEW_LABELS target (incl. dashboard).
+      const studioDetail = Boolean(related && RELATED_VIEW_LABELS[related]);
       if (studioDetail) {
         await openRelatedStudioView(related);
         toast(`${RELATED_VIEW_LABELS[related] ?? related} — finish, then Confirm`, "info");

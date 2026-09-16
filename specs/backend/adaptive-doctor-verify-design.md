@@ -33,7 +33,7 @@
 
 - Auto-Confirm  
 - Live `gh` create-release / store API  
-- Desktop Open/Related dashboard parity (separate polish)  
+- Desktop Open/Related dashboard parity (done — band #16)  
 
 ## Proof
 

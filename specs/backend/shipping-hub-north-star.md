@@ -38,6 +38,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **13** | **Container final-mile** — local `docker build` / `compose build` Run; push stays Confirm | Done (first slice; mobile store API still deferred) |
 | **14** | **Cut order + CI/registry Runs** — place ci/container after release; `gh run list` · npm/cargo `--dry-run` | Done (first slice) |
 | **15** | **Adaptive doctor + Verify honesty** — layout-aware `doctor.ok`; legal/trust/ci/desktop_cut verify | Done (first slice) |
+| **16** | **Desktop Open/Related parity** — Open navigates Dashboard/Tools/Launch like Related | Done (first slice) |
 
 ## Band #11 acceptance
 
@@ -69,3 +70,8 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 - `doctor.ok` requires Signet only when Tauri/signet.toml; Orbit or host CLI only when wrangler/vercel/netlify  
 - Verify re-probes `legal.baseline` / `trust.pack`; `ci.release` via `gh`; `ship.desktop_cut` after prior release Done  
 - Pending legal/trust steps stay sticky until Confirm so Verify works after files appear  
+
+## Band #16 acceptance
+
+- Desktop Publish **Open** navigates any `RELATED_VIEW_LABELS` target (including `dashboard`) the same as Related  
+- `entry_url` / Run terminal behavior unchanged after navigation  

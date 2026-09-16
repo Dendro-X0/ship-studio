@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Desktop Open/Related parity** — Publish Open navigates Dashboard/Tools/Launch (and every Related target) the same as Related
 - **Adaptive doctor + Verify** — layout-aware `doctor.ok`; Verify re-probes legal/trust; `gh` for ci.release; sticky pending baseline steps
 - **Cut order + CI/registry Runs** (Advanced) — `ci.release` / `container.*` after Signet release; `gh run list` + `npm|cargo publish --dry-run` Runs; live publish stays Confirm
 - **Container final-mile** (Advanced) — `container.build` Runs local `docker build` / `compose build`; `container.deploy` stays push docs + Confirm (never auto-push); doctor docker PATH notes

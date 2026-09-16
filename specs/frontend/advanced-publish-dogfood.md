@@ -30,7 +30,8 @@ Operator in **Advanced** mode can walk every new adaptive step with: **Open** (U
 | `container.build` | Open Portal | Portal (container filter) | Registry docs URL · **Run** `docker build` / `compose build` |
 | `container.deploy` | Open Portal | Portal (container filter) | Registry docs URL (push Confirm only) |
 
-Invariants: General mode still omits these steps; Advanced rebuilds via mode toggle; **Back to Publish** returns from Related.
+Invariants: General mode still omits these steps; Advanced rebuilds via mode toggle; **Back to Publish** returns from Related.  
+**Open** matches Related for every `RELATED_VIEW_LABELS` target (including Dashboard / Tools / Launch) — band #16 — then still opens `entry_url` / Run terminal when present.
 
 ## Proof
 
