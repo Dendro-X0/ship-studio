@@ -1,9 +1,10 @@
 # START HERE — Ship Studio
 
 1. **Product contract:** [docs/PRODUCT.md](./docs/PRODUCT.md)
-2. **Guided launch:** `shipctl launch` — open → verify → next ([design](../specs/backend/guided-launch-design.md))
-3. **What still needs a human:** [docs/OPERATOR-NEXT.md](./docs/OPERATOR-NEXT.md)
-4. **Design specs:** [specs/backend/](../specs/backend/)
+2. **Publish portal (preferred):** `shipctl publish` — Open/Run → Confirm → Next ([north star](../specs/backend/shipping-hub-north-star.md))
+3. **Guided launch (companion):** `shipctl launch` — open → verify → next ([design](../specs/backend/guided-launch-design.md))
+4. **What still needs a human:** [docs/OPERATOR-NEXT.md](./docs/OPERATOR-NEXT.md)
+5. **Extend lanes / bands:** [specs/backend/release-surface-map.md](../specs/backend/release-surface-map.md) · [specs/backend/](../specs/backend/)
 
 ## Build
 

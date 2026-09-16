@@ -4,6 +4,7 @@
 
 ### Added
 
+- **README hub pointer** — shipping-hub mission + north star / release-surface / Advanced dogfood links for contributors
 - **Assist Run notes** — checklist cues for `gh run/release list`, npm/crates `--dry-run`, and container build
 - **release.github Run** — Advanced `gh release list` (read-only) + Verify when a release exists; never creates releases
 - **Pulse cut hints** — Dashboard Now mid-publish detail cues for CI / npm·crates dry-run / container / GitHub Release

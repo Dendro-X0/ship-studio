@@ -42,6 +42,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **17** | **Pulse cut hints** — mid-publish cues for CI / registry / container / release.github | Done (first slice) |
 | **18** | **release.github Run** — `gh release list` (read-only); Verify when a release exists | Done (first slice) |
 | **19** | **Assist Run notes** — checklist cues for `gh` list / registry dry-run / container | Done (first slice) |
+| **20** | **README hub pointer** — mission + north star / release-surface / Advanced dogfood links | Done (first slice) |
 
 ## Band #11 acceptance
 
@@ -93,3 +94,8 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 
 - Assist CI step/note mentions `gh run list`  
 - Assist notes mention npm/crates `--dry-run` and `gh release list` when detected  
+
+## Band #20 acceptance
+
+- README states shipping-hub mission and links north star + release-surface map + Advanced dogfood  
+- START-HERE prefers Publish over Launch as the minute path  
