@@ -160,6 +160,12 @@ pub struct Detected {
     /// Publishable crates.io package.
     #[serde(default)]
     pub crates_publish: bool,
+    /// Installable PWA (web manifest / vite-plugin-pwa).
+    #[serde(default)]
+    pub pwa: bool,
+    /// Hugging Face Hub model/repo lane (opt-in or model card).
+    #[serde(default)]
+    pub huggingface: bool,
     /// Marketing / landing / GitHub Pages site present.
     #[serde(default)]
     pub marketing_site: bool,
@@ -294,6 +300,8 @@ pub fn probe(project: &Path) -> Detected {
     detect_markets(project, &mut d);
     detect_launch_baseline(project, &mut d);
     detect_package_registries(project, &mut d);
+    detect_pwa(project, &mut d);
+    detect_huggingface(project, &mut d);
     detect_marketing_site(project, &mut d);
     detect_graduate_commerce(project, &mut d);
     detect_suite_sync(project, &mut d);
@@ -371,7 +379,7 @@ pub fn probe(project: &Path) -> Detected {
     }
     if d.ci_release {
         d.hints.push(format!(
-            "CI release workflow(s): {} — open GitHub Actions after tagging / Signet release.",
+            "CI ship workflow(s): {} — open GitHub Actions after tag/deploy.",
             d.release_workflows.join(", ")
         ));
     }
@@ -437,6 +445,18 @@ pub fn probe(project: &Path) -> Detected {
             "Package registry ({}) — Advanced listing opens publisher dashboards (URL + confirm).",
             bits.join(" · ")
         ));
+    }
+    if d.pwa {
+        d.hints.push(
+            "PWA manifest detected — deploy host + marketing.deploy; ensure manifest/service worker live on canonical URL."
+                .into(),
+        );
+    }
+    if d.huggingface {
+        d.hints.push(
+            "Hugging Face lane — Advanced listing.huggingface opens Hub docs; upload stays on huggingface-cli (Confirm only)."
+                .into(),
+        );
     }
     if d.marketing_site {
         let host = if d.marketing_host.is_empty() {
@@ -547,7 +567,7 @@ fn detect_ci_release(project: &Path, d: &mut Detected) {
         if !(lower.ends_with(".yml") || lower.ends_with(".yaml")) {
             continue;
         }
-        if lower.contains("release") {
+        if lower.contains("release") || lower.contains("deploy") {
             names.push(name);
         }
     }
@@ -661,6 +681,56 @@ fn crates_looks_publishable(project: &Path) -> bool {
         }
     }
     saw_package && !publish_blocked
+}
+
+fn detect_pwa(project: &Path, d: &mut Detected) {
+    let manifest_paths = [
+        project.join("manifest.webmanifest"),
+        project.join("public/manifest.webmanifest"),
+        project.join("static/manifest.webmanifest"),
+        project.join("public/manifest.json"),
+        project.join("manifest.json"),
+        project.join("apps/web/public/manifest.webmanifest"),
+        project.join("apps/website/public/manifest.webmanifest"),
+    ];
+    for path in manifest_paths {
+        if path.is_file() && manifest_looks_pwa(&path) {
+            d.pwa = true;
+            return;
+        }
+    }
+    let pkg = project.join("package.json");
+    if pkg.is_file() {
+        if let Ok(raw) = fs::read_to_string(&pkg) {
+            if raw.contains("vite-plugin-pwa") {
+                d.pwa = true;
+            }
+        }
+    }
+}
+
+fn manifest_looks_pwa(path: &Path) -> bool {
+    let Ok(raw) = fs::read_to_string(path) else {
+        return false;
+    };
+    let lower = raw.to_ascii_lowercase();
+    (lower.contains("\"display\"")
+        && (lower.contains("standalone")
+            || lower.contains("fullscreen")
+            || lower.contains("minimal-ui")))
+        || (lower.contains("\"start_url\"") && lower.contains("\"name\""))
+}
+
+fn detect_huggingface(project: &Path, d: &mut Detected) {
+    let opted = read_markets_opt_in(project);
+    d.huggingface = opted.iter().any(|m| {
+        matches!(
+            m.as_str(),
+            "hf" | "huggingface" | "huggingface_hub" | "model"
+        )
+    }) || project.join("modelcard.md").is_file()
+        || project.join("MODEL_CARD.md").is_file()
+        || project.join(".huggingface").is_dir();
 }
 
 fn detect_marketing_site(project: &Path, d: &mut Detected) {
@@ -1421,6 +1491,29 @@ mod tests {
             .iter()
             .any(|n| n == "Release-Publish.yaml"));
         assert!(!d.release_workflows.iter().any(|n| n == "ci.yml"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_deploy_workflow_filename() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-deploy-wf-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".github/workflows")).unwrap();
+        fs::write(
+            dir.join(".github/workflows/deploy.yml"),
+            "name: Deploy\non: push\n",
+        )
+        .unwrap();
+        let d = probe(&dir);
+        assert!(d.ci_release);
+        assert!(d.release_workflows.iter().any(|n| n == "deploy.yml"));
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -1622,5 +1715,65 @@ mod tests {
         assert_eq!(d.suite_canonical, "https://example.com");
         assert_eq!(suite_sync_url(&dir), "https://example.com");
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_pwa_manifest_and_vite_plugin() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-pwa-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("public")).unwrap();
+        fs::write(
+            dir.join("public/manifest.webmanifest"),
+            r#"{"name":"demo","display":"standalone","start_url":"/"}"#,
+        )
+        .unwrap();
+        let d = probe(&dir);
+        assert!(d.pwa);
+
+        fs::write(
+            dir.join("package.json"),
+            r#"{"devDependencies":{"vite-plugin-pwa":"^0.20.0"}}"#,
+        )
+        .unwrap();
+        let d2 = probe(&dir);
+        assert!(d2.pwa);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_huggingface_markets_and_modelcard() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-hf-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".ship/markets.json"), r#"["hf"]"#).unwrap();
+        let d = probe(&dir);
+        assert!(d.huggingface);
+
+        let dir2 = std::env::temp_dir().join(format!(
+            "shipctl-hf-card-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir2);
+        fs::create_dir_all(&dir2).unwrap();
+        fs::write(dir2.join("modelcard.md"), "# Model\n").unwrap();
+        let d2 = probe(&dir2);
+        assert!(d2.huggingface);
+        let _ = fs::remove_dir_all(&dir);
+        let _ = fs::remove_dir_all(&dir2);
     }
 }

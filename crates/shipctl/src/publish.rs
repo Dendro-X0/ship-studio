@@ -636,6 +636,19 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
         ));
     }
 
+    if detected.huggingface {
+        steps.push(step(
+            "listing.huggingface",
+            "Listing — Hugging Face Hub",
+            PubKind::List,
+            "Create/update the model or dataset repo on huggingface.co; upload weights with huggingface-cli on your machine. Open Hub docs, Confirm when the repo is public. Bridge never uploads.",
+            4,
+            Some("https://huggingface.co/docs/hub/repositories-getting-started".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+
     if detected.steam {
         steps.push(step(
             "listing.steam",
@@ -746,13 +759,29 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
             .first()
             .cloned()
             .unwrap_or_else(|| "release.yml".into());
-        steps.push(step(
-            "ci.release",
-            "CI — GitHub Actions release",
-            PubKind::Check,
+        let ci_title = ci_actions_step_title(&detected.release_workflows);
+        let ci_detail = if detected
+            .release_workflows
+            .iter()
+            .all(|n| n.to_ascii_lowercase().contains("deploy"))
+            && !detected
+                .release_workflows
+                .iter()
+                .any(|n| n.to_ascii_lowercase().contains("release"))
+        {
+            format!(
+                "Workflow(s): {files}. After merge to main, Run `gh run list` (read-only) and Confirm when the deploy run looks green."
+            )
+        } else {
             format!(
                 "Workflow(s): {files}. After tag/Signet release, Run `gh run list` (read-only) and Confirm when the Actions run looks green."
-            ),
+            )
+        };
+        steps.push(step(
+            "ci.release",
+            ci_title,
+            PubKind::Check,
+            ci_detail,
             2,
             config::github_actions_url(project)
                 .or_else(|| Some("https://github.com/actions".into())),
@@ -938,11 +967,16 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
         PubKind::Check,
         "Open your site/API/release page and Confirm when it looks right.",
         2,
-        if detected.polar {
-            Some("https://polar.sh/dashboard".into())
-        } else {
-            None
-        },
+        crate::pulse::latest_live_urls(project)
+            .first()
+            .cloned()
+            .or_else(|| {
+                if detected.polar {
+                    Some("https://polar.sh/dashboard".into())
+                } else {
+                    config::github_releases_new_url(project)
+                }
+            }),
         None,
         Some("dashboard"),
     ));
@@ -952,6 +986,45 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
     }
 
     Ok(steps)
+}
+
+fn ci_actions_step_title(workflows: &[String]) -> String {
+    let has_release = workflows
+        .iter()
+        .any(|n| n.to_ascii_lowercase().contains("release"));
+    let has_deploy = workflows
+        .iter()
+        .any(|n| n.to_ascii_lowercase().contains("deploy"));
+    match (has_release, has_deploy) {
+        (true, false) => "CI — GitHub Actions release".into(),
+        (false, true) => "CI — GitHub Actions deploy".into(),
+        _ => "CI — GitHub Actions ship".into(),
+    }
+}
+
+fn provider_from_step_run(run: Option<&[String]>) -> Option<&str> {
+    let run = run?;
+    run.iter()
+        .position(|a| a == "--provider")
+        .and_then(|i| run.get(i + 1))
+        .map(|s| s.as_str())
+}
+
+fn deploy_url_for_step(step: &PubStep, deploy: &crate::pulse::DeployPulse) -> Option<String> {
+    if deploy.urls.is_empty() {
+        return None;
+    }
+    if deploy.urls.len() == 1 {
+        return deploy.urls.first().cloned();
+    }
+    let pick = |pred: fn(&str) -> bool| deploy.urls.iter().find(|u| pred(u)).cloned();
+    match provider_from_step_run(step.run.as_deref()) {
+        Some("cloudflare") => pick(|u| u.contains("workers.dev") || u.contains("cloudflare")),
+        Some("vercel") => pick(|u| u.contains("vercel.app") || u.contains("vercel.com")),
+        Some("netlify") => pick(|u| u.contains("netlify.app") || u.contains("netlify.com")),
+        _ => None,
+    }
+    .or_else(|| deploy.urls.first().cloned())
 }
 
 fn load_saved(project: &Path) -> Option<PublishState> {
@@ -1016,10 +1089,17 @@ fn apply_live_deploy_skips(project: &Path, steps: &mut [PubStep]) {
         if step.status == PubStatus::Pending {
             step.status = PubStatus::Done;
             step.verified_at = stamp.clone();
-            step.detail = format!("{} · {}", step.detail, reason);
+            let scoped_url = deploy_url_for_step(step, &deploy);
+            let scoped_reason = scoped_url
+                .as_ref()
+                .map(|u| format!("skipped — already live ({u})"))
+                .unwrap_or_else(|| reason.clone());
+            step.detail = format!("{} · {}", step.detail, scoped_reason);
         }
-        if is_live && step.entry_url.is_none() {
-            step.entry_url = deploy.urls.first().cloned();
+        if is_live {
+            step.entry_url = deploy_url_for_step(step, &deploy)
+                .or_else(|| deploy.urls.first().cloned())
+                .or(step.entry_url.clone());
         }
     }
 }
@@ -1660,6 +1740,55 @@ mod tests {
             live.entry_url.as_deref(),
             Some("https://x.workers.dev")
         );
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn multi_scope_deploy_skip_uses_provider_matched_url() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-skip-multi-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("apps/api")).unwrap();
+        fs::create_dir_all(dir.join("apps/docs")).unwrap();
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join("apps/api/wrangler.toml"), "name = \"api\"\n").unwrap();
+        fs::write(dir.join("apps/docs/vercel.json"), "{}\n").unwrap();
+        fs::write(
+            dir.join(".ship/scopes.json"),
+            r#"{"active":["api.api","docs.docs"]}"#,
+        )
+        .unwrap();
+        let run = dir.join(".orbit/runs/2026-09-12T19-33-55Z");
+        fs::create_dir_all(&run).unwrap();
+        fs::write(
+            run.join("summary.json"),
+            r#"{"ok":true,"provider":"vercel","url":"https://docs.example.vercel.app","apiUrl":"https://api.example.workers.dev","docsUrl":"https://docs.example.vercel.app"}"#,
+        )
+        .unwrap();
+        let state = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let api = state
+            .steps
+            .iter()
+            .find(|s| s.id == "deploy.api.api")
+            .expect("api deploy");
+        let docs = state
+            .steps
+            .iter()
+            .find(|s| s.id == "deploy.docs.docs")
+            .expect("docs deploy");
+        assert!(api.detail.contains("api.example.workers.dev"));
+        assert!(docs.detail.contains("docs.example.vercel.app"));
+        let live = state.steps.iter().find(|s| s.id == "live_check").unwrap();
+        assert_eq!(
+            live.entry_url.as_deref(),
+            Some("https://api.example.workers.dev")
+        );
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -2092,6 +2221,43 @@ mod tests {
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "listing.npm"));
         assert!(!general.steps.iter().any(|s| s.id == "listing.crates"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn huggingface_listing_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-hf-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".ship/markets.json"), r#"["hf"]"#).unwrap();
+        fs::write(dir.join("modelcard.md"), "# Model\n").unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(advanced
+            .steps
+            .iter()
+            .any(|s| s.id == "listing.huggingface"));
+        let step = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "listing.huggingface")
+            .unwrap();
+        assert_eq!(step.desktop_view.as_deref(), Some("portal"));
+        assert!(step
+            .entry_url
+            .as_deref()
+            .is_some_and(|u| u.contains("huggingface.co/docs")));
+        assert!(step.run.is_none());
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general
+            .steps
+            .iter()
+            .any(|s| s.id == "listing.huggingface"));
         let _ = fs::remove_dir_all(&dir);
     }
 

@@ -45,6 +45,8 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **18** | **release.github Run** — `gh release list` (read-only); Verify when a release exists | Done (first slice) |
 | **19** | **Assist Run notes** — checklist cues for `gh` list / registry dry-run / container | Done (first slice) |
 | **20** | **README hub pointer** — mission + north star / release-surface / Advanced dogfood links | Done (first slice) |
+| **21** | **Archetype expansion** — PWA detect + Hugging Face listing + launch matrix | Done (first slice) |
+| **22** | **assess-api dogfood** — deploy.yml CI detect + per-scope live skip URLs | Done (first slice) |
 
 ## Band #11 acceptance
 
@@ -101,3 +103,14 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 
 - README states shipping-hub mission and links north star + release-surface map + Advanced dogfood  
 - START-HERE prefers Publish over Launch as the minute path  
+
+## Band #21 acceptance
+
+- PWA manifest / vite-plugin-pwa detected with pulse + assist hints  
+- Advanced `listing.huggingface` when markets/model card signals present; no Hub upload from bridge  
+
+## Band #22 acceptance
+
+- `deploy.yml` (and similar) surfaces Advanced `ci.release` with deploy-oriented copy  
+- Multi-scope publish skips match provider URL (Workers vs Vercel), not always the first URL  
+- `live_check` prefers live deploy URLs over Polar dashboard when both exist  

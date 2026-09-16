@@ -25,6 +25,7 @@ Operator in **Advanced** mode can walk every new adaptive step with: **Open** (U
 | `ship.desktop_cut` | Open Sign | Sign | GitHub Releases (desktop-only cue) |
 | `listing.gumroad` / `listing.lemon` | Open Portal | Portal | Vendor dashboard |
 | `listing.npm` / `listing.crates` | Open Portal | Portal | Vendor login · **Run** `npm|cargo publish --dry-run` |
+| `listing.huggingface` | Open Portal | Portal | Hub docs URL (upload Confirm-only) |
 | `marketing.deploy` | Open Portal | Portal | Host dashboard (Pages/Vercel/Netlify) |
 | `suite.url_sync` | Dashboard | Dashboard | Canonical hint / marketing URL |
 | `container.build` | Open Portal | Portal (container filter) | Registry docs URL · **Run** `docker build` / `compose build` |

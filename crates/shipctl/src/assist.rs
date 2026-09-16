@@ -162,6 +162,18 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
                 .into(),
         );
     }
+    if detected.pwa {
+        notes.push(
+            "PWA manifest — deploy with web host; confirm manifest + service worker on canonical URL."
+                .into(),
+        );
+    }
+    if detected.huggingface {
+        notes.push(
+            "Hugging Face — Advanced listing.huggingface opens Hub docs; weight upload stays Confirm-only."
+                .into(),
+        );
+    }
     // Non-Signet-self GitHub releases use release.github (same gate as publish plan).
     let wants_signet = detected.tauri || detected.signet_toml;
     if detected.github && !(wants_signet) {

@@ -31,6 +31,26 @@ Ship Studio stays a **local sequencing portal**: detect → adaptive plan → Op
 | **Container** | `Dockerfile` / Compose | Advanced `container.build` (Run local docker) + `container.deploy` (push docs + Confirm; no bridge push) |
 | **Db** | Neon / Supabase / D1 / Turso markers | Portal + env hints + Advanced `db.provision` (no migrate automation) |
 | **Ci** | `.github/workflows/*release*` | Pulse note + Advanced `ci.release` (Actions URL) |
+| **Pwa** | `manifest.webmanifest` / PWA manifest / vite-plugin-pwa | Pulse + Assist hints; host via Web + marketing.deploy |
+| **Oss** | npm/crates publishable package | Advanced `listing.npm` / `listing.crates` dry-run Runs |
+| **Game** | Steam / itch / Epic opt-in | Advanced listing.* (URL + Confirm; no depot upload) |
+| **Digital product** | Gumroad / Lemon / Polar markers | Advanced listing + marketing.deploy |
+| **AiModel** | `.ship/markets` hf · modelcard · `.huggingface/` | Advanced `listing.huggingface` (Hub docs + Confirm; no upload) |
+
+### Indie launch phases (reference)
+
+| Phase | Studio sequences | Human / vendor |
+|-------|------------------|----------------|
+| Identity | doctor, scopes, configure | bind folder |
+| Legal / trust | legal.baseline, trust.pack | write files |
+| Access | oauth*, env, db.provision | tokens, OAuth |
+| Build / sign | sign.self.*, container.build | Signet, docker |
+| Release | release.github, sign.self.release, ci.release | GH, Actions |
+| List / commerce | listing.*, marketing.deploy | store UIs |
+| Deploy | deploy*, live_check | Orbit / host |
+| Suite | suite.url_sync | paste sibling env |
+
+Full archetype notes: `archetype-launch-matrix-design.md`.
 
 ## Capability matrix
 
@@ -132,6 +152,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 18 | **release.github Run** | ✅ `gh release list` Run + Verify when a release exists | Unit run vector; no create |
 | 19 | **Assist Run notes** | ✅ Checklist cues for gh list / registry dry-run | Unit assist notes |
 | 20 | **README hub pointer** | ✅ Mission + north star / map / dogfood links | README + START-HERE |
+| 21 | **Archetype expansion** | ✅ PWA detect + Hugging Face listing lane + launch matrix doc | Unit + dogfood `listing.huggingface` |
 
 ## Change protocol
 
@@ -163,6 +184,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 - `release-github-list-run-design.md` — band #18 (done)  
 - `assist-run-notes-design.md` — band #19 (done)  
 - `readme-hub-pointer-design.md` — band #20 (done)  
+- `archetype-launch-matrix-design.md` — band #21 (done)  
 - `publish-portal-design.md` — live stepper  
 - `studio-scopes-design.md` — Web/Api/Desktop/Docs/Mobile  
 - `studio-modes-design.md` — General / Advanced  
@@ -172,7 +194,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Gaps #1–#20 first slices cleared** (mobile store API upload still deferred).  
+**Gaps #1–#21 first slices cleared** (mobile store API upload still deferred).  
 
 Suggested follow-ups (not parallel wizards):
 

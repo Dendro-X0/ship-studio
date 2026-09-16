@@ -617,6 +617,12 @@ fn describe_kind(project: &Path) -> String {
             "Container".into()
         });
     }
+    if d.pwa {
+        bits.push("PWA".into());
+    }
+    if d.huggingface {
+        bits.push("Hugging Face".into());
+    }
     if d.steam || d.itch || d.epic {
         let mut m = Vec::new();
         if d.steam {
@@ -682,6 +688,7 @@ fn publish_cut_hint(id: &str) -> &'static str {
         "ci.release" => " After tag/release — Run `gh run list` / confirm Actions green.",
         "listing.npm" => " Run `npm publish --dry-run`; live publish stays Confirm.",
         "listing.crates" => " Run `cargo publish --dry-run`; live publish stays Confirm.",
+        "listing.huggingface" => " Upload on Hub with huggingface-cli; Confirm when repo is live.",
         "container.build" => " Run local `docker build` / compose build, then Confirm.",
         "container.deploy" => " Push image on your machine (docs Open); bridge never pushes.",
         "legal.baseline" => " Add LICENSE + SECURITY.md at repo root, then Confirm.",
