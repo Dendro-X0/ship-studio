@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Assist Run notes** — checklist cues for `gh run/release list`, npm/crates `--dry-run`, and container build
 - **release.github Run** — Advanced `gh release list` (read-only) + Verify when a release exists; never creates releases
 - **Pulse cut hints** — Dashboard Now mid-publish detail cues for CI / npm·crates dry-run / container / GitHub Release
 - **Desktop Open/Related parity** — Publish Open navigates Dashboard/Tools/Launch (and every Related target) the same as Related

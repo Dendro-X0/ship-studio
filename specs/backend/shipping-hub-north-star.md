@@ -41,6 +41,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **16** | **Desktop Open/Related parity** — Open navigates Dashboard/Tools/Launch like Related | Done (first slice) |
 | **17** | **Pulse cut hints** — mid-publish cues for CI / registry / container / release.github | Done (first slice) |
 | **18** | **release.github Run** — `gh release list` (read-only); Verify when a release exists | Done (first slice) |
+| **19** | **Assist Run notes** — checklist cues for `gh` list / registry dry-run / container | Done (first slice) |
 
 ## Band #11 acceptance
 
@@ -87,3 +88,8 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 
 - Advanced `release.github` Runs `gh release list --limit 5` (read-only); never `gh release create`  
 - Verify succeeds when `gh release list --limit 1` is non-empty  
+
+## Band #19 acceptance
+
+- Assist CI step/note mentions `gh run list`  
+- Assist notes mention npm/crates `--dry-run` and `gh release list` when detected  

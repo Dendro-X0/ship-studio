@@ -101,9 +101,13 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
     if detected.ci_release {
         let files = detected.release_workflows.join(", ");
         let detail = if let Some(url) = config::github_actions_url(project) {
-            format!("Workflow(s): {files}. Confirm green on {url}")
+            format!(
+                "Workflow(s): {files}. After tag/Signet release, Run `gh run list` or confirm green on {url}"
+            )
         } else {
-            format!("Workflow(s): {files}. Open GitHub Actions after tagging.")
+            format!(
+                "Workflow(s): {files}. After tag/Signet release, Run `gh run list` / open GitHub Actions."
+            )
         };
         steps.push(AssistStep {
             id: "ci.release".into(),
@@ -136,13 +140,33 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
     }
     if detected.ci_release {
         notes.push(format!(
-            "Release CI: {} — confirm Actions after tag/Signet release.",
+            "Release CI: {} — Advanced Run `gh run list` after tag/Signet release, then Confirm.",
             detected.release_workflows.join(", ")
         ));
     }
     if detected.container {
         notes.push(
             "Container Dockerfile/Compose — Advanced Run `container.build`; push is Confirm-only (no docker push from bridge)."
+                .into(),
+        );
+    }
+    if detected.npm_publish {
+        notes.push(
+            "npm package — Advanced listing.npm Runs `npm publish --dry-run`; live publish stays Confirm."
+                .into(),
+        );
+    }
+    if detected.crates_publish {
+        notes.push(
+            "crates.io package — Advanced listing.crates Runs `cargo publish --dry-run`; live publish stays Confirm."
+                .into(),
+        );
+    }
+    // Non-Signet-self GitHub releases use release.github (same gate as publish plan).
+    let wants_signet = detected.tauri || detected.signet_toml;
+    if detected.github && !(wants_signet) {
+        notes.push(
+            "GitHub remote — Advanced release.github Runs `gh release list` (read-only); create stays on GitHub UI."
                 .into(),
         );
     }
@@ -208,6 +232,49 @@ mod tests {
         .unwrap();
         let plan = plan_for(&dir).unwrap();
         assert!(plan.steps.iter().any(|s| s.id == "ci.release"));
-        assert!(plan.notes.iter().any(|n| n.contains("Release CI")));
+        assert!(plan.notes.iter().any(|n| n.contains("gh run list")));
+        let step = plan.steps.iter().find(|s| s.id == "ci.release").unwrap();
+        assert!(step.detail.contains("gh run list"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn assist_notes_registry_dry_run_and_release_list() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-assist-pkg-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("package.json"),
+            r#"{"name":"@demo/pkg","version":"0.1.0","publishConfig":{"access":"public"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            dir.join("Cargo.toml"),
+            "[package]\nname = \"demo_pkg\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+        )
+        .unwrap();
+        let st = std::process::Command::new("git")
+            .args(["init"])
+            .current_dir(&dir)
+            .status();
+        if st.map(|s| s.success()).unwrap_or(false) {
+            let _ = std::process::Command::new("git")
+                .args(["remote", "add", "origin", "https://github.com/acme/pkg.git"])
+                .current_dir(&dir)
+                .status();
+        }
+        let plan = plan_for(&dir).unwrap();
+        assert!(plan.notes.iter().any(|n| n.contains("npm publish --dry-run")));
+        assert!(plan.notes.iter().any(|n| n.contains("cargo publish --dry-run")));
+        if config::probe(&dir).github {
+            assert!(plan.notes.iter().any(|n| n.contains("gh release list")));
+        }
+        let _ = fs::remove_dir_all(&dir);
     }
 }

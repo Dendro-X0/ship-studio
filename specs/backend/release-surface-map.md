@@ -130,6 +130,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 16 | **Desktop Open/Related parity** | ✅ Open navigates Dashboard/Tools/Launch like Related | Code + frontend-spec |
 | 17 | **Pulse cut hints** | ✅ Mid-publish Now cues for CI / registry / container / release | Unit `publish_cut_hints_for_ci_and_registry` |
 | 18 | **release.github Run** | ✅ `gh release list` Run + Verify when a release exists | Unit run vector; no create |
+| 19 | **Assist Run notes** | ✅ Checklist cues for gh list / registry dry-run | Unit assist notes |
 
 ## Change protocol
 
@@ -159,6 +160,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 - `desktop-open-dashboard-parity-design.md` — band #16 (done)  
 - `pulse-cut-hints-design.md` — band #17 (done)  
 - `release-github-list-run-design.md` — band #18 (done)  
+- `assist-run-notes-design.md` — band #19 (done)  
 - `publish-portal-design.md` — live stepper  
 - `studio-scopes-design.md` — Web/Api/Desktop/Docs/Mobile  
 - `studio-modes-design.md` — General / Advanced  
@@ -168,10 +170,10 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Gaps #1–#18 first slices cleared** (mobile store API upload still deferred).  
+**Gaps #1–#19 first slices cleared** (mobile store API upload still deferred).  
 
 Suggested follow-ups (not parallel wizards):
 
 1. Live Desktop L3 Open/Run on a Signet subject (final-mile cut).  
 2. Keep `OPERATOR-NEXT.md` as the human-gate checklist.  
-3. Optional Assist notes for new Runs (release.github / dry-run).
+3. Optional README “shipping hub bands” pointer for contributors.
