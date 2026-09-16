@@ -23,6 +23,8 @@ Operators should rarely miss a gate. The hub sequences Open/Run → human vendor
 
 Developers still create docs and demos elsewhere; Ship Studio cuts the ship.
 
+**Scope of service (product boundary):** [`docs/SCOPE-OF-SERVICE.md`](../../docs/SCOPE-OF-SERVICE.md)
+
 ## Architecture (unchanged spine)
 
 Detect → Adaptive Publish plan → Open or Run local CLI (Signet / Orbit / `gh`) → Confirm → Next.  

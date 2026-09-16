@@ -1,7 +1,9 @@
 # Ship Studio — product contract
 
 **Status:** Active — CLI + TUI + desktop  
-**Updated:** 2026-09-15  
+**Updated:** 2026-09-16  
+
+**Scope of service (who / what / boundary):** [docs/SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md)
 
 ```text
 GOAL:     Local shipping hub — final-mile sign → release → deploy (Adaptive Publish spine)
@@ -12,6 +14,19 @@ PROOF:    cargo test -p shipctl · scripts/dogfood-advanced-*.sh · Desktop Publ
 DONE:     Publish portal + adaptive doctor + Verify honesty + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut + scopes/env/listings/commerce + assist + desktop shell
 NOT YET:  Operator completes paste / graduate certs / live release / marketplace / registry push / deploy on vendor platforms (see OPERATOR-NEXT)
 ```
+
+## Scope of service (summary)
+
+| We provide | We do not provide |
+|------------|-------------------|
+| Detect project shipping layout | Product docs / demos / marketing GIFs |
+| Adaptive Publish plan (General / Advanced) | Replacement for Cloudflare / Apple / Play / Gumroad UIs |
+| Open/Run → Confirm → Next sequencing | Finishing OAuth, store review, or DNS without you |
+| Safe local CLI Runs + vendor Open URLs | `docker push`, live npm/cargo publish, store API upload |
+| Doctor / Pulse / Assist orientation | Secret values stored in `.ship/` |
+| Optional encrypted vault **export** | Being your team password manager |
+
+Full definition: [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · Human gates: [OPERATOR-NEXT.md](./OPERATOR-NEXT.md)
 
 ## UX principle — minimal actions, one spine
 

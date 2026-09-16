@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Scope of service** — canonical product boundary: detect → plan → sequence final-mile; vendors + humans finish irreversible work ([docs/SCOPE-OF-SERVICE.md](./docs/SCOPE-OF-SERVICE.md))
 - **README hub pointer** — shipping-hub mission + north star / release-surface / Advanced dogfood links for contributors
 - **Assist Run notes** — checklist cues for `gh run/release list`, npm/crates `--dry-run`, and container build
 - **release.github Run** — Advanced `gh release list` (read-only) + Verify when a release exists; never creates releases

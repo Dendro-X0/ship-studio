@@ -4,7 +4,7 @@
 
 **Local shipping hub for the final mile** — sign → release → deploy — on three surfaces: **CLI** (JSON/MCP) · **TUI** · **Desktop**. Same `shipctl` engine (Signet + Orbit adapters). Adaptive **Publish** is the spine (Open/Run → Confirm → Next); Scopes / Env / Sign / Portal are detail panels, not a second wizard.
 
-Boot: [docs/START-HERE.md](./docs/START-HERE.md) · Contract: [docs/PRODUCT.md](./docs/PRODUCT.md) · Manual gates: [docs/OPERATOR-NEXT.md](./docs/OPERATOR-NEXT.md)
+Boot: [docs/START-HERE.md](./docs/START-HERE.md) · **Scope:** [docs/SCOPE-OF-SERVICE.md](./docs/SCOPE-OF-SERVICE.md) · Contract: [docs/PRODUCT.md](./docs/PRODUCT.md) · Manual gates: [docs/OPERATOR-NEXT.md](./docs/OPERATOR-NEXT.md)
 
 **Extend the hub (not docs/demos):** [specs/backend/shipping-hub-north-star.md](./specs/backend/shipping-hub-north-star.md) · [specs/backend/release-surface-map.md](./specs/backend/release-surface-map.md) · Advanced dogfood: `bash scripts/dogfood-advanced-publish.sh` · `bash scripts/dogfood-advanced-walk.sh fixtures/advanced-dogfood`
 
