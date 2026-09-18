@@ -4,6 +4,7 @@
 
 ### Added
 
+- **aperio dogfood** — desktop Tauri no longer pulls Play/Android official/submit lanes (MAS + Microsoft Store stay)
 - **Archetype expansion** — PWA manifest / vite-plugin-pwa detection (pulse + assist); Advanced `listing.huggingface` for Hub docs + Confirm (no upload); extended release-surface archetypes + launch matrix doc
 - **Scope of service** — canonical product boundary: detect → plan → sequence final-mile; vendors + humans finish irreversible work ([docs/SCOPE-OF-SERVICE.md](./docs/SCOPE-OF-SERVICE.md))
 - **README hub pointer** — shipping-hub mission + north star / release-surface / Advanced dogfood links for contributors

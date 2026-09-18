@@ -47,6 +47,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **20** | **README hub pointer** — mission + north star / release-surface / Advanced dogfood links | Done (first slice) |
 | **21** | **Archetype expansion** — PWA detect + Hugging Face listing + launch matrix | Done (first slice) |
 | **22** | **assess-api dogfood** — deploy.yml CI detect + per-scope live skip URLs | Done (first slice) |
+| **23** | **aperio dogfood** — Tauri desktop must not pull Play/Android lanes | Done (first slice) |
 
 ## Band #11 acceptance
 
@@ -114,3 +115,9 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 - `deploy.yml` (and similar) surfaces Advanced `ci.release` with deploy-oriented copy  
 - Multi-scope publish skips match provider URL (Workers vs Vercel), not always the first URL  
 - `live_check` prefers live deploy URLs over Polar dashboard when both exist  
+
+## Band #23 acceptance
+
+- Desktop Tauri alone does **not** get Play/Android `sign.official.android` / `submit.play`  
+- Mobile android/expo fixtures still get Play listing + submit  
+- Apple notarization + MAS/MS Store submit remain for Tauri  

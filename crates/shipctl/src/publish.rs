@@ -1881,6 +1881,12 @@ mod tests {
         let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
         assert!(advanced.steps.iter().any(|s| s.id == "submit.microsoft"));
         assert!(advanced.steps.iter().any(|s| s.id == "submit.app_store"));
+        assert!(
+            !advanced.steps.iter().any(|s| s.id == "sign.official.android"),
+            "desktop Tauri must not get Play/Android official sign"
+        );
+        assert!(!advanced.steps.iter().any(|s| s.id == "submit.play"));
+        assert!(!advanced.steps.iter().any(|s| s.id == "listing.play"));
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id.starts_with("submit.")));
     }

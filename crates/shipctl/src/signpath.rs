@@ -30,8 +30,10 @@ pub struct SignPortal {
 pub fn plan_for(project: &Path) -> SignPortal {
     let detected = config::probe(project);
     let wants = detected.tauri || detected.signet_toml;
+    // Apple notarization + optional MAS: desktop Tauri and/or iOS/Expo layouts.
     let wants_apple = detected.tauri || detected.ios || detected.mobile || detected.expo;
-    let wants_play = detected.android || detected.mobile || detected.expo || detected.tauri;
+    // Play Console is mobile-only — Tauri desktop must not pull Android lanes.
+    let wants_play = detected.android || detected.mobile || detected.expo;
     let mut paths = vec![SignPath {
         id: "self.build".into(),
         kind: "self".into(),
@@ -229,7 +231,16 @@ mod tests {
         fs::create_dir_all(dir.join("src-tauri")).unwrap();
         let portal = plan_for(&dir);
         assert!(portal.paths.iter().any(|p| p.id == "official.windows"));
+        assert!(portal.paths.iter().any(|p| p.id == "official.apple"));
         assert!(portal.paths.iter().any(|p| p.id == "submit.microsoft"));
         assert!(portal.paths.iter().any(|p| p.id == "submit.app_store"));
+        assert!(
+            !portal.paths.iter().any(|p| p.id == "official.android"),
+            "desktop Tauri must not pull Play/Android cert lanes"
+        );
+        assert!(
+            !portal.paths.iter().any(|p| p.id == "submit.play"),
+            "desktop Tauri must not pull Play submit"
+        );
     }
 }

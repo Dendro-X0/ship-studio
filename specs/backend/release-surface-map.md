@@ -153,6 +153,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 19 | **Assist Run notes** | ✅ Checklist cues for gh list / registry dry-run | Unit assist notes |
 | 20 | **README hub pointer** | ✅ Mission + north star / map / dogfood links | README + START-HERE |
 | 21 | **Archetype expansion** | ✅ PWA detect + Hugging Face listing lane + launch matrix doc | Unit + dogfood `listing.huggingface` |
+| 23 | **aperio dogfood** | ✅ Tauri desktop drops Play/Android false positives | Unit + aperio Advanced plan |
 
 ## Change protocol
 
@@ -194,7 +195,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Gaps #1–#21 first slices cleared** (mobile store API upload still deferred).  
+**Gaps #1–#23 first slices cleared** (mobile store API upload still deferred).  
 
 Suggested follow-ups (not parallel wizards):
 
