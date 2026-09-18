@@ -1,11 +1,12 @@
 # START HERE — Ship Studio
 
-1. **Scope of service:** [docs/SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md)
-2. **Product contract:** [docs/PRODUCT.md](./PRODUCT.md)
-3. **Publish portal (preferred):** `shipctl publish` — Open/Run → Confirm → Next ([north star](../specs/backend/shipping-hub-north-star.md))
-4. **Guided launch (companion):** `shipctl launch` — open → verify → next ([design](../specs/backend/guided-launch-design.md))
-5. **What still needs a human:** [docs/OPERATOR-NEXT.md](./OPERATOR-NEXT.md)
-6. **Extend lanes / bands:** [specs/backend/release-surface-map.md](../specs/backend/release-surface-map.md) · [specs/backend/](../specs/backend/)
+1. **Session handoff (agents):** [docs/handoffs/current-session.md](./handoffs/current-session.md) — Next Atomic Step only
+2. **Scope of service:** [docs/SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md)
+3. **Product contract:** [docs/PRODUCT.md](./PRODUCT.md)
+4. **Publish portal (preferred):** `shipctl publish` — Open/Run → Confirm → Next ([north star](../specs/backend/shipping-hub-north-star.md))
+5. **Guided launch (companion):** `shipctl launch` — open → verify → next ([design](../specs/backend/guided-launch-design.md))
+6. **What still needs a human:** [docs/OPERATOR-NEXT.md](./OPERATOR-NEXT.md)
+7. **Extend lanes / bands:** [specs/backend/release-surface-map.md](../specs/backend/release-surface-map.md) · [specs/backend/](../specs/backend/)
 
 ## Build
 

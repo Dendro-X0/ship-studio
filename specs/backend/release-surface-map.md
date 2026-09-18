@@ -153,6 +153,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 19 | **Assist Run notes** | ✅ Checklist cues for gh list / registry dry-run | Unit assist notes |
 | 20 | **README hub pointer** | ✅ Mission + north star / map / dogfood links | README + START-HERE |
 | 21 | **Archetype expansion** | ✅ PWA detect + Hugging Face listing lane + launch matrix doc | Unit + dogfood `listing.huggingface` |
+| 22 | **assess-api dogfood** | ✅ `deploy.yml` CI detect + per-scope live skip URLs | Unit multi-scope skip + live_check URL preference |
 | 23 | **aperio dogfood** | ✅ Tauri desktop drops Play/Android false positives | Unit + aperio Advanced plan |
 
 ## Change protocol
@@ -180,18 +181,22 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 - `container-final-mile-design.md` — band #13 (done)  
 - `cut-order-ci-registry-design.md` — band #14 (done)  
 - `adaptive-doctor-verify-design.md` — band #15 (done)  
-- `desktop-open-dashboard-parity-design.md` — band #16 (done)  
+- `../frontend/desktop-open-dashboard-parity-design.md` — band #16 (done)  
 - `pulse-cut-hints-design.md` — band #17 (done)  
 - `release-github-list-run-design.md` — band #18 (done)  
 - `assist-run-notes-design.md` — band #19 (done)  
 - `readme-hub-pointer-design.md` — band #20 (done)  
 - `archetype-launch-matrix-design.md` — band #21 (done)  
+- `shipping-hub-north-star.md` Band #22 acceptance — assess-api dogfood (done)  
+- `desktop-tauri-store-lanes-design.md` — band #23 (done)  
 - `publish-portal-design.md` — live stepper  
 - `studio-scopes-design.md` — Web/Api/Desktop/Docs/Mobile  
 - `studio-modes-design.md` — General / Advanced  
 - `deploy-status-skip-design.md` — already-live skip  
 - `project-pulse-design.md` — Dashboard Now  
 - `docs/OPERATOR-NEXT.md` — human gates  
+- `docs/handoffs/current-session.md` — next atomic step  
+
 
 ## Next atomic iteration (suggested)
 

@@ -1,7 +1,7 @@
 # Shipping hub — north star
 
 **Status:** Active  
-**Updated:** 2026-09-15  
+**Updated:** 2026-09-18  
 **Owner:** product + `shipctl` publish / pulse / doctor  
 
 ## Mission
