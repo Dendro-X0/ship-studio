@@ -2,13 +2,14 @@
 
 **Updated:** 2026-09-18  
 **Branch:** `main` (local may be ahead of `origin/main`)  
-**Status:** Continuity restored after interrupted band #23
+**Status:** Band #23 L3 closed on aperio
 
 ## Next Atomic Step
 
-**Live Desktop L3** — Open/Run Adaptive Publish (Advanced) on a real Signet subject (e.g. aperio desktop cut), confirm cut order + no Play/Android false positives, record evidence.
+**Idle — no new Adaptive lane** unless a real ship needs one.  
+Operator L4 on aperio remains human-only (`docs/OPERATOR-NEXT.md`: LICENSE/SECURITY, graduate, live release, deploy).
 
-Do **not** invent a new Adaptive lane unless a real ship needs it.
+Do **not** invent a parallel wizard or store-API upload (still deferred).
 
 ## PAUSED / CANCELLED
 
@@ -22,7 +23,8 @@ Do **not** invent a new Adaptive lane unless a real ship needs it.
 | Band | Commit / proof |
 |------|----------------|
 | #21–#22 | `b32c634` — archetypes + assess-api multi-surface |
-| #23 | `d26c728` — Tauri desktop drops Play/Android lanes; L1 `cargo test -p shipctl` (signpath + publish) |
+| #23 | `d26c728` — Tauri desktop drops Play/Android lanes; L1 units |
+| #23 L3 | Desktop Advanced Publish on aperio — 20 steps, no Play/Android; evidence under `docs/handoffs/evidence-aperio-l3*` |
 
 ## Canonical owners
 
@@ -39,8 +41,8 @@ Do **not** invent a new Adaptive lane unless a real ship needs it.
 | Layer | Command / action |
 |-------|------------------|
 | L1 | `cargo test -p shipctl` |
-| L2 | `bash scripts/dogfood-advanced-publish.sh` |
-| L3 | Desktop Advanced Publish Open/Run on Signet subject |
+| L2 | Advanced dogfood fixture plan asserts (Play retained for mobile) |
+| L3 | Desktop Advanced Publish Open/Run on Signet subject — **done 2026-09-18 (aperio)** |
 | L4 | Operator Confirm on vendor UIs (`OPERATOR-NEXT.md`) — not Studio bugs |
 
 ## Boot allowlist

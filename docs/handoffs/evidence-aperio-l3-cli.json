@@ -1,0 +1,293 @@
+﻿{
+  "schema": "ship-studio/publish/v1",
+  "project": "\\\\?\\E:\\Web Projects\\aperio",
+  "mode": "advanced",
+  "current_index": 2,
+  "total": 20,
+  "done_count": 2,
+  "minutes_remaining": 50,
+  "minutes_total": 52,
+  "finished": false,
+  "current": {
+    "id": "legal.baseline",
+    "title": "Launch ΓÇö legal / security baseline",
+    "kind": "human",
+    "detail": "Missing at repo root: LICENSE ┬╖ SECURITY.md. Add LICENSE + SECURITY.md (CHANGELOG recommended), then Confirm. No legal advice ΓÇö just the ship checklist.",
+    "minutes": 2,
+    "desktop_view": "dashboard",
+    "status": "pending"
+  },
+  "steps": [
+    {
+      "id": "doctor",
+      "title": "Doctor ΓÇö tools for this layout",
+      "kind": "auto",
+      "detail": "Required tools for this project are ready. Confirm and continue.",
+      "minutes": 1,
+      "run": [
+        "shipctl",
+        "doctor",
+        "--project",
+        "."
+      ],
+      "desktop_view": "tools",
+      "status": "done",
+      "verified_at": "2026-09-18T13:48:01.9801179Z"
+    },
+    {
+      "id": "scopes",
+      "title": "Scopes ΓÇö pick Web / API / Desktop / Mobile / Container",
+      "kind": "human",
+      "detail": "2 detected ┬╖ 2 active. Save selection in Scopes, then Confirm.",
+      "minutes": 1,
+      "run": [
+        "shipctl",
+        "scopes",
+        "--project",
+        "."
+      ],
+      "desktop_view": "scopes",
+      "status": "done",
+      "verified_at": "2026-09-18T13:48:02.9162728Z"
+    },
+    {
+      "id": "legal.baseline",
+      "title": "Launch ΓÇö legal / security baseline",
+      "kind": "human",
+      "detail": "Missing at repo root: LICENSE ┬╖ SECURITY.md. Add LICENSE + SECURITY.md (CHANGELOG recommended), then Confirm. No legal advice ΓÇö just the ship checklist.",
+      "minutes": 2,
+      "desktop_view": "dashboard",
+      "status": "pending"
+    },
+    {
+      "id": "oauth.vercel",
+      "title": "Vercel ΓÇö CLI login",
+      "kind": "oauth",
+      "detail": "vercel login ΓåÆ whoami",
+      "minutes": 2,
+      "desktop_view": "portal",
+      "status": "pending"
+    },
+    {
+      "id": "env.sprint",
+      "title": "ENV & tokens ΓÇö create / paste / put",
+      "kind": "human",
+      "detail": "4 secret(s) to put. Open Env portal, paste on vendor sites, put via CLI, then Confirm.",
+      "minutes": 5,
+      "entry_url": "https://dash.cloudflare.com/profile/api-tokens",
+      "desktop_view": "env",
+      "status": "pending"
+    },
+    {
+      "id": "configure",
+      "title": "Configure ΓÇö write .ship/studio.json",
+      "kind": "auto",
+      "detail": "Persist sign/deploy intent for this publish.",
+      "minutes": 1,
+      "run": [
+        "shipctl",
+        "configure",
+        "--project",
+        "."
+      ],
+      "desktop_view": "ritual",
+      "status": "pending"
+    },
+    {
+      "id": "sign.self.scan",
+      "title": "Self-sign ΓÇö scan / init signet.toml",
+      "kind": "sign",
+      "detail": "Create signing config from repo layout.",
+      "minutes": 2,
+      "run": [
+        "signet",
+        "scan",
+        "--apply"
+      ],
+      "desktop_view": "sign",
+      "status": "pending"
+    },
+    {
+      "id": "sign.self.build",
+      "title": "Self-sign ΓÇö Signet build",
+      "kind": "sign",
+      "detail": "Build & sign local artifacts.",
+      "minutes": 8,
+      "run": [
+        "signet",
+        "build"
+      ],
+      "desktop_view": "sign",
+      "status": "pending"
+    },
+    {
+      "id": "trust.pack",
+      "title": "Trust ΓÇö TRUST.md + checksums",
+      "kind": "human",
+      "detail": "Add TRUST.md (honesty: self-signed / SmartScreen expected). Attach SHA256SUMS (┬▒ minisign) with the release. Confirm when the pack exists.",
+      "minutes": 2,
+      "desktop_view": "sign",
+      "status": "pending"
+    },
+    {
+      "id": "sign.self.release_dry",
+      "title": "Self-sign ΓÇö release dry-run",
+      "kind": "sign",
+      "detail": "Checksum / GitHub payload check before live release.",
+      "minutes": 2,
+      "run": [
+        "signet",
+        "release",
+        "--dry-run",
+        "--tag",
+        "v0.1.0"
+      ],
+      "desktop_view": "sign",
+      "status": "pending"
+    },
+    {
+      "id": "sign.official.apple",
+      "title": "Official ΓÇö Apple notarization / certificates",
+      "kind": "sign",
+      "detail": "Certificates & notarization in Apple Developer. Not App Store review.",
+      "minutes": 3,
+      "entry_url": "https://developer.apple.com/account/resources/certificates/list",
+      "desktop_view": "sign",
+      "status": "pending"
+    },
+    {
+      "id": "sign.official.windows",
+      "title": "Official ΓÇö Windows Authenticode / certificates",
+      "kind": "sign",
+      "detail": "Code-signing certificate setup. Store listing/submission is a separate step.",
+      "minutes": 3,
+      "entry_url": "https://partner.microsoft.com/dashboard",
+      "desktop_view": "sign",
+      "status": "pending"
+    },
+    {
+      "id": "sign.official.app_store_connect",
+      "title": "Official ΓÇö App Store Connect (listing)",
+      "kind": "sign",
+      "detail": "App record, metadata, pricing, TestFlight builds. Submit-for-review is separate.",
+      "minutes": 3,
+      "entry_url": "https://appstoreconnect.apple.com",
+      "desktop_view": "sign",
+      "status": "pending"
+    },
+    {
+      "id": "sign.self.release",
+      "title": "Publish ΓÇö GitHub Release (network)",
+      "kind": "sign",
+      "detail": "Live `signet release` after gh auth. Confirm when the release is up.",
+      "minutes": 3,
+      "entry_url": "https://github.com/releases/new",
+      "run": [
+        "signet",
+        "release",
+        "--tag",
+        "v0.1.0"
+      ],
+      "desktop_view": "sign",
+      "status": "pending"
+    },
+    {
+      "id": "submit.app_store",
+      "title": "Submit ΓÇö App Store review",
+      "kind": "list",
+      "detail": "Submit for Review on App Store Connect after listing + build ΓÇö then Confirm.",
+      "minutes": 3,
+      "entry_url": "https://appstoreconnect.apple.com",
+      "desktop_view": "sign",
+      "status": "pending"
+    },
+    {
+      "id": "submit.microsoft",
+      "title": "Submit ΓÇö Microsoft Store",
+      "kind": "list",
+      "detail": "Partner Center product submission / certification ΓÇö then Confirm.",
+      "minutes": 3,
+      "entry_url": "https://partner.microsoft.com/dashboard/products",
+      "desktop_view": "sign",
+      "status": "pending"
+    },
+    {
+      "id": "ci.release",
+      "title": "CI ΓÇö GitHub Actions release",
+      "kind": "check",
+      "detail": "Workflow(s): release-desktop.yml, release.yml. After tag/Signet release, Run `gh run list` (read-only) and Confirm when the Actions run looks green.",
+      "minutes": 2,
+      "entry_url": "https://github.com/Dendro-X0/Aperio/actions",
+      "run": [
+        "gh",
+        "run",
+        "list",
+        "--workflow",
+        "release-desktop.yml",
+        "--limit",
+        "5"
+      ],
+      "desktop_view": "dashboard",
+      "status": "pending"
+    },
+    {
+      "id": "dry_run",
+      "title": "Dry-run ΓÇö configure ΓåÆ sign ΓåÆ deploy plan",
+      "kind": "auto",
+      "detail": "Offline preview before network deploy.",
+      "minutes": 1,
+      "run": [
+        "shipctl",
+        "flow",
+        "--project",
+        ".",
+        "--dry-run",
+        "--offline",
+        "--skip-deploy"
+      ],
+      "desktop_view": "tools",
+      "status": "pending"
+    },
+    {
+      "id": "deploy.web.web",
+      "title": "Deploy ΓÇö Web ΓÇö web",
+      "kind": "deploy",
+      "detail": "Orbit deploy in `apps/web`.",
+      "minutes": 3,
+      "run": [
+        "shipctl",
+        "deploy",
+        "--project",
+        "apps/web",
+        "deploy",
+        "--provider",
+        "vercel"
+      ],
+      "desktop_view": "launch",
+      "status": "pending"
+    },
+    {
+      "id": "live_check",
+      "title": "Live check ΓÇö smoke the published surface",
+      "kind": "check",
+      "detail": "Open your site/API/release page and Confirm when it looks right.",
+      "minutes": 2,
+      "entry_url": "https://github.com/Dendro-X0/Aperio/releases/new",
+      "desktop_view": "dashboard",
+      "status": "pending"
+    }
+  ],
+  "actions": [
+    "shipctl publish --mode advanced",
+    "shipctl publish open",
+    "shipctl publish confirm",
+    "shipctl publish next",
+    "desktop view: dashboard"
+  ],
+  "notes": [
+    "Mode: advanced ΓÇö full OAuth / official sign / listing path.",
+    "~52 min guided publish ΓÇö you finish vendor UIs; shipctl sequences.",
+    "Open/Run ΓåÆ work on official platform or local CLI ΓåÆ Confirm ΓåÆ Next.",
+    "Network deploy & live release require your initiation."
+  ]
+}

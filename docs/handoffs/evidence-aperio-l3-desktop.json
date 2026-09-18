@@ -1,0 +1,30 @@
+{
+  "stillEmpty": false,
+  "stepCount": 20,
+  "current": "humanLaunch — legal / security baseline · ~2m\n       Missing at repo root: LICENSE · SECURITY.md. Add LICENSE + SECURITY.md (CHANGELOG recommended), then Confirm. No legal advice — just the ship checklist. · studio: Open Dashboard",
+  "hint": "Advanced · Step 3/20 · ~50 min left · 2 done — Related opens detail panels without leaving the spine.",
+  "steps": [
+    "doneDoctor — tools for this layout",
+    "doneScopes — pick Web / API / Desktop / Mobile / Container",
+    "pendingLaunch — legal / security baseline",
+    "pendingVercel — CLI login",
+    "pendingENV & tokens — create / paste / put",
+    "pendingConfigure — write .ship/studio.json",
+    "pendingSelf-sign — scan / init signet.toml",
+    "pendingSelf-sign — Signet build",
+    "pendingTrust — TRUST.md + checksums",
+    "pendingSelf-sign — release dry-run",
+    "pendingOfficial — Apple notarization / certificates",
+    "pendingOfficial — Windows Authenticode / certificates",
+    "pendingOfficial — App Store Connect (listing)",
+    "pendingPublish — GitHub Release (network)",
+    "pendingSubmit — App Store review",
+    "pendingSubmit — Microsoft Store",
+    "pendingCI — GitHub Actions release",
+    "pendingDry-run — configure → sign → deploy plan",
+    "pendingDeploy — Web — web",
+    "pendingLive check — smoke the published surface"
+  ],
+  "hasSubmitPlay": false,
+  "hasMasOrMs": true
+}
