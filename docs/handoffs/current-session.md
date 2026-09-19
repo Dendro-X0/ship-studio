@@ -1,12 +1,12 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main`  
-**Status:** Band #50 Launch legal/trust/graduate/release parity — awaiting commit/push
+**Branch:** `main` (synced after push)  
+**Status:** Band #50 Launch legal/trust/graduate/release parity shipped — idle
 
 ## Next Atomic Step
 
-**Idle after commit** — no Studio Adaptive work unless a real ship needs a new portal lane.
+**Idle** — no Studio Adaptive work unless a real ship needs a new portal lane.
 
 ## PAUSED / CANCELLED
 
@@ -22,7 +22,7 @@
 |------|--------|
 | #48 Launch DB + marketing + suite | `8703416` |
 | #49 Launch CI + container | `782bced` |
-| #50 Launch legal/trust/graduate/release | (pending commit) |
+| #50 Launch legal/trust/graduate/release | `81ac97d` |
 
 ## Boot allowlist
 
