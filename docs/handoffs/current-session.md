@@ -21,7 +21,7 @@
 | Band | Commit |
 |------|--------|
 | #41 Launch commerce parity | `36c5802` |
-| #42 Heroku / Amplify hosts | (this push) |
+| #42 Heroku / Amplify hosts | bbe8024 |
 
 ## Boot allowlist
 
