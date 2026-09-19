@@ -1,13 +1,13 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main`  
-**Status:** Band #25 implemented — commit pending
+**Branch:** `main` @ `5a437ae` (synced)  
+**Status:** Bands #24–#25 shipped
 
 ## Next Atomic Step
 
-**Commit + push** band #25 (Desktop busy unlock),  
-or continue **band #26** (PowerShell dogfood), or idle.
+**Idle** — or optional **band #26** (native PowerShell dogfood for Windows without WSL).  
+Do not invent marketing/demo lanes. Aperio Advanced public L4 remains parked.
 
 ## PAUSED / CANCELLED
 
@@ -19,10 +19,10 @@ or continue **band #26** (PowerShell dogfood), or idle.
 
 ## Last closed
 
-| Band | Evidence |
-|------|----------|
+| Band | Commit |
+|------|--------|
 | #24 + #24b | `4f071fe` |
-| #25 Desktop busy unlock | `specs/frontend/desktop-busy-unlock-design.md` · `apps/desktop/src/main.ts` |
+| #25 Desktop busy unlock | `5a437ae` |
 
 ## Boot allowlist
 
