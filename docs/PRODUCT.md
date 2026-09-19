@@ -11,7 +11,7 @@ NOT:      Product docs/demo authoring · replace vendor UIs · store secrets · 
 RUNTIME:  Local + offline-first (bridge never requires network; open/login/put/verify are operator-initiated)
 SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri sidebar dashboard + Ctrl+K search)
 PROOF:    cargo test -p shipctl · scripts/dogfood-advanced-*.sh|.ps1 · Desktop Publish Advanced
-DONE:     Publish portal + adaptive doctor + Verify honesty + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut + scopes/env/listings/commerce + assist + desktop shell + Local/Public ship intent + publish progress watch + mobile BaaS portal + Steam/itch/Epic submit + Fly/Railway/Render/DO host portals
+DONE:     Publish portal + adaptive doctor + Verify honesty + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut + scopes/env/listings/commerce + assist + desktop shell + Local/Public ship intent + publish progress watch (CLI/Desktop/TUI) + mobile BaaS portal + Steam/itch/Epic submit + Fly/Railway/Render/DO host portals
 NOT YET:  Operator completes paste / graduate certs / live release / marketplace / registry push / deploy on vendor platforms (see OPERATOR-NEXT)
 ```
 

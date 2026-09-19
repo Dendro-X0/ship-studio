@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main`  
-**Status:** Bands #31–#32 shipped — idle
+**Status:** Band #33 TUI publish watch shipped — idle
 
 ## Next Atomic Step
 
@@ -20,12 +20,12 @@
 
 | Band | Commit |
 |------|--------|
-| #29–#30 Steam submit + Fly/Railway hosts | `cdc2c97` |
-| #31–#32 itch/Epic submit + Render/DO hosts | (this commit) |
+| #31–#32 itch/Epic submit + Render/DO hosts | `385cb01` |
+| #33 TUI publish watch | (this commit) |
 
 ## Boot allowlist
 
 1. This file  
 2. `docs/START-HERE.md` → SCOPE → PRODUCT  
-3. North star · marketplace-submit · alt-host-render-do designs  
+3. North star · `specs/backend/tui-publish-watch-design.md`  
 4. `docs/OPERATOR-NEXT.md`  

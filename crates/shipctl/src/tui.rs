@@ -19,7 +19,7 @@ use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wra
 use ratatui::Terminal;
 use std::io::{self, IsTerminal, Stdout};
 use std::path::{Path, PathBuf};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Screen {
@@ -55,6 +55,11 @@ struct App {
     secrets_plan: Option<SecretsPlan>,
     launch_view: Option<crate::launch::LaunchView>,
     publish_view: Option<crate::publish::PublishView>,
+    /// Band #33 — local Verify poller (Publish screen only).
+    publish_watch: bool,
+    publish_watch_last_ok: bool,
+    publish_watch_last_step: String,
+    publish_watch_last_tick: Option<Instant>,
     wizard: Option<WizardPhase>,
     status: String,
     log: Vec<String>,
@@ -121,6 +126,10 @@ pub fn run(project: &Path) -> Result<()> {
         secrets_plan: None,
         launch_view: None,
         publish_view: None,
+        publish_watch: false,
+        publish_watch_last_ok: false,
+        publish_watch_last_step: String::new(),
+        publish_watch_last_tick: None,
         wizard: None,
         status: format!("project: {}", project.display()),
         log: vec![
@@ -149,6 +158,15 @@ fn event_loop(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) 
         terminal.draw(|f| draw(f, app))?;
 
         if !event::poll(Duration::from_millis(200))? {
+            if app.publish_watch && app.screen == Screen::Publish {
+                let due = app
+                    .publish_watch_last_tick
+                    .map(|t| t.elapsed() >= Duration::from_secs(15))
+                    .unwrap_or(true);
+                if due {
+                    publish_watch_tick(app);
+                }
+            }
             continue;
         }
         let Event::Key(key) = event::read()? else {
@@ -208,6 +226,7 @@ fn event_loop(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) 
                 KeyCode::Char('n') => publish_next(app, false),
                 KeyCode::Char('N') => publish_next(app, true),
                 KeyCode::Char('r') => open_publish(app),
+                KeyCode::Char('w') => publish_watch_toggle(app),
                 _ => {}
             },
             Screen::Launch => match key.code {
@@ -489,11 +508,66 @@ fn open_publish(app: &mut App) {
             }
             app.publish_view = Some(view);
             app.screen = Screen::Publish;
-            app.status = "publish — o open · v verify · c confirm · n next".into();
+            app.status = if app.publish_watch {
+                "publish — Watch ON · o open · v verify · c confirm · n next · w off"
+                    .into()
+            } else {
+                "publish — o open · v verify · c confirm · n next · w watch".into()
+            };
         }
         Err(e) => {
             app.push(format!("publish failed: {e:#}"));
             app.status = "publish failed".into();
+        }
+    }
+}
+
+fn publish_watch_toggle(app: &mut App) {
+    app.publish_watch = !app.publish_watch;
+    if app.publish_watch {
+        app.publish_watch_last_ok = false;
+        app.publish_watch_last_step.clear();
+        app.publish_watch_last_tick = None;
+        app.push("watch ON — local Verify every ~15s");
+        app.status = "Watch ON — probing…".into();
+        publish_watch_tick(app);
+    } else {
+        app.push("watch OFF");
+        app.status = "Watch OFF — o open · v verify · c confirm · n next".into();
+    }
+}
+
+fn publish_watch_tick(app: &mut App) {
+    app.publish_watch_last_tick = Some(Instant::now());
+    match crate::publish::verify_current(&app.project) {
+        Ok((ok, msg, view)) => {
+            let step = view
+                .current
+                .as_ref()
+                .map(|c| c.id.clone())
+                .unwrap_or_default();
+            let finished = view.finished;
+            if ok
+                && (!app.publish_watch_last_ok || step != app.publish_watch_last_step)
+            {
+                app.push(format!(
+                    "WATCH READY · {step} · {msg} — Confirm then Next"
+                ));
+                app.status = "READY — c confirm · n next".into();
+            } else if !ok && app.publish_watch_last_ok {
+                app.status = format!("Watch · waiting ({step})");
+            }
+            app.publish_watch_last_ok = ok;
+            app.publish_watch_last_step = step;
+            app.publish_view = Some(view);
+            if finished {
+                app.publish_watch = false;
+                app.push("watch OFF — publish finished");
+                app.status = "publish finished".into();
+            }
+        }
+        Err(e) => {
+            app.push(format!("watch probe failed: {e:#}"));
         }
     }
 }
@@ -686,7 +760,7 @@ fn draw_publish(f: &mut ratatui::Frame, app: &App, area: Rect) {
     };
     let mut lines: Vec<Line> = Vec::new();
     lines.push(Line::from(format!(
-        "progress {}/{} · done {} · ~{}m left · {}",
+        "progress {}/{} · done {} · ~{}m left · {} · watch {}",
         view.current_index + 1,
         view.total,
         view.done_count,
@@ -695,7 +769,8 @@ fn draw_publish(f: &mut ratatui::Frame, app: &App, area: Rect) {
             "FINISHED"
         } else {
             "in progress"
-        }
+        },
+        if app.publish_watch { "ON" } else { "off" }
     )));
     if let Some(cur) = &view.current {
         lines.push(Line::from(""));
@@ -738,7 +813,11 @@ fn draw_publish(f: &mut ratatui::Frame, app: &App, area: Rect) {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title("publish portal"),
+                    .title(if app.publish_watch {
+                        "publish portal · WATCH"
+                    } else {
+                        "publish portal"
+                    }),
             ),
         area,
     );
@@ -1281,7 +1360,7 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
 
     let help = match app.screen {
         Screen::Home => "↑↓ · Enter · P publish · L launch · w wizard · d doctor · p portal · q quit",
-        Screen::Publish => "o/Enter open/run · v verify · c confirm · n next · N force-next · r refresh · Esc back",
+        Screen::Publish => "o/Enter open/run · v verify · c confirm · n next · N force-next · w watch · r refresh · Esc back",
         Screen::Launch => "o/Enter open/run · v verify · c confirm · n next · N force-next · r refresh · Esc back",
         Screen::Providers => "↑↓ · Space toggle · Enter continue · Esc back",
         Screen::Portal => "↑↓ · Enter/o open · l login · a all · n next · Esc back",
