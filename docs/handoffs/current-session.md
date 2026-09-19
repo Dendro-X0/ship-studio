@@ -1,13 +1,13 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main` (local commits pending)  
-**Status:** Bands #24 + #24b implemented — ready to commit
+**Branch:** `main` @ `4f071fe` (synced)  
+**Status:** Bands #24 + #24b shipped
 
 ## Next Atomic Step
 
-**Commit + push** bands #24 / #24b (Local intent + env entry URL honesty),  
-or continue **band #25** (Desktop busy/Refresh deadlock).
+**Band #25** — Desktop busy/Refresh deadlock (Open/Run leaves Refresh disabled),  
+or idle until a real ship needs a new lane.
 
 ## PAUSED / CANCELLED
 
@@ -19,14 +19,13 @@ or continue **band #25** (Desktop busy/Refresh deadlock).
 
 ## Last closed
 
-| Band | Evidence |
-|------|----------|
-| #24 Local/Public intent | CLI `--intent` · Desktop toggle · unit matrix |
-| #24b Env entry URLs | `entry_url_for_secret` · vercel fixture unit |
+| Band | Commit |
+|------|--------|
+| #24 + #24b | `4f071fe` — Local/Public intent + provider-matched secret entry URLs |
 
 ## Boot allowlist
 
 1. This file  
 2. `docs/START-HERE.md` → SCOPE → PRODUCT  
-3. `specs/backend/personal-local-intent-design.md` · `env-entry-url-provider-match-design.md`  
+3. North star · release-surface map  
 4. `docs/OPERATOR-NEXT.md`  
