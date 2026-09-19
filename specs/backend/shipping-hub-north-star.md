@@ -56,6 +56,8 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **28** | **Mobile BaaS portal** — `baas.provision` Open URL for Firebase / Appwrite / Convex / mobile+Supabase | Done (first slice) |
 | **29** | **Steam submit portal** — `submit.steam` depot/build docs (Open + Confirm; no Steam API) | Done (first slice) |
 | **30** | **Alt host portal** — `host.fly` / `host.railway` dashboard Open URLs | Done (first slice) |
+| **31** | **Marketplace submit parity** — `submit.itch` / `submit.epic` docs (Open + Confirm) | Done (first slice) |
+| **32** | **Alt host expand** — `host.render` / `host.digitalocean` dashboard Open URLs | Done (first slice) |
 
 ## Band #11 acceptance
 

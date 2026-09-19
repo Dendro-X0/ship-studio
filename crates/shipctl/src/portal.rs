@@ -24,6 +24,8 @@ pub enum ProviderId {
     Convex,
     Fly,
     Railway,
+    Render,
+    DigitalOcean,
 }
 
 impl ProviderId {
@@ -44,6 +46,8 @@ impl ProviderId {
             Self::Convex => "convex",
             Self::Fly => "fly",
             Self::Railway => "railway",
+            Self::Render => "render",
+            Self::DigitalOcean => "digitalocean",
         }
     }
 
@@ -51,7 +55,7 @@ impl ProviderId {
         catalog_entry(self).label
     }
 
-    pub fn all() -> [ProviderId; 15] {
+    pub fn all() -> [ProviderId; 17] {
         [
             ProviderId::Cloudflare,
             ProviderId::Vercel,
@@ -68,6 +72,8 @@ impl ProviderId {
             ProviderId::Convex,
             ProviderId::Fly,
             ProviderId::Railway,
+            ProviderId::Render,
+            ProviderId::DigitalOcean,
         ]
     }
 
@@ -88,9 +94,11 @@ impl ProviderId {
             "convex" => Ok(Self::Convex),
             "fly" | "flyio" | "fly.io" => Ok(Self::Fly),
             "railway" => Ok(Self::Railway),
+            "render" => Ok(Self::Render),
+            "digitalocean" | "do" | "docean" => Ok(Self::DigitalOcean),
             other => {
                 bail!(
-                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex|fly|railway)"
+                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex|fly|railway|render|digitalocean)"
                 )
             }
         }
@@ -146,6 +154,8 @@ pub fn catalog_entry(id: ProviderId) -> &'static ProviderCatalog {
         ProviderId::Convex => &CONVEX,
         ProviderId::Fly => &FLY,
         ProviderId::Railway => &RAILWAY,
+        ProviderId::Render => &RENDER,
+        ProviderId::DigitalOcean => &DIGITALOCEAN,
     }
 }
 
@@ -359,6 +369,32 @@ static RAILWAY: ProviderCatalog = ProviderCatalog {
     once_hint: "Railway tokens may be shown once — rotate if leaked.",
 };
 
+static RENDER: ProviderCatalog = ProviderCatalog {
+    label: "Render",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://dashboard.render.com/",
+    create_url: "https://dashboard.render.com/",
+    docs_url: "https://render.com/docs/deploy-an-app",
+    oauth_hint: "Open Render dashboard — create/deploy the service there. Studio only opens the dashboard.",
+    env_hint: "Put RENDER_* / service env on Render — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Render API keys may be shown once — rotate if leaked.",
+};
+
+static DIGITALOCEAN: ProviderCatalog = ProviderCatalog {
+    label: "DigitalOcean",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://cloud.digitalocean.com/apps",
+    create_url: "https://cloud.digitalocean.com/apps",
+    docs_url: "https://docs.digitalocean.com/products/app-platform/",
+    oauth_hint: "Open DigitalOcean App Platform — create/deploy the app there or with doctl. Studio only opens the dashboard.",
+    env_hint: "Put DIGITALOCEAN_* / DO_* tokens via doctl or the control panel — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "DigitalOcean API tokens may be shown once — rotate if leaked.",
+};
+
 /// Where to copy the *value* for a named secret (not where to put it).
 /// Prefer [`entry_url_for_secret`] when the put provider is known.
 pub fn source_url_for_secret_name(name: &str) -> &'static str {
@@ -394,6 +430,12 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
     }
     if upper.starts_with("RAILWAY_") {
         return Some(RAILWAY.create_url);
+    }
+    if upper.starts_with("RENDER_") {
+        return Some(RENDER.create_url);
+    }
+    if upper.starts_with("DIGITALOCEAN_") || upper.starts_with("DO_API_") {
+        return Some(DIGITALOCEAN.create_url);
     }
     if upper.starts_with("TURSO_") || upper.starts_with("LIBSQL_") {
         return Some(TURSO.create_url);
@@ -456,6 +498,8 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
         Some(ProviderId::Convex) => Some(CONVEX.create_url),
         Some(ProviderId::Fly) => Some(FLY.create_url),
         Some(ProviderId::Railway) => Some(RAILWAY.create_url),
+        Some(ProviderId::Render) => Some(RENDER.create_url),
+        Some(ProviderId::DigitalOcean) => Some(DIGITALOCEAN.create_url),
         None => None,
     }
 }
@@ -539,6 +583,12 @@ pub fn detected_providers(detected: &Detected) -> Vec<ProviderId> {
     }
     if detected.railway {
         out.push(ProviderId::Railway);
+    }
+    if detected.render {
+        out.push(ProviderId::Render);
+    }
+    if detected.digitalocean {
+        out.push(ProviderId::DigitalOcean);
     }
     out
 }

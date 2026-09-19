@@ -163,6 +163,26 @@ pub fn plan_for(project: &Path) -> SignPortal {
             run: None,
         });
     }
+    if detected.itch {
+        paths.push(SignPath {
+            id: "submit.itch".into(),
+            kind: "submit".into(),
+            title: "Submit — itch.io butler push".into(),
+            detail: "Push builds with butler or the itch dashboard. Studio only opens the official docs.".into(),
+            entry_url: Some("https://itch.io/docs/butler/".into()),
+            run: None,
+        });
+    }
+    if detected.epic {
+        paths.push(SignPath {
+            id: "submit.epic".into(),
+            kind: "submit".into(),
+            title: "Submit — Epic binary / artifacts".into(),
+            detail: "Upload binaries via Epic Games Store publishing tools. Studio only opens the official docs.".into(),
+            entry_url: Some("https://dev.epicgames.com/docs/epic-games-store/".into()),
+            run: None,
+        });
+    }
 
     paths.push(SignPath {
         id: "official.github".into(),
@@ -277,6 +297,25 @@ mod tests {
             .entry_url
             .as_deref()
             .is_some_and(|u| u.contains("/doc/sdk/uploading")));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn itch_epic_sign_portal_includes_submit() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-signpath-markets-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join("itch.toml"), "[itch]\n").unwrap();
+        fs::write(dir.join(".ship/markets.json"), r#"["epic"]"#).unwrap();
+        let portal = plan_for(&dir);
+        assert!(portal.paths.iter().any(|p| p.id == "submit.itch"));
+        assert!(portal.paths.iter().any(|p| p.id == "submit.epic"));
         let _ = fs::remove_dir_all(&dir);
     }
 }

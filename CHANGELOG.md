@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Alt host expand** — Advanced `host.render` / `host.digitalocean` Open dashboard URLs (deploy stays on vendor CLI/UI)
+- **Marketplace submit parity** — Advanced `submit.itch` / `submit.epic` open butler / Epic publishing docs (Open + Confirm; no upload from bridge)
 - **Alt host portal** — Advanced `host.fly` / `host.railway` Open dashboard URLs (deploy stays on Fly/Railway CLI/UI)
 - **Steam submit portal** — Advanced `submit.steam` opens Steamworks depot/build docs (Open + Confirm; no Steam API upload)
 - **Mobile BaaS portal** — Advanced `baas.provision` Open URL + Confirm for Firebase / Appwrite / Convex / mobile+Supabase Auth (no vendor HTTPS; Local/General omit)

@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main`  
-**Status:** Bands #29–#30 shipped — idle
+**Status:** Bands #31–#32 shipped — idle
 
 ## Next Atomic Step
 
@@ -20,12 +20,12 @@
 
 | Band | Commit |
 |------|--------|
-| #28 Mobile BaaS portal | `a77cab0` |
-| #29–#30 Steam submit + Fly/Railway hosts | (this commit) |
+| #29–#30 Steam submit + Fly/Railway hosts | `cdc2c97` |
+| #31–#32 itch/Epic submit + Render/DO hosts | (this commit) |
 
 ## Boot allowlist
 
 1. This file  
 2. `docs/START-HERE.md` → SCOPE → PRODUCT  
-3. North star · steam-submit · alt-host portal designs  
+3. North star · marketplace-submit · alt-host-render-do designs  
 4. `docs/OPERATOR-NEXT.md`  

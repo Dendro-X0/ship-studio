@@ -245,6 +245,8 @@ fn is_local_intent_step(step: &PubStep, env_required: bool) -> bool {
         || id == "baas.provision"
         || id == "host.fly"
         || id == "host.railway"
+        || id == "host.render"
+        || id == "host.digitalocean"
     {
         return false;
     }
@@ -478,6 +480,30 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "Create/deploy the service on Railway (dashboard or railway CLI). Studio only opens the official page. Confirm when the service is live.",
             3,
             Some("https://railway.app/dashboard".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+    if detected.render {
+        steps.push(step(
+            "host.render",
+            "Host — Render dashboard",
+            PubKind::Human,
+            "Create/deploy the service on Render. Studio only opens the official page — never deploys for you. Confirm when the service is live.",
+            3,
+            Some("https://dashboard.render.com/".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+    if detected.digitalocean {
+        steps.push(step(
+            "host.digitalocean",
+            "Host — DigitalOcean App Platform",
+            PubKind::Human,
+            "Create/deploy the app on DigitalOcean App Platform (dashboard or doctl). Studio only opens the official page. Confirm when the app is live.",
+            3,
+            Some("https://cloud.digitalocean.com/apps".into()),
             None,
             Some("portal"),
         ));
@@ -758,7 +784,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "listing.itch",
             "Listing — itch.io dashboard",
             PubKind::List,
-            "Upload / page / pricing on itch.io — then Confirm.",
+            "Store page / pricing on itch.io — build push is the next Submit step (butler). Then Confirm.",
             3,
             Some("https://itch.io/dashboard".into()),
             None,
@@ -771,7 +797,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "listing.epic",
             "Listing — Epic Games Store portal",
             PubKind::List,
-            "Epic product listing stays on the developer portal — then Confirm.",
+            "Epic product listing stays on the developer portal — binary upload is the next Submit step. Then Confirm.",
             3,
             Some("https://dev.epicgames.com/portal".into()),
             None,
@@ -850,6 +876,30 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "Upload the build and set depots on Steamworks (partner docs). Studio only opens the official page — never Steam API upload. Confirm when the build is live.",
             3,
             Some("https://partner.steamgames.com/doc/sdk/uploading".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+    if detected.itch {
+        steps.push(step(
+            "submit.itch",
+            "Submit — itch.io butler push",
+            PubKind::List,
+            "Push the build with butler (or the itch dashboard). Studio only opens the official docs — never runs butler for you. Confirm when the build is live.",
+            3,
+            Some("https://itch.io/docs/butler/".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+    if detected.epic {
+        steps.push(step(
+            "submit.epic",
+            "Submit — Epic binary / artifacts",
+            PubKind::List,
+            "Upload binaries on the Epic Games Store publishing tools. Studio only opens the official docs. Confirm when the build is submitted.",
+            3,
+            Some("https://dev.epicgames.com/docs/epic-games-store/".into()),
             None,
             Some("portal"),
         ));
@@ -2321,6 +2371,45 @@ mod tests {
     }
 
     #[test]
+    fn host_render_digitalocean_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-host-rd-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".do")).unwrap();
+        fs::write(dir.join("render.yaml"), "services: []\n").unwrap();
+        fs::write(dir.join(".do/app.yaml"), "name: demo\n").unwrap();
+
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let render = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "host.render")
+            .expect("host.render");
+        assert_eq!(
+            render.entry_url.as_deref(),
+            Some("https://dashboard.render.com/")
+        );
+        let digitalocean = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "host.digitalocean")
+            .expect("host.digitalocean");
+        assert_eq!(
+            digitalocean.entry_url.as_deref(),
+            Some("https://cloud.digitalocean.com/apps")
+        );
+
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id.starts_with("host.")));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn ci_release_fixture_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
             "shipctl-publish-ci-{}",
@@ -2452,6 +2541,8 @@ mod tests {
         assert!(advanced.steps.iter().any(|s| s.id == "listing.steam"));
         assert!(advanced.steps.iter().any(|s| s.id == "listing.itch"));
         assert!(advanced.steps.iter().any(|s| s.id == "listing.epic"));
+        assert!(advanced.steps.iter().any(|s| s.id == "submit.itch"));
+        assert!(advanced.steps.iter().any(|s| s.id == "submit.epic"));
         let steam = advanced
             .steps
             .iter()
@@ -2470,9 +2561,27 @@ mod tests {
             submit.entry_url.as_deref(),
             Some("https://partner.steamgames.com/doc/sdk/uploading")
         );
+        let itch_submit = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "submit.itch")
+            .expect("submit.itch");
+        assert!(itch_submit
+            .entry_url
+            .as_deref()
+            .is_some_and(|u| u.contains("itch.io/docs/butler")));
+        let epic_submit = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "submit.epic")
+            .expect("submit.epic");
+        assert!(epic_submit
+            .entry_url
+            .as_deref()
+            .is_some_and(|u| u.contains("epic-games-store")));
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id.starts_with("listing.")));
-        assert!(!general.steps.iter().any(|s| s.id == "submit.steam"));
+        assert!(!general.steps.iter().any(|s| s.id.starts_with("submit.")));
         let _ = fs::remove_dir_all(&dir);
     }
 

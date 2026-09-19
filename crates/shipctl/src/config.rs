@@ -213,6 +213,12 @@ pub struct Detected {
     /// Railway app markers (alt host portal).
     #[serde(default)]
     pub railway: bool,
+    /// Render.com app markers (alt host portal).
+    #[serde(default)]
+    pub render: bool,
+    /// DigitalOcean App Platform markers (alt host portal).
+    #[serde(default)]
+    pub digitalocean: bool,
     /// Marketing / landing / GitHub Pages site present.
     #[serde(default)]
     pub marketing_site: bool,
@@ -426,13 +432,19 @@ pub fn probe(project: &Path) -> Detected {
             bits.join(" · ")
         ));
     }
-    if d.fly || d.railway {
+    if d.fly || d.railway || d.render || d.digitalocean {
         let mut bits = Vec::new();
         if d.fly {
             bits.push("Fly");
         }
         if d.railway {
             bits.push("Railway");
+        }
+        if d.render {
+            bits.push("Render");
+        }
+        if d.digitalocean {
+            bits.push("DigitalOcean");
         }
         d.hints.push(format!(
             "Alt host markers ({}) — Advanced publish opens the vendor dashboard (deploy stays on their CLI/UI).",
@@ -663,6 +675,14 @@ fn detect_alt_hosts(project: &Path, d: &mut Detected) {
         || project.join(".railway").is_dir()
         || env_key_prefix(project, "RAILWAY_")
         || package_mentions(project, &["@railway/cli", "\"railway\""]);
+    d.render = any_named(project, &["render.yaml", "render.yml"])
+        || env_key_prefix(project, "RENDER_")
+        || package_mentions(project, &["@render.com", "render-sdk"]);
+    d.digitalocean = project.join(".do/app.yaml").is_file()
+        || project.join(".do/app.yml").is_file()
+        || env_key_prefix(project, "DIGITALOCEAN_")
+        || env_key_prefix(project, "DO_API_")
+        || package_mentions(project, &["digitalocean", "doctl"]);
 }
 
 fn detect_ci_release(project: &Path, d: &mut Detected) {
