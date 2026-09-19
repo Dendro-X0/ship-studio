@@ -1,12 +1,12 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main`  
-**Status:** Band #49 Launch CI + container parity — awaiting commit/push
+**Branch:** `main` (synced after push)  
+**Status:** Band #49 Launch CI + container parity shipped — idle
 
 ## Next Atomic Step
 
-**Idle after commit** — no Studio Adaptive work unless a real ship needs a new portal lane.
+**Idle** — no Studio Adaptive work unless a real ship needs a new portal lane.
 
 ## PAUSED / CANCELLED
 
@@ -22,7 +22,7 @@
 |------|--------|
 | #47 Launch registry + HF listing | `8703416` |
 | #48 Launch DB + marketing + suite | `8703416` |
-| #49 Launch CI + container | (pending commit) |
+| #49 Launch CI + container | `782bced` |
 
 ## Boot allowlist
 
