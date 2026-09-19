@@ -367,6 +367,7 @@ const ACTION_IDS = [
 ] as const;
 
 let running = false;
+let busyWatchdog: number | null = null;
 let streamBuf = "";
 
 function projectPath(): string {
@@ -381,12 +382,42 @@ function includeDeploy(): boolean {
   return deployEl()?.checked ?? false;
 }
 
+function clearBusyWatchdog() {
+  if (busyWatchdog !== null) {
+    window.clearTimeout(busyWatchdog);
+    busyWatchdog = null;
+  }
+}
+
 function setBusy(busy: boolean, label = "Ready", failed = false) {
   running = busy;
   const el = stateEl();
-  if (!el) return;
-  el.textContent = label;
-  el.className = busy ? "busy" : failed ? "failed" : "ready";
+  if (el) {
+    el.textContent = label;
+    el.className = busy ? "busy" : failed ? "failed" : "ready";
+  }
+  // Always re-sync disabled state — Cancel / Clear / errors must unlock Refresh.
+  setProjectUi(Boolean(projectPath()));
+  clearBusyWatchdog();
+  if (busy) {
+    busyWatchdog = window.setTimeout(() => {
+      if (!running) return;
+      toast("Still running — use Cancel to unlock Publish if stuck", "info", 6000);
+      const cancel = document.querySelector<HTMLButtonElement>("#btn-cancel");
+      if (cancel) cancel.disabled = false;
+    }, 90_000);
+  }
+}
+
+function forceUnlockUi(reason = "Unlocked") {
+  clearBusyWatchdog();
+  running = false;
+  const el = stateEl();
+  if (el) {
+    el.textContent = reason;
+    el.className = "ready";
+  }
+  setProjectUi(Boolean(projectPath()));
 }
 
 function setProjectUi(on: boolean) {
@@ -2777,17 +2808,19 @@ async function run(args: string[], opts?: { step?: string; quietHeader?: boolean
     return;
   }
   if (running) {
-    show("Already running — wait for the current command.");
+    show("Already running — wait for the current command, or Cancel to unlock.");
+    toast("Busy — Cancel unlocks Publish if stuck", "info", 4000);
     return;
   }
   if (opts?.step) setStep(opts.step, "active");
   setBusy(true, "Running…");
-  setProjectUi(true);
   if (!opts?.silent) {
     streamBuf = opts?.quietHeader ? "" : `shipctl ${args[0]}\n`;
     show(streamBuf);
   }
 
+  let endLabel = "Ready";
+  let endFailed = false;
   try {
     const result = await invoke<CmdResult>("run_shipctl", { project, args });
     // Final pretty pass for JSON-heavy commands
@@ -2833,8 +2866,8 @@ async function run(args: string[], opts?: { step?: string; quietHeader?: boolean
     ) {
       await refreshShipState();
     }
-    setBusy(false, result.cancelled ? "Cancelled" : result.ok ? "Ready" : "Failed", !result.ok && !result.cancelled);
-    setProjectUi(true);
+    endLabel = result.cancelled ? "Cancelled" : result.ok ? "Ready" : "Failed";
+    endFailed = !result.ok && !result.cancelled;
     if (!opts?.quietHeader && !opts?.silent) {
       const cmd = args[0] ?? "shipctl";
       if (result.cancelled) toast(`${cmd} cancelled`, "err");
@@ -2845,9 +2878,12 @@ async function run(args: string[], opts?: { step?: string; quietHeader?: boolean
   } catch (err) {
     if (!opts?.silent) appendStream({ stream: "stderr", text: String(err) });
     if (opts?.step) setStep(opts.step, "fail");
-    setBusy(false, "Failed", true);
-    setProjectUi(true);
+    endLabel = "Failed";
+    endFailed = true;
     if (!opts?.quietHeader && !opts?.silent) toast(String(err), "err");
+  } finally {
+    // Always unlock — prevents Refresh/Open stuck after cancel, hang, or throw.
+    setBusy(false, endLabel, endFailed);
   }
 }
 
@@ -3149,17 +3185,23 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#btn-clear")?.addEventListener("click", () => {
     show("");
-    setBusy(false, "Ready");
+    forceUnlockUi("Ready");
   });
 
   document.querySelector("#btn-cancel")?.addEventListener("click", async () => {
     try {
       const killed = await invoke<boolean>("cancel_shipctl");
       if (!killed) {
-        appendStream({ stream: "meta", text: "nothing to cancel" });
+        appendStream({ stream: "meta", text: "nothing to cancel — unlocking UI" });
+      } else {
+        appendStream({ stream: "meta", text: "cancel signal sent" });
       }
     } catch (err) {
       appendStream({ stream: "stderr", text: String(err) });
+    } finally {
+      // Band #25: always unlock Refresh even if Rust pid was already cleared.
+      forceUnlockUi("Cancelled");
+      toast("Unlocked — you can Refresh Publish again", "ok");
     }
   });
 

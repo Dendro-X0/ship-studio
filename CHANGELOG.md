@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Desktop busy unlock** — Cancel/Clear always re-enable Publish Refresh; `run()` clears busy in `finally`; 90s stuck hint
 - **Env entry URL honesty** — secret Open URLs match value source or put provider (Vercel-bound names no longer open Cloudflare tokens)
 - **Personal / local ship intent** — `--intent local|public` (orthogonal to General/Advanced); Local omits hosted env/deploy/store lanes; Desktop Local/Public toggle; persists in `.ship/studio.json`
 - **aperio dogfood** — desktop Tauri no longer pulls Play/Android official/submit lanes (MAS + Microsoft Store stay)

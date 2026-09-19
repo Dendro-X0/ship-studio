@@ -1,13 +1,13 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main` @ `4f071fe` (synced)  
-**Status:** Bands #24 + #24b shipped
+**Branch:** `main`  
+**Status:** Band #25 implemented — commit pending
 
 ## Next Atomic Step
 
-**Band #25** — Desktop busy/Refresh deadlock (Open/Run leaves Refresh disabled),  
-or idle until a real ship needs a new lane.
+**Commit + push** band #25 (Desktop busy unlock),  
+or continue **band #26** (PowerShell dogfood), or idle.
 
 ## PAUSED / CANCELLED
 
@@ -19,9 +19,10 @@ or idle until a real ship needs a new lane.
 
 ## Last closed
 
-| Band | Commit |
-|------|--------|
-| #24 + #24b | `4f071fe` — Local/Public intent + provider-matched secret entry URLs |
+| Band | Evidence |
+|------|----------|
+| #24 + #24b | `4f071fe` |
+| #25 Desktop busy unlock | `specs/frontend/desktop-busy-unlock-design.md` · `apps/desktop/src/main.ts` |
 
 ## Boot allowlist
 
