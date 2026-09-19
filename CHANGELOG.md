@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Alt host expand (Cloud Run / Azure Static)** — Advanced + Launch `host.cloudrun` / `host.azurestatic` Open dashboard URLs
 - **Launch mobile / store submit parity** — Guided Launch sequences Play / App Store / Microsoft Store Open + Confirm (no upload; Tauri skips Play)
 - **Launch marketplace submit parity** — Guided Launch sequences Steam / itch / Epic listing + submit docs (Open + Confirm; no upload)
 - **Launch host / BaaS parity** — Guided Launch sequences alt-host dashboards + mobile BaaS provision (Open + Confirm)

@@ -198,7 +198,15 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
             m.join(" · ")
         ));
     }
-    if detected.fly || detected.railway || detected.render || detected.digitalocean || detected.heroku || detected.amplify {
+    if detected.fly
+        || detected.railway
+        || detected.render
+        || detected.digitalocean
+        || detected.heroku
+        || detected.amplify
+        || detected.cloudrun
+        || detected.azurestatic
+    {
         let mut m = Vec::new();
         if detected.fly {
             m.push("Fly");
@@ -217,6 +225,12 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
         }
         if detected.amplify {
             m.push("Amplify");
+        }
+        if detected.cloudrun {
+            m.push("Cloud Run");
+        }
+        if detected.azurestatic {
+            m.push("Azure Static");
         }
         notes.push(format!(
             "Alt hosts ({}) — Advanced host.* opens dashboards; deploy stays on their CLI/UI (no Orbit).",

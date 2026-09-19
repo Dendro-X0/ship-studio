@@ -233,7 +233,15 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
         "Desktop/TUI Wizard follows the same step ids.".into(),
         "Optional vault: shipctl vault export --out ship-secrets.km --from-hints".into(),
     ];
-    if detected.fly || detected.railway || detected.render || detected.digitalocean || detected.heroku || detected.amplify {
+    if detected.fly
+        || detected.railway
+        || detected.render
+        || detected.digitalocean
+        || detected.heroku
+        || detected.amplify
+        || detected.cloudrun
+        || detected.azurestatic
+    {
         let mut m = Vec::new();
         if detected.fly {
             m.push("Fly");
@@ -252,6 +260,12 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
         }
         if detected.amplify {
             m.push("Amplify");
+        }
+        if detected.cloudrun {
+            m.push("Cloud Run");
+        }
+        if detected.azurestatic {
+            m.push("Azure Static");
         }
         notes.push(format!(
             "Alt hosts ({}) — Advanced Publish host.* opens dashboards; deploy stays on their CLI/UI.",

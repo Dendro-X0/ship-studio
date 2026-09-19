@@ -71,6 +71,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **43** | **Launch host / BaaS parity** — companion `host.*` + `baas.provision` Open URLs | Done (first slice) |
 | **44** | **Launch marketplace submit parity** — Steam / itch / Epic listing + submit Open URLs | Done (first slice) |
 | **45** | **Launch mobile / store submit parity** — Play / ASC / MS listing + submit (Tauri honesty) | Done (first slice) |
+| **46** | **Alt host expand** — `host.cloudrun` / `host.azurestatic` dashboard Open URLs | Done (first slice) |
 
 ## Band #11 acceptance
 

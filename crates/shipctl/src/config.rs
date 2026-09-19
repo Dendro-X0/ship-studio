@@ -225,6 +225,12 @@ pub struct Detected {
     /// AWS Amplify app markers (alt host portal).
     #[serde(default)]
     pub amplify: bool,
+    /// Google Cloud Run markers (alt host portal).
+    #[serde(default)]
+    pub cloudrun: bool,
+    /// Azure Static Web Apps markers (alt host portal).
+    #[serde(default)]
+    pub azurestatic: bool,
     /// Marketing / landing / GitHub Pages site present.
     #[serde(default)]
     pub marketing_site: bool,
@@ -444,7 +450,7 @@ pub fn probe(project: &Path) -> Detected {
             bits.join(" · ")
         ));
     }
-    if d.fly || d.railway || d.render || d.digitalocean || d.heroku || d.amplify {
+    if d.fly || d.railway || d.render || d.digitalocean || d.heroku || d.amplify || d.cloudrun || d.azurestatic {
         let mut bits = Vec::new();
         if d.fly {
             bits.push("Fly");
@@ -463,6 +469,12 @@ pub fn probe(project: &Path) -> Detected {
         }
         if d.amplify {
             bits.push("Amplify");
+        }
+        if d.cloudrun {
+            bits.push("Cloud Run");
+        }
+        if d.azurestatic {
+            bits.push("Azure Static");
         }
         d.hints.push(format!(
             "Alt host markers ({}) — Advanced publish opens the vendor dashboard (deploy stays on their CLI/UI).",
@@ -732,6 +744,65 @@ fn detect_alt_hosts(project: &Path, d: &mut Detected) {
                 "aws-exports.js",
             ],
         );
+    let cloudrun_markets = read_markets_opt_in(project).iter().any(|m| {
+        m == "cloudrun" || m == "cloud-run" || m == "gcp-run" || m == "google-cloud-run"
+    });
+    d.cloudrun = cloudrun_markets
+        || env_key_prefix(project, "CLOUD_RUN_")
+        || env_key_prefix(project, "K_SERVICE")
+        || package_mentions(project, &["@google-cloud/run", "google-cloud-run"])
+        || file_mentions_any(
+            project,
+            &["service.yaml", "service.yml", "cloudbuild.yaml", "cloudbuild.yml"],
+            "run.googleapis.com",
+        )
+        || file_mentions_any(
+            project,
+            &["service.yaml", "service.yml"],
+            "serving.knative.dev",
+        )
+        || file_mentions_any(
+            project,
+            &["cloudbuild.yaml", "cloudbuild.yml"],
+            "gcloud run",
+        )
+        || workflow_mentions(project, "gcloud run")
+        || workflow_mentions(project, "google-github-actions/deploy-cloudrun");
+    let azurestatic_markets = read_markets_opt_in(project).iter().any(|m| {
+        m == "azurestatic"
+            || m == "azure-static"
+            || m == "swa"
+            || m == "static-web-apps"
+            || m == "azure-swa"
+    });
+    d.azurestatic = azurestatic_markets
+        || project.join("staticwebapp.config.json").is_file()
+        || env_key_prefix(project, "AZURE_STATIC_")
+        || env_key_prefix(project, "STATIC_WEB_APP_")
+        || package_mentions(project, &["@azure/static-web-apps-cli", "swa"])
+        || workflow_mentions(project, "static-web-apps-deploy")
+        || workflow_mentions(project, "Azure/static-web-apps");
+}
+
+fn workflow_mentions(project: &Path, needle: &str) -> bool {
+    let dir = project.join(".github").join("workflows");
+    let Ok(entries) = fs::read_dir(&dir) else {
+        return false;
+    };
+    let n = needle.to_ascii_lowercase();
+    for ent in entries.flatten() {
+        let path = ent.path();
+        if !path.is_file() {
+            continue;
+        }
+        let Ok(raw) = fs::read_to_string(&path) else {
+            continue;
+        };
+        if raw.to_ascii_lowercase().contains(&n) {
+            return true;
+        }
+    }
+    false
 }
 
 fn detect_ci_release(project: &Path, d: &mut Detected) {

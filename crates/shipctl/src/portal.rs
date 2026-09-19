@@ -32,6 +32,8 @@ pub enum ProviderId {
     Paddle,
     Heroku,
     Amplify,
+    CloudRun,
+    AzureStatic,
 }
 
 impl ProviderId {
@@ -60,6 +62,8 @@ impl ProviderId {
             Self::Paddle => "paddle",
             Self::Heroku => "heroku",
             Self::Amplify => "amplify",
+            Self::CloudRun => "cloudrun",
+            Self::AzureStatic => "azurestatic",
         }
     }
 
@@ -67,7 +71,7 @@ impl ProviderId {
         catalog_entry(self).label
     }
 
-    pub fn all() -> [ProviderId; 23] {
+    pub fn all() -> [ProviderId; 25] {
         [
             ProviderId::Cloudflare,
             ProviderId::Vercel,
@@ -92,6 +96,8 @@ impl ProviderId {
             ProviderId::Paddle,
             ProviderId::Heroku,
             ProviderId::Amplify,
+            ProviderId::CloudRun,
+            ProviderId::AzureStatic,
         ]
     }
 
@@ -120,9 +126,13 @@ impl ProviderId {
             "paddle" => Ok(Self::Paddle),
             "heroku" => Ok(Self::Heroku),
             "amplify" | "aws-amplify" | "awsamplify" => Ok(Self::Amplify),
+            "cloudrun" | "cloud-run" | "gcp-run" | "google-cloud-run" => Ok(Self::CloudRun),
+            "azurestatic" | "azure-static" | "swa" | "static-web-apps" | "azure-swa" => {
+                Ok(Self::AzureStatic)
+            }
             other => {
                 bail!(
-                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex|fly|railway|render|digitalocean|gumroad|lemon|stripe|paddle|heroku|amplify)"
+                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex|fly|railway|render|digitalocean|gumroad|lemon|stripe|paddle|heroku|amplify|cloudrun|azurestatic)"
                 )
             }
         }
@@ -193,6 +203,8 @@ pub fn catalog_entry(id: ProviderId) -> &'static ProviderCatalog {
         ProviderId::Paddle => &PADDLE,
         ProviderId::Heroku => &HEROKU,
         ProviderId::Amplify => &AMPLIFY,
+        ProviderId::CloudRun => &CLOUDRUN,
+        ProviderId::AzureStatic => &AZURESTATIC,
     }
 }
 
@@ -510,6 +522,32 @@ static AMPLIFY: ProviderCatalog = ProviderCatalog {
     once_hint: "AWS access keys may be shown once — rotate if leaked.",
 };
 
+static CLOUDRUN: ProviderCatalog = ProviderCatalog {
+    label: "Google Cloud Run",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://console.cloud.google.com/run",
+    create_url: "https://console.cloud.google.com/run",
+    docs_url: "https://cloud.google.com/run/docs",
+    oauth_hint: "Open Cloud Run console — create/deploy the service with gcloud or the console. Studio only opens the page.",
+    env_hint: "Put CLOUD_RUN_* / GCP credentials via gcloud or Secret Manager — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "GCP service account keys may be shown once — rotate if leaked.",
+};
+
+static AZURESTATIC: ProviderCatalog = ProviderCatalog {
+    label: "Azure Static Web Apps",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://portal.azure.com/#view/HubsExtension/BrowseResource/resourceType/Microsoft.Web%2FstaticSites",
+    create_url: "https://portal.azure.com/#view/HubsExtension/BrowseResource/resourceType/Microsoft.Web%2FstaticSites",
+    docs_url: "https://learn.microsoft.com/azure/static-web-apps/",
+    oauth_hint: "Open Azure Static Web Apps — create/deploy the app there or with SWA CLI. Studio only opens the portal.",
+    env_hint: "Put AZURE_STATIC_* / deployment tokens via Azure portal or SWA CLI — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Azure deployment tokens may be shown once — rotate if leaked.",
+};
+
 /// Where to copy the *value* for a named secret (not where to put it).
 /// Prefer [`entry_url_for_secret`] when the put provider is known.
 pub fn source_url_for_secret_name(name: &str) -> &'static str {
@@ -596,6 +634,12 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
     if upper.starts_with("AMPLIFY_") {
         return Some(AMPLIFY.create_url);
     }
+    if upper.starts_with("CLOUD_RUN_") || upper == "K_SERVICE" {
+        return Some(CLOUDRUN.create_url);
+    }
+    if upper.starts_with("AZURE_STATIC_") || upper.starts_with("STATIC_WEB_APP_") {
+        return Some(AZURESTATIC.create_url);
+    }
     if upper.starts_with("GUMROAD_") {
         return Some(GUMROAD.create_url);
     }
@@ -633,6 +677,8 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
         Some(ProviderId::Paddle) => Some(PADDLE.create_url),
         Some(ProviderId::Heroku) => Some(HEROKU.create_url),
         Some(ProviderId::Amplify) => Some(AMPLIFY.create_url),
+        Some(ProviderId::CloudRun) => Some(CLOUDRUN.create_url),
+        Some(ProviderId::AzureStatic) => Some(AZURESTATIC.create_url),
         None => None,
     }
 }
@@ -731,6 +777,12 @@ pub fn detected_providers(detected: &Detected) -> Vec<ProviderId> {
     }
     if detected.amplify {
         out.push(ProviderId::Amplify);
+    }
+    if detected.cloudrun {
+        out.push(ProviderId::CloudRun);
+    }
+    if detected.azurestatic {
+        out.push(ProviderId::AzureStatic);
     }
     if detected.gumroad {
         out.push(ProviderId::Gumroad);

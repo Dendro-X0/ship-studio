@@ -238,7 +238,8 @@ fn put_queue_from_hints(hints: &[SecretHint]) -> Vec<SecretHint> {
             h.provider.as_str(),
             "polar" | "github" | "neon" | "supabase" | "d1" | "turso" | "container"
                 | "firebase" | "appwrite" | "convex" | "fly" | "railway" | "render"
-                | "digitalocean" | "heroku" | "amplify" | "gumroad" | "lemon" | "stripe" | "paddle"
+                | "digitalocean" | "heroku" | "amplify" | "cloudrun" | "azurestatic" | "gumroad"
+                | "lemon" | "stripe" | "paddle"
         ) {
             continue;
         }

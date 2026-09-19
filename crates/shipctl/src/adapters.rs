@@ -278,7 +278,15 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
                 .into(),
         );
     }
-    if detected.fly || detected.railway || detected.render || detected.digitalocean || detected.heroku || detected.amplify {
+    if detected.fly
+        || detected.railway
+        || detected.render
+        || detected.digitalocean
+        || detected.heroku
+        || detected.amplify
+        || detected.cloudrun
+        || detected.azurestatic
+    {
         let mut m = Vec::new();
         if detected.fly {
             m.push("Fly");
@@ -298,8 +306,14 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
         if detected.amplify {
             m.push("Amplify");
         }
+        if detected.cloudrun {
+            m.push("Cloud Run");
+        }
+        if detected.azurestatic {
+            m.push("Azure Static");
+        }
         notes.push(format!(
-            "Alt hosts ({}) — Advanced host.* opens dashboards; deploy stays on their CLI/UI (optional flyctl/railway/doctl/heroku; not required for doctor ok).",
+            "Alt hosts ({}) — Advanced host.* opens dashboards; deploy stays on their CLI/UI (optional flyctl/railway/doctl/heroku/gcloud; not required for doctor ok).",
             m.join(" · ")
         ));
     }
@@ -432,6 +446,12 @@ fn provider_cli_status(detected: &crate::config::Detected) -> Vec<ProviderCliSta
             detected.heroku,
             "heroku",
             "optional: install Heroku CLI — Studio only opens the Heroku dashboard",
+        ),
+        (
+            "cloudrun",
+            detected.cloudrun,
+            "gcloud",
+            "optional: install gcloud — Studio only opens the Cloud Run console",
         ),
     ];
     for (provider, needed, bin, fix) in checks {

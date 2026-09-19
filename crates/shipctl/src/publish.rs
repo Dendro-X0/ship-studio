@@ -529,6 +529,30 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             Some("portal"),
         ));
     }
+    if detected.cloudrun {
+        steps.push(step(
+            "host.cloudrun",
+            "Host — Google Cloud Run",
+            PubKind::Human,
+            "Create/deploy the service on Cloud Run (console or gcloud). Studio only opens the official page — never deploys for you. Confirm when the service is live.",
+            3,
+            Some("https://console.cloud.google.com/run".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+    if detected.azurestatic {
+        steps.push(step(
+            "host.azurestatic",
+            "Host — Azure Static Web Apps",
+            PubKind::Human,
+            "Create/deploy the static web app on Azure. Studio only opens the official page — never deploys for you. Confirm when the app is live.",
+            3,
+            Some("https://portal.azure.com/#view/HubsExtension/BrowseResource/resourceType/Microsoft.Web%2FstaticSites".into()),
+            None,
+            Some("portal"),
+        ));
+    }
 
     steps.push(step(
         "configure",
@@ -2538,6 +2562,61 @@ mod tests {
         let portal = crate::portal::plan_for(&dir, None).unwrap();
         assert!(portal.providers.iter().any(|p| p == "heroku"));
         assert!(portal.providers.iter().any(|p| p == "amplify"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn host_cloudrun_azurestatic_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-host-ca-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("service.yaml"),
+            "apiVersion: serving.knative.dev/v1\nkind: Service\nmetadata:\n  name: demo\n",
+        )
+        .unwrap();
+        fs::write(dir.join("staticwebapp.config.json"), "{}\n").unwrap();
+
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let cloudrun = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "host.cloudrun")
+            .expect("host.cloudrun");
+        assert_eq!(
+            cloudrun.entry_url.as_deref(),
+            Some("https://console.cloud.google.com/run")
+        );
+        let azure = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "host.azurestatic")
+            .expect("host.azurestatic");
+        assert!(azure
+            .entry_url
+            .as_deref()
+            .unwrap_or("")
+            .contains("staticSites"));
+
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id.starts_with("host.")));
+        let local =
+            load_or_build_with_options(&dir, StudioMode::Advanced, Some(ShipIntent::Local)).unwrap();
+        assert!(!local.steps.iter().any(|s| s.id.starts_with("host.")));
+
+        let portal = crate::portal::plan_for(&dir, None).unwrap();
+        assert!(portal.providers.iter().any(|p| p == "cloudrun"));
+        assert!(portal.providers.iter().any(|p| p == "azurestatic"));
+
+        let launch = crate::launch::load_or_build(&dir).unwrap();
+        assert!(launch.steps.iter().any(|s| s.id == "host.cloudrun"));
+        assert!(launch.steps.iter().any(|s| s.id == "host.azurestatic"));
         let _ = fs::remove_dir_all(&dir);
     }
 

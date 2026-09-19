@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main` (synced after push)  
-**Status:** Band #45 Launch mobile/store submit parity shipped — idle
+**Status:** Band #46 Cloud Run / Azure Static hosts shipped — idle
 
 ## Next Atomic Step
 
@@ -20,11 +20,11 @@
 
 | Band | Commit |
 |------|--------|
-| #44 Launch marketplace submit | `c2abac5` |
-| #45 Launch mobile / store submit | 723116d |
+| #45 Launch mobile / store submit | `723116d` |
+| #46 Cloud Run / Azure Static hosts | (this push) |
 
 ## Boot allowlist
 
 1. This file  
-2. North star · `specs/backend/launch-mobile-store-parity-design.md`  
+2. North star · `specs/backend/alt-host-cloudrun-azurestatic-design.md`  
 3. `docs/OPERATOR-NEXT.md`  

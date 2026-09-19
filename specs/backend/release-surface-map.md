@@ -204,12 +204,12 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Gaps #1–#45 first slices cleared** (mobile store API upload still deferred).  
+**Gaps #1–#46 first slices cleared** (mobile store API upload still deferred).  
 **L3:** aperio Desktop Advanced Publish — 20 steps, no Play/Android (`docs/handoffs/evidence-aperio-l3*`, 2026-09-18).
 
 Suggested follow-ups (not parallel wizards):
 
-1. ~~Bands #24–#45~~ — Local intent through Launch mobile/store submit parity.  
+1. ~~Bands #24–#46~~ — Local intent through Cloud Run / Azure Static hosts.  
 2. Keep `OPERATOR-NEXT.md` as the human-gate checklist (Public intent).  
 3. Only add a new Adaptive lane when a real ship needs it.  
 
@@ -217,4 +217,4 @@ Suggested follow-ups (not parallel wizards):
 
 | # | Band | Why it raises hub value |
 |---|------|-------------------------|
-| ~~24–45~~ | ~~Local intent … Launch mobile/store submit~~ | ~~done~~ |
+| ~~24–46~~ | ~~Local intent … Cloud Run / Azure Static~~ | ~~done~~ |

@@ -465,6 +465,28 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             None,
         ));
     }
+    if detected.cloudrun {
+        steps.push(step(
+            "host.cloudrun",
+            "Host — Google Cloud Run",
+            StepKind::Deploy,
+            "Create/deploy the service on Cloud Run. Studio only opens the official page — never deploys for you.",
+            Some("https://console.cloud.google.com/run".into()),
+            Some("confirm when the service is live".into()),
+            None,
+        ));
+    }
+    if detected.azurestatic {
+        steps.push(step(
+            "host.azurestatic",
+            "Host — Azure Static Web Apps",
+            StepKind::Deploy,
+            "Create/deploy the static web app on Azure. Studio only opens the official page — never deploys for you.",
+            Some("https://portal.azure.com/#view/HubsExtension/BrowseResource/resourceType/Microsoft.Web%2FstaticSites".into()),
+            Some("confirm when the app is live".into()),
+            None,
+        ));
+    }
 
     if detected.polar {
         steps.push(step(
