@@ -30,6 +30,8 @@ pub enum ProviderId {
     Lemon,
     Stripe,
     Paddle,
+    Heroku,
+    Amplify,
 }
 
 impl ProviderId {
@@ -56,6 +58,8 @@ impl ProviderId {
             Self::Lemon => "lemon",
             Self::Stripe => "stripe",
             Self::Paddle => "paddle",
+            Self::Heroku => "heroku",
+            Self::Amplify => "amplify",
         }
     }
 
@@ -63,7 +67,7 @@ impl ProviderId {
         catalog_entry(self).label
     }
 
-    pub fn all() -> [ProviderId; 21] {
+    pub fn all() -> [ProviderId; 23] {
         [
             ProviderId::Cloudflare,
             ProviderId::Vercel,
@@ -86,6 +90,8 @@ impl ProviderId {
             ProviderId::Lemon,
             ProviderId::Stripe,
             ProviderId::Paddle,
+            ProviderId::Heroku,
+            ProviderId::Amplify,
         ]
     }
 
@@ -112,9 +118,11 @@ impl ProviderId {
             "lemon" | "lemonsqueezy" | "lemon_squeezy" => Ok(Self::Lemon),
             "stripe" => Ok(Self::Stripe),
             "paddle" => Ok(Self::Paddle),
+            "heroku" => Ok(Self::Heroku),
+            "amplify" | "aws-amplify" | "awsamplify" => Ok(Self::Amplify),
             other => {
                 bail!(
-                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex|fly|railway|render|digitalocean|gumroad|lemon|stripe|paddle)"
+                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex|fly|railway|render|digitalocean|gumroad|lemon|stripe|paddle|heroku|amplify)"
                 )
             }
         }
@@ -183,6 +191,8 @@ pub fn catalog_entry(id: ProviderId) -> &'static ProviderCatalog {
         ProviderId::Lemon => &LEMON,
         ProviderId::Stripe => &STRIPE,
         ProviderId::Paddle => &PADDLE,
+        ProviderId::Heroku => &HEROKU,
+        ProviderId::Amplify => &AMPLIFY,
     }
 }
 
@@ -474,6 +484,32 @@ static PADDLE: ProviderCatalog = ProviderCatalog {
     once_hint: "Paddle API keys may be shown once — rotate if leaked.",
 };
 
+static HEROKU: ProviderCatalog = ProviderCatalog {
+    label: "Heroku",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://dashboard.heroku.com/apps",
+    create_url: "https://dashboard.heroku.com/apps",
+    docs_url: "https://devcenter.heroku.com/",
+    oauth_hint: "Open Heroku dashboard — create/deploy the app with heroku CLI on your machine. Studio only opens the dashboard.",
+    env_hint: "Put HEROKU_* / config vars via heroku config:set — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Heroku API keys may be shown once — rotate if leaked.",
+};
+
+static AMPLIFY: ProviderCatalog = ProviderCatalog {
+    label: "AWS Amplify",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://console.aws.amazon.com/amplify/home",
+    create_url: "https://console.aws.amazon.com/amplify/home",
+    docs_url: "https://docs.aws.amazon.com/amplify/",
+    oauth_hint: "Open AWS Amplify console — create/deploy the app there. Studio only opens the console.",
+    env_hint: "Put AMPLIFY_* / AWS credentials via Amplify console or CLI — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "AWS access keys may be shown once — rotate if leaked.",
+};
+
 /// Where to copy the *value* for a named secret (not where to put it).
 /// Prefer [`entry_url_for_secret`] when the put provider is known.
 pub fn source_url_for_secret_name(name: &str) -> &'static str {
@@ -554,6 +590,12 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
             "https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution",
         );
     }
+    if upper.starts_with("HEROKU_") {
+        return Some(HEROKU.create_url);
+    }
+    if upper.starts_with("AMPLIFY_") {
+        return Some(AMPLIFY.create_url);
+    }
     if upper.starts_with("GUMROAD_") {
         return Some(GUMROAD.create_url);
     }
@@ -589,6 +631,8 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
         Some(ProviderId::Lemon) => Some(LEMON.create_url),
         Some(ProviderId::Stripe) => Some(STRIPE.create_url),
         Some(ProviderId::Paddle) => Some(PADDLE.create_url),
+        Some(ProviderId::Heroku) => Some(HEROKU.create_url),
+        Some(ProviderId::Amplify) => Some(AMPLIFY.create_url),
         None => None,
     }
 }
@@ -681,6 +725,12 @@ pub fn detected_providers(detected: &Detected) -> Vec<ProviderId> {
     }
     if detected.digitalocean {
         out.push(ProviderId::DigitalOcean);
+    }
+    if detected.heroku {
+        out.push(ProviderId::Heroku);
+    }
+    if detected.amplify {
+        out.push(ProviderId::Amplify);
     }
     if detected.gumroad {
         out.push(ProviderId::Gumroad);

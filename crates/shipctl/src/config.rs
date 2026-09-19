@@ -219,6 +219,12 @@ pub struct Detected {
     /// DigitalOcean App Platform markers (alt host portal).
     #[serde(default)]
     pub digitalocean: bool,
+    /// Heroku app markers (alt host portal).
+    #[serde(default)]
+    pub heroku: bool,
+    /// AWS Amplify app markers (alt host portal).
+    #[serde(default)]
+    pub amplify: bool,
     /// Marketing / landing / GitHub Pages site present.
     #[serde(default)]
     pub marketing_site: bool,
@@ -438,7 +444,7 @@ pub fn probe(project: &Path) -> Detected {
             bits.join(" · ")
         ));
     }
-    if d.fly || d.railway || d.render || d.digitalocean {
+    if d.fly || d.railway || d.render || d.digitalocean || d.heroku || d.amplify {
         let mut bits = Vec::new();
         if d.fly {
             bits.push("Fly");
@@ -451,6 +457,12 @@ pub fn probe(project: &Path) -> Detected {
         }
         if d.digitalocean {
             bits.push("DigitalOcean");
+        }
+        if d.heroku {
+            bits.push("Heroku");
+        }
+        if d.amplify {
+            bits.push("Amplify");
         }
         d.hints.push(format!(
             "Alt host markers ({}) — Advanced publish opens the vendor dashboard (deploy stays on their CLI/UI).",
@@ -695,6 +707,31 @@ fn detect_alt_hosts(project: &Path, d: &mut Detected) {
         || env_key_prefix(project, "DIGITALOCEAN_")
         || env_key_prefix(project, "DO_API_")
         || package_mentions(project, &["digitalocean", "doctl"]);
+    let heroku_markets = read_markets_opt_in(project)
+        .iter()
+        .any(|m| m == "heroku");
+    d.heroku = heroku_markets
+        || any_named(project, &["heroku.yml", "heroku.yaml"])
+        || project.join(".heroku").is_dir()
+        || env_key_prefix(project, "HEROKU_")
+        || package_mentions(project, &["\"heroku\"", "heroku-cli"])
+        || (project.join("Procfile").is_file() && project.join("app.json").is_file());
+    let amplify_markets = read_markets_opt_in(project)
+        .iter()
+        .any(|m| m == "amplify" || m == "aws-amplify");
+    d.amplify = amplify_markets
+        || project.join("amplify").is_dir()
+        || any_named(project, &["amplify.yml", "amplify.yaml"])
+        || env_key_prefix(project, "AMPLIFY_")
+        || package_mentions(project, &["@aws-amplify", "aws-amplify"])
+        || any_named(
+            project,
+            &[
+                "amplifyconfiguration.json",
+                "amplifyconfiguration.js",
+                "aws-exports.js",
+            ],
+        );
 }
 
 fn detect_ci_release(project: &Path, d: &mut Detected) {

@@ -323,7 +323,8 @@ fn hints_for_provider(project: &Path, id: ProviderId) -> Result<Vec<SecretHint>>
         ProviderId::Firebase | ProviderId::Appwrite | ProviderId::Convex => {
             // First slice: portal Open only — no forced BaaS secret names.
         }
-        ProviderId::Fly | ProviderId::Railway | ProviderId::Render | ProviderId::DigitalOcean => {
+        ProviderId::Fly | ProviderId::Railway | ProviderId::Render | ProviderId::DigitalOcean
+        | ProviderId::Heroku | ProviderId::Amplify => {
             // First slice: portal Open only — deploy stays on vendor CLI/UI.
         }
         ProviderId::Gumroad | ProviderId::Lemon | ProviderId::Stripe | ProviderId::Paddle => {
@@ -408,6 +409,8 @@ fn put_cli_for(id: ProviderId, name: &str) -> Vec<String> {
         | ProviderId::Railway
         | ProviderId::Render
         | ProviderId::DigitalOcean
+        | ProviderId::Heroku
+        | ProviderId::Amplify
         | ProviderId::Gumroad
         | ProviderId::Lemon
         | ProviderId::Stripe
@@ -452,7 +455,12 @@ pub fn put_secret(project: &Path, provider: ProviderId, name: &str) -> Result<i3
     }
     if matches!(
         provider,
-        ProviderId::Fly | ProviderId::Railway | ProviderId::Render | ProviderId::DigitalOcean
+        ProviderId::Fly
+            | ProviderId::Railway
+            | ProviderId::Render
+            | ProviderId::DigitalOcean
+            | ProviderId::Heroku
+            | ProviderId::Amplify
     ) {
         bail!(
             "{} has no secret put CLI — open the dashboard or use their CLI",
@@ -655,8 +663,8 @@ fn dedupe_hints(hints: &mut Vec<SecretHint>) {
             "github" => 3,
             "polar" => 4,
             "neon" | "supabase" | "d1" | "turso" | "container" | "firebase" | "appwrite"
-            | "convex" | "fly" | "railway" | "render" | "digitalocean" | "gumroad" | "lemon"
-            | "stripe" | "paddle" => 5,
+            | "convex" | "fly" | "railway" | "render" | "digitalocean" | "heroku" | "amplify"
+            | "gumroad" | "lemon" | "stripe" | "paddle" => 5,
             "graduate" => 6,
             _ => 9,
         }

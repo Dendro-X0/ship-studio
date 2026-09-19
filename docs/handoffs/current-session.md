@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main` (synced after push)  
-**Status:** Band #41 Launch commerce parity shipped — idle
+**Status:** Band #42 Heroku/Amplify alt hosts shipped — idle
 
 ## Next Atomic Step
 
@@ -20,11 +20,11 @@
 
 | Band | Commit |
 |------|--------|
-| #40 Commerce portal catalog | `a107dbd` |
-| #41 Launch commerce parity | 36c5802 |
+| #41 Launch commerce parity | `36c5802` |
+| #42 Heroku / Amplify hosts | (this push) |
 
 ## Boot allowlist
 
 1. This file  
-2. North star · `specs/backend/launch-commerce-parity-design.md`  
+2. North star · `specs/backend/alt-host-heroku-amplify-design.md`  
 3. `docs/OPERATOR-NEXT.md`  

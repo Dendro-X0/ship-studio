@@ -278,7 +278,7 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
                 .into(),
         );
     }
-    if detected.fly || detected.railway || detected.render || detected.digitalocean {
+    if detected.fly || detected.railway || detected.render || detected.digitalocean || detected.heroku || detected.amplify {
         let mut m = Vec::new();
         if detected.fly {
             m.push("Fly");
@@ -292,8 +292,14 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
         if detected.digitalocean {
             m.push("DigitalOcean");
         }
+        if detected.heroku {
+            m.push("Heroku");
+        }
+        if detected.amplify {
+            m.push("Amplify");
+        }
         notes.push(format!(
-            "Alt hosts ({}) — Advanced host.* opens dashboards; deploy on their CLI/UI (optional flyctl/railway/doctl; not required for doctor ok).",
+            "Alt hosts ({}) — Advanced host.* opens dashboards; deploy stays on their CLI/UI (optional flyctl/railway/doctl/heroku; not required for doctor ok).",
             m.join(" · ")
         ));
     }
@@ -420,6 +426,12 @@ fn provider_cli_status(detected: &crate::config::Detected) -> Vec<ProviderCliSta
             detected.digitalocean,
             "doctl",
             "optional: install doctl — Studio only opens the DigitalOcean dashboard",
+        ),
+        (
+            "heroku",
+            detected.heroku,
+            "heroku",
+            "optional: install Heroku CLI — Studio only opens the Heroku dashboard",
         ),
     ];
     for (provider, needed, bin, fix) in checks {

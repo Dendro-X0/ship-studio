@@ -243,10 +243,7 @@ fn is_local_intent_step(step: &PubStep, env_required: bool) -> bool {
         || id == "suite.url_sync"
         || id == "db.provision"
         || id == "baas.provision"
-        || id == "host.fly"
-        || id == "host.railway"
-        || id == "host.render"
-        || id == "host.digitalocean"
+        || id.starts_with("host.")
     {
         return false;
     }
@@ -504,6 +501,30 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "Create/deploy the app on DigitalOcean App Platform (dashboard or doctl). Studio only opens the official page. Confirm when the app is live.",
             3,
             Some("https://cloud.digitalocean.com/apps".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+    if detected.heroku {
+        steps.push(step(
+            "host.heroku",
+            "Host — Heroku dashboard",
+            PubKind::Human,
+            "Create/deploy the app on Heroku (dashboard or heroku CLI). Studio only opens the official page — never deploys for you. Confirm when the app is live.",
+            3,
+            Some("https://dashboard.heroku.com/apps".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+    if detected.amplify {
+        steps.push(step(
+            "host.amplify",
+            "Host — AWS Amplify console",
+            PubKind::Human,
+            "Create/deploy the app on AWS Amplify. Studio only opens the official page — never deploys for you. Confirm when the app is live.",
+            3,
+            Some("https://console.aws.amazon.com/amplify/home".into()),
             None,
             Some("portal"),
         ));
@@ -2471,6 +2492,52 @@ mod tests {
 
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id.starts_with("host.")));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn host_heroku_amplify_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-host-ha-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("heroku.yml"), "build:\n  docker:\n    web: Dockerfile\n").unwrap();
+        fs::write(dir.join("amplify.yml"), "version: 1\nfrontend:\n  phases:\n    build:\n      commands: []\n").unwrap();
+
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let heroku = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "host.heroku")
+            .expect("host.heroku");
+        assert_eq!(
+            heroku.entry_url.as_deref(),
+            Some("https://dashboard.heroku.com/apps")
+        );
+        let amplify = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "host.amplify")
+            .expect("host.amplify");
+        assert_eq!(
+            amplify.entry_url.as_deref(),
+            Some("https://console.aws.amazon.com/amplify/home")
+        );
+
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id.starts_with("host.")));
+        let local =
+            load_or_build_with_options(&dir, StudioMode::Advanced, Some(ShipIntent::Local)).unwrap();
+        assert!(!local.steps.iter().any(|s| s.id.starts_with("host.")));
+
+        let portal = crate::portal::plan_for(&dir, None).unwrap();
+        assert!(portal.providers.iter().any(|p| p == "heroku"));
+        assert!(portal.providers.iter().any(|p| p == "amplify"));
         let _ = fs::remove_dir_all(&dir);
     }
 

@@ -41,7 +41,7 @@ MCP: `ship_publish_watch` — one local Verify probe per call (agents poll; opti
 
 Progress: project `.ship/publish.json` (no secret values).
 
-**Adaptive plan (Advanced + Public):** doctor → scopes → legal.baseline → oauth* → env → db.provision → **baas.provision?** → **host.fly?** → **host.railway?** → **host.render?** → **host.digitalocean?** → configure → **sign.self.build → trust.pack → sign.graduate? → sign.self.release_dry → sign.self.release** (or release.github) → **ship.desktop_cut?** → listing.* → submit.* → **ci.release → container.build → container.deploy** → marketing.deploy → **suite.url_sync** → dry-run → deploy* → live check.
+**Adaptive plan (Advanced + Public):** doctor → scopes → legal.baseline → oauth* → env → db.provision → **baas.provision?** → **host.fly?** → **host.railway?** → **host.render?** → **host.digitalocean?** → **host.heroku?** → **host.amplify?** → configure → **sign.self.build → trust.pack → sign.graduate? → sign.self.release_dry → sign.self.release** (or release.github) → **ship.desktop_cut?** → listing.* → submit.* → **ci.release → container.build → container.deploy** → marketing.deploy → **suite.url_sync** → dry-run → deploy* → live check.
 
 Shipping hub: final-mile is sign → release → deploy. Docs/demos stay outside Studio (`specs/backend/shipping-hub-north-star.md`).
 
@@ -75,7 +75,7 @@ Same open → verify → confirm → next pattern; state in `.ship/launch.json`.
 | Listing | Polar · Gumroad · Lemon · Stripe · Paddle · npm · crates.io · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced) |
 | Steam submit | After listing, Open Steamworks uploading docs (`submit.steam`) and upload depots yourself |
 | itch / Epic submit | After listing, Open butler / Epic publishing docs (`submit.itch` / `submit.epic`) and upload yourself |
-| Fly / Railway / Render / DO | Open dashboard (`host.*`); deploy with their CLI/UI — Studio does not Orbit-deploy them |
+| Fly / Railway / Render / DO / Heroku / Amplify | Open dashboard (`host.*`); deploy with their CLI/UI — Studio does not Orbit-deploy them |
 | DB | Provision on Neon/Supabase/D1/Turso console; put connection on deploy target |
 | CI | After tag/Signet release, Run `gh run list` / confirm GitHub Actions |
 | Legal / trust | Add LICENSE + SECURITY.md; TRUST.md + checksums for desktop/Signet; Run `gh release list` then cut GitHub Release when prompted |

@@ -198,7 +198,7 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
             m.join(" · ")
         ));
     }
-    if detected.fly || detected.railway || detected.render || detected.digitalocean {
+    if detected.fly || detected.railway || detected.render || detected.digitalocean || detected.heroku || detected.amplify {
         let mut m = Vec::new();
         if detected.fly {
             m.push("Fly");
@@ -211,6 +211,12 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
         }
         if detected.digitalocean {
             m.push("DigitalOcean");
+        }
+        if detected.heroku {
+            m.push("Heroku");
+        }
+        if detected.amplify {
+            m.push("Amplify");
         }
         notes.push(format!(
             "Alt hosts ({}) — Advanced host.* opens dashboards; deploy stays on their CLI/UI (no Orbit).",

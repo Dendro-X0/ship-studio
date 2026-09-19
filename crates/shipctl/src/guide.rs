@@ -233,7 +233,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
         "Desktop/TUI Wizard follows the same step ids.".into(),
         "Optional vault: shipctl vault export --out ship-secrets.km --from-hints".into(),
     ];
-    if detected.fly || detected.railway || detected.render || detected.digitalocean {
+    if detected.fly || detected.railway || detected.render || detected.digitalocean || detected.heroku || detected.amplify {
         let mut m = Vec::new();
         if detected.fly {
             m.push("Fly");
@@ -246,6 +246,12 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
         }
         if detected.digitalocean {
             m.push("DigitalOcean");
+        }
+        if detected.heroku {
+            m.push("Heroku");
+        }
+        if detected.amplify {
+            m.push("Amplify");
         }
         notes.push(format!(
             "Alt hosts ({}) — Advanced Publish host.* opens dashboards; deploy stays on their CLI/UI.",
