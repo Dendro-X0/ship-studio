@@ -2,12 +2,11 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main`  
-**Status:** Band #28 mobile BaaS portal shipped — idle
+**Status:** Bands #29–#30 shipped — idle
 
 ## Next Atomic Step
 
-**Idle** — no Studio Adaptive work unless a real ship needs a new portal lane  
-(optional later: Steam submit/depot docs · Fly/Railway Open URLs).
+**Idle** — no Studio Adaptive work unless a real ship needs a new portal lane.
 
 ## PAUSED / CANCELLED
 
@@ -21,12 +20,12 @@
 
 | Band | Commit |
 |------|--------|
-| #27 Publish progress watch | `b858795` |
-| #28 Mobile BaaS portal | (this commit) |
+| #28 Mobile BaaS portal | `a77cab0` |
+| #29–#30 Steam submit + Fly/Railway hosts | (this commit) |
 
 ## Boot allowlist
 
 1. This file  
 2. `docs/START-HERE.md` → SCOPE → PRODUCT  
-3. North star · `specs/backend/mobile-baas-portal-design.md`  
+3. North star · steam-submit · alt-host portal designs  
 4. `docs/OPERATOR-NEXT.md`  

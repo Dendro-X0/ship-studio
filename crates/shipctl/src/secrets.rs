@@ -266,6 +266,9 @@ fn hints_for_provider(project: &Path, id: ProviderId) -> Result<Vec<SecretHint>>
         ProviderId::Firebase | ProviderId::Appwrite | ProviderId::Convex => {
             // First slice: portal Open only — no forced BaaS secret names.
         }
+        ProviderId::Fly | ProviderId::Railway => {
+            // First slice: portal Open only — deploy stays on vendor CLI/UI.
+        }
     }
 
     let work = match id {
@@ -340,7 +343,9 @@ fn put_cli_for(id: ProviderId, name: &str) -> Vec<String> {
         | ProviderId::Container
         | ProviderId::Firebase
         | ProviderId::Appwrite
-        | ProviderId::Convex => vec![
+        | ProviderId::Convex
+        | ProviderId::Fly
+        | ProviderId::Railway => vec![
             "shipctl".into(),
             "portal".into(),
             "--provider".into(),
@@ -373,6 +378,12 @@ pub fn put_secret(project: &Path, provider: ProviderId, name: &str) -> Result<i3
     if provider.is_baas() {
         bail!(
             "{} has no secret put CLI — open the vendor console, then put keys on cloudflare|vercel|netlify (or the mobile app host)",
+            provider.label()
+        );
+    }
+    if matches!(provider, ProviderId::Fly | ProviderId::Railway) {
+        bail!(
+            "{} has no secret put CLI — open the dashboard or use their CLI (`fly secrets set` / Railway env UI)",
             provider.label()
         );
     }
@@ -572,7 +583,7 @@ fn dedupe_hints(hints: &mut Vec<SecretHint>) {
             "github" => 3,
             "polar" => 4,
             "neon" | "supabase" | "d1" | "turso" | "container" | "firebase" | "appwrite"
-            | "convex" => 5,
+            | "convex" | "fly" | "railway" => 5,
             "graduate" | "gumroad" | "lemon" => 6,
             _ => 9,
         }

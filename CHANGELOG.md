@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Alt host portal** — Advanced `host.fly` / `host.railway` Open dashboard URLs (deploy stays on Fly/Railway CLI/UI)
+- **Steam submit portal** — Advanced `submit.steam` opens Steamworks depot/build docs (Open + Confirm; no Steam API upload)
 - **Mobile BaaS portal** — Advanced `baas.provision` Open URL + Confirm for Firebase / Appwrite / Convex / mobile+Supabase Auth (no vendor HTTPS; Local/General omit)
 - **Publish progress watch** — `shipctl publish watch [--once|--interval-secs|--auto-confirm]` local Verify poller; Desktop Publish **Watch** toggle toasts when Confirm is ready (portal nudge; no vendor HTTPS)
 - **PowerShell Advanced dogfood** — `scripts/dogfood-advanced-publish.ps1` for Windows hosts without WSL bash

@@ -40,7 +40,7 @@ TUI: Publish (`P`) → o / v / c / n.
 
 Progress: project `.ship/publish.json` (no secret values).
 
-**Adaptive plan (Advanced + Public):** doctor → scopes → legal.baseline → oauth* → env → db.provision → **baas.provision?** → configure → **sign.self.build → trust.pack → sign.graduate? → sign.self.release_dry → sign.self.release** (or release.github) → **ship.desktop_cut?** → listing.* → submit.* → **ci.release → container.build → container.deploy** → marketing.deploy → **suite.url_sync** → dry-run → deploy* → live check.
+**Adaptive plan (Advanced + Public):** doctor → scopes → legal.baseline → oauth* → env → db.provision → **baas.provision?** → **host.fly?** → **host.railway?** → configure → **sign.self.build → trust.pack → sign.graduate? → sign.self.release_dry → sign.self.release** (or release.github) → **ship.desktop_cut?** → listing.* → submit.* → **ci.release → container.build → container.deploy** → marketing.deploy → **suite.url_sync** → dry-run → deploy* → live check.
 
 Shipping hub: final-mile is sign → release → deploy. Docs/demos stay outside Studio (`specs/backend/shipping-hub-north-star.md`).
 
@@ -72,6 +72,8 @@ Same open → verify → confirm → next pattern; state in `.ship/launch.json`.
 | Sign | Self-sign locally; Run `signet graduate notes` then apply/ov-sign/notarize; **Submit** store review on vendor sites |
 | Desktop cut | No Orbit host → Confirm `ship.desktop_cut` — Signet release is the deploy |
 | Listing | Polar · Gumroad · Lemon · npm · crates.io · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced) |
+| Steam submit | After listing, Open Steamworks uploading docs (`submit.steam`) and upload depots yourself |
+| Fly / Railway | Open dashboard (`host.fly` / `host.railway`); deploy with their CLI/UI — Studio does not Orbit-deploy them |
 | DB | Provision on Neon/Supabase/D1/Turso console; put connection on deploy target |
 | CI | After tag/Signet release, Run `gh run list` / confirm GitHub Actions |
 | Legal / trust | Add LICENSE + SECURITY.md; TRUST.md + checksums for desktop/Signet; Run `gh release list` then cut GitHub Release when prompted |

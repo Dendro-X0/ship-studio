@@ -22,6 +22,8 @@ pub enum ProviderId {
     Firebase,
     Appwrite,
     Convex,
+    Fly,
+    Railway,
 }
 
 impl ProviderId {
@@ -40,6 +42,8 @@ impl ProviderId {
             Self::Firebase => "firebase",
             Self::Appwrite => "appwrite",
             Self::Convex => "convex",
+            Self::Fly => "fly",
+            Self::Railway => "railway",
         }
     }
 
@@ -47,7 +51,7 @@ impl ProviderId {
         catalog_entry(self).label
     }
 
-    pub fn all() -> [ProviderId; 13] {
+    pub fn all() -> [ProviderId; 15] {
         [
             ProviderId::Cloudflare,
             ProviderId::Vercel,
@@ -62,6 +66,8 @@ impl ProviderId {
             ProviderId::Firebase,
             ProviderId::Appwrite,
             ProviderId::Convex,
+            ProviderId::Fly,
+            ProviderId::Railway,
         ]
     }
 
@@ -80,9 +86,11 @@ impl ProviderId {
             "firebase" => Ok(Self::Firebase),
             "appwrite" => Ok(Self::Appwrite),
             "convex" => Ok(Self::Convex),
+            "fly" | "flyio" | "fly.io" => Ok(Self::Fly),
+            "railway" => Ok(Self::Railway),
             other => {
                 bail!(
-                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex)"
+                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex|fly|railway)"
                 )
             }
         }
@@ -136,6 +144,8 @@ pub fn catalog_entry(id: ProviderId) -> &'static ProviderCatalog {
         ProviderId::Firebase => &FIREBASE,
         ProviderId::Appwrite => &APPWRITE,
         ProviderId::Convex => &CONVEX,
+        ProviderId::Fly => &FLY,
+        ProviderId::Railway => &RAILWAY,
     }
 }
 
@@ -323,6 +333,32 @@ static CONVEX: ProviderCatalog = ProviderCatalog {
     once_hint: "Convex deploy keys may be shown once — rotate if leaked.",
 };
 
+static FLY: ProviderCatalog = ProviderCatalog {
+    label: "Fly.io",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://fly.io/dashboard",
+    create_url: "https://fly.io/dashboard",
+    docs_url: "https://fly.io/docs/hands-on/launch-app/",
+    oauth_hint: "Open Fly dashboard — create/launch the app with flyctl on your machine. Studio only opens the dashboard.",
+    env_hint: "Put FLY_* secrets via `fly secrets set` or the dashboard — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Fly API tokens may be shown once — create a new token if lost.",
+};
+
+static RAILWAY: ProviderCatalog = ProviderCatalog {
+    label: "Railway",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://railway.app/dashboard",
+    create_url: "https://railway.app/dashboard",
+    docs_url: "https://docs.railway.com/",
+    oauth_hint: "Open Railway dashboard — create/deploy the service there or with railway CLI. Studio only opens the dashboard.",
+    env_hint: "Put RAILWAY_* / project env on Railway — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Railway tokens may be shown once — rotate if leaked.",
+};
+
 /// Where to copy the *value* for a named secret (not where to put it).
 /// Prefer [`entry_url_for_secret`] when the put provider is known.
 pub fn source_url_for_secret_name(name: &str) -> &'static str {
@@ -352,6 +388,12 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
     }
     if upper.starts_with("CONVEX_") {
         return Some(CONVEX.create_url);
+    }
+    if upper.starts_with("FLY_") {
+        return Some(FLY.create_url);
+    }
+    if upper.starts_with("RAILWAY_") {
+        return Some(RAILWAY.create_url);
     }
     if upper.starts_with("TURSO_") || upper.starts_with("LIBSQL_") {
         return Some(TURSO.create_url);
@@ -412,6 +454,8 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
         Some(ProviderId::Firebase) => Some(FIREBASE.create_url),
         Some(ProviderId::Appwrite) => Some(APPWRITE.create_url),
         Some(ProviderId::Convex) => Some(CONVEX.create_url),
+        Some(ProviderId::Fly) => Some(FLY.create_url),
+        Some(ProviderId::Railway) => Some(RAILWAY.create_url),
         None => None,
     }
 }
@@ -489,6 +533,12 @@ pub fn detected_providers(detected: &Detected) -> Vec<ProviderId> {
     }
     if detected.convex {
         out.push(ProviderId::Convex);
+    }
+    if detected.fly {
+        out.push(ProviderId::Fly);
+    }
+    if detected.railway {
+        out.push(ProviderId::Railway);
     }
     out
 }

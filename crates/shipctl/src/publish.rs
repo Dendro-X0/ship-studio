@@ -239,7 +239,12 @@ fn is_local_intent_step(step: &PubStep, env_required: bool) -> bool {
     if id.starts_with("listing.") || id.starts_with("submit.") {
         return false;
     }
-    if id == "marketing.deploy" || id == "suite.url_sync" || id == "db.provision" || id == "baas.provision"
+    if id == "marketing.deploy"
+        || id == "suite.url_sync"
+        || id == "db.provision"
+        || id == "baas.provision"
+        || id == "host.fly"
+        || id == "host.railway"
     {
         return false;
     }
@@ -450,6 +455,31 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             entry,
             None,
             Some("env"),
+        ));
+    }
+
+    if detected.fly {
+        steps.push(step(
+            "host.fly",
+            "Host — Fly.io dashboard",
+            PubKind::Human,
+            "Launch/scale the app on Fly (dashboard or flyctl). Studio only opens the official page — never deploys for you. Confirm when the app is live.",
+            3,
+            Some("https://fly.io/dashboard".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+    if detected.railway {
+        steps.push(step(
+            "host.railway",
+            "Host — Railway dashboard",
+            PubKind::Human,
+            "Create/deploy the service on Railway (dashboard or railway CLI). Studio only opens the official page. Confirm when the service is live.",
+            3,
+            Some("https://railway.app/dashboard".into()),
+            None,
+            Some("portal"),
         ));
     }
 
@@ -715,7 +745,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "listing.steam",
             "Listing — Steamworks partner",
             PubKind::List,
-            "Steam store presence / depots stay on partner.steamgames.com — then Confirm.",
+            "Steam store presence stays on partner.steamgames.com — depots/builds are the next Submit step. Then Confirm.",
             3,
             Some("https://partner.steamgames.com/".into()),
             None,
@@ -810,6 +840,18 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             Some("https://partner.microsoft.com/dashboard/products".into()),
             None,
             Some("sign"),
+        ));
+    }
+    if detected.steam {
+        steps.push(step(
+            "submit.steam",
+            "Submit — Steam depots / builds",
+            PubKind::List,
+            "Upload the build and set depots on Steamworks (partner docs). Studio only opens the official page — never Steam API upload. Confirm when the build is live.",
+            3,
+            Some("https://partner.steamgames.com/doc/sdk/uploading".into()),
+            None,
+            Some("portal"),
         ));
     }
 
@@ -2239,6 +2281,46 @@ mod tests {
     }
 
     #[test]
+    fn host_fly_railway_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-host-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("fly.toml"), "app = \"demo\"\n").unwrap();
+        fs::write(dir.join("railway.toml"), "[build]\n").unwrap();
+
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let fly = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "host.fly")
+            .expect("host.fly");
+        assert_eq!(fly.entry_url.as_deref(), Some("https://fly.io/dashboard"));
+        let railway = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "host.railway")
+            .expect("host.railway");
+        assert_eq!(
+            railway.entry_url.as_deref(),
+            Some("https://railway.app/dashboard")
+        );
+
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id.starts_with("host.")));
+
+        let local =
+            load_or_build_with_options(&dir, StudioMode::Advanced, Some(ShipIntent::Local)).unwrap();
+        assert!(!local.steps.iter().any(|s| s.id.starts_with("host.")));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn ci_release_fixture_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
             "shipctl-publish-ci-{}",
@@ -2379,8 +2461,18 @@ mod tests {
             steam.entry_url.as_deref(),
             Some("https://partner.steamgames.com/")
         );
+        let submit = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "submit.steam")
+            .expect("submit.steam");
+        assert_eq!(
+            submit.entry_url.as_deref(),
+            Some("https://partner.steamgames.com/doc/sdk/uploading")
+        );
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id.starts_with("listing.")));
+        assert!(!general.steps.iter().any(|s| s.id == "submit.steam"));
         let _ = fs::remove_dir_all(&dir);
     }
 

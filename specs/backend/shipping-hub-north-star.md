@@ -54,6 +54,8 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **26** | **PowerShell Advanced dogfood** — Windows L2 without WSL bash | Done (first slice) |
 | **27** | **Publish progress watch** — local Verify poller + Desktop Watch toggle (portal nudge) | Done (first slice) |
 | **28** | **Mobile BaaS portal** — `baas.provision` Open URL for Firebase / Appwrite / Convex / mobile+Supabase | Done (first slice) |
+| **29** | **Steam submit portal** — `submit.steam` depot/build docs (Open + Confirm; no Steam API) | Done (first slice) |
+| **30** | **Alt host portal** — `host.fly` / `host.railway` dashboard Open URLs | Done (first slice) |
 
 ## Band #11 acceptance
 

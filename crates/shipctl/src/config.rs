@@ -207,6 +207,12 @@ pub struct Detected {
     /// Convex backend markers (mobile BaaS).
     #[serde(default)]
     pub convex: bool,
+    /// Fly.io app markers (alt host portal).
+    #[serde(default)]
+    pub fly: bool,
+    /// Railway app markers (alt host portal).
+    #[serde(default)]
+    pub railway: bool,
     /// Marketing / landing / GitHub Pages site present.
     #[serde(default)]
     pub marketing_site: bool,
@@ -337,6 +343,7 @@ pub fn probe(project: &Path) -> Detected {
     detect_mobile(project, &mut d);
     detect_db(project, &mut d);
     detect_baas(project, &mut d);
+    detect_alt_hosts(project, &mut d);
     detect_ci_release(project, &mut d);
     detect_container(project, &mut d);
     detect_markets(project, &mut d);
@@ -416,6 +423,19 @@ pub fn probe(project: &Path) -> Detected {
         }
         d.hints.push(format!(
             "Mobile BaaS markers ({}) — Advanced publish opens the vendor console (Open → Confirm).",
+            bits.join(" · ")
+        ));
+    }
+    if d.fly || d.railway {
+        let mut bits = Vec::new();
+        if d.fly {
+            bits.push("Fly");
+        }
+        if d.railway {
+            bits.push("Railway");
+        }
+        d.hints.push(format!(
+            "Alt host markers ({}) — Advanced publish opens the vendor dashboard (deploy stays on their CLI/UI).",
             bits.join(" · ")
         ));
     }
@@ -632,6 +652,17 @@ fn detect_baas(project: &Path, d: &mut Detected) {
     d.convex = project.join("convex").is_dir()
         || env_key_prefix(project, "CONVEX_")
         || package_mentions(project, &["\"convex\""]);
+}
+
+fn detect_alt_hosts(project: &Path, d: &mut Detected) {
+    d.fly = any_named(project, &["fly.toml"])
+        || project.join(".fly").is_dir()
+        || env_key_prefix(project, "FLY_")
+        || package_mentions(project, &["fly.io", "@flydotio"]);
+    d.railway = any_named(project, &["railway.toml", "railway.json"])
+        || project.join(".railway").is_dir()
+        || env_key_prefix(project, "RAILWAY_")
+        || package_mentions(project, &["@railway/cli", "\"railway\""]);
 }
 
 fn detect_ci_release(project: &Path, d: &mut Detected) {

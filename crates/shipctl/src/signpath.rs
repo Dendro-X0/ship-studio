@@ -153,6 +153,16 @@ pub fn plan_for(project: &Path) -> SignPortal {
             run: None,
         });
     }
+    if detected.steam {
+        paths.push(SignPath {
+            id: "submit.steam".into(),
+            kind: "submit".into(),
+            title: "Submit — Steam depots / builds".into(),
+            detail: "Upload builds and set depots on Steamworks. Studio only opens the official docs.".into(),
+            entry_url: Some("https://partner.steamgames.com/doc/sdk/uploading".into()),
+            run: None,
+        });
+    }
 
     paths.push(SignPath {
         id: "official.github".into(),
@@ -242,5 +252,31 @@ mod tests {
             !portal.paths.iter().any(|p| p.id == "submit.play"),
             "desktop Tauri must not pull Play submit"
         );
+    }
+
+    #[test]
+    fn steam_sign_portal_includes_depot_submit() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-signpath-steam-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("steam_appid.txt"), "480\n").unwrap();
+        let portal = plan_for(&dir);
+        let step = portal
+            .paths
+            .iter()
+            .find(|p| p.id == "submit.steam")
+            .expect("submit.steam");
+        assert_eq!(step.kind, "submit");
+        assert!(step
+            .entry_url
+            .as_deref()
+            .is_some_and(|u| u.contains("/doc/sdk/uploading")));
+        let _ = fs::remove_dir_all(&dir);
     }
 }
