@@ -56,7 +56,7 @@ pub fn plan_for(project: &Path, filter: Option<ProviderId>) -> Result<SecretsPla
             "Paste values into the provider CLI — shipctl never stores secret values.".into(),
             "Run: shipctl secrets put --project . --provider cloudflare --name <NAME>".into(),
             "Or use TUI → Secrets → Enter to put the selected hint.".into(),
-            "Graduate / Gumroad / Lemon rows are name-only catalogs — set in CI or vendor dashboards, not .ship/.".into(),
+            "Graduate / Gumroad / Lemon / Stripe / Paddle rows are name-only catalogs — set in CI or vendor dashboards, not .ship/.".into(),
             "Optional backup: shipctl vault export --out ship-secrets.km --from-hints".into(),
         ],
     })
@@ -147,6 +147,8 @@ fn graduate_commerce_catalog_hints(
                 put_cli: vec![
                     "shipctl".into(),
                     "portal".into(),
+                    "--provider".into(),
+                    "gumroad".into(),
                     "--open".into(),
                 ],
                 work_dir: work.clone(),
@@ -169,6 +171,8 @@ fn graduate_commerce_catalog_hints(
                 put_cli: vec![
                     "shipctl".into(),
                     "portal".into(),
+                    "--provider".into(),
+                    "lemon".into(),
                     "--open".into(),
                 ],
                 work_dir: work.clone(),
@@ -192,6 +196,8 @@ fn graduate_commerce_catalog_hints(
                 put_cli: vec![
                     "shipctl".into(),
                     "portal".into(),
+                    "--provider".into(),
+                    "stripe".into(),
                     "--open".into(),
                 ],
                 work_dir: work.clone(),
@@ -216,6 +222,8 @@ fn graduate_commerce_catalog_hints(
                 put_cli: vec![
                     "shipctl".into(),
                     "portal".into(),
+                    "--provider".into(),
+                    "paddle".into(),
                     "--open".into(),
                 ],
                 work_dir: work.clone(),
@@ -318,6 +326,9 @@ fn hints_for_provider(project: &Path, id: ProviderId) -> Result<Vec<SecretHint>>
         ProviderId::Fly | ProviderId::Railway | ProviderId::Render | ProviderId::DigitalOcean => {
             // First slice: portal Open only — deploy stays on vendor CLI/UI.
         }
+        ProviderId::Gumroad | ProviderId::Lemon | ProviderId::Stripe | ProviderId::Paddle => {
+            // Catalog names come from graduate_commerce_catalog_hints — portal Open only here.
+        }
     }
 
     let work = match id {
@@ -396,7 +407,11 @@ fn put_cli_for(id: ProviderId, name: &str) -> Vec<String> {
         | ProviderId::Fly
         | ProviderId::Railway
         | ProviderId::Render
-        | ProviderId::DigitalOcean => vec![
+        | ProviderId::DigitalOcean
+        | ProviderId::Gumroad
+        | ProviderId::Lemon
+        | ProviderId::Stripe
+        | ProviderId::Paddle => vec![
             "shipctl".into(),
             "portal".into(),
             "--provider".into(),
@@ -414,8 +429,11 @@ pub fn put_secret(project: &Path, provider: ProviderId, name: &str) -> Result<i3
     if provider == ProviderId::Github {
         bail!("GitHub has no deploy secret put here — open the token page, then put on cloudflare/vercel/netlify");
     }
-    if provider == ProviderId::Polar {
-        bail!("Polar has no secret put CLI — open polar.sh dashboard, then `shipctl secrets put --provider cloudflare --name POLAR_…`");
+    if provider.is_commerce() {
+        bail!(
+            "{} has no secret put CLI — open the commerce dashboard, then `shipctl secrets put --provider cloudflare|vercel|netlify --name …`",
+            provider.label()
+        );
     }
     if provider.is_db() {
         bail!(
@@ -637,8 +655,9 @@ fn dedupe_hints(hints: &mut Vec<SecretHint>) {
             "github" => 3,
             "polar" => 4,
             "neon" | "supabase" | "d1" | "turso" | "container" | "firebase" | "appwrite"
-            | "convex" | "fly" | "railway" | "render" | "digitalocean" => 5,
-            "graduate" | "gumroad" | "lemon" | "stripe" | "paddle" => 6,
+            | "convex" | "fly" | "railway" | "render" | "digitalocean" | "gumroad" | "lemon"
+            | "stripe" | "paddle" => 5,
+            "graduate" => 6,
             _ => 9,
         }
     }

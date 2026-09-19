@@ -1,8 +1,8 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main` @ `cf4b6fd` (synced)  
-**Status:** Bands #37–#39 shipped — idle
+**Branch:** `main` (synced after push)  
+**Status:** Band #40 Commerce portal catalog shipped — idle
 
 ## Next Atomic Step
 
@@ -20,11 +20,11 @@
 
 | Band | Commit |
 |------|--------|
-| #35–#36 Stripe/Paddle + Pulse cut hints | `6ca5380` |
-| #37–#39 Assist / Doctor / Guide notes expand | `cf4b6fd` |
+| #37–#39 Assist / Doctor / Guide notes | `cf4b6fd` |
+| #40 Commerce portal catalog | (this push) |
 
 ## Boot allowlist
 
 1. This file  
-2. North star · assist / doctor / guide notes-expand designs  
+2. North star · `specs/backend/commerce-portal-catalog-design.md`  
 3. `docs/OPERATOR-NEXT.md`  

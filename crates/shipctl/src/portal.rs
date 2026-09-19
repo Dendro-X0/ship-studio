@@ -26,6 +26,10 @@ pub enum ProviderId {
     Railway,
     Render,
     DigitalOcean,
+    Gumroad,
+    Lemon,
+    Stripe,
+    Paddle,
 }
 
 impl ProviderId {
@@ -48,6 +52,10 @@ impl ProviderId {
             Self::Railway => "railway",
             Self::Render => "render",
             Self::DigitalOcean => "digitalocean",
+            Self::Gumroad => "gumroad",
+            Self::Lemon => "lemon",
+            Self::Stripe => "stripe",
+            Self::Paddle => "paddle",
         }
     }
 
@@ -55,7 +63,7 @@ impl ProviderId {
         catalog_entry(self).label
     }
 
-    pub fn all() -> [ProviderId; 17] {
+    pub fn all() -> [ProviderId; 21] {
         [
             ProviderId::Cloudflare,
             ProviderId::Vercel,
@@ -74,6 +82,10 @@ impl ProviderId {
             ProviderId::Railway,
             ProviderId::Render,
             ProviderId::DigitalOcean,
+            ProviderId::Gumroad,
+            ProviderId::Lemon,
+            ProviderId::Stripe,
+            ProviderId::Paddle,
         ]
     }
 
@@ -96,9 +108,13 @@ impl ProviderId {
             "railway" => Ok(Self::Railway),
             "render" => Ok(Self::Render),
             "digitalocean" | "do" | "docean" => Ok(Self::DigitalOcean),
+            "gumroad" => Ok(Self::Gumroad),
+            "lemon" | "lemonsqueezy" | "lemon_squeezy" => Ok(Self::Lemon),
+            "stripe" => Ok(Self::Stripe),
+            "paddle" => Ok(Self::Paddle),
             other => {
                 bail!(
-                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex|fly|railway|render|digitalocean)"
+                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex|fly|railway|render|digitalocean|gumroad|lemon|stripe|paddle)"
                 )
             }
         }
@@ -113,6 +129,13 @@ impl ProviderId {
 
     pub fn is_baas(self) -> bool {
         matches!(self, Self::Firebase | Self::Appwrite | Self::Convex)
+    }
+
+    pub fn is_commerce(self) -> bool {
+        matches!(
+            self,
+            Self::Polar | Self::Gumroad | Self::Lemon | Self::Stripe | Self::Paddle
+        )
     }
 }
 
@@ -156,6 +179,10 @@ pub fn catalog_entry(id: ProviderId) -> &'static ProviderCatalog {
         ProviderId::Railway => &RAILWAY,
         ProviderId::Render => &RENDER,
         ProviderId::DigitalOcean => &DIGITALOCEAN,
+        ProviderId::Gumroad => &GUMROAD,
+        ProviderId::Lemon => &LEMON,
+        ProviderId::Stripe => &STRIPE,
+        ProviderId::Paddle => &PADDLE,
     }
 }
 
@@ -395,6 +422,58 @@ static DIGITALOCEAN: ProviderCatalog = ProviderCatalog {
     once_hint: "DigitalOcean API tokens may be shown once — rotate if leaked.",
 };
 
+static GUMROAD: ProviderCatalog = ProviderCatalog {
+    label: "Gumroad",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://app.gumroad.com/",
+    create_url: "https://app.gumroad.com/",
+    docs_url: "https://gumroad.com/help",
+    oauth_hint: "Open Gumroad — create/edit the product and copy the checkout URL. Studio never creates products.",
+    env_hint: "Paste GUMROAD_CHECKOUT_URL into the marketing CTA; API tokens stay on the deploy target — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Gumroad access tokens may need regeneration if lost — check Settings.",
+};
+
+static LEMON: ProviderCatalog = ProviderCatalog {
+    label: "Lemon Squeezy",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://app.lemonsqueezy.com/",
+    create_url: "https://app.lemonsqueezy.com/",
+    docs_url: "https://docs.lemonsqueezy.com/",
+    oauth_hint: "Open Lemon Squeezy — create the product/variant and copy checkout + webhook secrets. Studio never creates SKUs.",
+    env_hint: "Put LEMON_* / LEMONSQUEEZY_* on the deploy target — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Lemon API keys / webhook secrets may be shown once — rotate if leaked.",
+};
+
+static STRIPE: ProviderCatalog = ProviderCatalog {
+    label: "Stripe",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://dashboard.stripe.com/",
+    create_url: "https://dashboard.stripe.com/",
+    docs_url: "https://docs.stripe.com/",
+    oauth_hint: "Open Stripe Dashboard — create products/prices/Payment Links there. Studio never creates charges.",
+    env_hint: "Put STRIPE_* keys on the deploy target — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Stripe secret keys are shown once at create — roll a new key if lost.",
+};
+
+static PADDLE: ProviderCatalog = ProviderCatalog {
+    label: "Paddle",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://vendors.paddle.com/",
+    create_url: "https://vendors.paddle.com/",
+    docs_url: "https://developer.paddle.com/",
+    oauth_hint: "Open Paddle vendor dashboard — create products/prices there. Studio never creates transactions.",
+    env_hint: "Put PADDLE_* keys on the deploy target — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Paddle API keys may be shown once — rotate if leaked.",
+};
+
 /// Where to copy the *value* for a named secret (not where to put it).
 /// Prefer [`entry_url_for_secret`] when the put provider is known.
 pub fn source_url_for_secret_name(name: &str) -> &'static str {
@@ -476,16 +555,16 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
         );
     }
     if upper.starts_with("GUMROAD_") {
-        return Some("https://app.gumroad.com/");
+        return Some(GUMROAD.create_url);
     }
     if upper.starts_with("LEMON_") || upper.starts_with("LEMONSQUEEZY_") {
-        return Some("https://app.lemonsqueezy.com/");
+        return Some(LEMON.create_url);
     }
     if upper.starts_with("STRIPE_") {
-        return Some("https://dashboard.stripe.com/");
+        return Some(STRIPE.create_url);
     }
     if upper.starts_with("PADDLE_") {
-        return Some("https://vendors.paddle.com/");
+        return Some(PADDLE.create_url);
     }
     // Self-generated (CRON_SECRET, BETTER_AUTH_SECRET, …) or unknown → put destination.
     match put_provider {
@@ -506,6 +585,10 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
         Some(ProviderId::Railway) => Some(RAILWAY.create_url),
         Some(ProviderId::Render) => Some(RENDER.create_url),
         Some(ProviderId::DigitalOcean) => Some(DIGITALOCEAN.create_url),
+        Some(ProviderId::Gumroad) => Some(GUMROAD.create_url),
+        Some(ProviderId::Lemon) => Some(LEMON.create_url),
+        Some(ProviderId::Stripe) => Some(STRIPE.create_url),
+        Some(ProviderId::Paddle) => Some(PADDLE.create_url),
         None => None,
     }
 }
@@ -598,6 +681,18 @@ pub fn detected_providers(detected: &Detected) -> Vec<ProviderId> {
     }
     if detected.digitalocean {
         out.push(ProviderId::DigitalOcean);
+    }
+    if detected.gumroad {
+        out.push(ProviderId::Gumroad);
+    }
+    if detected.lemon {
+        out.push(ProviderId::Lemon);
+    }
+    if detected.stripe {
+        out.push(ProviderId::Stripe);
+    }
+    if detected.paddle {
+        out.push(ProviderId::Paddle);
     }
     out
 }
@@ -910,6 +1005,34 @@ mod tests {
             .steps
             .iter()
             .any(|s| s.entry_url.as_deref() == Some(POLAR.token_url)));
+    }
+
+    #[test]
+    fn commerce_portal_detects_stripe_and_gumroad() {
+        let dir = tempfile_dir();
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".env"), "STRIPE_SECRET_KEY=\n").unwrap();
+        fs::write(
+            dir.join(".ship/markets.json"),
+            r#"["gumroad","paddle"]"#,
+        )
+        .unwrap();
+        let plan = plan_for(&dir, None).unwrap();
+        assert!(plan.providers.iter().any(|p| p == "stripe"));
+        assert!(plan.providers.iter().any(|p| p == "gumroad"));
+        assert!(plan.providers.iter().any(|p| p == "paddle"));
+        assert!(plan.steps.iter().any(|s| {
+            s.provider == "stripe" && s.entry_url.as_deref() == Some(STRIPE.token_url)
+        }));
+        assert!(plan.steps.iter().any(|s| {
+            s.provider == "gumroad" && s.entry_url.as_deref() == Some(GUMROAD.token_url)
+        }));
+        assert_eq!(ProviderId::parse("lemonsqueezy").unwrap(), ProviderId::Lemon);
+        assert!(ProviderId::Stripe.is_commerce());
+        let err = crate::secrets::put_secret(&dir, ProviderId::Stripe, "STRIPE_SECRET_KEY");
+        assert!(err.is_err());
+        let msg = format!("{}", err.unwrap_err());
+        assert!(msg.contains("Stripe") || msg.contains("commerce") || msg.contains("dashboard"));
     }
 
     #[test]

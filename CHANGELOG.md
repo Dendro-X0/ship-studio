@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Commerce portal catalog** — Gumroad / Lemon / Stripe / Paddle join Polar as `shipctl portal` providers (dashboard Open; no SKU creation)
 - **Guide notes expand** — `shipctl guide` adds Publish step + host / BaaS / commerce / Watch notes (prefer Publish over Flow)
 - **Doctor notes expand** — cut-readiness notes for alt hosts / mobile BaaS / Stripe·Paddle + optional flyctl/railway/doctl; Watch cue; missing host CLIs do not fail doctor ok
 - **Assist notes expand** — checklist notes for alt hosts / mobile BaaS / Stripe·Paddle / marketplace submit + Watch cue on Publish step
