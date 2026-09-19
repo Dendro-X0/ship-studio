@@ -1,8 +1,8 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main`  
-**Status:** Bands #24–#26 shipped (commit pending for #26)
+**Branch:** `main` @ `418baa8` (synced)  
+**Status:** Bands #24–#26 shipped — idle
 
 ## Next Atomic Step
 
@@ -19,10 +19,10 @@ Aperio Advanced public L4 remains parked; prefer `--intent local` for personal t
 
 ## Last closed
 
-| Band | Evidence |
-|------|----------|
+| Band | Commit |
+|------|--------|
 | #24–#25 | `4f071fe` · `5a437ae` |
-| #26 PowerShell dogfood | `scripts/dogfood-advanced-publish.ps1` · design |
+| #26 PowerShell dogfood | `418baa8` |
 
 ## Boot allowlist
 
