@@ -68,6 +68,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **40** | **Commerce portal catalog** — Gumroad / Lemon / Stripe / Paddle as portal providers | Done (first slice) |
 | **41** | **Launch commerce parity** — companion listing.* for Gumroad / Lemon / Stripe / Paddle | Done (first slice) |
 | **42** | **Alt host expand** — `host.heroku` / `host.amplify` dashboard Open URLs | Done (first slice) |
+| **43** | **Launch host / BaaS parity** — companion `host.*` + `baas.provision` Open URLs | Done (first slice) |
 
 ## Band #11 acceptance
 

@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main` (synced after push)  
-**Status:** Band #42 Heroku/Amplify alt hosts shipped — idle
+**Status:** Band #43 Launch host/BaaS parity shipped — idle
 
 ## Next Atomic Step
 
@@ -20,11 +20,11 @@
 
 | Band | Commit |
 |------|--------|
-| #41 Launch commerce parity | `36c5802` |
-| #42 Heroku / Amplify hosts | bbe8024 |
+| #42 Heroku / Amplify hosts | `bbe8024` |
+| #43 Launch host / BaaS parity | (this push) |
 
 ## Boot allowlist
 
 1. This file  
-2. North star · `specs/backend/alt-host-heroku-amplify-design.md`  
+2. North star · `specs/backend/launch-host-baas-parity-design.md`  
 3. `docs/OPERATOR-NEXT.md`  

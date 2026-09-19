@@ -364,6 +364,108 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         }
     }
 
+    if detected.mobile
+        && (detected.firebase || detected.appwrite || detected.convex || detected.supabase)
+    {
+        let entry = if detected.firebase {
+            Some("https://console.firebase.google.com/".into())
+        } else if detected.appwrite {
+            Some("https://cloud.appwrite.io/".into())
+        } else if detected.convex {
+            Some("https://dashboard.convex.dev/".into())
+        } else {
+            Some("https://supabase.com/dashboard".into())
+        };
+        let mut bits = Vec::new();
+        if detected.firebase {
+            bits.push("Firebase");
+        }
+        if detected.appwrite {
+            bits.push("Appwrite");
+        }
+        if detected.convex {
+            bits.push("Convex");
+        }
+        if detected.supabase {
+            bits.push("Supabase Auth");
+        }
+        steps.push(step(
+            "baas.provision",
+            &format!("Mobile BaaS — provision ({})", bits.join(" · ")),
+            StepKind::Deploy,
+            "Open the vendor console, create Auth / client keys for the mobile app, put values on the host, then Confirm. Studio never calls the BaaS APIs.",
+            entry,
+            Some("confirm after BaaS console setup".into()),
+            None,
+        ));
+    }
+    if detected.fly {
+        steps.push(step(
+            "host.fly",
+            "Host — Fly.io dashboard",
+            StepKind::Deploy,
+            "Launch/scale the app on Fly (dashboard or flyctl). Studio only opens the official page — never deploys for you.",
+            Some("https://fly.io/dashboard".into()),
+            Some("confirm when the app is live".into()),
+            None,
+        ));
+    }
+    if detected.railway {
+        steps.push(step(
+            "host.railway",
+            "Host — Railway dashboard",
+            StepKind::Deploy,
+            "Create/deploy the service on Railway. Studio only opens the official page.",
+            Some("https://railway.app/dashboard".into()),
+            Some("confirm when the service is live".into()),
+            None,
+        ));
+    }
+    if detected.render {
+        steps.push(step(
+            "host.render",
+            "Host — Render dashboard",
+            StepKind::Deploy,
+            "Create/deploy the service on Render. Studio only opens the official page.",
+            Some("https://dashboard.render.com/".into()),
+            Some("confirm when the service is live".into()),
+            None,
+        ));
+    }
+    if detected.digitalocean {
+        steps.push(step(
+            "host.digitalocean",
+            "Host — DigitalOcean App Platform",
+            StepKind::Deploy,
+            "Create/deploy the app on DigitalOcean App Platform. Studio only opens the official page.",
+            Some("https://cloud.digitalocean.com/apps".into()),
+            Some("confirm when the app is live".into()),
+            None,
+        ));
+    }
+    if detected.heroku {
+        steps.push(step(
+            "host.heroku",
+            "Host — Heroku dashboard",
+            StepKind::Deploy,
+            "Create/deploy the app on Heroku. Studio only opens the official page — never deploys for you.",
+            Some("https://dashboard.heroku.com/apps".into()),
+            Some("confirm when the app is live".into()),
+            None,
+        ));
+    }
+    if detected.amplify {
+        steps.push(step(
+            "host.amplify",
+            "Host — AWS Amplify console",
+            StepKind::Deploy,
+            "Create/deploy the app on AWS Amplify. Studio only opens the official page — never deploys for you.",
+            Some("https://console.aws.amazon.com/amplify/home".into()),
+            Some("confirm when the app is live".into()),
+            None,
+        ));
+    }
+
     if detected.polar {
         steps.push(step(
             "listing.polar",
@@ -1056,6 +1158,42 @@ mod tests {
         assert_eq!(
             stripe.entry_url.as_deref(),
             Some("https://dashboard.stripe.com/")
+        );
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn launch_host_and_baas_when_detected() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-launch-host-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("android")).unwrap();
+        fs::write(dir.join("fly.toml"), "app = \"demo\"\n").unwrap();
+        fs::write(dir.join("heroku.yml"), "build:\n  docker:\n    web: Dockerfile\n").unwrap();
+        fs::write(dir.join("firebase.json"), "{}\n").unwrap();
+        fs::write(dir.join("build.gradle"), "// android\n").unwrap();
+        let state = load_or_build(&dir).unwrap();
+        assert!(state.steps.iter().any(|s| s.id == "baas.provision"));
+        let baas = state
+            .steps
+            .iter()
+            .find(|s| s.id == "baas.provision")
+            .unwrap();
+        assert_eq!(
+            baas.entry_url.as_deref(),
+            Some("https://console.firebase.google.com/")
+        );
+        let fly = state.steps.iter().find(|s| s.id == "host.fly").unwrap();
+        assert_eq!(fly.entry_url.as_deref(), Some("https://fly.io/dashboard"));
+        let heroku = state.steps.iter().find(|s| s.id == "host.heroku").unwrap();
+        assert_eq!(
+            heroku.entry_url.as_deref(),
+            Some("https://dashboard.heroku.com/apps")
         );
         let _ = fs::remove_dir_all(&dir);
     }

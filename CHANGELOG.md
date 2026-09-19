@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Launch host / BaaS parity** — Guided Launch sequences alt-host dashboards + mobile BaaS provision (Open + Confirm)
 - **Alt host expand (Heroku / Amplify)** — Advanced `host.heroku` / `host.amplify` Open dashboard URLs (deploy stays on vendor CLI/UI)
 - **Launch commerce parity** — Guided Launch lists Gumroad / Lemon / Stripe / Paddle (Open + Confirm) beside Polar
 - **Commerce portal catalog** — Gumroad / Lemon / Stripe / Paddle join Polar as `shipctl portal` providers (dashboard Open; no SKU creation)

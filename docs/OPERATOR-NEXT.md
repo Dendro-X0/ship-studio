@@ -62,7 +62,7 @@ Real repo example: `assess-api` surfaces **db.provision** (D1) + **listing.polar
 
 ## Guided launch (legacy companion)
 
-Same open → verify → confirm → next pattern; state in `.ship/launch.json`. Prefer **Publish** for the full minute-oriented path. Launch also sequences Polar / Gumroad / Lemon / Stripe / Paddle listings when detected.
+Same open → verify → confirm → next pattern; state in `.ship/launch.json`. Prefer **Publish** for the full minute-oriented path. Launch also sequences Polar / Gumroad / Lemon / Stripe / Paddle listings, alt-host dashboards (`host.*`), and mobile BaaS provision when detected.
 
 ## Remaining human work
 
