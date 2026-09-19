@@ -70,15 +70,15 @@ Same open → verify → confirm → next pattern; state in `.ship/launch.json`.
 |------|--------|
 | Paste | Create tokens / DB URLs on vendor sites; Open → put → Confirm → Next |
 | Scopes | Pick Web / API / Desktop / Mobile / Container, then Save |
-| Sign | Self-sign locally; Run `signet graduate notes` then apply/ov-sign/notarize; **Submit** store review on vendor sites |
-| Desktop cut | No Orbit host → Confirm `ship.desktop_cut` — Signet release is the deploy |
+| Sign | Self-sign locally; Run `signet graduate notes` then apply/ov-sign/notarize (Publish or Launch); **Submit** store review on vendor sites |
+| Desktop cut | No Orbit host → Confirm `ship.desktop_cut` on Publish or Launch — Signet release is the deploy |
 | Listing | Polar · Gumroad · Lemon · Stripe · Paddle · npm · crates.io · Hugging Face · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced Publish + Launch) |
 | Steam submit | After listing, Open Steamworks uploading docs (`submit.steam`) and upload depots yourself |
 | itch / Epic submit | After listing, Open butler / Epic publishing docs (`submit.itch` / `submit.epic`) and upload yourself |
 | Fly / Railway / Render / DO / Heroku / Amplify / Cloud Run / Azure Static | Open dashboard (`host.*`); deploy with their CLI/UI — Studio does not Orbit-deploy them |
 | DB | Provision on Neon/Supabase/D1/Turso console (Publish or Launch `db.provision`); put connection on deploy target |
 | CI | After tag/Signet release, Run `gh run list` from Publish or Launch / confirm GitHub Actions |
-| Legal / trust | Add LICENSE + SECURITY.md; TRUST.md + checksums for desktop/Signet; Run `gh release list` then cut GitHub Release when prompted |
+| Legal / trust | Add LICENSE + SECURITY.md; TRUST.md + checksums for desktop/Signet (Publish or Launch); Run `gh release list` then cut GitHub Release when prompted |
 | Marketing | Deploy landing / HOOK / download site (Publish or Launch `marketing.deploy`); confirm canonical URL (DNS stays manual) |
 | Suite | After landing is live, paste URL into sibling env keys from `.ship/suite.json` (`suite.url_sync` on Publish or Launch) |
 | Container | Run local `docker build` / `compose build` from Publish or Launch; push stays Confirm + registry docs |

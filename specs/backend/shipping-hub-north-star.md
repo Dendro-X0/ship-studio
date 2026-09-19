@@ -75,6 +75,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **47** | **Launch registry + HF listing parity** — companion `listing.npm` / `listing.crates` / `listing.huggingface` | Done (first slice) |
 | **48** | **Launch DB + marketing + suite parity** — companion `db.provision` / `marketing.deploy` / `suite.url_sync` | Done (first slice) |
 | **49** | **Launch CI + container parity** — companion `ci.release` / `container.build` / `container.deploy` | Done (first slice) |
+| **50** | **Launch legal / trust / graduate / release parity** — companion `legal.baseline` / `trust.pack` / `sign.graduate` / `release.github` / `ship.desktop_cut` | Done (first slice) |
 
 ## Band #11 acceptance
 

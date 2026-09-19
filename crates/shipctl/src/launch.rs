@@ -300,6 +300,31 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
     let include_self = wants_signet && sign_mode != "official";
     let include_official = sign_mode != "self";
 
+    if !detected.license || !detected.security_md {
+        let mut miss = Vec::new();
+        if !detected.license {
+            miss.push("LICENSE");
+        }
+        if !detected.security_md {
+            miss.push("SECURITY.md");
+        }
+        if !detected.changelog {
+            miss.push("CHANGELOG");
+        }
+        steps.push(step(
+            "legal.baseline",
+            "Launch — legal / security baseline",
+            StepKind::List,
+            &format!(
+                "Missing at repo root: {}. Add LICENSE + SECURITY.md (CHANGELOG recommended), then Confirm. No legal advice — just the ship checklist.",
+                miss.join(" · ")
+            ),
+            None,
+            Some("confirm after LICENSE + SECURITY.md exist".into()),
+            None,
+        ));
+    }
+
     if include_self {
         if !detected.signet_toml {
             steps.push(step(
@@ -330,6 +355,17 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             Some("signet build exit 0 (or confirm)".into()),
             Some(vec!["signet".into(), "build".into()]),
         ));
+        if !detected.trust_md {
+            steps.push(step(
+                "trust.pack",
+                "Trust — TRUST.md + checksums",
+                StepKind::Sign,
+                "Add TRUST.md (honesty: self-signed / SmartScreen expected). Attach SHA256SUMS (± minisign) with the release. Confirm when the pack exists.",
+                None,
+                Some("confirm when TRUST.md + checksums exist".into()),
+                None,
+            ));
+        }
         steps.push(step(
             "signet.ship_plan",
             "Signet — multi-platform ship plan",
@@ -370,9 +406,27 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         ));
     }
 
+    if detected.graduate_sign {
+        steps.push(step(
+            "sign.graduate",
+            "Graduate — OV / notarization",
+            StepKind::Sign,
+            "Run Signet graduate notes, then apply/ov-sign/azure-sign/notarize as configured. Confirm when CI secrets + identities exist. Do not claim verified publisher or SmartScreen silence until true.",
+            Some(
+                "https://learn.microsoft.com/en-us/azure/trusted-signing/"
+                    .into(),
+            ),
+            Some("confirm after graduate notes / identities".into()),
+            Some(vec!["signet".into(), "graduate".into(), "notes".into()]),
+        ));
+    }
+
     if include_official && wants_signet {
         for p in signpath::plan_for(project).paths {
             if p.kind != "official" {
+                continue;
+            }
+            if p.id == "graduate.checklist" {
                 continue;
             }
             steps.push(step(
@@ -385,6 +439,39 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
                 p.run.clone(),
             ));
         }
+    }
+
+    // Non-Signet-self projects still cut GitHub Releases by hand.
+    if config::github_releases_new_url(project).is_some() && !include_self {
+        steps.push(step(
+            "release.github",
+            "Release — GitHub Release cut",
+            StepKind::List,
+            "Run `gh release list` (read-only), then Open Releases → create tag/assets. Confirm after the draft is published. Bridge never creates releases.",
+            config::github_releases_new_url(project),
+            Some("confirm after GitHub Release is published".into()),
+            Some(vec![
+                "gh".into(),
+                "release".into(),
+                "list".into(),
+                "--limit".into(),
+                "5".into(),
+            ]),
+        ));
+    }
+
+    let orbit_host = detected.wrangler || detected.vercel || detected.netlify;
+    if wants_signet && !orbit_host {
+        steps.push(step(
+            "ship.desktop_cut",
+            "Desktop cut — Signet release is the deploy",
+            StepKind::Sign,
+            "No Cloudflare/Vercel/Netlify host detected. The final-mile cut is Signet build → release (+ optional marketing.deploy). Orbit deploy is not the desktop ship path.",
+            config::github_releases_new_url(project)
+                .or_else(|| Some("https://github.com/releases".into())),
+            Some("confirm after Signet release is the live cut".into()),
+            None,
+        ));
     }
 
     if detected.d1 || detected.neon || detected.supabase || detected.turso {
@@ -1866,5 +1953,97 @@ mod tests {
         assert!(deploy.run.is_none());
         assert!(deploy.entry_url.is_some());
         let _ = fs::remove_dir_all(&ctr);
+    }
+
+    #[test]
+    fn launch_baseline_release_parity() {
+        let legal = std::env::temp_dir().join(format!(
+            "shipctl-launch-legal-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&legal);
+        fs::create_dir_all(legal.join(".ship")).unwrap();
+        fs::write(legal.join("signet.toml"), "name = \"x\"\n").unwrap();
+        let l = load_or_build(&legal).unwrap();
+        assert!(l.steps.iter().any(|s| s.id == "legal.baseline"));
+        assert!(l.steps.iter().any(|s| s.id == "trust.pack"));
+        assert!(l.steps.iter().any(|s| s.id == "ship.desktop_cut"));
+        let cut = l
+            .steps
+            .iter()
+            .find(|s| s.id == "ship.desktop_cut")
+            .unwrap();
+        assert!(cut.entry_url.is_some());
+        let _ = fs::remove_dir_all(&legal);
+
+        let grad = std::env::temp_dir().join(format!(
+            "shipctl-launch-grad-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&grad);
+        fs::create_dir_all(grad.join(".ship")).unwrap();
+        fs::write(
+            grad.join(".ship/markets.json"),
+            r#"["graduate"]"#,
+        )
+        .unwrap();
+        let g = load_or_build(&grad).unwrap();
+        assert!(g.steps.iter().any(|s| s.id == "sign.graduate"));
+        let graduate = g.steps.iter().find(|s| s.id == "sign.graduate").unwrap();
+        assert_eq!(
+            graduate.run.as_ref().map(|r| r.as_slice()),
+            Some(
+                [
+                    "signet".to_string(),
+                    "graduate".to_string(),
+                    "notes".to_string()
+                ]
+                .as_slice()
+            )
+        );
+        let _ = fs::remove_dir_all(&grad);
+
+        let rel = std::env::temp_dir().join(format!(
+            "shipctl-launch-ghrel-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&rel);
+        fs::create_dir_all(&rel).unwrap();
+        fs::write(rel.join("package.json"), r#"{"name":"x"}"#).unwrap();
+        let st = std::process::Command::new("git")
+            .args(["init"])
+            .current_dir(&rel)
+            .status();
+        if !st.map(|s| s.success()).unwrap_or(false) {
+            return;
+        }
+        let _ = std::process::Command::new("git")
+            .args(["remote", "add", "origin", "https://github.com/acme/app.git"])
+            .current_dir(&rel)
+            .status();
+        let r = load_or_build(&rel).unwrap();
+        assert!(
+            r.steps.iter().any(|s| s.id == "release.github"),
+            "web package with GitHub origin should get release.github"
+        );
+        let step = r.steps.iter().find(|s| s.id == "release.github").unwrap();
+        assert_eq!(
+            step.entry_url.as_deref(),
+            Some("https://github.com/acme/app/releases/new")
+        );
+        let run = step.run.as_ref().expect("gh release list");
+        assert_eq!(run[0], "gh");
+        assert_eq!(run[1], "release");
+        assert_eq!(run[2], "list");
+        let _ = fs::remove_dir_all(&rel);
     }
 }
