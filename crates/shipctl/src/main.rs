@@ -123,6 +123,10 @@ enum Commands {
         /// general = minimal spine · advanced = full OAuth / official / listing path
         #[arg(long, default_value = "general")]
         mode: String,
+        /// local = personal cut (no hosted env/deploy/stores) · public = hosted final-mile
+        /// Omit to keep `.ship/studio.json` / prior publish.json intent.
+        #[arg(long)]
+        intent: Option<String>,
     },
     /// Detect / select Web·API·Desktop deploy scopes.
     Scopes {
@@ -447,21 +451,28 @@ fn main() -> Result<()> {
             action,
             project,
             mode,
+            intent,
         } => {
             let mode = publish::StudioMode::parse(&mode);
+            let intent = intent
+                .as_deref()
+                .map(config::ShipIntent::parse);
             let action = action.unwrap_or(PublishCmd::Status);
             match action {
                 PublishCmd::Status => {
-                    let state = publish::load_or_build_with_mode(&project, mode)?;
+                    let state =
+                        publish::load_or_build_with_options(&project, mode, intent)?;
                     println!("{}", serde_json::to_string_pretty(&publish::view(&state))?);
                 }
                 PublishCmd::Open | PublishCmd::Run => {
-                    let _ = publish::load_or_build_with_mode(&project, mode)?;
+                    let _ =
+                        publish::load_or_build_with_options(&project, mode, intent)?;
                     let view = publish::open_current(&project)?;
                     println!("{}", serde_json::to_string_pretty(&view)?);
                 }
                 PublishCmd::Verify => {
-                    let _ = publish::load_or_build_with_mode(&project, mode)?;
+                    let _ =
+                        publish::load_or_build_with_options(&project, mode, intent)?;
                     let (ok, msg, view) = publish::verify_current(&project)?;
                     eprintln!("{msg}");
                     println!("{}", serde_json::to_string_pretty(&serde_json::json!({
@@ -474,17 +485,19 @@ fn main() -> Result<()> {
                     }
                 }
                 PublishCmd::Confirm => {
-                    let _ = publish::load_or_build_with_mode(&project, mode)?;
+                    let _ =
+                        publish::load_or_build_with_options(&project, mode, intent)?;
                     let view = publish::confirm_current(&project)?;
                     println!("{}", serde_json::to_string_pretty(&view)?);
                 }
                 PublishCmd::Next { force } => {
-                    let _ = publish::load_or_build_with_mode(&project, mode)?;
+                    let _ =
+                        publish::load_or_build_with_options(&project, mode, intent)?;
                     let view = publish::next(&project, force)?;
                     println!("{}", serde_json::to_string_pretty(&view)?);
                 }
                 PublishCmd::Reset => {
-                    let view = publish::reset_with_mode(&project, mode)?;
+                    let view = publish::reset_with_options(&project, mode, intent)?;
                     println!("{}", serde_json::to_string_pretty(&view)?);
                 }
             }

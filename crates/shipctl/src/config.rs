@@ -3,6 +3,32 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum ShipIntent {
+    /// Local cut — Signet / honesty without hosted env · deploy · store lanes.
+    Local,
+    /// Public final-mile (default) — hosted env / deploy when signals match.
+    #[default]
+    Public,
+}
+
+impl ShipIntent {
+    pub fn parse(s: &str) -> Self {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "local" | "personal" | "private" => Self::Local,
+            _ => Self::Public,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Local => "local",
+            Self::Public => "public",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StudioIntent {
     pub schema: String,
@@ -27,6 +53,12 @@ pub struct StudioIntent {
     /// `self` | `official` | `self_then_official`
     #[serde(default = "default_sign_path")]
     pub sign_path: String,
+    /// `local` | `public` — orthogonal to General/Advanced publish density.
+    #[serde(default)]
+    pub ship_intent: ShipIntent,
+    /// When true, Local intent still keeps `env.sprint`.
+    #[serde(default)]
+    pub env_required: bool,
 }
 
 fn default_sign_path() -> String {
@@ -1400,7 +1432,48 @@ pub fn intent_for(project: &Path) -> Result<StudioIntent> {
                 .filter(|s| !s.is_empty())
                 .unwrap_or_else(|| "official_listing_only".into())
         },
+        ship_intent: existing
+            .as_ref()
+            .map(|e| e.ship_intent)
+            .unwrap_or_default(),
+        env_required: existing.as_ref().map(|e| e.env_required).unwrap_or(false),
     })
+}
+
+/// Resolve ship intent from `.ship/studio.json` (default public).
+pub fn ship_intent_for(project: &Path) -> ShipIntent {
+    read_studio(project)
+        .ok()
+        .flatten()
+        .map(|s| s.ship_intent)
+        .unwrap_or_default()
+}
+
+/// Persist `ship_intent` into `.ship/studio.json` (creates via configure merge).
+pub fn set_ship_intent(project: &Path, intent: ShipIntent) -> Result<StudioIntent> {
+    let mut intent_doc = intent_for(project)?;
+    intent_doc.ship_intent = intent;
+    let dir = ship_dir(Path::new(&intent_doc.project));
+    fs::create_dir_all(&dir).context("mkdir .ship")?;
+    let path = studio_path(Path::new(&intent_doc.project));
+    fs::write(&path, serde_json::to_string_pretty(&intent_doc)?)
+        .with_context(|| format!("write {}", path.display()))?;
+    Ok(intent_doc)
+}
+
+/// Local intent keeps `env.sprint` when studio says so or markets opts into `env`.
+pub fn env_required_for_local(project: &Path) -> bool {
+    if read_studio(project)
+        .ok()
+        .flatten()
+        .map(|s| s.env_required)
+        .unwrap_or(false)
+    {
+        return true;
+    }
+    read_markets_opt_in(project)
+        .iter()
+        .any(|m| m == "env" || m == "env_required")
 }
 
 pub fn configure(project: &Path) -> Result<StudioIntent> {

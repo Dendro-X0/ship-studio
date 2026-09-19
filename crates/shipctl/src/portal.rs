@@ -266,55 +266,84 @@ static CONTAINER: ProviderCatalog = ProviderCatalog {
 };
 
 /// Where to copy the *value* for a named secret (not where to put it).
+/// Prefer [`entry_url_for_secret`] when the put provider is known.
 pub fn source_url_for_secret_name(name: &str) -> &'static str {
+    entry_url_for_secret(name, None).unwrap_or(GITHUB.create_url)
+}
+
+/// Open URL for a secret hint: known vendor value-source, else put-provider dashboard.
+pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Option<&'static str> {
     let upper = name.to_ascii_uppercase();
     if upper == "GITHUB_TOKEN" || upper.starts_with("GH_") {
-        return GITHUB.create_url;
+        return Some(GITHUB.create_url);
     }
     if upper.starts_with("POLAR_") {
-        return POLAR.token_url;
+        return Some(POLAR.token_url);
     }
     if upper.starts_with("NEON_") || upper.contains("NEON") {
-        return NEON.create_url;
+        return Some(NEON.create_url);
     }
     if upper.starts_with("SUPABASE_") {
-        return SUPABASE.create_url;
+        return Some(SUPABASE.create_url);
     }
     if upper.starts_with("TURSO_") || upper.starts_with("LIBSQL_") {
-        return TURSO.create_url;
+        return Some(TURSO.create_url);
     }
     if upper == "DATABASE_URL" || upper.ends_with("_DATABASE_URL") {
-        // Prefer Neon console as a common Postgres host; operator may use another vendor.
-        return NEON.create_url;
+        return Some(NEON.create_url);
     }
     if upper.contains("CLOUDFLARE") || upper == "CF_API_TOKEN" || upper == "CF_API_KEY" {
-        return CLOUDFLARE.create_url;
+        return Some(CLOUDFLARE.create_url);
     }
     if upper.starts_with("VERCEL_") {
-        return VERCEL.create_url;
+        return Some(VERCEL.create_url);
     }
     if upper.starts_with("NETLIFY_") {
-        return NETLIFY.create_url;
+        return Some(NETLIFY.create_url);
+    }
+    if upper == "ANTHROPIC_API_KEY" || upper.starts_with("ANTHROPIC_") {
+        return Some("https://console.anthropic.com/settings/keys");
+    }
+    if upper == "RESEND_API_KEY" || upper.starts_with("RESEND_") {
+        return Some("https://resend.com/api-keys");
+    }
+    if upper.contains("WELLFOUND") {
+        return Some("https://wellfound.com/");
     }
     if upper.starts_with("SIGNET_AZURE_")
         || upper.starts_with("WIN_CERT_")
         || upper == "SIGNET_OV_CERT"
     {
-        return "https://learn.microsoft.com/en-us/azure/trusted-signing/";
+        return Some("https://learn.microsoft.com/en-us/azure/trusted-signing/");
     }
     if upper.starts_with("SIGNET_NOTARY_")
         || upper.starts_with("APPLE_API_")
         || upper.starts_with("NOTARY_")
     {
-        return "https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution";
+        return Some(
+            "https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution",
+        );
     }
     if upper.starts_with("GUMROAD_") {
-        return "https://app.gumroad.com/";
+        return Some("https://app.gumroad.com/");
     }
     if upper.starts_with("LEMON_") || upper.starts_with("LEMONSQUEEZY_") {
-        return "https://app.lemonsqueezy.com/";
+        return Some("https://app.lemonsqueezy.com/");
     }
-    CLOUDFLARE.token_url
+    // Self-generated (CRON_SECRET, BETTER_AUTH_SECRET, …) or unknown → put destination.
+    match put_provider {
+        Some(ProviderId::Cloudflare) => Some(CLOUDFLARE.create_url),
+        Some(ProviderId::Vercel) => Some(VERCEL.create_url),
+        Some(ProviderId::Netlify) => Some(NETLIFY.create_url),
+        Some(ProviderId::Github) => Some(GITHUB.create_url),
+        Some(ProviderId::Polar) => Some(POLAR.token_url),
+        Some(ProviderId::Neon) => Some(NEON.create_url),
+        Some(ProviderId::Supabase) => Some(SUPABASE.create_url),
+        Some(ProviderId::D1) => Some(CLOUDFLARE.create_url),
+        Some(ProviderId::Turso) => Some(TURSO.create_url),
+        Some(ProviderId::Container) => Some(CONTAINER.create_url),
+        None => None,
+    }
 }
 
 pub fn once_hint_for_secret_name(name: &str) -> &'static str {

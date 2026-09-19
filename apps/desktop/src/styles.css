@@ -955,6 +955,27 @@ button.cta-launch.cta-compact {
   color: var(--text);
 }
 
+.intent-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.32rem 0.65rem;
+  border-radius: 999px;
+  transform: none !important;
+}
+
+.intent-btn.active {
+  background: rgba(110, 160, 120, 0.22);
+  color: var(--text);
+}
+
+.intent-btn:hover:not(.active):not(:disabled) {
+  color: var(--text);
+}
+
 body[data-mode="general"] .nav-advanced,
 body[data-mode="general"] .advanced-only {
   display: none !important;

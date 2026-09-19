@@ -110,6 +110,8 @@ type LaunchView = {
 };
 
 type PublishView = {
+  mode?: string;
+  intent?: string;
   current_index?: number;
   total?: number;
   done_count?: number;
@@ -230,16 +232,58 @@ const RECENT_KEY = "ship-studio.recent-projects";
 const OFFLINE_KEY = "ship-studio.offline";
 const DEPLOY_KEY = "ship-studio.include-deploy";
 const MODE_KEY = "ship-studio.mode";
+const INTENT_KEY = "ship-studio.intent";
 const MAX_RECENT = 6;
 
 type StudioMode = "general" | "advanced";
+type ShipIntent = "local" | "public";
 
 function studioMode(): StudioMode {
   return localStorage.getItem(MODE_KEY) === "advanced" ? "advanced" : "general";
 }
 
+function shipIntent(): ShipIntent {
+  return localStorage.getItem(INTENT_KEY) === "local" ? "local" : "public";
+}
+
 function publishArgs(extra: string[] = []): string[] {
-  return ["publish", "--mode", studioMode(), "--project", projectPath(), ...extra];
+  return [
+    "publish",
+    "--mode",
+    studioMode(),
+    "--intent",
+    shipIntent(),
+    "--project",
+    projectPath(),
+    ...extra,
+  ];
+}
+
+function applyShipIntent(intent: ShipIntent, opts?: { rebuild?: boolean }) {
+  localStorage.setItem(INTENT_KEY, intent);
+  document.body.dataset.intent = intent;
+  document.querySelectorAll<HTMLButtonElement>(".intent-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.intent === intent);
+  });
+  if (opts?.rebuild && projectPath()) {
+    void (async () => {
+      const result = await run(publishArgs(["reset"]), { quietHeader: true });
+      if (result?.stdout) {
+        try {
+          applyPublishView(JSON.parse(result.stdout) as PublishView);
+        } catch {
+          /* ignore */
+        }
+      }
+      toast(
+        intent === "local"
+          ? "Local intent — hosted env/deploy omitted"
+          : "Public intent — hosted final-mile when detected",
+        "ok",
+      );
+      await refreshSessionNow();
+    })();
+  }
 }
 
 function applyStudioMode(mode: StudioMode, opts?: { rebuild?: boolean }) {
@@ -2314,9 +2358,10 @@ function applyPublishView(view: PublishView | null) {
   const cur = view.current;
   if (hint) {
     const modeLabel = studioMode() === "general" ? "General" : "Advanced";
+    const intentLabel = shipIntent() === "local" ? "Local" : "Public";
     hint.textContent = view.finished
       ? "Publish workflow finished — live check confirmed."
-      : `${modeLabel} · Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ~${view.minutes_remaining ?? 0} min left · ${view.done_count ?? 0} done — Related opens detail panels without leaving the spine.`;
+      : `${modeLabel} · ${intentLabel} · Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ~${view.minutes_remaining ?? 0} min left · ${view.done_count ?? 0} done — Related opens detail panels without leaving the spine.`;
   }
   if (mins) {
     mins.hidden = false;
@@ -2848,11 +2893,19 @@ window.addEventListener("DOMContentLoaded", () => {
   deployEl()?.addEventListener("change", syncDeployToggle);
   syncDeployToggle();
   applyStudioMode(studioMode());
+  applyShipIntent(shipIntent());
   document.querySelectorAll<HTMLButtonElement>(".mode-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const next = btn.dataset.mode === "advanced" ? "advanced" : "general";
       if (next === studioMode()) return;
       applyStudioMode(next, { rebuild: Boolean(projectPath()) });
+    });
+  });
+  document.querySelectorAll<HTMLButtonElement>(".intent-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = btn.dataset.intent === "local" ? "local" : "public";
+      if (next === shipIntent()) return;
+      applyShipIntent(next, { rebuild: Boolean(projectPath()) });
     });
   });
   renderRecent(loadRecent());

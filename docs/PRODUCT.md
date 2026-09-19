@@ -1,7 +1,7 @@
 # Ship Studio — product contract
 
 **Status:** Active — CLI + TUI + desktop  
-**Updated:** 2026-09-16  
+**Updated:** 2026-09-19  
 
 **Scope of service (who / what / boundary):** [docs/SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md)
 
@@ -11,7 +11,7 @@ NOT:      Product docs/demo authoring · replace vendor UIs · store secrets · 
 RUNTIME:  Local + offline-first (bridge never requires network; open/login/put/verify are operator-initiated)
 SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri sidebar dashboard + Ctrl+K search)
 PROOF:    cargo test -p shipctl · scripts/dogfood-advanced-*.sh · Desktop Publish Advanced
-DONE:     Publish portal + adaptive doctor + Verify honesty + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut + scopes/env/listings/commerce + assist + desktop shell
+DONE:     Publish portal + adaptive doctor + Verify honesty + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut + scopes/env/listings/commerce + assist + desktop shell + Local/Public ship intent
 NOT YET:  Operator completes paste / graduate certs / live release / marketplace / registry push / deploy on vendor platforms (see OPERATOR-NEXT)
 ```
 
@@ -20,7 +20,7 @@ NOT YET:  Operator completes paste / graduate certs / live release / marketplace
 | We provide | We do not provide |
 |------------|-------------------|
 | Detect project shipping layout | Product docs / demos / marketing GIFs |
-| Adaptive Publish plan (General / Advanced) | Replacement for Cloudflare / Apple / Play / Gumroad UIs |
+| Adaptive Publish plan (General / Advanced × Local / Public) | Replacement for Cloudflare / Apple / Play / Gumroad UIs |
 | Open/Run → Confirm → Next sequencing | Finishing OAuth, store review, or DNS without you |
 | Safe local CLI Runs + vendor Open URLs | `docker push`, live npm/cargo publish, store API upload |
 | Doctor / Pulse / Assist orientation | Secret values stored in `.ship/` |

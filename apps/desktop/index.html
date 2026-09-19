@@ -142,6 +142,14 @@
                 Advanced
               </button>
             </div>
+            <div class="mode-switch intent-switch" role="group" aria-label="Ship intent">
+              <button type="button" id="intent-local" class="intent-btn" data-intent="local" title="Local cut — no hosted env/deploy/stores">
+                Local
+              </button>
+              <button type="button" id="intent-public" class="intent-btn active" data-intent="public" title="Public final-mile when signals match">
+                Public
+              </button>
+            </div>
             <button type="button" id="btn-search" class="search-trigger" title="Search (Ctrl+K)">
               <span>Search actions…</span>
               <kbd>Ctrl K</kbd>

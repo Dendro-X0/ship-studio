@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Env entry URL honesty** — secret Open URLs match value source or put provider (Vercel-bound names no longer open Cloudflare tokens)
+- **Personal / local ship intent** — `--intent local|public` (orthogonal to General/Advanced); Local omits hosted env/deploy/store lanes; Desktop Local/Public toggle; persists in `.ship/studio.json`
 - **aperio dogfood** — desktop Tauri no longer pulls Play/Android official/submit lanes (MAS + Microsoft Store stay)
 - **Archetype expansion** — PWA manifest / vite-plugin-pwa detection (pulse + assist); Advanced `listing.huggingface` for Hub docs + Confirm (no upload); extended release-surface archetypes + launch matrix doc
 - **Scope of service** — canonical product boundary: detect → plan → sequence final-mile; vendors + humans finish irreversible work ([docs/SCOPE-OF-SERVICE.md](./docs/SCOPE-OF-SERVICE.md))

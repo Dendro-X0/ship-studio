@@ -1,12 +1,26 @@
 # Operator next — manual gates only
 
-**Updated:** 2026-09-15  
+**Updated:** 2026-09-19  
 **Repo:** https://github.com/Dendro-X0/ship-studio  
 **Local path:** `E:/Web Projects/ship-studio`
 
 ## Publish portal (preferred)
 
 Minute-oriented path: **official platform for the work**, Ship Studio for sequence + verify.
+
+**Intent (orthogonal to General/Advanced):**
+
+| Intent | Use when | Omits |
+|--------|----------|-------|
+| **Local** | Personal tools / desktop cut only | `env.sprint`, `deploy.*`, `live_check`, oauth/listing/submit/marketing |
+| **Public** (default) | Hosted final-mile | (none — full adaptive plan) |
+
+```bash
+./target/release/shipctl.exe publish --mode general --intent local --project "E:/Web Projects/aperio"
+./target/release/shipctl.exe publish --mode advanced --intent public --project "E:/Web Projects/assess-api"
+```
+
+Desktop: topbar **Local | Public** next to General/Advanced. Persists in `.ship/studio.json` (`ship_intent`).
 
 ```bash
 cd "E:/Web Projects/ship-studio"
@@ -23,11 +37,12 @@ TUI: Publish (`P`) → o / v / c / n.
 
 Progress: project `.ship/publish.json` (no secret values).
 
-**Adaptive plan (Advanced):** doctor → scopes → legal.baseline → oauth* → env → db.provision → configure → **sign.self.build → trust.pack → sign.graduate? → sign.self.release_dry → sign.self.release** (or release.github) → **ship.desktop_cut?** → listing.* → submit.* → **ci.release → container.build → container.deploy** → marketing.deploy → **suite.url_sync** → dry-run → deploy* → live check.
+**Adaptive plan (Advanced + Public):** doctor → scopes → legal.baseline → oauth* → env → db.provision → configure → **sign.self.build → trust.pack → sign.graduate? → sign.self.release_dry → sign.self.release** (or release.github) → **ship.desktop_cut?** → listing.* → submit.* → **ci.release → container.build → container.deploy** → marketing.deploy → **suite.url_sync** → dry-run → deploy* → live check.
 
 Shipping hub: final-mile is sign → release → deploy. Docs/demos stay outside Studio (`specs/backend/shipping-hub-north-star.md`).
 
-**General** keeps the short spine (doctor, scopes, env, configure, sign.self.build, dry-run, deploy*, live_check).
+**General + Public** keeps the short spine (doctor, scopes, env, configure, sign.self.build, dry-run, deploy*, live_check).  
+**Local** drops hosted env/deploy/stores even in Advanced.
 
 ## Dogfood
 

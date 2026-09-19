@@ -273,7 +273,8 @@ fn hints_for_provider(project: &Path, id: ProviderId) -> Result<Vec<SecretHint>>
     let mut out = Vec::new();
     for (name, source) in names {
         let put_cli = put_cli_for(id, &name);
-        let source_url = portal::source_url_for_secret_name(&name);
+        let source_url = portal::entry_url_for_secret(&name, Some(id))
+            .unwrap_or_else(|| portal::source_url_for_secret_name(&name));
         let once = portal::once_hint_for_secret_name(&name);
         let detail = match id {
             ProviderId::Github => {
@@ -698,6 +699,43 @@ name = "x"
         assert!(names.contains(&"GITHUB_TOKEN"));
         assert!(names.contains(&"POLAR_CHECKOUT_URL"));
         assert!(!names.contains(&"API_KEY_PEPPER"));
+    }
+
+    #[test]
+    fn vercel_empty_env_entry_urls_not_cloudflare() {
+        let dir = tempfile_dir();
+        fs::write(dir.join("vercel.json"), "{}\n").unwrap();
+        fs::write(
+            dir.join(".env"),
+            "ANTHROPIC_API_KEY=\nCRON_SECRET=\nRESEND_API_KEY=\n",
+        )
+        .unwrap();
+        let plan = plan_for(&dir, Some(ProviderId::Vercel)).unwrap();
+        let anthropic = plan
+            .hints
+            .iter()
+            .find(|h| h.name == "ANTHROPIC_API_KEY")
+            .expect("anthropic hint");
+        assert!(
+            anthropic
+                .entry_url
+                .as_deref()
+                .unwrap_or("")
+                .contains("anthropic.com"),
+            "got {:?}",
+            anthropic.entry_url
+        );
+        let cron = plan
+            .hints
+            .iter()
+            .find(|h| h.name == "CRON_SECRET")
+            .expect("cron hint");
+        let cron_url = cron.entry_url.as_deref().unwrap_or("");
+        assert!(
+            cron_url.contains("vercel.com"),
+            "CRON_SECRET should open Vercel put destination, got {cron_url}"
+        );
+        assert!(!cron_url.contains("cloudflare"));
     }
 
     #[test]

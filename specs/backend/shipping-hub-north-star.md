@@ -48,6 +48,8 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **21** | **Archetype expansion** — PWA detect + Hugging Face listing + launch matrix | Done (first slice) |
 | **22** | **assess-api dogfood** — deploy.yml CI detect + per-scope live skip URLs | Done (first slice) |
 | **23** | **aperio dogfood** — Tauri desktop must not pull Play/Android lanes | Done (first slice) |
+| **24** | **Personal / local ship intent** — Local vs Public filter orthogonal to General/Advanced | Done (first slice) |
+| **24b** | **Env entry URL honesty** — provider-matched Open URLs for secrets | Done (first slice) |
 
 ## Band #11 acceptance
 

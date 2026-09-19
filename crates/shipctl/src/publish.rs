@@ -1,7 +1,7 @@
 //! Publish portal — minute-oriented wizard for the full manual publishing path.
 
 use crate::adapters;
-use crate::config;
+use crate::config::{self, ShipIntent};
 use crate::flow;
 use crate::human;
 use crate::portal::{self, ProviderId};
@@ -84,6 +84,8 @@ pub struct PublishState {
     pub project: String,
     #[serde(default)]
     pub mode: StudioMode,
+    #[serde(default)]
+    pub intent: ShipIntent,
     pub current: usize,
     pub steps: Vec<PubStep>,
     pub notes: Vec<String>,
@@ -94,6 +96,7 @@ pub struct PublishView {
     pub schema: String,
     pub project: String,
     pub mode: StudioMode,
+    pub intent: ShipIntent,
     pub current_index: usize,
     pub total: usize,
     pub done_count: usize,
@@ -222,7 +225,27 @@ fn is_general_step(step: &PubStep) -> bool {
         || id == "sign.self.build"
 }
 
-fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
+fn is_local_intent_step(step: &PubStep, env_required: bool) -> bool {
+    let id = step.id.as_str();
+    if id.starts_with("oauth.") {
+        return false;
+    }
+    if id == "env.sprint" {
+        return env_required;
+    }
+    if id == "deploy" || id.starts_with("deploy.") || id == "live_check" {
+        return false;
+    }
+    if id.starts_with("listing.") || id.starts_with("submit.") {
+        return false;
+    }
+    if id == "marketing.deploy" || id == "suite.url_sync" || id == "db.provision" {
+        return false;
+    }
+    true
+}
+
+fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Result<Vec<PubStep>> {
     let doctor = adapters::doctor(project)?;
     let detected = config::probe(project);
     let portal = portal::plan_for(project, None)?;
@@ -984,6 +1007,10 @@ fn build_plan_for(project: &Path, mode: StudioMode) -> Result<Vec<PubStep>> {
     if mode == StudioMode::General {
         steps.retain(is_general_step);
     }
+    if intent == ShipIntent::Local {
+        let env_required = config::env_required_for_local(project);
+        steps.retain(|s| is_local_intent_step(s, env_required));
+    }
 
     Ok(steps)
 }
@@ -1105,19 +1132,31 @@ fn apply_live_deploy_skips(project: &Path, steps: &mut [PubStep]) {
 }
 
 pub fn load_or_build(project: &Path) -> Result<PublishState> {
-    load_state(project, true, None)
+    load_state(project, true, None, None)
 }
 
 pub fn load_or_build_with_mode(project: &Path, mode: StudioMode) -> Result<PublishState> {
-    load_state(project, true, Some(mode))
+    load_state(project, true, Some(mode), None)
+}
+
+pub fn load_or_build_with_options(
+    project: &Path,
+    mode: StudioMode,
+    intent: Option<ShipIntent>,
+) -> Result<PublishState> {
+    load_state(project, true, Some(mode), intent)
 }
 
 fn load_state(
     project: &Path,
     snap_to_pending: bool,
     mode_override: Option<StudioMode>,
+    intent_override: Option<ShipIntent>,
 ) -> Result<PublishState> {
     let project = fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
+    if let Some(intent) = intent_override {
+        let _ = config::set_ship_intent(&project, intent);
+    }
     let saved = load_saved(&project);
     let mode = mode_override.unwrap_or_else(|| {
         saved
@@ -1125,11 +1164,19 @@ fn load_state(
             .map(|s| s.mode)
             .unwrap_or(StudioMode::General)
     });
+    let intent = intent_override.unwrap_or_else(|| {
+        saved
+            .as_ref()
+            .map(|s| s.intent)
+            .unwrap_or_else(|| config::ship_intent_for(&project))
+    });
     let mode_changed = saved.as_ref().is_some_and(|s| s.mode != mode);
-    let mut steps = build_plan_for(&project, mode)?;
+    let intent_changed = saved.as_ref().is_some_and(|s| s.intent != intent);
+    let rebuild = mode_changed || intent_changed;
+    let mut steps = build_plan_for(&project, mode, intent)?;
     let mut current = 0;
     if let Some(saved) = &saved {
-        if !mode_changed {
+        if !rebuild {
             restore_pending_detection_steps(&mut steps, saved);
             merge_statuses(&mut steps, saved);
             current = saved.current.min(steps.len().saturating_sub(1));
@@ -1159,18 +1206,29 @@ fn load_state(
         StudioMode::General => "Mode: general — minimal publish spine.",
         StudioMode::Advanced => "Mode: advanced — full OAuth / official sign / listing path.",
     };
+    let intent_note = match intent {
+        ShipIntent::Local => "Intent: local — hosted env / deploy / store lanes omitted.",
+        ShipIntent::Public => "Intent: public — hosted final-mile when project signals match.",
+    };
+    let mut notes = vec![
+        mode_note.into(),
+        intent_note.into(),
+        format!("~{minutes_total} min guided publish — you finish vendor UIs; shipctl sequences."),
+        "Open/Run → work on official platform or local CLI → Confirm → Next.".into(),
+    ];
+    if intent == ShipIntent::Local {
+        notes.push("Local intent — hosted deploy skipped.".into());
+    } else {
+        notes.push("Network deploy & live release require your initiation.".into());
+    }
     let state = PublishState {
         schema: "ship-studio/publish/v1".into(),
         project: project.display().to_string(),
         mode,
+        intent,
         current,
         steps,
-        notes: vec![
-            mode_note.into(),
-            format!("~{minutes_total} min guided publish — you finish vendor UIs; shipctl sequences."),
-            "Open/Run → work on official platform or local CLI → Confirm → Next.".into(),
-            "Network deploy & live release require your initiation.".into(),
-        ],
+        notes,
     };
     save_state(&project, &state)?;
     Ok(state)
@@ -1197,7 +1255,11 @@ pub fn view(state: &PublishState) -> PublishView {
         .map(|s| s.minutes)
         .sum();
     let mut actions = vec![
-        format!("shipctl publish --mode {}", state.mode.as_str()),
+        format!(
+            "shipctl publish --mode {} --intent {}",
+            state.mode.as_str(),
+            state.intent.as_str()
+        ),
         "shipctl publish open".into(),
         "shipctl publish confirm".into(),
         "shipctl publish next".into(),
@@ -1214,6 +1276,7 @@ pub fn view(state: &PublishState) -> PublishView {
         schema: state.schema.clone(),
         project: state.project.clone(),
         mode: state.mode,
+        intent: state.intent,
         current_index: state.current,
         total: state.steps.len(),
         done_count,
@@ -1228,7 +1291,7 @@ pub fn view(state: &PublishState) -> PublishView {
 }
 
 pub fn open_current(project: &Path) -> Result<PublishView> {
-    let mut state = load_state(project, true, None)?;
+    let mut state = load_state(project, true, None, None)?;
     let idx = state.current;
     let Some(step) = state.steps.get(idx).cloned() else {
         bail!("no publish steps");
@@ -1288,7 +1351,7 @@ pub fn open_current(project: &Path) -> Result<PublishView> {
 }
 
 pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
-    let mut state = load_state(project, true, None)?;
+    let mut state = load_state(project, true, None, None)?;
     let idx = state.current;
     let step = state
         .steps
@@ -1596,7 +1659,7 @@ fn run_capture(bin: &str, args: &[&str], cwd: &Path) -> Result<(i32, String)> {
 }
 
 pub fn confirm_current(project: &Path) -> Result<PublishView> {
-    let mut state = load_state(project, true, None)?;
+    let mut state = load_state(project, true, None, None)?;
     let idx = state.current;
     let Some(step) = state.steps.get_mut(idx) else {
         bail!("no current step");
@@ -1608,7 +1671,7 @@ pub fn confirm_current(project: &Path) -> Result<PublishView> {
 }
 
 pub fn next(project: &Path, force: bool) -> Result<PublishView> {
-    let mut state = load_state(project, false, None)?;
+    let mut state = load_state(project, false, None, None)?;
     let idx = state.current;
     let Some(step) = state.steps.get(idx) else {
         bail!("no current step");
@@ -1646,9 +1709,17 @@ pub fn reset(project: &Path) -> Result<PublishView> {
 }
 
 pub fn reset_with_mode(project: &Path, mode: StudioMode) -> Result<PublishView> {
+    reset_with_options(project, mode, None)
+}
+
+pub fn reset_with_options(
+    project: &Path,
+    mode: StudioMode,
+    intent: Option<ShipIntent>,
+) -> Result<PublishView> {
     let project = fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
     let _ = fs::remove_file(state_path(&project));
-    let state = load_or_build_with_mode(&project, mode)?;
+    let state = load_or_build_with_options(&project, mode, intent)?;
     Ok(view(&state))
 }
 
@@ -1808,6 +1879,84 @@ mod tests {
         assert_eq!(v.current.as_ref().unwrap().status, PubStatus::Done);
         let v2 = next(&dir, false).unwrap();
         assert_ne!(v2.current_index, 0);
+    }
+
+    #[test]
+    fn local_intent_omits_hosted_and_store_lanes() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-local-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("src-tauri")).unwrap();
+        fs::write(dir.join("vercel.json"), "{}\n").unwrap();
+        fs::write(dir.join("signet.toml"), "name = \"x\"\n").unwrap();
+        fs::write(dir.join(".env"), "ANTHROPIC_API_KEY=\nCRON_SECRET=\n").unwrap();
+        fs::create_dir_all(dir.join("android")).unwrap();
+        fs::write(dir.join("android/build.gradle"), "// stub\n").unwrap();
+
+        let public = load_or_build_with_options(
+            &dir,
+            StudioMode::Advanced,
+            Some(ShipIntent::Public),
+        )
+        .unwrap();
+        assert!(
+            public.steps.iter().any(|s| s.id == "oauth.vercel"),
+            "public should keep oauth.vercel"
+        );
+        assert!(
+            public.steps.iter().any(|s| s.id == "env.sprint"),
+            "public should keep env.sprint when empty secrets exist"
+        );
+        assert!(
+            public.steps.iter().any(|s| s.id.starts_with("deploy.")),
+            "public should keep deploy"
+        );
+        assert!(
+            public.steps.iter().any(|s| s.id.starts_with("submit.")),
+            "public advanced should keep a submit lane"
+        );
+
+        let local = load_or_build_with_options(
+            &dir,
+            StudioMode::Advanced,
+            Some(ShipIntent::Local),
+        )
+        .unwrap();
+        assert_eq!(local.intent, ShipIntent::Local);
+        assert!(
+            !local.steps.iter().any(|s| s.id == "env.sprint"),
+            "local must omit env.sprint"
+        );
+        assert!(
+            !local
+                .steps
+                .iter()
+                .any(|s| s.id.starts_with("deploy.") || s.id == "live_check"),
+            "local must omit deploy/live_check"
+        );
+        assert!(
+            !local
+                .steps
+                .iter()
+                .any(|s| s.id.starts_with("submit.") || s.id.starts_with("oauth.")),
+            "local must omit submit/oauth"
+        );
+        assert!(
+            local.steps.iter().any(|s| s.id == "sign.self.build"),
+            "local should keep Signet build"
+        );
+        assert!(
+            local.notes.iter().any(|n| n.contains("Local intent")),
+            "notes should mention local intent"
+        );
+        let studio = config::read_studio(&dir).unwrap().expect("studio.json");
+        assert_eq!(studio.ship_intent, ShipIntent::Local);
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -2461,7 +2610,7 @@ mod tests {
         let _ = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
         // Seek legal.baseline
         {
-            let mut state = load_state(&dir, true, Some(StudioMode::Advanced)).unwrap();
+            let mut state = load_state(&dir, true, Some(StudioMode::Advanced), None).unwrap();
             let idx = state
                 .steps
                 .iter()
@@ -2478,7 +2627,7 @@ mod tests {
         }
         // trust.pack
         {
-            let mut state = load_state(&dir, true, Some(StudioMode::Advanced)).unwrap();
+            let mut state = load_state(&dir, true, Some(StudioMode::Advanced), None).unwrap();
             let idx = state
                 .steps
                 .iter()
@@ -2511,7 +2660,7 @@ mod tests {
         fs::write(dir.join("SECURITY.md"), "#\n").unwrap();
         fs::write(dir.join("TRUST.md"), "#\n").unwrap();
         let _ = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
-        let mut state = load_state(&dir, true, Some(StudioMode::Advanced)).unwrap();
+        let mut state = load_state(&dir, true, Some(StudioMode::Advanced), None).unwrap();
         assert!(state.steps.iter().any(|s| s.id == "ship.desktop_cut"));
         for s in state.steps.iter_mut() {
             if s.id == "sign.self.release" {

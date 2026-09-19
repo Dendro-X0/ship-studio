@@ -155,6 +155,8 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 21 | **Archetype expansion** | ✅ PWA detect + Hugging Face listing lane + launch matrix doc | Unit + dogfood `listing.huggingface` |
 | 22 | **assess-api dogfood** | ✅ `deploy.yml` CI detect + per-scope live skip URLs | Unit multi-scope skip + live_check URL preference |
 | 23 | **aperio dogfood** | ✅ Tauri desktop drops Play/Android false positives | Unit + aperio Advanced plan |
+| 24 | **Personal / local ship intent** | ✅ Local omits env/deploy/stores; Public keeps hosted path | Unit `local_intent_omits_hosted_and_store_lanes` |
+| 24b | **Env entry URL honesty** | ✅ Vercel-bound names open Anthropic/Resend/Vercel — not Cloudflare | Unit `vercel_empty_env_entry_urls_not_cloudflare` |
 
 ## Change protocol
 
@@ -200,11 +202,22 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Gaps #1–#23 first slices cleared** (mobile store API upload still deferred).  
+**Gaps #1–#24b first slices cleared** (mobile store API upload still deferred).  
 **L3:** aperio Desktop Advanced Publish — 20 steps, no Play/Android (`docs/handoffs/evidence-aperio-l3*`, 2026-09-18).
 
 Suggested follow-ups (not parallel wizards):
 
 1. ~~Live Desktop L3 Open/Run on a Signet subject~~ — done (aperio).  
-2. Keep `OPERATOR-NEXT.md` as the human-gate checklist.  
-3. Only add a new Adaptive lane when a real ship needs it.
+2. ~~Band #24 — Personal / local ship intent~~ — done (first slice).  
+3. ~~Band #24b — Env entry URL honesty~~ — done.  
+4. **25** Desktop busy/Refresh deadlock.  
+5. Keep `OPERATOR-NEXT.md` as the human-gate checklist (Public intent).  
+
+### Value backlog (ranked, not parallel)
+
+| # | Band | Why it raises hub value |
+|---|------|-------------------------|
+| ~~24~~ | ~~Local vs Public intent~~ | ~~done~~ |
+| ~~24b~~ | ~~Env/secrets provider-matched entry URLs~~ | ~~done~~ |
+| 25 | Desktop busy/Refresh deadlock | L3 reliability when Open/Run leaves UI stuck |
+| 26 | Native PowerShell dogfood | Windows hosts without WSL bash |

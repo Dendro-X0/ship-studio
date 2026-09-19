@@ -334,6 +334,27 @@ mod tests {
     }
 
     #[test]
+    fn entry_url_vercel_put_not_cloudflare_default() {
+        assert!(portal::entry_url_for_secret("ANTHROPIC_API_KEY", Some(ProviderId::Vercel))
+            .unwrap()
+            .contains("anthropic.com"));
+        assert!(portal::entry_url_for_secret("CRON_SECRET", Some(ProviderId::Vercel))
+            .unwrap()
+            .contains("vercel.com"));
+        assert!(portal::entry_url_for_secret("RESEND_API_KEY", Some(ProviderId::Vercel))
+            .unwrap()
+            .contains("resend.com"));
+        assert!(
+            !portal::entry_url_for_secret("CRON_SECRET", Some(ProviderId::Vercel))
+                .unwrap()
+                .contains("cloudflare")
+        );
+        assert!(portal::entry_url_for_secret("CF_API_TOKEN", None)
+            .unwrap()
+            .contains("cloudflare"));
+    }
+
+    #[test]
     fn put_queue_prefers_cloudflare_and_skips_pepper() {
         let hints = vec![
             SecretHint {
