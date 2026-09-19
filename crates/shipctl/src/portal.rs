@@ -19,6 +19,9 @@ pub enum ProviderId {
     D1,
     Turso,
     Container,
+    Firebase,
+    Appwrite,
+    Convex,
 }
 
 impl ProviderId {
@@ -34,6 +37,9 @@ impl ProviderId {
             Self::D1 => "d1",
             Self::Turso => "turso",
             Self::Container => "container",
+            Self::Firebase => "firebase",
+            Self::Appwrite => "appwrite",
+            Self::Convex => "convex",
         }
     }
 
@@ -41,7 +47,7 @@ impl ProviderId {
         catalog_entry(self).label
     }
 
-    pub fn all() -> [ProviderId; 10] {
+    pub fn all() -> [ProviderId; 13] {
         [
             ProviderId::Cloudflare,
             ProviderId::Vercel,
@@ -53,6 +59,9 @@ impl ProviderId {
             ProviderId::D1,
             ProviderId::Turso,
             ProviderId::Container,
+            ProviderId::Firebase,
+            ProviderId::Appwrite,
+            ProviderId::Convex,
         ]
     }
 
@@ -68,9 +77,12 @@ impl ProviderId {
             "d1" | "cloudflare-d1" => Ok(Self::D1),
             "turso" | "libsql" => Ok(Self::Turso),
             "container" | "docker" | "ghcr" => Ok(Self::Container),
+            "firebase" => Ok(Self::Firebase),
+            "appwrite" => Ok(Self::Appwrite),
+            "convex" => Ok(Self::Convex),
             other => {
                 bail!(
-                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container)"
+                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex)"
                 )
             }
         }
@@ -81,6 +93,10 @@ impl ProviderId {
             self,
             Self::Neon | Self::Supabase | Self::D1 | Self::Turso
         )
+    }
+
+    pub fn is_baas(self) -> bool {
+        matches!(self, Self::Firebase | Self::Appwrite | Self::Convex)
     }
 }
 
@@ -117,6 +133,9 @@ pub fn catalog_entry(id: ProviderId) -> &'static ProviderCatalog {
         ProviderId::D1 => &D1,
         ProviderId::Turso => &TURSO,
         ProviderId::Container => &CONTAINER,
+        ProviderId::Firebase => &FIREBASE,
+        ProviderId::Appwrite => &APPWRITE,
+        ProviderId::Convex => &CONVEX,
     }
 }
 
@@ -265,6 +284,45 @@ static CONTAINER: ProviderCatalog = ProviderCatalog {
     once_hint: "Use `docker login` or `gh auth token` for GHCR. Rotate registry tokens if leaked.",
 };
 
+static FIREBASE: ProviderCatalog = ProviderCatalog {
+    label: "Firebase",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://console.firebase.google.com/",
+    create_url: "https://console.firebase.google.com/",
+    docs_url: "https://firebase.google.com/docs/auth",
+    oauth_hint: "Open Firebase console — create project, enable Auth, download client config. Studio never calls Google APIs.",
+    env_hint: "Put FIREBASE_* / google-services values on the app host — never in .ship/.",
+    secret_shown_once: false,
+    once_hint: "Rotate Firebase API keys / service accounts if leaked.",
+};
+
+static APPWRITE: ProviderCatalog = ProviderCatalog {
+    label: "Appwrite",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://cloud.appwrite.io/",
+    create_url: "https://cloud.appwrite.io/",
+    docs_url: "https://appwrite.io/docs",
+    oauth_hint: "Open Appwrite Cloud — create project and Auth. Studio only opens the dashboard.",
+    env_hint: "Put APPWRITE_* endpoint/project/key on the deploy target — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Appwrite API keys may be shown once — create a new key if lost.",
+};
+
+static CONVEX: ProviderCatalog = ProviderCatalog {
+    label: "Convex",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://dashboard.convex.dev/",
+    create_url: "https://dashboard.convex.dev/",
+    docs_url: "https://docs.convex.dev/",
+    oauth_hint: "Open Convex dashboard — create deployment and Auth. Studio only opens the dashboard.",
+    env_hint: "Put CONVEX_URL / CONVEX_DEPLOY_KEY on the deploy target — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Convex deploy keys may be shown once — rotate if leaked.",
+};
+
 /// Where to copy the *value* for a named secret (not where to put it).
 /// Prefer [`entry_url_for_secret`] when the put provider is known.
 pub fn source_url_for_secret_name(name: &str) -> &'static str {
@@ -285,6 +343,15 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
     }
     if upper.starts_with("SUPABASE_") {
         return Some(SUPABASE.create_url);
+    }
+    if upper.starts_with("FIREBASE_") || upper.starts_with("NEXT_PUBLIC_FIREBASE_") {
+        return Some(FIREBASE.create_url);
+    }
+    if upper.starts_with("APPWRITE_") {
+        return Some(APPWRITE.create_url);
+    }
+    if upper.starts_with("CONVEX_") {
+        return Some(CONVEX.create_url);
     }
     if upper.starts_with("TURSO_") || upper.starts_with("LIBSQL_") {
         return Some(TURSO.create_url);
@@ -342,6 +409,9 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
         Some(ProviderId::D1) => Some(CLOUDFLARE.create_url),
         Some(ProviderId::Turso) => Some(TURSO.create_url),
         Some(ProviderId::Container) => Some(CONTAINER.create_url),
+        Some(ProviderId::Firebase) => Some(FIREBASE.create_url),
+        Some(ProviderId::Appwrite) => Some(APPWRITE.create_url),
+        Some(ProviderId::Convex) => Some(CONVEX.create_url),
         None => None,
     }
 }
@@ -410,6 +480,15 @@ pub fn detected_providers(detected: &Detected) -> Vec<ProviderId> {
     }
     if detected.container {
         out.push(ProviderId::Container);
+    }
+    if detected.firebase {
+        out.push(ProviderId::Firebase);
+    }
+    if detected.appwrite {
+        out.push(ProviderId::Appwrite);
+    }
+    if detected.convex {
+        out.push(ProviderId::Convex);
     }
     out
 }

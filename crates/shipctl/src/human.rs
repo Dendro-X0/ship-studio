@@ -237,6 +237,7 @@ fn put_queue_from_hints(hints: &[SecretHint]) -> Vec<SecretHint> {
         if matches!(
             h.provider.as_str(),
             "polar" | "github" | "neon" | "supabase" | "d1" | "turso" | "container"
+                | "firebase" | "appwrite" | "convex"
         ) {
             continue;
         }

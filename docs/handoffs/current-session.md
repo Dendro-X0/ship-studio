@@ -2,12 +2,12 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main`  
-**Status:** Band #27 Publish progress watch shipped — idle
+**Status:** Band #28 mobile BaaS portal shipped — idle
 
 ## Next Atomic Step
 
 **Idle** — no Studio Adaptive work unless a real ship needs a new portal lane  
-(optional later: mobile BaaS Open URLs · Steam submit/depot docs step).
+(optional later: Steam submit/depot docs · Fly/Railway Open URLs).
 
 ## PAUSED / CANCELLED
 
@@ -21,13 +21,12 @@
 
 | Band | Commit |
 |------|--------|
-| #24–#25 | `4f071fe` · `5a437ae` |
-| #26 PowerShell dogfood | `418baa8` |
-| #27 Publish progress watch | (this commit) |
+| #27 Publish progress watch | `b858795` |
+| #28 Mobile BaaS portal | (this commit) |
 
 ## Boot allowlist
 
 1. This file  
 2. `docs/START-HERE.md` → SCOPE → PRODUCT  
-3. North star · release-surface map · `specs/backend/publish-progress-watch-design.md`  
+3. North star · `specs/backend/mobile-baas-portal-design.md`  
 4. `docs/OPERATOR-NEXT.md`  

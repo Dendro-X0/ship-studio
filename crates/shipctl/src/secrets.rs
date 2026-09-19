@@ -263,6 +263,9 @@ fn hints_for_provider(project: &Path, id: ProviderId) -> Result<Vec<SecretHint>>
         ProviderId::Container => {
             // First slice: docs/portal only — no forced registry secret names.
         }
+        ProviderId::Firebase | ProviderId::Appwrite | ProviderId::Convex => {
+            // First slice: portal Open only — no forced BaaS secret names.
+        }
     }
 
     let work = match id {
@@ -334,7 +337,10 @@ fn put_cli_for(id: ProviderId, name: &str) -> Vec<String> {
         | ProviderId::Supabase
         | ProviderId::D1
         | ProviderId::Turso
-        | ProviderId::Container => vec![
+        | ProviderId::Container
+        | ProviderId::Firebase
+        | ProviderId::Appwrite
+        | ProviderId::Convex => vec![
             "shipctl".into(),
             "portal".into(),
             "--provider".into(),
@@ -363,6 +369,12 @@ pub fn put_secret(project: &Path, provider: ProviderId, name: &str) -> Result<i3
     }
     if provider == ProviderId::Container {
         bail!("Container has no secret put CLI — use docker login / gh auth, then push locally");
+    }
+    if provider.is_baas() {
+        bail!(
+            "{} has no secret put CLI — open the vendor console, then put keys on cloudflare|vercel|netlify (or the mobile app host)",
+            provider.label()
+        );
     }
     let project = fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
     let work = match provider {
@@ -559,7 +571,8 @@ fn dedupe_hints(hints: &mut Vec<SecretHint>) {
             "netlify" => 2,
             "github" => 3,
             "polar" => 4,
-            "neon" | "supabase" | "d1" | "turso" | "container" => 5,
+            "neon" | "supabase" | "d1" | "turso" | "container" | "firebase" | "appwrite"
+            | "convex" => 5,
             "graduate" | "gumroad" | "lemon" => 6,
             _ => 9,
         }

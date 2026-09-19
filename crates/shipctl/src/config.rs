@@ -198,6 +198,15 @@ pub struct Detected {
     /// Hugging Face Hub model/repo lane (opt-in or model card).
     #[serde(default)]
     pub huggingface: bool,
+    /// Firebase project markers (mobile BaaS).
+    #[serde(default)]
+    pub firebase: bool,
+    /// Appwrite project markers (mobile BaaS).
+    #[serde(default)]
+    pub appwrite: bool,
+    /// Convex backend markers (mobile BaaS).
+    #[serde(default)]
+    pub convex: bool,
     /// Marketing / landing / GitHub Pages site present.
     #[serde(default)]
     pub marketing_site: bool,
@@ -327,6 +336,7 @@ pub fn probe(project: &Path) -> Detected {
     d.orbit_configured = project.join(".orbit/state.json").is_file();
     detect_mobile(project, &mut d);
     detect_db(project, &mut d);
+    detect_baas(project, &mut d);
     detect_ci_release(project, &mut d);
     detect_container(project, &mut d);
     detect_markets(project, &mut d);
@@ -388,6 +398,25 @@ pub fn probe(project: &Path) -> Detected {
             } else {
                 bits.join(" · ")
             }
+        ));
+    }
+    if d.mobile && (d.firebase || d.appwrite || d.convex || d.supabase) {
+        let mut bits = Vec::new();
+        if d.firebase {
+            bits.push("Firebase");
+        }
+        if d.appwrite {
+            bits.push("Appwrite");
+        }
+        if d.convex {
+            bits.push("Convex");
+        }
+        if d.supabase {
+            bits.push("Supabase Auth");
+        }
+        d.hints.push(format!(
+            "Mobile BaaS markers ({}) — Advanced publish opens the vendor console (Open → Confirm).",
+            bits.join(" · ")
         ));
     }
     if d.d1 || d.neon || d.supabase || d.turso {
@@ -581,6 +610,28 @@ fn detect_db(project: &Path, d: &mut Detected) {
     d.turso = env_key_prefix(project, "TURSO_")
         || env_key_prefix(project, "LIBSQL_")
         || package_mentions(project, &["@libsql", "@tursodatabase"]);
+}
+
+fn detect_baas(project: &Path, d: &mut Detected) {
+    d.firebase = project.join("firebase.json").is_file()
+        || project.join("google-services.json").is_file()
+        || any_named(
+            project,
+            &["google-services.json", "GoogleService-Info.plist"],
+        )
+        || env_key_prefix(project, "FIREBASE_")
+        || env_key_prefix(project, "NEXT_PUBLIC_FIREBASE_")
+        || package_mentions(
+            project,
+            &["\"firebase\"", "@firebase/", "@react-native-firebase"],
+        )
+        || file_mentions_any(project, &["pubspec.yaml"], "firebase");
+    d.appwrite = project.join("appwrite.json").is_file()
+        || env_key_prefix(project, "APPWRITE_")
+        || package_mentions(project, &["appwrite"]);
+    d.convex = project.join("convex").is_dir()
+        || env_key_prefix(project, "CONVEX_")
+        || package_mentions(project, &["\"convex\""]);
 }
 
 fn detect_ci_release(project: &Path, d: &mut Detected) {

@@ -53,6 +53,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **25** | **Desktop busy unlock** — Cancel restores Refresh; `run` finally + watchdog | Done (first slice) |
 | **26** | **PowerShell Advanced dogfood** — Windows L2 without WSL bash | Done (first slice) |
 | **27** | **Publish progress watch** — local Verify poller + Desktop Watch toggle (portal nudge) | Done (first slice) |
+| **28** | **Mobile BaaS portal** — `baas.provision` Open URL for Firebase / Appwrite / Convex / mobile+Supabase | Done (first slice) |
 
 ## Band #11 acceptance
 

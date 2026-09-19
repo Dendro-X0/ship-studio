@@ -239,7 +239,8 @@ fn is_local_intent_step(step: &PubStep, env_required: bool) -> bool {
     if id.starts_with("listing.") || id.starts_with("submit.") {
         return false;
     }
-    if id == "marketing.deploy" || id == "suite.url_sync" || id == "db.provision" {
+    if id == "marketing.deploy" || id == "suite.url_sync" || id == "db.provision" || id == "baas.provision"
+    {
         return false;
     }
     true
@@ -408,6 +409,43 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             format!("Database — provision ({})", bits.join(" · ")),
             PubKind::Human,
             "Create the DB on the vendor console, copy the connection string, put on the deploy target, then Confirm.",
+            4,
+            entry,
+            None,
+            Some("env"),
+        ));
+    }
+
+    if detected.mobile
+        && (detected.firebase || detected.appwrite || detected.convex || detected.supabase)
+    {
+        let entry = if detected.firebase {
+            Some("https://console.firebase.google.com/".into())
+        } else if detected.appwrite {
+            Some("https://cloud.appwrite.io/".into())
+        } else if detected.convex {
+            Some("https://dashboard.convex.dev/".into())
+        } else {
+            Some("https://supabase.com/dashboard".into())
+        };
+        let mut bits = Vec::new();
+        if detected.firebase {
+            bits.push("Firebase");
+        }
+        if detected.appwrite {
+            bits.push("Appwrite");
+        }
+        if detected.convex {
+            bits.push("Convex");
+        }
+        if detected.supabase {
+            bits.push("Supabase Auth");
+        }
+        steps.push(step(
+            "baas.provision",
+            format!("Mobile BaaS — provision ({})", bits.join(" · ")),
+            PubKind::Human,
+            "Open the vendor console, create Auth / client keys for the mobile app, put values on the host, then Confirm. Studio never calls the BaaS APIs.",
             4,
             entry,
             None,
@@ -2131,6 +2169,73 @@ mod tests {
 
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "db.provision"));
+    }
+
+    #[test]
+    fn baas_provision_mobile_firebase_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-baas-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("android")).unwrap();
+        fs::write(dir.join("firebase.json"), "{}\n").unwrap();
+        fs::write(dir.join("build.gradle"), "// android\n").unwrap();
+
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(
+            advanced.steps.iter().any(|s| s.id == "baas.provision"),
+            "advanced mobile+firebase missing baas.provision"
+        );
+        let baas = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "baas.provision")
+            .unwrap();
+        assert_eq!(baas.desktop_view.as_deref(), Some("env"));
+        assert!(
+            baas.entry_url
+                .as_deref()
+                .is_some_and(|u| u.contains("firebase.google.com")),
+            "expected Firebase console URL"
+        );
+
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "baas.provision"));
+
+        let local =
+            load_or_build_with_options(&dir, StudioMode::Advanced, Some(ShipIntent::Local)).unwrap();
+        assert!(!local.steps.iter().any(|s| s.id == "baas.provision"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn baas_provision_skips_supabase_without_mobile() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-baas-api-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("supabase")).unwrap();
+        fs::write(dir.join("supabase/config.toml"), "project_id = \"x\"\n").unwrap();
+        fs::write(dir.join("wrangler.toml"), "name = \"api\"\n").unwrap();
+
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(
+            !advanced.steps.iter().any(|s| s.id == "baas.provision"),
+            "API-only Supabase must not add baas.provision"
+        );
+        assert!(
+            advanced.steps.iter().any(|s| s.id == "db.provision"),
+            "API Supabase should still get db.provision"
+        );
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
