@@ -21,7 +21,7 @@
 | Band | Commit |
 |------|--------|
 | #37–#39 Assist / Doctor / Guide notes | `cf4b6fd` |
-| #40 Commerce portal catalog | (this push) |
+| #40 Commerce portal catalog | a107dbd |
 
 ## Boot allowlist
 
