@@ -143,6 +143,29 @@ fn step(
     }
 }
 
+fn container_local_tag(project: &Path) -> String {
+    let raw = project
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("app");
+    let sanitized: String = raw
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.' {
+                c.to_ascii_lowercase()
+            } else {
+                '-'
+            }
+        })
+        .collect();
+    let name = if sanitized.is_empty() {
+        "app".into()
+    } else {
+        sanitized
+    };
+    format!("{name}:local")
+}
+
 fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
     let doctor = adapters::doctor(project)?;
     let detected = config::probe(project);
@@ -728,6 +751,118 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             "Partner Center product submission / certification — Studio never uploads packages.",
             Some("https://partner.microsoft.com/dashboard/products".into()),
             Some("confirm after Partner Center submit".into()),
+            None,
+        ));
+    }
+
+    if detected.ci_release {
+        let files = detected.release_workflows.join(", ");
+        let workflow = detected
+            .release_workflows
+            .first()
+            .cloned()
+            .unwrap_or_else(|| "release.yml".into());
+        let has_release = detected
+            .release_workflows
+            .iter()
+            .any(|n| n.to_ascii_lowercase().contains("release"));
+        let has_deploy = detected
+            .release_workflows
+            .iter()
+            .any(|n| n.to_ascii_lowercase().contains("deploy"));
+        let ci_title = match (has_release, has_deploy) {
+            (true, false) => "CI — GitHub Actions release",
+            (false, true) => "CI — GitHub Actions deploy",
+            _ => "CI — GitHub Actions ship",
+        };
+        let ci_detail = if detected
+            .release_workflows
+            .iter()
+            .all(|n| n.to_ascii_lowercase().contains("deploy"))
+            && !has_release
+        {
+            format!(
+                "Workflow(s): {files}. After merge to main, Run `gh run list` (read-only) and Confirm when the deploy run looks green."
+            )
+        } else {
+            format!(
+                "Workflow(s): {files}. After tag/Signet release, Run `gh run list` (read-only) and Confirm when the Actions run looks green."
+            )
+        };
+        steps.push(step(
+            "ci.release",
+            ci_title,
+            StepKind::List,
+            &ci_detail,
+            config::github_actions_url(project)
+                .or_else(|| Some("https://github.com/actions".into())),
+            Some("confirm when Actions looks green".into()),
+            Some(vec![
+                "gh".into(),
+                "run".into(),
+                "list".into(),
+                "--workflow".into(),
+                workflow,
+                "--limit".into(),
+                "5".into(),
+            ]),
+        ));
+    }
+
+    if detected.container {
+        let tag = container_local_tag(project);
+        let (build_run, build_detail) = if detected.dockerfile {
+            (
+                Some(vec![
+                    "docker".into(),
+                    "build".into(),
+                    "-t".into(),
+                    tag.clone(),
+                    ".".into(),
+                ]),
+                format!(
+                    "Run `docker build -t {tag} .` locally. Confirm when the image builds. Push stays on the next step."
+                ),
+            )
+        } else {
+            (
+                Some(vec![
+                    "docker".into(),
+                    "compose".into(),
+                    "build".into(),
+                ]),
+                "Run `docker compose build` locally. Confirm when images build. Push stays on the next step."
+                    .into(),
+            )
+        };
+        steps.push(step(
+            "container.build",
+            "Container — local build",
+            StepKind::Deploy,
+            &build_detail,
+            Some(config::container_docs_url(project).into()),
+            Some("confirm after local image build".into()),
+            build_run,
+        ));
+        let push_detail = if detected.compose && detected.dockerfile {
+            format!(
+                "After `{tag}` (or compose images) exist locally: `docker login` / `gh auth`, then `docker push` on your machine. Open registry docs, Confirm when published. Bridge never pushes."
+            )
+        } else if detected.compose {
+            "After compose images build: `docker login` / `gh auth`, then push tags on your machine. Open registry docs, Confirm when published. Bridge never pushes."
+                .into()
+        } else {
+            format!(
+                "After `{tag}` builds: `docker login` / `gh auth`, then `docker push` on your machine. Open registry docs, Confirm when published. Bridge never pushes."
+            )
+        };
+        steps.push(step(
+            "container.deploy",
+            "Container — registry push (docs)",
+            StepKind::Deploy,
+            &push_detail,
+            Some(config::container_docs_url(project).into()),
+            Some("confirm when image is in the registry".into()),
             None,
         ));
     }
@@ -1671,5 +1806,65 @@ mod tests {
         assert_eq!(sync.entry_url.as_deref(), Some("https://ship.example"));
         assert!(sync.detail.contains("NEXT_PUBLIC_X_URL"));
         let _ = fs::remove_dir_all(&suite);
+    }
+
+    #[test]
+    fn launch_ci_container_parity() {
+        let ci = std::env::temp_dir().join(format!(
+            "shipctl-launch-ci-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&ci);
+        fs::create_dir_all(ci.join(".github/workflows")).unwrap();
+        fs::write(ci.join("wrangler.toml"), "name = \"x\"\n").unwrap();
+        fs::write(
+            ci.join(".github/workflows/release.yml"),
+            "name: release\non: push\n",
+        )
+        .unwrap();
+        let c = load_or_build(&ci).unwrap();
+        assert!(c.steps.iter().any(|s| s.id == "ci.release"));
+        let release = c.steps.iter().find(|s| s.id == "ci.release").unwrap();
+        assert!(release.entry_url.is_some());
+        let run = release.run.as_ref().expect("gh run list");
+        assert_eq!(run[0], "gh");
+        assert_eq!(run[1], "run");
+        assert_eq!(run[2], "list");
+        assert!(run.iter().any(|a| a.contains("release.yml")));
+        let _ = fs::remove_dir_all(&ci);
+
+        let ctr = std::env::temp_dir().join(format!(
+            "shipctl-launch-ctr-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&ctr);
+        fs::create_dir_all(&ctr).unwrap();
+        fs::write(ctr.join("Dockerfile"), "FROM scratch\n").unwrap();
+        let t = load_or_build(&ctr).unwrap();
+        assert!(t.steps.iter().any(|s| s.id == "container.build"));
+        assert!(t.steps.iter().any(|s| s.id == "container.deploy"));
+        let build = t
+            .steps
+            .iter()
+            .find(|s| s.id == "container.build")
+            .unwrap();
+        let brun = build.run.as_ref().expect("docker build");
+        assert_eq!(brun[0], "docker");
+        assert_eq!(brun[1], "build");
+        assert!(brun.iter().any(|a| a.ends_with(":local")));
+        let deploy = t
+            .steps
+            .iter()
+            .find(|s| s.id == "container.deploy")
+            .unwrap();
+        assert!(deploy.run.is_none());
+        assert!(deploy.entry_url.is_some());
+        let _ = fs::remove_dir_all(&ctr);
     }
 }

@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Launch CI + container parity** — Guided Launch sequences `gh run list` (read-only) + local `docker build` / compose build; registry push stays Confirm
 - **Launch DB + marketing + suite parity** — Guided Launch sequences DB provision / marketing landing / suite URL sync (Open + Confirm; no DNS or sibling `.env` writes)
 - **Launch registry + HF listing parity** — Guided Launch sequences npm / crates.io dry-run Runs + Hugging Face Hub docs Open (live publish/upload stays Confirm)
 - **Alt host expand (Cloud Run / Azure Static)** — Advanced + Launch `host.cloudrun` / `host.azurestatic` Open dashboard URLs

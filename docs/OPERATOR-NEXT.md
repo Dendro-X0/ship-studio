@@ -77,11 +77,11 @@ Same open → verify → confirm → next pattern; state in `.ship/launch.json`.
 | itch / Epic submit | After listing, Open butler / Epic publishing docs (`submit.itch` / `submit.epic`) and upload yourself |
 | Fly / Railway / Render / DO / Heroku / Amplify / Cloud Run / Azure Static | Open dashboard (`host.*`); deploy with their CLI/UI — Studio does not Orbit-deploy them |
 | DB | Provision on Neon/Supabase/D1/Turso console (Publish or Launch `db.provision`); put connection on deploy target |
-| CI | After tag/Signet release, Run `gh run list` / confirm GitHub Actions |
+| CI | After tag/Signet release, Run `gh run list` from Publish or Launch / confirm GitHub Actions |
 | Legal / trust | Add LICENSE + SECURITY.md; TRUST.md + checksums for desktop/Signet; Run `gh release list` then cut GitHub Release when prompted |
 | Marketing | Deploy landing / HOOK / download site (Publish or Launch `marketing.deploy`); confirm canonical URL (DNS stays manual) |
 | Suite | After landing is live, paste URL into sibling env keys from `.ship/suite.json` (`suite.url_sync` on Publish or Launch) |
-| Container | Run local `docker build` / `compose build`; push stays Confirm + registry docs |
+| Container | Run local `docker build` / `compose build` from Publish or Launch; push stays Confirm + registry docs |
 | npm / crates | Run `--dry-run` from Publish or Launch; live publish + OTP stays on your machine |
 | Hugging Face | Open Hub docs from Publish/Launch; upload with huggingface-cli yourself |
 | Deploy | Allow network deploy when Publish reaches deploy (skip if already live) |
