@@ -364,6 +364,40 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         }
     }
 
+    if detected.d1 || detected.neon || detected.supabase || detected.turso {
+        let entry = if detected.neon {
+            Some("https://console.neon.tech".into())
+        } else if detected.supabase {
+            Some("https://supabase.com/dashboard".into())
+        } else if detected.turso {
+            Some("https://turso.tech/app".into())
+        } else {
+            Some("https://dash.cloudflare.com/?to=/:account/workers/d1".into())
+        };
+        let mut bits = Vec::new();
+        if detected.d1 {
+            bits.push("D1");
+        }
+        if detected.neon {
+            bits.push("Neon");
+        }
+        if detected.supabase {
+            bits.push("Supabase");
+        }
+        if detected.turso {
+            bits.push("Turso");
+        }
+        steps.push(step(
+            "db.provision",
+            &format!("Database — provision ({})", bits.join(" · ")),
+            StepKind::Deploy,
+            "Create the DB on the vendor console, copy the connection string, put on the deploy target, then Confirm. Studio never creates databases.",
+            entry,
+            Some("confirm after DB provision + put".into()),
+            None,
+        ));
+    }
+
     if detected.mobile
         && (detected.firebase || detected.appwrite || detected.convex || detected.supabase)
     {
@@ -543,6 +577,47 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             None,
         ));
     }
+    if detected.npm_publish {
+        steps.push(step(
+            "listing.npm",
+            "Listing — npm publish",
+            StepKind::List,
+            "Run `npm publish --dry-run` first. Live publish (OTP) stays on your machine — Confirm when the version is live. Bridge never publishes.",
+            Some("https://www.npmjs.com/login".into()),
+            Some("confirm after dry-run / live publish".into()),
+            Some(vec![
+                "npm".into(),
+                "publish".into(),
+                "--dry-run".into(),
+            ]),
+        ));
+    }
+    if detected.crates_publish {
+        steps.push(step(
+            "listing.crates",
+            "Listing — crates.io publish",
+            StepKind::List,
+            "Run `cargo publish --dry-run` first. Live publish stays on your machine — Confirm when crates.io shows the version. Bridge never publishes.",
+            Some("https://crates.io/me".into()),
+            Some("confirm after dry-run / live publish".into()),
+            Some(vec![
+                "cargo".into(),
+                "publish".into(),
+                "--dry-run".into(),
+            ]),
+        ));
+    }
+    if detected.huggingface {
+        steps.push(step(
+            "listing.huggingface",
+            "Listing — Hugging Face Hub",
+            StepKind::List,
+            "Create/update the model or dataset repo on huggingface.co; upload with huggingface-cli on your machine. Bridge never uploads.",
+            Some("https://huggingface.co/docs/hub/repositories-getting-started".into()),
+            Some("confirm when the Hub repo is public".into()),
+            None,
+        ));
+    }
     if detected.steam {
         steps.push(step(
             "listing.steam",
@@ -653,6 +728,44 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             "Partner Center product submission / certification — Studio never uploads packages.",
             Some("https://partner.microsoft.com/dashboard/products".into()),
             Some("confirm after Partner Center submit".into()),
+            None,
+        ));
+    }
+
+    if detected.marketing_site {
+        let host = if detected.marketing_host.is_empty() {
+            "your host".into()
+        } else {
+            detected.marketing_host.clone()
+        };
+        steps.push(step(
+            "marketing.deploy",
+            "Marketing — public landing deploy",
+            StepKind::Deploy,
+            &format!(
+                "Deploy or cut over the download / HOOK / docs landing ({host}). Confirm when the canonical URL serves this build. Bridge does not touch DNS."
+            ),
+            Some(config::marketing_deploy_url(project)),
+            Some("confirm when the landing URL is live".into()),
+            None,
+        ));
+    }
+
+    if detected.suite_sync {
+        let targets = if detected.suite_detail.is_empty() {
+            "configured siblings".into()
+        } else {
+            detected.suite_detail.clone()
+        };
+        steps.push(step(
+            "suite.url_sync",
+            "Suite — sync canonical URL to siblings",
+            StepKind::List,
+            &format!(
+                "Paste the live landing URL into sibling env keys ({targets}). Ship Studio never writes sibling .env values — Confirm when keys match."
+            ),
+            Some(config::suite_sync_url(project)),
+            Some("confirm when sibling env keys match".into()),
             None,
         ));
     }
@@ -1415,5 +1528,148 @@ mod tests {
             Some("https://partner.microsoft.com/dashboard/products")
         );
         let _ = fs::remove_dir_all(&tauri);
+    }
+
+    #[test]
+    fn launch_registry_and_hf_listings() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-launch-registry-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(
+            dir.join("package.json"),
+            r#"{"name":"@acme/lib","version":"1.0.0"}"#,
+        )
+        .unwrap();
+        fs::write(
+            dir.join("Cargo.toml"),
+            "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+        )
+        .unwrap();
+        fs::write(dir.join(".ship/markets.json"), r#"["hf"]"#).unwrap();
+        let state = load_or_build(&dir).unwrap();
+        assert!(state.steps.iter().any(|s| s.id == "listing.npm"));
+        assert!(state.steps.iter().any(|s| s.id == "listing.crates"));
+        assert!(state.steps.iter().any(|s| s.id == "listing.huggingface"));
+        let npm = state.steps.iter().find(|s| s.id == "listing.npm").unwrap();
+        assert_eq!(
+            npm.run.as_ref().map(|r| r.as_slice()),
+            Some(
+                [
+                    "npm".to_string(),
+                    "publish".to_string(),
+                    "--dry-run".to_string()
+                ]
+                .as_slice()
+            )
+        );
+        assert_eq!(
+            npm.entry_url.as_deref(),
+            Some("https://www.npmjs.com/login")
+        );
+        let crates = state
+            .steps
+            .iter()
+            .find(|s| s.id == "listing.crates")
+            .unwrap();
+        assert_eq!(
+            crates.run.as_ref().map(|r| r.as_slice()),
+            Some(
+                [
+                    "cargo".to_string(),
+                    "publish".to_string(),
+                    "--dry-run".to_string()
+                ]
+                .as_slice()
+            )
+        );
+        let hf = state
+            .steps
+            .iter()
+            .find(|s| s.id == "listing.huggingface")
+            .unwrap();
+        assert_eq!(
+            hf.entry_url.as_deref(),
+            Some("https://huggingface.co/docs/hub/repositories-getting-started")
+        );
+        assert!(hf.run.is_none());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn launch_db_marketing_and_suite() {
+        let db = std::env::temp_dir().join(format!(
+            "shipctl-launch-db-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&db);
+        fs::create_dir_all(&db).unwrap();
+        fs::write(
+            db.join("wrangler.toml"),
+            "name = \"x\"\n[[d1_databases]]\nbinding = \"DB\"\ndatabase_name = \"x\"\ndatabase_id = \"…\"\n",
+        )
+        .unwrap();
+        fs::write(db.join(".env.local"), "NEON_DATABASE_URL=\n").unwrap();
+        let d = load_or_build(&db).unwrap();
+        assert!(d.steps.iter().any(|s| s.id == "db.provision"));
+        let provision = d.steps.iter().find(|s| s.id == "db.provision").unwrap();
+        assert_eq!(
+            provision.entry_url.as_deref(),
+            Some("https://console.neon.tech")
+        );
+        let _ = fs::remove_dir_all(&db);
+
+        let mkt = std::env::temp_dir().join(format!(
+            "shipctl-launch-mkt-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&mkt);
+        fs::create_dir_all(mkt.join("apps/website")).unwrap();
+        fs::write(mkt.join("apps/website/index.html"), "<h1>site</h1>\n").unwrap();
+        fs::write(mkt.join("vercel.json"), "{}\n").unwrap();
+        let m = load_or_build(&mkt).unwrap();
+        assert!(m.steps.iter().any(|s| s.id == "marketing.deploy"));
+        let marketing = m
+            .steps
+            .iter()
+            .find(|s| s.id == "marketing.deploy")
+            .unwrap();
+        assert!(marketing
+            .entry_url
+            .as_ref()
+            .is_some_and(|u| u.contains("vercel") || u.contains("pages") || u.contains("netlify")));
+        let _ = fs::remove_dir_all(&mkt);
+
+        let suite = std::env::temp_dir().join(format!(
+            "shipctl-launch-suite-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&suite);
+        fs::create_dir_all(suite.join(".ship")).unwrap();
+        fs::write(
+            suite.join(".ship/suite.json"),
+            r#"{"canonical_hint":"https://ship.example","siblings":[{"label":"truss","path":"../truss","env_keys":["NEXT_PUBLIC_X_URL"]}]}"#,
+        )
+        .unwrap();
+        let s = load_or_build(&suite).unwrap();
+        assert!(s.steps.iter().any(|s| s.id == "suite.url_sync"));
+        let sync = s.steps.iter().find(|st| st.id == "suite.url_sync").unwrap();
+        assert_eq!(sync.entry_url.as_deref(), Some("https://ship.example"));
+        assert!(sync.detail.contains("NEXT_PUBLIC_X_URL"));
+        let _ = fs::remove_dir_all(&suite);
     }
 }

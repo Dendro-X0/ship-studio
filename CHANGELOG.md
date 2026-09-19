@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Launch DB + marketing + suite parity** — Guided Launch sequences DB provision / marketing landing / suite URL sync (Open + Confirm; no DNS or sibling `.env` writes)
+- **Launch registry + HF listing parity** — Guided Launch sequences npm / crates.io dry-run Runs + Hugging Face Hub docs Open (live publish/upload stays Confirm)
 - **Alt host expand (Cloud Run / Azure Static)** — Advanced + Launch `host.cloudrun` / `host.azurestatic` Open dashboard URLs
 - **Launch mobile / store submit parity** — Guided Launch sequences Play / App Store / Microsoft Store Open + Confirm (no upload; Tauri skips Play)
 - **Launch marketplace submit parity** — Guided Launch sequences Steam / itch / Epic listing + submit docs (Open + Confirm; no upload)

@@ -32,10 +32,10 @@ Ship Studio stays a **local sequencing portal**: detect → adaptive plan → Op
 | **Db** | Neon / Supabase / D1 / Turso markers | Portal + env hints + Advanced `db.provision` (no migrate automation) |
 | **Ci** | `.github/workflows/*release*` | Pulse note + Advanced `ci.release` (Actions URL) |
 | **Pwa** | `manifest.webmanifest` / PWA manifest / vite-plugin-pwa | Pulse + Assist hints; host via Web + marketing.deploy |
-| **Oss** | npm/crates publishable package | Advanced `listing.npm` / `listing.crates` dry-run Runs |
+| **Oss** | npm/crates publishable package | Advanced + Launch `listing.npm` / `listing.crates` dry-run Runs |
 | **Game** | Steam / itch / Epic opt-in | Advanced listing.* (URL + Confirm; no depot upload) |
 | **Digital product** | Gumroad / Lemon / Polar markers | Advanced listing + marketing.deploy |
-| **AiModel** | `.ship/markets` hf · modelcard · `.huggingface/` | Advanced `listing.huggingface` (Hub docs + Confirm; no upload) |
+| **AiModel** | `.ship/markets` hf · modelcard · `.huggingface/` | Advanced + Launch `listing.huggingface` (Hub docs + Confirm; no upload) |
 
 ### Indie launch phases (reference)
 
@@ -139,7 +139,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 5 | **Container deploy** | ✅ Detect + portal; band #13 adds `container.build` Run | Fixture scope + publish; General omits |
 | 6 | **Steam / extra marketplaces** | ✅ Opt-in markers + `.ship/markets`; Advanced `listing.steam` / `itch` / `epic` | Fixture steam_appid + markets.json; General omits |
 | 7 | **Professional launch baseline** | ✅ Detect LICENSE / SECURITY / TRUST / CHANGELOG; Advanced `legal.baseline` · `trust.pack` · `release.github` (non-Signet-self) | Fixture missing legal + signet.toml; General omits |
-| 8 | **Package registries** | ✅ Detect publishable npm / crates.io (+ markets opt-in); Advanced `listing.npm` / `listing.crates` | Fixture markets npm+crates; General omits |
+| 8 | **Package registries** | ✅ Detect publishable npm / crates.io (+ markets opt-in); Advanced + Launch `listing.npm` / `listing.crates` | Fixture markets npm+crates; General omits Publish lanes |
 | 9 | **Marketing deploy lane** | ✅ Detect `apps/website` / Pages / preview / markets; Advanced `marketing.deploy` | Fixture website + markets; General omits |
 | 10 | **Graduate signing + commerce** | ✅ Markets/env opt-in; Advanced `sign.graduate` · `listing.gumroad` · `listing.lemon` (+ Sign portal checklist) | Fixture markets; General omits |
 | 11 | **Final-mile run depth** | ✅ Cut order build→trust→graduate→release_dry→release; `signet graduate notes` run; `ship.desktop_cut`; doctor readiness | Unit cut-order test; dogfood green |
@@ -204,12 +204,12 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Gaps #1–#46 first slices cleared** (mobile store API upload still deferred).  
+**Gaps #1–#48 first slices cleared** (mobile store API upload still deferred).  
 **L3:** aperio Desktop Advanced Publish — 20 steps, no Play/Android (`docs/handoffs/evidence-aperio-l3*`, 2026-09-18).
 
 Suggested follow-ups (not parallel wizards):
 
-1. ~~Bands #24–#46~~ — Local intent through Cloud Run / Azure Static hosts.  
+1. ~~Bands #24–#48~~ — Local intent through Launch DB + marketing + suite parity.  
 2. Keep `OPERATOR-NEXT.md` as the human-gate checklist (Public intent).  
 3. Only add a new Adaptive lane when a real ship needs it.  
 
@@ -217,4 +217,4 @@ Suggested follow-ups (not parallel wizards):
 
 | # | Band | Why it raises hub value |
 |---|------|-------------------------|
-| ~~24–46~~ | ~~Local intent … Cloud Run / Azure Static~~ | ~~done~~ |
+| ~~24–48~~ | ~~Local intent … Launch DB/marketing/suite~~ | ~~done~~ |

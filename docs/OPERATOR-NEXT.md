@@ -72,15 +72,16 @@ Same open → verify → confirm → next pattern; state in `.ship/launch.json`.
 | Scopes | Pick Web / API / Desktop / Mobile / Container, then Save |
 | Sign | Self-sign locally; Run `signet graduate notes` then apply/ov-sign/notarize; **Submit** store review on vendor sites |
 | Desktop cut | No Orbit host → Confirm `ship.desktop_cut` — Signet release is the deploy |
-| Listing | Polar · Gumroad · Lemon · Stripe · Paddle · npm · crates.io · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced) |
+| Listing | Polar · Gumroad · Lemon · Stripe · Paddle · npm · crates.io · Hugging Face · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced Publish + Launch) |
 | Steam submit | After listing, Open Steamworks uploading docs (`submit.steam`) and upload depots yourself |
 | itch / Epic submit | After listing, Open butler / Epic publishing docs (`submit.itch` / `submit.epic`) and upload yourself |
 | Fly / Railway / Render / DO / Heroku / Amplify / Cloud Run / Azure Static | Open dashboard (`host.*`); deploy with their CLI/UI — Studio does not Orbit-deploy them |
-| DB | Provision on Neon/Supabase/D1/Turso console; put connection on deploy target |
+| DB | Provision on Neon/Supabase/D1/Turso console (Publish or Launch `db.provision`); put connection on deploy target |
 | CI | After tag/Signet release, Run `gh run list` / confirm GitHub Actions |
 | Legal / trust | Add LICENSE + SECURITY.md; TRUST.md + checksums for desktop/Signet; Run `gh release list` then cut GitHub Release when prompted |
-| Marketing | Deploy landing / HOOK / download site; confirm canonical URL (DNS stays manual) |
-| Suite | After landing is live, paste URL into sibling env keys from `.ship/suite.json` (`suite.url_sync`) |
+| Marketing | Deploy landing / HOOK / download site (Publish or Launch `marketing.deploy`); confirm canonical URL (DNS stays manual) |
+| Suite | After landing is live, paste URL into sibling env keys from `.ship/suite.json` (`suite.url_sync` on Publish or Launch) |
 | Container | Run local `docker build` / `compose build`; push stays Confirm + registry docs |
-| npm / crates | Run `--dry-run` from Publish; live publish + OTP stays on your machine |
+| npm / crates | Run `--dry-run` from Publish or Launch; live publish + OTP stays on your machine |
+| Hugging Face | Open Hub docs from Publish/Launch; upload with huggingface-cli yourself |
 | Deploy | Allow network deploy when Publish reaches deploy (skip if already live) |
