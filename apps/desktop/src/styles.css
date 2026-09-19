@@ -1152,6 +1152,17 @@ button.danger {
   flex-wrap: wrap;
   gap: 0.4rem;
   justify-content: flex-end;
+  align-items: center;
+}
+
+.portal-actions .watch-toggle {
+  margin: 0 0.15rem;
+  font-size: 0.82rem;
+}
+
+#btn-publish-confirm.watch-ready {
+  outline: 2px solid rgba(63, 157, 110, 0.65);
+  outline-offset: 1px;
 }
 
 .portal-steps {

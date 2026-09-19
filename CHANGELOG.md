@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Publish progress watch** — `shipctl publish watch [--once|--interval-secs|--auto-confirm]` local Verify poller; Desktop Publish **Watch** toggle toasts when Confirm is ready (portal nudge; no vendor HTTPS)
 - **PowerShell Advanced dogfood** — `scripts/dogfood-advanced-publish.ps1` for Windows hosts without WSL bash
 - **Desktop busy unlock** — Cancel/Clear always re-enable Publish Refresh; `run()` clears busy in `finally`; 90s stuck hint
 - **Env entry URL honesty** — secret Open URLs match value source or put provider (Vercel-bound names no longer open Cloudflare tokens)

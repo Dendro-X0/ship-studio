@@ -1,7 +1,7 @@
 # Ship Studio — Scope of Service
 
 **Status:** Active (product definition)  
-**Updated:** 2026-09-16  
+**Updated:** 2026-09-19  
 **Canonical with:** [PRODUCT.md](./PRODUCT.md) · [shipping-hub-north-star.md](../specs/backend/shipping-hub-north-star.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md)
 
 ## One sentence
@@ -41,7 +41,7 @@ Drive the minute spine on **CLI · TUI · Desktop · MCP**:
 
 **Open / Run → (human + vendor) → Verify / Confirm → Next**
 
-Progress lives in project `.ship/publish.json` (no secret values).
+Progress lives in project `.ship/publish.json` (no secret values). Optional **Watch** (`shipctl publish watch` / Desktop toggle) polls local Verify and prompts when a step is ready — still never finishes OAuth/store/DNS for you.
 
 ### 4. Orient
 

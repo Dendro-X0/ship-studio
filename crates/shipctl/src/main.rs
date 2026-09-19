@@ -248,6 +248,18 @@ enum PublishCmd {
     },
     /// Clear publish progress and rebuild the plan.
     Reset,
+    /// Poll local Verify until ready (or --once); optional --auto-confirm.
+    Watch {
+        /// Seconds between verify probes (ignored with --once).
+        #[arg(long, default_value_t = 15)]
+        interval_secs: u64,
+        /// Single verify probe; always exits 0 with JSON `{ok,…}`.
+        #[arg(long, default_value_t = false)]
+        once: bool,
+        /// When verify succeeds, Confirm (never live-publishes by itself).
+        #[arg(long, default_value_t = false)]
+        auto_confirm: bool,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -499,6 +511,22 @@ fn main() -> Result<()> {
                 PublishCmd::Reset => {
                     let view = publish::reset_with_options(&project, mode, intent)?;
                     println!("{}", serde_json::to_string_pretty(&view)?);
+                }
+                PublishCmd::Watch {
+                    interval_secs,
+                    once,
+                    auto_confirm,
+                } => {
+                    let _ =
+                        publish::load_or_build_with_options(&project, mode, intent)?;
+                    publish::watch(
+                        &project,
+                        publish::WatchOpts {
+                            interval_secs: interval_secs.max(1),
+                            once,
+                            auto_confirm,
+                        },
+                    )?;
                 }
             }
         }

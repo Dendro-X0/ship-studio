@@ -30,9 +30,12 @@ cd "E:/Web Projects/ship-studio"
 # after paste / listing / live release / deploy on vendor UIs…
 ./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" confirm
 ./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" next
+# optional: poll local Verify until ready (never vendor HTTPS)
+./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" watch --once
+./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" watch --interval-secs 15
 ```
 
-Desktop: topbar **Advanced** · **Publish** (spine) · Related opens Env / Sign / Portal / Scopes / Dashboard · **Back to Publish**.  
+Desktop: topbar **Advanced** · **Publish** (spine) · **Watch** toggle polls Verify every 15s and toasts when Confirm is ready · Related opens Env / Sign / Portal / Scopes / Dashboard · **Back to Publish**.  
 TUI: Publish (`P`) → o / v / c / n.
 
 Progress: project `.ship/publish.json` (no secret values).

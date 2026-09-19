@@ -1,13 +1,13 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main` @ `418baa8` (synced)  
-**Status:** Bands #24–#26 shipped — idle
+**Branch:** `main`  
+**Status:** Band #27 Publish progress watch shipped — idle
 
 ## Next Atomic Step
 
-**Idle** — no Studio Adaptive work unless a real ship needs a new lane.  
-Aperio Advanced public L4 remains parked; prefer `--intent local` for personal tools.
+**Idle** — no Studio Adaptive work unless a real ship needs a new portal lane  
+(optional later: mobile BaaS Open URLs · Steam submit/depot docs step).
 
 ## PAUSED / CANCELLED
 
@@ -23,10 +23,11 @@ Aperio Advanced public L4 remains parked; prefer `--intent local` for personal t
 |------|--------|
 | #24–#25 | `4f071fe` · `5a437ae` |
 | #26 PowerShell dogfood | `418baa8` |
+| #27 Publish progress watch | (this commit) |
 
 ## Boot allowlist
 
 1. This file  
 2. `docs/START-HERE.md` → SCOPE → PRODUCT  
-3. North star · release-surface map  
+3. North star · release-surface map · `specs/backend/publish-progress-watch-design.md`  
 4. `docs/OPERATOR-NEXT.md`  

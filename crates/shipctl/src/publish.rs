@@ -1723,6 +1723,62 @@ pub fn reset_with_options(
     Ok(view(&state))
 }
 
+#[derive(Debug, Clone)]
+pub struct WatchOpts {
+    pub interval_secs: u64,
+    pub once: bool,
+    pub auto_confirm: bool,
+}
+
+/// Local-only verify poller. Never calls vendor HTTPS.
+pub fn watch(project: &Path, opts: WatchOpts) -> Result<()> {
+    let project = fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
+    let mut last_key = String::new();
+    loop {
+        let (ok, msg, pub_view) = verify_current(&project)?;
+        let step_id = pub_view
+            .current
+            .as_ref()
+            .map(|c| c.id.clone())
+            .unwrap_or_default();
+        let key = format!("{ok}:{step_id}:{msg}");
+        let prompt = if ok {
+            Some("Step ready — Confirm then Next")
+        } else {
+            None
+        };
+        let event = serde_json::json!({
+            "ok": ok,
+            "message": msg,
+            "step_id": step_id,
+            "finished": pub_view.finished,
+            "prompt": prompt,
+            "current_index": pub_view.current_index,
+            "total": pub_view.total,
+        });
+        // --once always emits; interval mode emits on state change only.
+        if opts.once || key != last_key {
+            println!("{}", serde_json::to_string(&event)?);
+            if ok {
+                eprintln!(
+                    "READY [{step_id}] {msg} — Confirm then Next (or --auto-confirm)."
+                );
+                if opts.auto_confirm {
+                    let _ = confirm_current(&project)?;
+                    let _ = next(&project, false)?;
+                    eprintln!("auto-confirmed → advanced");
+                }
+            }
+            last_key = key;
+        }
+        if opts.once || pub_view.finished {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_secs(opts.interval_secs));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2641,6 +2697,54 @@ mod tests {
             let (ok, msg, _) = verify_current(&dir).unwrap();
             assert!(ok, "TRUST.md should pass: {msg}");
         }
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn watch_once_reports_verify_for_legal_baseline() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-watch-once-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join("signet.toml"), "name = \"w\"\n").unwrap();
+        let _ = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let mut state = load_state(&dir, true, Some(StudioMode::Advanced), None).unwrap();
+        let idx = state
+            .steps
+            .iter()
+            .position(|s| s.id == "legal.baseline")
+            .expect("legal.baseline");
+        state.current = idx;
+        save_state(&dir, &state).unwrap();
+
+        watch(
+            &dir,
+            WatchOpts {
+                interval_secs: 1,
+                once: true,
+                auto_confirm: false,
+            },
+        )
+        .unwrap();
+
+        fs::write(dir.join("LICENSE"), "MIT\n").unwrap();
+        fs::write(dir.join("SECURITY.md"), "#\n").unwrap();
+        let (ok, msg, _) = verify_current(&dir).unwrap();
+        assert!(ok, "after files: {msg}");
+        watch(
+            &dir,
+            WatchOpts {
+                interval_secs: 1,
+                once: true,
+                auto_confirm: false,
+            },
+        )
+        .unwrap();
         let _ = fs::remove_dir_all(&dir);
     }
 

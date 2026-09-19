@@ -2443,6 +2443,84 @@ async function refreshPublish() {
   }
 }
 
+let publishWatchTimer: number | null = null;
+let publishWatchLastOk = false;
+let publishWatchLastStep = "";
+
+function stopPublishWatch(opts?: { uncheck?: boolean }) {
+  if (publishWatchTimer !== null) {
+    window.clearInterval(publishWatchTimer);
+    publishWatchTimer = null;
+  }
+  if (opts?.uncheck) {
+    const el = document.querySelector<HTMLInputElement>("#opt-publish-watch");
+    if (el) el.checked = false;
+  }
+  document
+    .querySelector("#btn-publish-confirm")
+    ?.classList.remove("watch-ready");
+}
+
+async function tickPublishWatch() {
+  if (running) return;
+  const project = projectPath();
+  if (!project) return;
+  if (lastPublish?.finished) {
+    stopPublishWatch({ uncheck: true });
+    return;
+  }
+  try {
+    const result = await invoke<CmdResult>("run_shipctl", {
+      project,
+      args: publishArgs(["watch", "--once"]),
+    });
+    const raw = (result?.stdout ?? "").trim();
+    if (!raw) return;
+    const line = raw.split(/\r?\n/).filter(Boolean).pop() ?? "";
+    const parsed = JSON.parse(line) as {
+      ok?: boolean;
+      message?: string;
+      step_id?: string;
+      prompt?: string | null;
+      finished?: boolean;
+    };
+    const ok = Boolean(parsed.ok);
+    const step = parsed.step_id ?? "";
+    document
+      .querySelector("#btn-publish-confirm")
+      ?.classList.toggle("watch-ready", ok);
+    if (ok && (!publishWatchLastOk || step !== publishWatchLastStep)) {
+      toast(parsed.prompt ?? "Step ready — Confirm then Next", "ok", 6000);
+      const status = await invoke<CmdResult>("run_shipctl", {
+        project,
+        args: publishArgs(),
+      });
+      if (status?.ok && status.stdout) {
+        try {
+          applyPublishView(JSON.parse(status.stdout) as PublishView);
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    publishWatchLastOk = ok;
+    publishWatchLastStep = step;
+    if (parsed.finished) stopPublishWatch({ uncheck: true });
+  } catch {
+    /* watch is best-effort */
+  }
+}
+
+function startPublishWatch() {
+  stopPublishWatch();
+  publishWatchLastOk = false;
+  publishWatchLastStep = "";
+  void tickPublishWatch();
+  publishWatchTimer = window.setInterval(() => {
+    void tickPublishWatch();
+  }, 15_000);
+}
+
 async function publishAction(sub: string[]) {
   const ordered =
     sub.length === 0 ? publishArgs() : publishArgs(sub);
@@ -3315,6 +3393,20 @@ async function runWizard() {
   });
   document.querySelector("#btn-publish-verify")?.addEventListener("click", () => {
     void publishAction(["verify"]);
+  });
+  document.querySelector("#opt-publish-watch")?.addEventListener("change", (ev) => {
+    const on = (ev.target as HTMLInputElement).checked;
+    if (on) {
+      if (!projectPath()) {
+        (ev.target as HTMLInputElement).checked = false;
+        toast("Open a project first", "err");
+        return;
+      }
+      startPublishWatch();
+      toast("Watching — local Verify every 15s", "info", 4000);
+    } else {
+      stopPublishWatch();
+    }
   });
   document.querySelector("#btn-publish-confirm")?.addEventListener("click", () => {
     void publishAction(["confirm"]);

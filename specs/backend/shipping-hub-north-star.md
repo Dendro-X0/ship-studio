@@ -52,6 +52,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **24b** | **Env entry URL honesty** — provider-matched Open URLs for secrets | Done (first slice) |
 | **25** | **Desktop busy unlock** — Cancel restores Refresh; `run` finally + watchdog | Done (first slice) |
 | **26** | **PowerShell Advanced dogfood** — Windows L2 without WSL bash | Done (first slice) |
+| **27** | **Publish progress watch** — local Verify poller + Desktop Watch toggle (portal nudge) | Done (first slice) |
 
 ## Band #11 acceptance
 
