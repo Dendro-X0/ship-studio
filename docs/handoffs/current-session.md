@@ -1,13 +1,13 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main` @ `5a437ae` (synced)  
-**Status:** Bands #24–#25 shipped
+**Branch:** `main`  
+**Status:** Bands #24–#26 shipped (commit pending for #26)
 
 ## Next Atomic Step
 
-**Idle** — or optional **band #26** (native PowerShell dogfood for Windows without WSL).  
-Do not invent marketing/demo lanes. Aperio Advanced public L4 remains parked.
+**Idle** — no Studio Adaptive work unless a real ship needs a new lane.  
+Aperio Advanced public L4 remains parked; prefer `--intent local` for personal tools.
 
 ## PAUSED / CANCELLED
 
@@ -19,10 +19,10 @@ Do not invent marketing/demo lanes. Aperio Advanced public L4 remains parked.
 
 ## Last closed
 
-| Band | Commit |
-|------|--------|
-| #24 + #24b | `4f071fe` |
-| #25 Desktop busy unlock | `5a437ae` |
+| Band | Evidence |
+|------|----------|
+| #24–#25 | `4f071fe` · `5a437ae` |
+| #26 PowerShell dogfood | `scripts/dogfood-advanced-publish.ps1` · design |
 
 ## Boot allowlist
 

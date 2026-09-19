@@ -49,6 +49,8 @@ Shipping hub: final-mile is sign → release → deploy. Docs/demos stay outside
 ```bash
 bash scripts/dogfood-advanced-publish.sh
 bash scripts/dogfood-advanced-walk.sh fixtures/advanced-dogfood
+# Windows without WSL:
+# powershell -File scripts/dogfood-advanced-publish.ps1
 # Desktop: Advanced → bind E:/Web Projects/ship-studio/fixtures/advanced-dogfood
 ```
 

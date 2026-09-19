@@ -53,6 +53,7 @@ SHIP_VAULT_PASSPHRASE='…' MY_TOKEN='…' \
 cargo test -p shipctl
 ./target/release/shipctl guide --project .
 bash scripts/dogfood-advanced-publish.sh
+# Windows (no WSL): powershell -File scripts/dogfood-advanced-publish.ps1
 bash scripts/dogfood-offline.sh .
 ```
 

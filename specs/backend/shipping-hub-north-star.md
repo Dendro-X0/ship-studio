@@ -51,6 +51,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **24** | **Personal / local ship intent** — Local vs Public filter orthogonal to General/Advanced | Done (first slice) |
 | **24b** | **Env entry URL honesty** — provider-matched Open URLs for secrets | Done (first slice) |
 | **25** | **Desktop busy unlock** — Cancel restores Refresh; `run` finally + watchdog | Done (first slice) |
+| **26** | **PowerShell Advanced dogfood** — Windows L2 without WSL bash | Done (first slice) |
 
 ## Band #11 acceptance
 

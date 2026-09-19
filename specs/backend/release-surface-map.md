@@ -158,6 +158,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 24 | **Personal / local ship intent** | ✅ Local omits env/deploy/stores; Public keeps hosted path | Unit `local_intent_omits_hosted_and_store_lanes` |
 | 24b | **Env entry URL honesty** | ✅ Vercel-bound names open Anthropic/Resend/Vercel — not Cloudflare | Unit `vercel_empty_env_entry_urls_not_cloudflare` |
 | 25 | **Desktop busy unlock** | ✅ Cancel/Clear unlock Refresh; `run` finally + 90s hint | `specs/frontend/desktop-busy-unlock-design.md` |
+| 26 | **PowerShell dogfood** | ✅ `scripts/dogfood-advanced-publish.ps1` | Exit 0 on Windows host |
 
 ## Change protocol
 
@@ -203,21 +204,17 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 
 ## Next atomic iteration (suggested)
 
-**Gaps #1–#25 first slices cleared** (mobile store API upload still deferred).  
+**Gaps #1–#26 first slices cleared** (mobile store API upload still deferred).  
 **L3:** aperio Desktop Advanced Publish — 20 steps, no Play/Android (`docs/handoffs/evidence-aperio-l3*`, 2026-09-18).
 
 Suggested follow-ups (not parallel wizards):
 
-1. ~~Live Desktop L3 Open/Run on a Signet subject~~ — done (aperio).  
-2. ~~Band #24 — Personal / local ship intent~~ — done.  
-3. ~~Band #24b — Env entry URL honesty~~ — done.  
-4. ~~Band #25 — Desktop busy unlock~~ — done.  
-5. **26** Native PowerShell dogfood (optional).  
-6. Keep `OPERATOR-NEXT.md` as the human-gate checklist (Public intent).  
+1. ~~Bands #24–#26~~ — Local intent · env URLs · busy unlock · PowerShell dogfood.  
+2. Keep `OPERATOR-NEXT.md` as the human-gate checklist (Public intent).  
+3. Only add a new Adaptive lane when a real ship needs it.  
 
 ### Value backlog (ranked, not parallel)
 
 | # | Band | Why it raises hub value |
 |---|------|-------------------------|
-| ~~24–25~~ | ~~Local intent · env URLs · busy unlock~~ | ~~done~~ |
-| 26 | Native PowerShell dogfood | Windows hosts without WSL bash |
+| ~~24–26~~ | ~~Local intent · env URLs · busy unlock · PS dogfood~~ | ~~done~~ |
