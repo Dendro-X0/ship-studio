@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main` (synced after push)  
-**Status:** Band #44 Launch marketplace submit parity shipped — idle
+**Status:** Band #45 Launch mobile/store submit parity shipped — idle
 
 ## Next Atomic Step
 
@@ -20,11 +20,11 @@
 
 | Band | Commit |
 |------|--------|
-| #43 Launch host / BaaS parity | `957baf0` |
-| #44 Launch marketplace submit | c2abac5 |
+| #44 Launch marketplace submit | `c2abac5` |
+| #45 Launch mobile / store submit | (this push) |
 
 ## Boot allowlist
 
 1. This file  
-2. North star · `specs/backend/launch-marketplace-submit-parity-design.md`  
+2. North star · `specs/backend/launch-mobile-store-parity-design.md`  
 3. `docs/OPERATOR-NEXT.md`  

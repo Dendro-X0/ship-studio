@@ -581,6 +581,59 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             None,
         ));
     }
+    if detected.android || detected.expo || (detected.mobile && !detected.ios) {
+        steps.push(step(
+            "listing.play",
+            "Listing — Google Play Console",
+            StepKind::List,
+            "Store listing, screenshots, and release track on Play Console — then Confirm.",
+            Some("https://play.google.com/console".into()),
+            Some("confirm listing updated".into()),
+            None,
+        ));
+        steps.push(step(
+            "submit.play",
+            "Submit — Play production / review",
+            StepKind::List,
+            "Promote the release track and send for review on Play Console — Studio never uploads APKs/AABs.",
+            Some("https://play.google.com/console".into()),
+            Some("confirm after review submit".into()),
+            None,
+        ));
+    }
+    if detected.ios || detected.expo || (detected.mobile && !detected.android) {
+        steps.push(step(
+            "listing.app_store",
+            "Listing — App Store Connect",
+            StepKind::List,
+            "App record, metadata, and pricing on App Store Connect — then Confirm.",
+            Some("https://appstoreconnect.apple.com".into()),
+            Some("confirm listing updated".into()),
+            None,
+        ));
+    }
+    if detected.ios || detected.expo || detected.tauri || (detected.mobile && !detected.android) {
+        steps.push(step(
+            "submit.app_store",
+            "Submit — App Store review",
+            StepKind::List,
+            "Submit for Review on App Store Connect after listing + build — Studio never uploads binaries.",
+            Some("https://appstoreconnect.apple.com".into()),
+            Some("confirm after review submit".into()),
+            None,
+        ));
+    }
+    if detected.tauri {
+        steps.push(step(
+            "submit.microsoft",
+            "Submit — Microsoft Store",
+            StepKind::List,
+            "Partner Center product submission / certification — Studio never uploads packages.",
+            Some("https://partner.microsoft.com/dashboard/products".into()),
+            Some("confirm after Partner Center submit".into()),
+            None,
+        ));
+    }
 
     steps.push(step(
         "flow_dry_run",
@@ -1292,5 +1345,53 @@ mod tests {
             Some("https://partner.steamgames.com/doc/sdk/uploading")
         );
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn launch_store_mobile_and_tauri_honesty() {
+        let mobile = std::env::temp_dir().join(format!(
+            "shipctl-launch-play-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&mobile);
+        fs::create_dir_all(mobile.join("android")).unwrap();
+        fs::write(mobile.join("build.gradle"), "// android\n").unwrap();
+        let m = load_or_build(&mobile).unwrap();
+        assert!(m.steps.iter().any(|s| s.id == "listing.play"));
+        assert!(m.steps.iter().any(|s| s.id == "submit.play"));
+        assert!(!m.steps.iter().any(|s| s.id == "submit.microsoft"));
+        let play = m.steps.iter().find(|s| s.id == "listing.play").unwrap();
+        assert_eq!(
+            play.entry_url.as_deref(),
+            Some("https://play.google.com/console")
+        );
+        let _ = fs::remove_dir_all(&mobile);
+
+        let tauri = std::env::temp_dir().join(format!(
+            "shipctl-launch-tauri-store-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&tauri);
+        fs::create_dir_all(tauri.join("src-tauri")).unwrap();
+        fs::write(tauri.join("package.json"), "{}\n").unwrap();
+        let t = load_or_build(&tauri).unwrap();
+        assert!(
+            !t.steps.iter().any(|s| s.id == "listing.play" || s.id == "submit.play"),
+            "Tauri-only must not get Play lanes"
+        );
+        assert!(t.steps.iter().any(|s| s.id == "submit.app_store"));
+        assert!(t.steps.iter().any(|s| s.id == "submit.microsoft"));
+        let ms = t.steps.iter().find(|s| s.id == "submit.microsoft").unwrap();
+        assert_eq!(
+            ms.entry_url.as_deref(),
+            Some("https://partner.microsoft.com/dashboard/products")
+        );
+        let _ = fs::remove_dir_all(&tauri);
     }
 }
