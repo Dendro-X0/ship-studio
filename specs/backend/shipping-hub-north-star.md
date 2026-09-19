@@ -59,6 +59,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **31** | **Marketplace submit parity** — `submit.itch` / `submit.epic` docs (Open + Confirm) | Done (first slice) |
 | **32** | **Alt host expand** — `host.render` / `host.digitalocean` dashboard Open URLs | Done (first slice) |
 | **33** | **TUI publish watch** — Publish screen `w` polls local Verify (CLI/Desktop parity) | Done (first slice) |
+| **34** | **MCP publish watch** — `ship_publish_watch` one-shot Verify probe for agents | Done (first slice) |
 
 ## Band #11 acceptance
 

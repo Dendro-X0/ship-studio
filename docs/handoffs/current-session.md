@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main`  
-**Status:** Band #33 TUI publish watch shipped — idle
+**Status:** Band #34 MCP publish watch shipped — idle
 
 ## Next Atomic Step
 
@@ -20,12 +20,12 @@
 
 | Band | Commit |
 |------|--------|
-| #31–#32 itch/Epic submit + Render/DO hosts | `385cb01` |
-| #33 TUI publish watch | (this commit) |
+| #33 TUI publish watch | `6e77c88` |
+| #34 MCP publish watch | (this commit) |
 
 ## Boot allowlist
 
 1. This file  
 2. `docs/START-HERE.md` → SCOPE → PRODUCT  
-3. North star · `specs/backend/tui-publish-watch-design.md`  
+3. North star · `specs/backend/mcp-publish-watch-design.md`  
 4. `docs/OPERATOR-NEXT.md`  

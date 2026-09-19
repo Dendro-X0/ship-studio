@@ -36,7 +36,8 @@ cd "E:/Web Projects/ship-studio"
 ```
 
 Desktop: topbar **Advanced** · **Publish** (spine) · **Watch** toggle polls Verify every 15s and toasts when Confirm is ready · Related opens Env / Sign / Portal / Scopes / Dashboard · **Back to Publish**.  
-TUI: Publish (`P`) → o / v / c / n · **`w` Watch** (local Verify poll, READY when Confirm is safe).
+TUI: Publish (`P`) → o / v / c / n · **`w` Watch** (local Verify poll, READY when Confirm is safe).  
+MCP: `ship_publish_watch` — one local Verify probe per call (agents poll; optional `auto_confirm`).
 
 Progress: project `.ship/publish.json` (no secret values).
 

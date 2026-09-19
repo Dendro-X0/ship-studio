@@ -1860,48 +1860,87 @@ pub struct WatchOpts {
     pub auto_confirm: bool,
 }
 
+/// Single local Verify probe (JSON-safe for MCP). Never calls vendor HTTPS.
+pub fn watch_probe(project: &Path, auto_confirm: bool) -> Result<serde_json::Value> {
+    let project = fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
+    let (ok, msg, pub_view) = verify_current(&project)?;
+    let step_id = pub_view
+        .current
+        .as_ref()
+        .map(|c| c.id.clone())
+        .unwrap_or_default();
+    let prompt = if ok {
+        Some("Step ready — Confirm then Next")
+    } else {
+        None
+    };
+    let mut event = serde_json::json!({
+        "ok": ok,
+        "message": msg,
+        "step_id": step_id,
+        "finished": pub_view.finished,
+        "prompt": prompt,
+        "current_index": pub_view.current_index,
+        "total": pub_view.total,
+        "auto_confirmed": false,
+    });
+    if ok && auto_confirm {
+        let _ = confirm_current(&project)?;
+        let advanced = next(&project, false)?;
+        event["auto_confirmed"] = serde_json::json!(true);
+        event["finished"] = serde_json::json!(advanced.finished);
+        event["current_index"] = serde_json::json!(advanced.current_index);
+        event["total"] = serde_json::json!(advanced.total);
+        event["step_id"] = serde_json::json!(
+            advanced
+                .current
+                .as_ref()
+                .map(|c| c.id.clone())
+                .unwrap_or_default()
+        );
+        event["prompt"] = serde_json::Value::Null;
+        event["message"] = serde_json::json!("auto-confirmed → advanced");
+    }
+    Ok(event)
+}
+
 /// Local-only verify poller. Never calls vendor HTTPS.
 pub fn watch(project: &Path, opts: WatchOpts) -> Result<()> {
     let project = fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
     let mut last_key = String::new();
     loop {
-        let (ok, msg, pub_view) = verify_current(&project)?;
-        let step_id = pub_view
-            .current
-            .as_ref()
-            .map(|c| c.id.clone())
-            .unwrap_or_default();
+        let event = watch_probe(&project, opts.auto_confirm)?;
+        let ok = event.get("ok").and_then(|v| v.as_bool()).unwrap_or(false);
+        let step_id = event
+            .get("step_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let msg = event
+            .get("message")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let finished = event
+            .get("finished")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
         let key = format!("{ok}:{step_id}:{msg}");
-        let prompt = if ok {
-            Some("Step ready — Confirm then Next")
-        } else {
-            None
-        };
-        let event = serde_json::json!({
-            "ok": ok,
-            "message": msg,
-            "step_id": step_id,
-            "finished": pub_view.finished,
-            "prompt": prompt,
-            "current_index": pub_view.current_index,
-            "total": pub_view.total,
-        });
-        // --once always emits; interval mode emits on state change only.
         if opts.once || key != last_key {
             println!("{}", serde_json::to_string(&event)?);
-            if ok {
+            if ok && !opts.auto_confirm {
                 eprintln!(
                     "READY [{step_id}] {msg} — Confirm then Next (or --auto-confirm)."
                 );
-                if opts.auto_confirm {
-                    let _ = confirm_current(&project)?;
-                    let _ = next(&project, false)?;
-                    eprintln!("auto-confirmed → advanced");
-                }
+            } else if opts.auto_confirm
+                && event
+                    .get("auto_confirmed")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false)
+            {
+                eprintln!("auto-confirmed → advanced");
             }
             last_key = key;
         }
-        if opts.once || pub_view.finished {
+        if opts.once || finished {
             break;
         }
         std::thread::sleep(std::time::Duration::from_secs(opts.interval_secs));
@@ -3051,6 +3090,29 @@ mod tests {
             },
         )
         .unwrap();
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn watch_probe_returns_json_without_printing() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-watch-probe-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join("signet.toml"), "name = \"p\"\n").unwrap();
+        let _ = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let event = watch_probe(&dir, false).unwrap();
+        assert!(event.get("ok").is_some());
+        assert!(event.get("step_id").is_some());
+        assert_eq!(
+            event.get("auto_confirmed").and_then(|v| v.as_bool()),
+            Some(false)
+        );
         let _ = fs::remove_dir_all(&dir);
     }
 

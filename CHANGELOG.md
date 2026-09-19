@@ -4,6 +4,7 @@
 
 ### Added
 
+- **MCP publish watch** — `ship_publish_watch` one-shot local Verify probe for agents (optional `auto_confirm`; no vendor HTTPS / stdio pollution)
 - **TUI publish watch** — Publish screen `w` toggles local Verify poll (~15s); READY status when Confirm is safe (parity with CLI/Desktop Watch)
 - **Alt host expand** — Advanced `host.render` / `host.digitalocean` Open dashboard URLs (deploy stays on vendor CLI/UI)
 - **Marketplace submit parity** — Advanced `submit.itch` / `submit.epic` open butler / Epic publishing docs (Open + Confirm; no upload from bridge)

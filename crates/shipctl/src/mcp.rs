@@ -99,6 +99,7 @@ fn tools() -> Vec<Value> {
             "Publish portal status (minute wizard). Use CLI for open/verify/confirm/next mutations.",
             false,
         ),
+        tool_publish_watch(),
         tool(
             "ship_scopes",
             "Detect Web/API/Desktop deploy scopes (directories + providers)",
@@ -188,6 +189,24 @@ fn tool_vault() -> Value {
                 }
             },
             "required": ["action"]
+        }
+    })
+}
+
+fn tool_publish_watch() -> Value {
+    json!({
+        "name": "ship_publish_watch",
+        "description": "One local Verify probe for the current publish step (never vendor HTTPS). Agents should poll. Optional auto_confirm when verify ok (never live-publishes).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "project": { "type": "string", "description": "Absolute project path" },
+                "auto_confirm": {
+                    "type": "boolean",
+                    "description": "When verify ok, Confirm then Next (default false)"
+                }
+            },
+            "required": ["project"]
         }
     })
 }
@@ -451,6 +470,14 @@ fn call_tool(params: Value) -> Result<Value> {
         "ship_publish" => {
             let state = publish::load_or_build(&project)?;
             serde_json::to_value(publish::view(&state))?
+        }
+        "ship_publish_watch" => {
+            let auto_confirm = args
+                .get("auto_confirm")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            let _ = publish::load_or_build(&project)?;
+            publish::watch_probe(&project, auto_confirm)?
         }
         "ship_scopes" => serde_json::to_value(scopes::plan_for(&project))?,
         "ship_env" => serde_json::to_value(envx::plan_for(&project)?)?,
