@@ -21,7 +21,7 @@
 | Band | Commit |
 |------|--------|
 | #43 Launch host / BaaS parity | `957baf0` |
-| #44 Launch marketplace submit | (this push) |
+| #44 Launch marketplace submit | c2abac5 |
 
 ## Boot allowlist
 
