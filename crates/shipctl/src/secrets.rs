@@ -178,6 +178,55 @@ fn graduate_commerce_catalog_hints(
         }
     }
 
+    if detected.stripe {
+        for (name, why) in [
+            ("STRIPE_SECRET_KEY", "Stripe secret API key"),
+            ("STRIPE_PUBLISHABLE_KEY", "Stripe publishable key"),
+            ("STRIPE_WEBHOOK_SECRET", "Webhook signing secret"),
+            ("STRIPE_PRICE_ID", "Price / Payment Link id"),
+        ] {
+            out.push(SecretHint {
+                provider: "stripe".into(),
+                name: name.into(),
+                source: "catalog · stripe".into(),
+                put_cli: vec![
+                    "shipctl".into(),
+                    "portal".into(),
+                    "--open".into(),
+                ],
+                work_dir: work.clone(),
+                entry_url: Some("https://dashboard.stripe.com/".into()),
+                detail: format!(
+                    "{why}. Create on Stripe; put on the deploy target — never in .ship/."
+                ),
+            });
+        }
+    }
+
+    if detected.paddle {
+        for (name, why) in [
+            ("PADDLE_API_KEY", "Paddle API key"),
+            ("PADDLE_WEBHOOK_SECRET", "Webhook signing secret"),
+            ("PADDLE_PRICE_ID", "Price / product id"),
+        ] {
+            out.push(SecretHint {
+                provider: "paddle".into(),
+                name: name.into(),
+                source: "catalog · paddle".into(),
+                put_cli: vec![
+                    "shipctl".into(),
+                    "portal".into(),
+                    "--open".into(),
+                ],
+                work_dir: work.clone(),
+                entry_url: Some("https://vendors.paddle.com/".into()),
+                detail: format!(
+                    "{why}. Create on Paddle; put on the deploy target — never in .ship/."
+                ),
+            });
+        }
+    }
+
     out
 }
 
@@ -589,7 +638,7 @@ fn dedupe_hints(hints: &mut Vec<SecretHint>) {
             "polar" => 4,
             "neon" | "supabase" | "d1" | "turso" | "container" | "firebase" | "appwrite"
             | "convex" | "fly" | "railway" | "render" | "digitalocean" => 5,
-            "graduate" | "gumroad" | "lemon" => 6,
+            "graduate" | "gumroad" | "lemon" | "stripe" | "paddle" => 6,
             _ => 9,
         }
     }

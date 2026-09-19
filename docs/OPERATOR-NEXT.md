@@ -72,7 +72,7 @@ Same open → verify → confirm → next pattern; state in `.ship/launch.json`.
 | Scopes | Pick Web / API / Desktop / Mobile / Container, then Save |
 | Sign | Self-sign locally; Run `signet graduate notes` then apply/ov-sign/notarize; **Submit** store review on vendor sites |
 | Desktop cut | No Orbit host → Confirm `ship.desktop_cut` — Signet release is the deploy |
-| Listing | Polar · Gumroad · Lemon · npm · crates.io · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced) |
+| Listing | Polar · Gumroad · Lemon · Stripe · Paddle · npm · crates.io · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced) |
 | Steam submit | After listing, Open Steamworks uploading docs (`submit.steam`) and upload depots yourself |
 | itch / Epic submit | After listing, Open butler / Epic publishing docs (`submit.itch` / `submit.epic`) and upload yourself |
 | Fly / Railway / Render / DO | Open dashboard (`host.*`); deploy with their CLI/UI — Studio does not Orbit-deploy them |

@@ -481,6 +481,12 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
     if upper.starts_with("LEMON_") || upper.starts_with("LEMONSQUEEZY_") {
         return Some("https://app.lemonsqueezy.com/");
     }
+    if upper.starts_with("STRIPE_") {
+        return Some("https://dashboard.stripe.com/");
+    }
+    if upper.starts_with("PADDLE_") {
+        return Some("https://vendors.paddle.com/");
+    }
     // Self-generated (CRON_SECRET, BETTER_AUTH_SECRET, …) or unknown → put destination.
     match put_provider {
         Some(ProviderId::Cloudflare) => Some(CLOUDFLARE.create_url),
@@ -533,6 +539,9 @@ pub fn once_hint_for_secret_name(name: &str) -> &'static str {
     }
     if upper.starts_with("GUMROAD_") || upper.starts_with("LEMON") {
         return "Create on the commerce dashboard; paste checkout URL into marketing CTA only.";
+    }
+    if upper.starts_with("STRIPE_") || upper.starts_with("PADDLE_") {
+        return "Create on the commerce dashboard; put keys on the deploy target — never in .ship/.";
     }
     "Copy the value when the provider shows it — many platforms never display it again."
 }

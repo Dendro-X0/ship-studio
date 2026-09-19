@@ -234,6 +234,12 @@ pub struct Detected {
     /// Lemon Squeezy commerce markers.
     #[serde(default)]
     pub lemon: bool,
+    /// Stripe commerce markers.
+    #[serde(default)]
+    pub stripe: bool,
+    /// Paddle commerce markers.
+    #[serde(default)]
+    pub paddle: bool,
     /// Cross-suite URL sync configured (`.ship/suite.json` or markets).
     #[serde(default)]
     pub suite_sync: bool,
@@ -567,13 +573,19 @@ pub fn probe(project: &Path) -> Detected {
                 .into(),
         );
     }
-    if d.gumroad || d.lemon {
+    if d.gumroad || d.lemon || d.stripe || d.paddle {
         let mut bits = Vec::new();
         if d.gumroad {
             bits.push("Gumroad");
         }
         if d.lemon {
             bits.push("Lemon");
+        }
+        if d.stripe {
+            bits.push("Stripe");
+        }
+        if d.paddle {
+            bits.push("Paddle");
         }
         d.hints.push(format!(
             "Commerce ({}) — Advanced listing opens SKU dashboards (URL + confirm).",
@@ -976,6 +988,14 @@ fn detect_graduate_commerce(project: &Path, d: &mut Detected) {
         .any(|m| m == "lemon" || m == "lemonsqueezy" || m == "lemon_squeezy")
         || env_key_prefix(project, "LEMON_")
         || env_key_prefix(project, "LEMONSQUEEZY_");
+
+    d.stripe = opted.iter().any(|m| m == "stripe")
+        || env_key_prefix(project, "STRIPE_")
+        || package_mentions(project, &["\"stripe\"", "@stripe/"]);
+
+    d.paddle = opted.iter().any(|m| m == "paddle")
+        || env_key_prefix(project, "PADDLE_")
+        || package_mentions(project, &["@paddle/", "paddle-sdk"]);
 }
 
 #[derive(Debug, Deserialize)]

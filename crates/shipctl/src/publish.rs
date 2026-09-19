@@ -719,6 +719,32 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
         ));
     }
 
+    if detected.stripe {
+        steps.push(step(
+            "listing.stripe",
+            "Listing — Stripe product / Payment Link",
+            PubKind::List,
+            "Create/update product, price, or Payment Link on Stripe. Confirm after the live CTA works. Bridge never creates Payment Links.",
+            3,
+            Some("https://dashboard.stripe.com/".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+
+    if detected.paddle {
+        steps.push(step(
+            "listing.paddle",
+            "Listing — Paddle product / checkout",
+            PubKind::List,
+            "Create/update product and checkout on Paddle. Confirm after the live CTA works. Bridge does not create products.",
+            3,
+            Some("https://vendors.paddle.com/".into()),
+            None,
+            Some("portal"),
+        ));
+    }
+
     if detected.npm_publish {
         steps.push(step(
             "listing.npm",
@@ -2880,6 +2906,44 @@ mod tests {
         assert!(!general.steps.iter().any(|s| s.id == "sign.graduate"));
         assert!(!general.steps.iter().any(|s| s.id == "listing.gumroad"));
         assert!(!general.steps.iter().any(|s| s.id == "listing.lemon"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn stripe_paddle_listing_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-stripe-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".env"), "STRIPE_SECRET_KEY=\n").unwrap();
+        fs::write(dir.join(".ship/markets.json"), r#"["paddle"]"#).unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let stripe = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "listing.stripe")
+            .expect("listing.stripe");
+        assert_eq!(
+            stripe.entry_url.as_deref(),
+            Some("https://dashboard.stripe.com/")
+        );
+        let paddle = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "listing.paddle")
+            .expect("listing.paddle");
+        assert_eq!(
+            paddle.entry_url.as_deref(),
+            Some("https://vendors.paddle.com/")
+        );
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "listing.stripe"));
+        assert!(!general.steps.iter().any(|s| s.id == "listing.paddle"));
         let _ = fs::remove_dir_all(&dir);
     }
 

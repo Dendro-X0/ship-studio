@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main`  
-**Status:** Band #34 MCP publish watch shipped — idle
+**Status:** Bands #35–#36 shipped — idle
 
 ## Next Atomic Step
 
@@ -20,12 +20,12 @@
 
 | Band | Commit |
 |------|--------|
-| #33 TUI publish watch | `6e77c88` |
-| #34 MCP publish watch | (this commit) |
+| #34 MCP publish watch | `ce7a856` |
+| #35–#36 Stripe/Paddle + Pulse cut hints | (this commit) |
 
 ## Boot allowlist
 
 1. This file  
 2. `docs/START-HERE.md` → SCOPE → PRODUCT  
-3. North star · `specs/backend/mcp-publish-watch-design.md`  
+3. North star · commerce-stripe-paddle · pulse-cut-hints-expand designs  
 4. `docs/OPERATOR-NEXT.md`  

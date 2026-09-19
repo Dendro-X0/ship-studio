@@ -678,10 +678,19 @@ fn tools_hard_block(wants_signet: bool, tools: &ToolsPulse, deploy: &DeployPulse
     None
 }
 
-/// Step-specific cue appended to mid-publish Now detail (band #17).
+/// Step-specific cue appended to mid-publish Now detail (bands #17 · #36).
 fn publish_cut_hint(id: &str) -> &'static str {
     if id.starts_with("sign.") || id == "trust.pack" || id == "ship.desktop_cut" {
         return " Final-mile cut — Open/Run Signet, then Confirm.";
+    }
+    if id.starts_with("oauth.") {
+        return " Open vendor login / CLI whoami, then Confirm.";
+    }
+    if id.starts_with("host.") {
+        return " Open the host dashboard (deploy on their CLI/UI), then Confirm.";
+    }
+    if id.starts_with("submit.") {
+        return " Open official upload/review docs; finish on the vendor site, then Confirm.";
     }
     match id {
         "release.github" => " Run `gh release list`, then cut Release on GitHub and Confirm.",
@@ -689,11 +698,28 @@ fn publish_cut_hint(id: &str) -> &'static str {
         "listing.npm" => " Run `npm publish --dry-run`; live publish stays Confirm.",
         "listing.crates" => " Run `cargo publish --dry-run`; live publish stays Confirm.",
         "listing.huggingface" => " Upload on Hub with huggingface-cli; Confirm when repo is live.",
+        "listing.steam" | "listing.itch" | "listing.epic" => {
+            " Open store listing on the vendor portal, then Confirm."
+        }
+        "listing.play" | "listing.app_store" => {
+            " Update store listing metadata on the console, then Confirm."
+        }
+        "listing.stripe"
+        | "listing.paddle"
+        | "listing.gumroad"
+        | "listing.lemon"
+        | "listing.polar" => " Open commerce dashboard for SKU/checkout, then Confirm.",
         "container.build" => " Run local `docker build` / compose build, then Confirm.",
         "container.deploy" => " Push image on your machine (docs Open); bridge never pushes.",
         "legal.baseline" => " Add LICENSE + SECURITY.md at repo root, then Confirm.",
         "marketing.deploy" => " Deploy/cut over the public landing URL, then Confirm.",
         "suite.url_sync" => " Paste live URL into sibling env keys, then Confirm.",
+        "db.provision" => {
+            " Provision the DB on the vendor console, put the connection on the deploy target, then Confirm."
+        }
+        "baas.provision" => {
+            " Open the BaaS console for Auth/client keys, put values on the host, then Confirm."
+        }
         _ => "",
     }
 }
@@ -1067,13 +1093,19 @@ pub fn for_project(project: &Path) -> Result<ProjectPulse> {
             }
         ));
     }
-    if detected.gumroad || detected.lemon {
+    if detected.gumroad || detected.lemon || detected.stripe || detected.paddle {
         let mut m = Vec::new();
         if detected.gumroad {
             m.push("Gumroad");
         }
         if detected.lemon {
             m.push("Lemon");
+        }
+        if detected.stripe {
+            m.push("Stripe");
+        }
+        if detected.paddle {
+            m.push("Paddle");
         }
         notes.push(format!(
             "Commerce ({}) — Advanced listing opens SKU dashboards.",
@@ -1205,6 +1237,12 @@ mod tests {
         assert!(publish_cut_hint("release.github").contains("gh release list"));
         assert!(publish_cut_hint("sign.self.release").contains("Final-mile"));
         assert_eq!(publish_cut_hint("env.sprint"), "");
+        assert!(publish_cut_hint("host.fly").contains("host dashboard"));
+        assert!(publish_cut_hint("baas.provision").contains("BaaS"));
+        assert!(publish_cut_hint("submit.steam").contains("upload/review"));
+        assert!(publish_cut_hint("listing.stripe").contains("commerce"));
+        assert!(publish_cut_hint("oauth.vercel").contains("whoami"));
+        assert!(publish_cut_hint("db.provision").contains("connection"));
 
         let git = GitPulse {
             is_repo: true,

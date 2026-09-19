@@ -60,6 +60,8 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **32** | **Alt host expand** — `host.render` / `host.digitalocean` dashboard Open URLs | Done (first slice) |
 | **33** | **TUI publish watch** — Publish screen `w` polls local Verify (CLI/Desktop parity) | Done (first slice) |
 | **34** | **MCP publish watch** — `ship_publish_watch` one-shot Verify probe for agents | Done (first slice) |
+| **35** | **Commerce expand** — `listing.stripe` / `listing.paddle` Open + Confirm | Done (first slice) |
+| **36** | **Pulse cut hints expand** — Now detail cues for host / BaaS / submit / commerce | Done (first slice) |
 
 ## Band #11 acceptance
 
