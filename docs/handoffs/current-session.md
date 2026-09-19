@@ -21,7 +21,7 @@
 | Band | Commit |
 |------|--------|
 | #45 Launch mobile / store submit | `723116d` |
-| #46 Cloud Run / Azure Static hosts | (this push) |
+| #46 Cloud Run / Azure Static hosts | 588e00c |
 
 ## Boot allowlist
 
