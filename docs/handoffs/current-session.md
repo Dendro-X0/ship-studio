@@ -1,12 +1,13 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main`  
-**Status:** Bands #35–#36 shipped — idle
+**Branch:** `main` (local — bands #37–#39 in working tree)  
+**Status:** Bands #37–#39 Assist / Doctor / Guide notes expand — first slices shipped; await commit
 
 ## Next Atomic Step
 
-**Idle** — no Studio Adaptive work unless a real ship needs a new portal lane.
+**Commit / push bands #37–#39** when maintainer asks — then idle  
+(only add Adaptive lanes when a real ship needs them).
 
 ## PAUSED / CANCELLED
 
@@ -20,12 +21,13 @@
 
 | Band | Commit |
 |------|--------|
-| #34 MCP publish watch | `ce7a856` |
-| #35–#36 Stripe/Paddle + Pulse cut hints | (this commit) |
+| #35–#36 Stripe/Paddle + Pulse cut hints | `6ca5380` |
+| #37 Assist notes expand | (pending) |
+| #38 Doctor notes expand | (pending) |
+| #39 Guide notes expand | (pending) |
 
 ## Boot allowlist
 
 1. This file  
-2. `docs/START-HERE.md` → SCOPE → PRODUCT  
-3. North star · commerce-stripe-paddle · pulse-cut-hints-expand designs  
-4. `docs/OPERATOR-NEXT.md`  
+2. North star · assist / doctor / guide notes-expand designs  
+3. `docs/OPERATOR-NEXT.md`  

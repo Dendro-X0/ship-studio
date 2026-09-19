@@ -4,6 +4,9 @@
 
 ### Added
 
+- **Guide notes expand** — `shipctl guide` adds Publish step + host / BaaS / commerce / Watch notes (prefer Publish over Flow)
+- **Doctor notes expand** — cut-readiness notes for alt hosts / mobile BaaS / Stripe·Paddle + optional flyctl/railway/doctl; Watch cue; missing host CLIs do not fail doctor ok
+- **Assist notes expand** — checklist notes for alt hosts / mobile BaaS / Stripe·Paddle / marketplace submit + Watch cue on Publish step
 - **Pulse cut hints expand** — Dashboard Now mid-publish detail cues for `host.*` / `baas.provision` / `submit.*` / commerce listings
 - **Commerce expand** — Advanced `listing.stripe` / `listing.paddle` Open dashboard URLs + name-only secret catalog (no Payment Link creation)
 - **MCP publish watch** — `ship_publish_watch` one-shot local Verify probe for agents (optional `auto_confirm`; no vendor HTTPS / stdio pollution)

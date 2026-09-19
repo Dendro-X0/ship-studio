@@ -150,6 +150,18 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
             detail: "Merges detected deploy_args / sign_args.".into(),
         },
         GuideStep {
+            id: "publish".into(),
+            title: "Publish — minute Open/Run → Confirm → Next".into(),
+            human: true,
+            command: vec![
+                "shipctl".into(),
+                "publish".into(),
+                "--project".into(),
+                project.display().to_string(),
+            ],
+            detail: "Preferred final-mile spine. Optional Watch: `publish watch`, Desktop toggle, TUI `w`, MCP `ship_publish_watch`.".into(),
+        },
+        GuideStep {
             id: "flow_dry_run".into(),
             title: "Flow dry-run — preview sign → deploy args".into(),
             human: false,
@@ -182,7 +194,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
                 "--project".into(),
                 project.display().to_string(),
             ],
-            detail: "Requires network for deploy; use TUI/Desktop when operator is ready.".into(),
+            detail: "Legacy companion — prefer Publish for the full Adaptive path.".into(),
         },
     ];
 
@@ -208,8 +220,10 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
     }
 
     let intent = config::intent_for(&project)?;
+    let detected = config::probe(&project);
     let mut notes = vec![
         "Guide is offline-safe JSON — open/login/put are operator-initiated.".into(),
+        "Prefer Publish (`shipctl publish`) over Flow for Adaptive Open → Confirm → Next.".into(),
         format!("Suggested deploy_args: {:?}", intent.deploy_args),
         format!("Suggested sign_args: {:?}", intent.sign_args),
         format!(
@@ -219,7 +233,56 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
         "Desktop/TUI Wizard follows the same step ids.".into(),
         "Optional vault: shipctl vault export --out ship-secrets.km --from-hints".into(),
     ];
-    notes.extend(doctor.notes.iter().take(6).cloned());
+    if detected.fly || detected.railway || detected.render || detected.digitalocean {
+        let mut m = Vec::new();
+        if detected.fly {
+            m.push("Fly");
+        }
+        if detected.railway {
+            m.push("Railway");
+        }
+        if detected.render {
+            m.push("Render");
+        }
+        if detected.digitalocean {
+            m.push("DigitalOcean");
+        }
+        notes.push(format!(
+            "Alt hosts ({}) — Advanced Publish host.* opens dashboards; deploy stays on their CLI/UI.",
+            m.join(" · ")
+        ));
+    }
+    if detected.mobile
+        && (detected.firebase || detected.appwrite || detected.convex || detected.supabase)
+    {
+        notes.push(
+            "Mobile BaaS — Advanced Publish baas.provision opens Firebase/Appwrite/Convex/Supabase console."
+                .into(),
+        );
+    }
+    if detected.stripe || detected.paddle {
+        let mut m = Vec::new();
+        if detected.stripe {
+            m.push("Stripe");
+        }
+        if detected.paddle {
+            m.push("Paddle");
+        }
+        notes.push(format!(
+            "Commerce ({}) — Advanced listing.* opens SKU dashboards; no Payment Link creation from Studio.",
+            m.join(" · ")
+        ));
+    }
+    notes.push(
+        "Progress nudge: `shipctl publish watch` · Desktop Watch · TUI `w` · MCP `ship_publish_watch`."
+            .into(),
+    );
+    // Prefer cut-readiness / portal cues from doctor over early PATH noise.
+    for n in doctor.notes.iter().rev().take(8) {
+        if !notes.iter().any(|existing| existing == n) {
+            notes.push(n.clone());
+        }
+    }
 
     Ok(GuidePlan {
         schema: "ship-studio/guide/v1".into(),
@@ -267,7 +330,40 @@ mod tests {
         assert!(plan.steps.iter().any(|s| s.id == "secrets"));
         assert!(plan.steps.iter().any(|s| s.id == "vault"));
         assert!(plan.steps.iter().any(|s| s.id == "configure"));
+        assert!(plan.steps.iter().any(|s| s.id == "publish"));
         assert!(plan.providers.iter().any(|p| p == "cloudflare"));
         assert!(!plan.entry_urls.is_empty());
+    }
+
+    #[test]
+    fn guide_notes_hosts_baas_commerce_and_watch() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-guide-expand-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("android")).unwrap();
+        fs::write(dir.join("fly.toml"), "app = \"demo\"\n").unwrap();
+        fs::write(dir.join("firebase.json"), "{}\n").unwrap();
+        fs::write(dir.join("build.gradle"), "// android\n").unwrap();
+        fs::write(dir.join(".env"), "STRIPE_SECRET_KEY=\n").unwrap();
+        let plan = plan_for(&dir).unwrap();
+        assert!(plan.steps.iter().any(|s| s.id == "publish"));
+        let publish = plan.steps.iter().find(|s| s.id == "publish").unwrap();
+        assert!(publish.detail.contains("Watch"));
+        assert!(plan
+            .notes
+            .iter()
+            .any(|n| n.contains("host.*") || n.contains("Fly")));
+        assert!(plan.notes.iter().any(|n| n.contains("baas.provision")));
+        assert!(plan
+            .notes
+            .iter()
+            .any(|n| n.contains("Stripe") || n.contains("listing.*")));
+        assert!(plan.notes.iter().any(|n| n.contains("publish watch")));
+        let _ = fs::remove_dir_all(&dir);
     }
 }

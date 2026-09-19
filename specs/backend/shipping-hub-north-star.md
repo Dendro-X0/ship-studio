@@ -62,6 +62,9 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **34** | **MCP publish watch** — `ship_publish_watch` one-shot Verify probe for agents | Done (first slice) |
 | **35** | **Commerce expand** — `listing.stripe` / `listing.paddle` Open + Confirm | Done (first slice) |
 | **36** | **Pulse cut hints expand** — Now detail cues for host / BaaS / submit / commerce | Done (first slice) |
+| **37** | **Assist notes expand** — checklist cues for hosts / BaaS / commerce / submit + Watch | Done (first slice) |
+| **38** | **Doctor notes expand** — cut-readiness cues for hosts / BaaS / commerce + optional host CLIs | Done (first slice) |
+| **39** | **Guide notes expand** — Publish step + host / BaaS / commerce / Watch cues | Done (first slice) |
 
 ## Band #11 acceptance
 

@@ -278,6 +278,50 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
                 .into(),
         );
     }
+    if detected.fly || detected.railway || detected.render || detected.digitalocean {
+        let mut m = Vec::new();
+        if detected.fly {
+            m.push("Fly");
+        }
+        if detected.railway {
+            m.push("Railway");
+        }
+        if detected.render {
+            m.push("Render");
+        }
+        if detected.digitalocean {
+            m.push("DigitalOcean");
+        }
+        notes.push(format!(
+            "Alt hosts ({}) — Advanced host.* opens dashboards; deploy on their CLI/UI (optional flyctl/railway/doctl; not required for doctor ok).",
+            m.join(" · ")
+        ));
+    }
+    if detected.mobile
+        && (detected.firebase || detected.appwrite || detected.convex || detected.supabase)
+    {
+        notes.push(
+            "Mobile BaaS — Advanced baas.provision opens Firebase/Appwrite/Convex/Supabase console."
+                .into(),
+        );
+    }
+    if detected.stripe || detected.paddle {
+        let mut m = Vec::new();
+        if detected.stripe {
+            m.push("Stripe");
+        }
+        if detected.paddle {
+            m.push("Paddle");
+        }
+        notes.push(format!(
+            "Commerce ({}) — Advanced listing.* opens SKU dashboards; no Payment Link creation from Studio.",
+            m.join(" · ")
+        ));
+    }
+    notes.push(
+        "Progress nudge: `shipctl publish watch` (CLI) · Desktop Watch · TUI `w` · MCP `ship_publish_watch` — local Verify only."
+            .into(),
+    );
 
     let wants_signet = detected.tauri || detected.signet_toml;
     let needs_host = detected.wrangler || detected.vercel || detected.netlify;
@@ -359,12 +403,34 @@ fn provider_cli_status(detected: &crate::config::Detected) -> Vec<ProviderCliSta
             "docker",
             "install Docker Desktop / engine so Publish can Run `docker build`",
         ),
+        (
+            "fly",
+            detected.fly,
+            "flyctl",
+            "optional: install flyctl — Studio only opens the Fly dashboard",
+        ),
+        (
+            "railway",
+            detected.railway,
+            "railway",
+            "optional: install Railway CLI — Studio only opens the Railway dashboard",
+        ),
+        (
+            "digitalocean",
+            detected.digitalocean,
+            "doctl",
+            "optional: install doctl — Studio only opens the DigitalOcean dashboard",
+        ),
     ];
     for (provider, needed, bin, fix) in checks {
         if !*needed {
             continue;
         }
-        let found = which(bin).is_ok() || which(format!("{bin}.exe")).is_ok();
+        let mut found = which(bin).is_ok() || which(format!("{bin}.exe")).is_ok();
+        // Fly ships as flyctl or fly.
+        if !found && *provider == "fly" {
+            found = which("fly").is_ok() || which("fly.exe").is_ok();
+        }
         out.push(ProviderCliStatus {
             provider: (*provider).into(),
             bin: (*bin).into(),
@@ -490,6 +556,32 @@ mod tests {
             ]
         );
         assert!(intent.detected.netlify);
+    }
+
+    #[test]
+    fn doctor_notes_hosts_baas_commerce_and_watch() {
+        let dir = tempfile_dir();
+        std::fs::create_dir_all(dir.join("android")).unwrap();
+        std::fs::write(dir.join("fly.toml"), "app = \"demo\"\n").unwrap();
+        std::fs::write(dir.join("firebase.json"), "{}\n").unwrap();
+        std::fs::write(dir.join("build.gradle"), "// android\n").unwrap();
+        std::fs::write(dir.join(".env"), "STRIPE_SECRET_KEY=\nPADDLE_API_KEY=\n").unwrap();
+        let report = doctor(&dir).expect("doctor");
+        assert!(report.ok, "alt-host without flyctl must still be doctor ok");
+        assert!(report
+            .notes
+            .iter()
+            .any(|n| n.contains("host.*") || n.contains("Fly")));
+        assert!(report.notes.iter().any(|n| n.contains("baas.provision")));
+        assert!(report
+            .notes
+            .iter()
+            .any(|n| n.contains("Stripe") || n.contains("listing.*")));
+        assert!(report.notes.iter().any(|n| n.contains("publish watch")));
+        assert!(report
+            .provider_clis
+            .iter()
+            .any(|c| c.provider == "fly" && c.bin == "flyctl"));
     }
 
     fn tempfile_dir() -> PathBuf {

@@ -85,14 +85,14 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
         AssistStep {
             id: "providers".into(),
             title: "Providers — OAuth / dashboards".into(),
-            detail: "Cloudflare, Vercel, Netlify, GitHub, Polar, DB hosts as detected.".into(),
+            detail: "Cloudflare, Vercel, Netlify, GitHub, Polar, DB, BaaS, and alt hosts (Fly/Railway/Render/DO) as detected.".into(),
             view: "portal".into(),
             ready: true,
         },
         AssistStep {
             id: "publish".into(),
             title: "Publish portal — minute wizard".into(),
-            detail: "Open/Run → Confirm → Next — final-mile sign → release → deploy.".into(),
+            detail: "Open/Run → Confirm → Next — final-mile sign → release → deploy. Optional Watch: CLI `publish watch`, Desktop toggle, TUI `w`, MCP `ship_publish_watch`.".into(),
             view: "publish".into(),
             ready: has_studio,
         },
@@ -194,7 +194,47 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
             m.push("Epic");
         }
         notes.push(format!(
-            "Extra markets ({}) — enable via markers or `.ship/markets`; Advanced listing is URL + confirm.",
+            "Extra markets ({}) — Advanced listing + submit.* open vendor portals/docs; upload stays Confirm.",
+            m.join(" · ")
+        ));
+    }
+    if detected.fly || detected.railway || detected.render || detected.digitalocean {
+        let mut m = Vec::new();
+        if detected.fly {
+            m.push("Fly");
+        }
+        if detected.railway {
+            m.push("Railway");
+        }
+        if detected.render {
+            m.push("Render");
+        }
+        if detected.digitalocean {
+            m.push("DigitalOcean");
+        }
+        notes.push(format!(
+            "Alt hosts ({}) — Advanced host.* opens dashboards; deploy stays on their CLI/UI (no Orbit).",
+            m.join(" · ")
+        ));
+    }
+    if detected.mobile
+        && (detected.firebase || detected.appwrite || detected.convex || detected.supabase)
+    {
+        notes.push(
+            "Mobile BaaS — Advanced baas.provision opens Firebase/Appwrite/Convex/Supabase console (Auth/keys)."
+                .into(),
+        );
+    }
+    if detected.stripe || detected.paddle {
+        let mut m = Vec::new();
+        if detected.stripe {
+            m.push("Stripe");
+        }
+        if detected.paddle {
+            m.push("Paddle");
+        }
+        notes.push(format!(
+            "Commerce ({}) — Advanced listing.* opens SKU dashboards; no Payment Link creation from Studio.",
             m.join(" · ")
         ));
     }
@@ -287,6 +327,33 @@ mod tests {
         if config::probe(&dir).github {
             assert!(plan.notes.iter().any(|n| n.contains("gh release list")));
         }
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn assist_notes_hosts_baas_commerce_and_submit() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-assist-expand-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("android")).unwrap();
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join("fly.toml"), "app = \"demo\"\n").unwrap();
+        fs::write(dir.join("firebase.json"), "{}\n").unwrap();
+        fs::write(dir.join("build.gradle"), "// android\n").unwrap();
+        fs::write(dir.join(".env"), "STRIPE_SECRET_KEY=\n").unwrap();
+        fs::write(dir.join("steam_appid.txt"), "480\n").unwrap();
+        let plan = plan_for(&dir).unwrap();
+        assert!(plan.notes.iter().any(|n| n.contains("host.*") || n.contains("Fly")));
+        assert!(plan.notes.iter().any(|n| n.contains("baas.provision")));
+        assert!(plan.notes.iter().any(|n| n.contains("listing.") && n.contains("Stripe")));
+        assert!(plan.notes.iter().any(|n| n.contains("submit")));
+        let publish = plan.steps.iter().find(|s| s.id == "publish").unwrap();
+        assert!(publish.detail.contains("Watch"));
         let _ = fs::remove_dir_all(&dir);
     }
 }
