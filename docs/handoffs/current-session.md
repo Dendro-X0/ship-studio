@@ -21,7 +21,7 @@
 | Band | Commit |
 |------|--------|
 | #42 Heroku / Amplify hosts | `bbe8024` |
-| #43 Launch host / BaaS parity | (this push) |
+| #43 Launch host / BaaS parity | 957baf0 |
 
 ## Boot allowlist
 
