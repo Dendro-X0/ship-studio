@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main` (synced after push)  
-**Status:** Band #40 Commerce portal catalog shipped — idle
+**Status:** Band #41 Launch commerce parity shipped — idle
 
 ## Next Atomic Step
 
@@ -20,11 +20,11 @@
 
 | Band | Commit |
 |------|--------|
-| #37–#39 Assist / Doctor / Guide notes | `cf4b6fd` |
-| #40 Commerce portal catalog | a107dbd |
+| #40 Commerce portal catalog | `a107dbd` |
+| #41 Launch commerce parity | (this push) |
 
 ## Boot allowlist
 
 1. This file  
-2. North star · `specs/backend/commerce-portal-catalog-design.md`  
+2. North star · `specs/backend/launch-commerce-parity-design.md`  
 3. `docs/OPERATOR-NEXT.md`  

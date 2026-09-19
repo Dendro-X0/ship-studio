@@ -375,12 +375,56 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             None,
         ));
     }
+    if detected.gumroad {
+        steps.push(step(
+            "listing.gumroad",
+            "Listing — Gumroad product / checkout",
+            StepKind::List,
+            "Create/update the Gumroad product on app.gumroad.com — Studio only opens the door.",
+            Some("https://app.gumroad.com/".into()),
+            Some("confirm listing/checkout updated".into()),
+            None,
+        ));
+    }
+    if detected.lemon {
+        steps.push(step(
+            "listing.lemon",
+            "Listing — Lemon Squeezy product / checkout",
+            StepKind::List,
+            "Create/update the Lemon product on app.lemonsqueezy.com — Studio only opens the door.",
+            Some("https://app.lemonsqueezy.com/".into()),
+            Some("confirm listing/checkout updated".into()),
+            None,
+        ));
+    }
+    if detected.stripe {
+        steps.push(step(
+            "listing.stripe",
+            "Listing — Stripe product / Payment Link",
+            StepKind::List,
+            "Create/update Stripe products or Payment Links on the dashboard — Studio never creates charges.",
+            Some("https://dashboard.stripe.com/".into()),
+            Some("confirm listing/checkout updated".into()),
+            None,
+        ));
+    }
+    if detected.paddle {
+        steps.push(step(
+            "listing.paddle",
+            "Listing — Paddle product / price",
+            StepKind::List,
+            "Create/update Paddle products on the vendor dashboard — Studio never creates transactions.",
+            Some("https://vendors.paddle.com/".into()),
+            Some("confirm listing/checkout updated".into()),
+            None,
+        ));
+    }
 
     steps.push(step(
         "flow_dry_run",
         "Flow dry-run — preview configure → sign → deploy",
         StepKind::Auto,
-        "Offline plan check before network deploy.",
+        "Offline plan check before network deploy. Prefer Publish for the full Adaptive path.",
         None,
         Some("shipctl flow --dry-run --offline --skip-deploy".into()),
         Some(vec![
@@ -979,5 +1023,40 @@ mod tests {
         assert_eq!(v.current.as_ref().unwrap().status, StepStatus::Done);
         let v2 = next(&dir, false).unwrap();
         assert_ne!(v2.current_index, 0);
+    }
+
+    #[test]
+    fn launch_commerce_listings_when_detected() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-launch-commerce-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".env"), "STRIPE_SECRET_KEY=\nPOLAR_CHECKOUT_URL=\n").unwrap();
+        fs::write(
+            dir.join(".ship/markets.json"),
+            r#"["gumroad","lemon","paddle"]"#,
+        )
+        .unwrap();
+        let state = load_or_build(&dir).unwrap();
+        assert!(state.steps.iter().any(|s| s.id == "listing.polar"));
+        assert!(state.steps.iter().any(|s| s.id == "listing.gumroad"));
+        assert!(state.steps.iter().any(|s| s.id == "listing.lemon"));
+        assert!(state.steps.iter().any(|s| s.id == "listing.stripe"));
+        assert!(state.steps.iter().any(|s| s.id == "listing.paddle"));
+        let stripe = state
+            .steps
+            .iter()
+            .find(|s| s.id == "listing.stripe")
+            .unwrap();
+        assert_eq!(
+            stripe.entry_url.as_deref(),
+            Some("https://dashboard.stripe.com/")
+        );
+        let _ = fs::remove_dir_all(&dir);
     }
 }

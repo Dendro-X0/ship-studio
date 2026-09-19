@@ -66,6 +66,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **38** | **Doctor notes expand** — cut-readiness cues for hosts / BaaS / commerce + optional host CLIs | Done (first slice) |
 | **39** | **Guide notes expand** — Publish step + host / BaaS / commerce / Watch cues | Done (first slice) |
 | **40** | **Commerce portal catalog** — Gumroad / Lemon / Stripe / Paddle as portal providers | Done (first slice) |
+| **41** | **Launch commerce parity** — companion listing.* for Gumroad / Lemon / Stripe / Paddle | Done (first slice) |
 
 ## Band #11 acceptance
 
