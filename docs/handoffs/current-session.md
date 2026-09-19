@@ -21,7 +21,7 @@
 | Band | Commit |
 |------|--------|
 | #44 Launch marketplace submit | `c2abac5` |
-| #45 Launch mobile / store submit | (this push) |
+| #45 Launch mobile / store submit | 723116d |
 
 ## Boot allowlist
 
