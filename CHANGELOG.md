@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Launch marketplace submit parity** — Guided Launch sequences Steam / itch / Epic listing + submit docs (Open + Confirm; no upload)
 - **Launch host / BaaS parity** — Guided Launch sequences alt-host dashboards + mobile BaaS provision (Open + Confirm)
 - **Alt host expand (Heroku / Amplify)** — Advanced `host.heroku` / `host.amplify` Open dashboard URLs (deploy stays on vendor CLI/UI)
 - **Launch commerce parity** — Guided Launch lists Gumroad / Lemon / Stripe / Paddle (Open + Confirm) beside Polar

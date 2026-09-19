@@ -521,6 +521,66 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             None,
         ));
     }
+    if detected.steam {
+        steps.push(step(
+            "listing.steam",
+            "Listing — Steamworks partner",
+            StepKind::List,
+            "Steam store presence stays on partner.steamgames.com — depots/builds are the next Submit step.",
+            Some("https://partner.steamgames.com/".into()),
+            Some("confirm listing updated".into()),
+            None,
+        ));
+        steps.push(step(
+            "submit.steam",
+            "Submit — Steam depots / builds",
+            StepKind::List,
+            "Upload the build and set depots on Steamworks. Studio only opens the docs — never Steam API upload.",
+            Some("https://partner.steamgames.com/doc/sdk/uploading".into()),
+            Some("confirm when the build is live".into()),
+            None,
+        ));
+    }
+    if detected.itch {
+        steps.push(step(
+            "listing.itch",
+            "Listing — itch.io dashboard",
+            StepKind::List,
+            "Store page / pricing on itch.io — build push is the next Submit step (butler).",
+            Some("https://itch.io/dashboard".into()),
+            Some("confirm listing updated".into()),
+            None,
+        ));
+        steps.push(step(
+            "submit.itch",
+            "Submit — itch.io butler push",
+            StepKind::List,
+            "Push the build with butler (or the itch dashboard). Studio only opens the docs — never runs butler.",
+            Some("https://itch.io/docs/butler/".into()),
+            Some("confirm when the build is live".into()),
+            None,
+        ));
+    }
+    if detected.epic {
+        steps.push(step(
+            "listing.epic",
+            "Listing — Epic Games Store portal",
+            StepKind::List,
+            "Epic product listing stays on the developer portal — binary upload is the next Submit step.",
+            Some("https://dev.epicgames.com/portal".into()),
+            Some("confirm listing updated".into()),
+            None,
+        ));
+        steps.push(step(
+            "submit.epic",
+            "Submit — Epic binary / artifacts",
+            StepKind::List,
+            "Upload binaries on Epic publishing tools. Studio only opens the docs — never uploads for you.",
+            Some("https://dev.epicgames.com/docs/epic-games-store/".into()),
+            Some("confirm when the build is submitted".into()),
+            None,
+        ));
+    }
 
     steps.push(step(
         "flow_dry_run",
@@ -1194,6 +1254,42 @@ mod tests {
         assert_eq!(
             heroku.entry_url.as_deref(),
             Some("https://dashboard.heroku.com/apps")
+        );
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn launch_marketplace_listing_and_submit() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-launch-market-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join("steam_appid.txt"), "480\n").unwrap();
+        fs::write(
+            dir.join(".ship/markets.json"),
+            r#"["itch","epic"]"#,
+        )
+        .unwrap();
+        let state = load_or_build(&dir).unwrap();
+        assert!(state.steps.iter().any(|s| s.id == "listing.steam"));
+        assert!(state.steps.iter().any(|s| s.id == "submit.steam"));
+        assert!(state.steps.iter().any(|s| s.id == "listing.itch"));
+        assert!(state.steps.iter().any(|s| s.id == "submit.itch"));
+        assert!(state.steps.iter().any(|s| s.id == "listing.epic"));
+        assert!(state.steps.iter().any(|s| s.id == "submit.epic"));
+        let submit = state
+            .steps
+            .iter()
+            .find(|s| s.id == "submit.steam")
+            .unwrap();
+        assert_eq!(
+            submit.entry_url.as_deref(),
+            Some("https://partner.steamgames.com/doc/sdk/uploading")
         );
         let _ = fs::remove_dir_all(&dir);
     }

@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main` (synced after push)  
-**Status:** Band #43 Launch host/BaaS parity shipped — idle
+**Status:** Band #44 Launch marketplace submit parity shipped — idle
 
 ## Next Atomic Step
 
@@ -20,11 +20,11 @@
 
 | Band | Commit |
 |------|--------|
-| #42 Heroku / Amplify hosts | `bbe8024` |
-| #43 Launch host / BaaS parity | 957baf0 |
+| #43 Launch host / BaaS parity | `957baf0` |
+| #44 Launch marketplace submit | (this push) |
 
 ## Boot allowlist
 
 1. This file  
-2. North star · `specs/backend/launch-host-baas-parity-design.md`  
+2. North star · `specs/backend/launch-marketplace-submit-parity-design.md`  
 3. `docs/OPERATOR-NEXT.md`  
