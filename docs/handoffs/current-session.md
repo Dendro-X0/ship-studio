@@ -1,13 +1,12 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main` (local — bands #37–#39 in working tree)  
-**Status:** Bands #37–#39 Assist / Doctor / Guide notes expand — first slices shipped; await commit
+**Branch:** `main` @ `cf4b6fd` (synced)  
+**Status:** Bands #37–#39 shipped — idle
 
 ## Next Atomic Step
 
-**Commit / push bands #37–#39** when maintainer asks — then idle  
-(only add Adaptive lanes when a real ship needs them).
+**Idle** — no Studio Adaptive work unless a real ship needs a new portal lane.
 
 ## PAUSED / CANCELLED
 
@@ -22,9 +21,7 @@
 | Band | Commit |
 |------|--------|
 | #35–#36 Stripe/Paddle + Pulse cut hints | `6ca5380` |
-| #37 Assist notes expand | (pending) |
-| #38 Doctor notes expand | (pending) |
-| #39 Guide notes expand | (pending) |
+| #37–#39 Assist / Doctor / Guide notes expand | `cf4b6fd` |
 
 ## Boot allowlist
 
