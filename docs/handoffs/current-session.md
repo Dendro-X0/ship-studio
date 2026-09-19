@@ -1,12 +1,12 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main`  
-**Status:** Band #48 Launch DB + marketing + suite parity — awaiting commit/push (#47 still uncommitted)
+**Branch:** `main` (synced after push)  
+**Status:** Bands #47–#48 Launch companion parity shipped — idle
 
 ## Next Atomic Step
 
-**Idle after commit** — no Studio Adaptive work unless a real ship needs a new portal lane.
+**Idle** — no Studio Adaptive work unless a real ship needs a new portal lane.
 
 ## PAUSED / CANCELLED
 
@@ -21,8 +21,8 @@
 | Band | Commit |
 |------|--------|
 | #46 Cloud Run / Azure Static hosts | `588e00c` |
-| #47 Launch registry + HF listing | (pending commit) |
-| #48 Launch DB + marketing + suite | (pending commit) |
+| #47 Launch registry + HF listing | `8703416` |
+| #48 Launch DB + marketing + suite | `8703416` |
 
 ## Boot allowlist
 
