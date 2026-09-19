@@ -21,7 +21,7 @@
 | Band | Commit |
 |------|--------|
 | #40 Commerce portal catalog | `a107dbd` |
-| #41 Launch commerce parity | (this push) |
+| #41 Launch commerce parity | 36c5802 |
 
 ## Boot allowlist
 
