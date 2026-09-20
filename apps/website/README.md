@@ -44,6 +44,17 @@ Script + captions: `docs/assets/demo/v0.1.0/SCRIPT.md`.
 python scripts/generate-demo-gifs.py   # regenerate stylized GIFs → docs + public
 ```
 
+## License + refund dogfood (W4)
+
+Buyer page: `/license` · maintainer checklist: [docs/LICENSE-REFUND-DOGFOOD.md](./docs/LICENSE-REFUND-DOGFOOD.md).
+
+```bash
+python scripts/issue-license.py issue --email buyer@example.com --order polar_xxx
+python scripts/issue-license.py revoke --order polar_xxx
+```
+
+Format: `docs/assets/license/FORMAT.md`. Ledger: `.ship-licenses/` (gitignored).
+
 ## Build
 
 ```bash

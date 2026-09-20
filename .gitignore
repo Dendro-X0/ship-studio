@@ -19,4 +19,9 @@ apps/desktop/src-tauri/target/
 ship-secrets.km
 vault-export-tmp.json
 
+# W4 license ledger + issued key files (keep examples tracked)
+.ship-licenses/
+*.ship-license
+ship-studio-*.license
+
 apps/website/.astro/

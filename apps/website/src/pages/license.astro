@@ -1,0 +1,61 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { downloadUrl, refundWindowDays, supportEmail } from "../lib/commerce";
+
+const email = supportEmail();
+const days = refundWindowDays();
+---
+
+<BaseLayout
+  title="License — Ship Studio"
+  description="Solo license is a local key file. Delivered by email after Polar checkout."
+  path="/license"
+>
+  <section class="section">
+    <h1>License</h1>
+    <p class="lead">
+      Ship Studio Solo is a <strong>local key file</strong> — not a cloud seat. After Polar
+      checkout you receive <code>ship-studio.license</code> by email (or Polar benefit).
+    </p>
+
+    <h2>After you buy</h2>
+    <ol class="list-clean license-steps">
+      <li>Finish checkout — you land on <a href="/checkout/success">purchase complete</a>.</li>
+      <li>Check email for the <code>.license</code> attachment (or Polar benefit download).</li>
+      <li>
+        Save it as:
+        <ul>
+          <li>Windows: <code>%USERPROFILE%\.ship\ship-studio.license</code></li>
+          <li>macOS / Linux: <code>~/.ship/ship-studio.license</code></li>
+        </ul>
+      </li>
+      <li>
+        <a href={downloadUrl()} rel="noopener noreferrer">Download</a> the build and open
+        <a href="/docs/start">Start here</a>.
+      </li>
+    </ol>
+
+    <div class="hero-cta" style="margin-top: 1.5rem">
+      <a class="btn btn-primary" href="/license/ship-studio.license.example" download>
+        Example license file
+      </a>
+      <a class="btn" href="/account">Manage order</a>
+      <a class="btn" href="/legal/refunds">Refunds ({days} days)</a>
+    </div>
+
+    <p class="price-meta" style="margin-top: 1.5rem">
+      Missing your file?
+      {
+        email ? (
+          <a href={`mailto:${email}?subject=Ship%20Studio%20license%20resend`}>
+            Email {email}
+          </a>
+        ) : (
+          <span>Email the maintainer</span>
+        )
+      }
+      with your Polar order ID. Schema:
+      <code>docs/assets/license/FORMAT.md</code> in the repo.
+    </p>
+  </section>
+</BaseLayout>

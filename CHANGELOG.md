@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Product website W4** — local license key file (`/license` · `scripts/issue-license.py`) + refund dogfood guide; success/account/refunds wired
 - **Product website W3** — `/demo` silent GIF shelf (bind · Open · Confirm→Next · Output Preview) + `docs/assets/demo/v0.1.0` script
 - **Product website W2** — Polar env-gated checkout · `/checkout/success|cancel` · `/account` portal · configurable refund window; `apps/website/docs/POLAR-SETUP.md`
 - **Product website W1** — `/docs/*` renders repo Markdown (START-HERE · scope · product · human-gates · current)

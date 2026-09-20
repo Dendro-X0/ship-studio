@@ -1,27 +1,50 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { downloadUrl } from "../../lib/commerce";
+import { downloadUrl, refundWindowDays, supportEmail } from "../../lib/commerce";
+
+const email = supportEmail();
+const days = refundWindowDays();
 ---
 
 <BaseLayout
   title="Purchase complete — Ship Studio"
-  description="Thanks for buying Ship Studio. Download and start with the docs."
+  description="Thanks for buying Ship Studio. Download, save your license file, start shipping."
   path="/checkout/success"
 >
   <section class="section">
     <h1>You’re in.</h1>
     <p class="lead">
-      Polar confirmed the payment. Ship Studio runs on your machine — download the build, then
-      follow Start here.
+      Polar confirmed the payment. Next: save your <strong>license key file</strong>, download the
+      build, then follow Start here.
     </p>
-    <div class="hero-cta">
+
+    <ol class="list-clean license-steps">
+      <li>
+        Watch for email with <code>ship-studio.license</code> (or open your Polar benefit). See
+        <a href="/license">license setup</a>.
+      </li>
+      <li>Save the file under <code>~/.ship/ship-studio.license</code>.</li>
+      <li>Download the desktop / CLI build from GitHub Releases.</li>
+    </ol>
+
+    <div class="hero-cta" style="margin-top: 1.5rem">
       <a class="btn btn-primary" href={downloadUrl()} rel="noopener noreferrer">Download</a>
+      <a class="btn" href="/license">License setup</a>
       <a class="btn" href="/docs/start">Start here</a>
       <a class="btn" href="/account">Manage order</a>
     </div>
     <p class="price-meta" style="margin-top: 1.5rem">
-      Receipts and invoices live in the Polar customer portal. Need a refund?
-      <a href="/legal/refunds">Refund policy</a>.
+      Receipts live in the Polar portal.
+      {
+        email ? (
+          <>
+            {" "}
+            Resend license: <a href={`mailto:${email}?subject=Ship%20Studio%20license%20resend`}>{email}</a>.
+          </>
+        ) : null
+      }
+      {" "}
+      {days}-day refunds — <a href="/legal/refunds">policy</a>.
     </p>
   </section>
 </BaseLayout>

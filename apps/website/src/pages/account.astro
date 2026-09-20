@@ -20,13 +20,14 @@ const email = supportEmail();
       <a class="btn btn-primary" href={polarPortalUrl()} rel="noopener noreferrer" target="_blank">
         Open Polar portal
       </a>
+      <a class="btn" href="/license">License file</a>
       <a class="btn" href="/legal/refunds">Refund policy</a>
       <a class="btn" href="/docs/start">Docs</a>
     </div>
     {
       email ? (
         <p class="price-meta" style="margin-top: 1.5rem">
-          Support: <a href={`mailto:${email}`}>{email}</a>
+          Support / license resend: <a href={`mailto:${email}`}>{email}</a>
         </p>
       ) : null
     }

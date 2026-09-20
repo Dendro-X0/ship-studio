@@ -50,4 +50,5 @@ pnpm website:dev
 2. Within `PUBLIC_REFUND_WINDOW_DAYS`, request refund in portal **or** email `PUBLIC_SUPPORT_EMAIL` with order ID.  
 3. Maintainer approves in Polar — Studio never stores cards or issues refunds itself.
 
-W4 adds automated license keys; W2 stops at checkout + policy + redirects.
+W4 — license keys + refund dogfood: [LICENSE-REFUND-DOGFOOD.md](./LICENSE-REFUND-DOGFOOD.md).
+W2 stops at checkout + policy + redirects; W4 adds key-file issuance and revoke ledger.

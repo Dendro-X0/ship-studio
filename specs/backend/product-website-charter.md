@@ -1,7 +1,7 @@
 # Official product website — charter
 
-**Status:** W3 done — feature demo page + first silent GIF set  
-**Updated:** 2026-09-19  
+**Status:** W4 done — license key file delivery + refund dogfood  
+**Updated:** 2026-09-20  
 **Owner:** `apps/website` · commerce via Polar (preferred)  
 **Parent:** product commercialization · separate from Adaptive Publish hub  
 
@@ -41,9 +41,21 @@
 - [x] Watermark `local app · recorded` · Buy/Download CTA  
 - [x] `pnpm website:build`  
 
+## W4 acceptance
+
+- [x] `/license` explains local key-file delivery + save paths  
+- [x] `/checkout/success` links license setup + resend mailto  
+- [x] License schema + example: `docs/assets/license/`  
+- [x] Maintainer issue/revoke: `scripts/issue-license.py` + gitignored ledger  
+- [x] Refund dogfood guide: `apps/website/docs/LICENSE-REFUND-DOGFOOD.md`  
+- [x] `/legal/refunds` + `/account` mention license honesty  
+- [x] `pnpm website:build`  
+
+> Live buy→refund still needs maintainer Polar credentials (not in git). Worker/webhook automation is optional follow-up.
+
 ## Next
 
-**W4:** license delivery (email / key file) + refund path dogfood  
+Website delivery bands W0–W4 complete. Adaptive hub remains idle unless a new band is queued.  
 
 
 ## Boundary (do not conflate)

@@ -1,8 +1,8 @@
 # CURRENT — Ship Studio
 
 **Version:** 0.1.0  
-**Updated:** 2026-09-19  
-**Status:** Adaptive hub **idle** · product website **W3 done** (demo GIF shelf)
+**Updated:** 2026-09-20  
+**Status:** Adaptive hub **idle** · product website **W4 done** (license + refund dogfood)
 
 ## Truth pointers
 
