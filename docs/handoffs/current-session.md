@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main`  
-**Status:** Product website **W2 done** — awaiting commit/push
+**Status:** Product website **W2 done** — next W3 when continue
 
 ## Next Atomic Step
 
@@ -21,8 +21,7 @@
 | Band | Commit |
 |------|--------|
 | Website W0 | `d1dae86` |
-| Website W1 docs pipeline | (pending commit) |
-| Website W2 Polar checkout + refunds | (pending commit) |
+| Website W1 docs + W2 Polar checkout | `9ce0989` |
 
 ## Boot allowlist
 
