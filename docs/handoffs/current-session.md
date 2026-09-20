@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main`  
-**Status:** Product website **W3 done** — awaiting commit/push
+**Status:** Product website **W3 done** — next W4 when continue
 
 ## Next Atomic Step
 
@@ -22,7 +22,7 @@
 |------|--------|
 | Website W0 | `d1dae86` |
 | Website W1 docs + W2 Polar checkout | `9ce0989` |
-| Website W3 demo GIF shelf | (pending commit) |
+| Website W3 demo GIF shelf | `a25c3ba` |
 
 ## Boot allowlist
 
