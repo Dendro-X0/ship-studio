@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-20  
 **Branch:** `main`  
-**Status:** Product website **W4 done** — awaiting commit/push
+**Status:** Product website **W4 done** — hub idle
 
 ## Next Atomic Step
 
@@ -23,7 +23,7 @@
 | Website W0 | `d1dae86` |
 | Website W1 docs + W2 Polar checkout | `9ce0989` |
 | Website W3 demo GIF shelf | `a25c3ba` |
-| Website W4 license + refund dogfood | (pending commit) |
+| Website W4 license + refund dogfood | `7935a49` |
 
 ## Boot allowlist
 
