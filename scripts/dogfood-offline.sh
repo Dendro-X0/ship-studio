@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Offline dogfood — runs everything shipctl can do without human tokens/deploy.
-# Stops with a clear MANUAL checklist (see docs/OPERATOR-NEXT.md).
+# Stops with a clear MANUAL checklist (see docs/product/OPERATOR-NEXT.md).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT="${1:-$ROOT}"
@@ -40,4 +40,4 @@ echo "3. Optional vault:        $SHIPCTL vault export --out ship-secrets.km --fr
 echo "4. Deploy when ready:     $SHIPCTL deploy --project \"$PROJECT\""
 echo "5. Create GitHub remote + push for ship-studio (if publishing)"
 echo
-echo "Full checklist: $ROOT/docs/OPERATOR-NEXT.md"
+echo "Full checklist: $ROOT/docs/product/OPERATOR-NEXT.md"

@@ -1,0 +1,32 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { checkoutConfigured, downloadUrl, polarCheckoutUrl } from "../lib/commerce";
+
+const buyHref = checkoutConfigured() ? polarCheckoutUrl() : "/pricing";
+---
+
+<BaseLayout
+  title="Demo — Ship Studio"
+  description="Feature demo of Adaptive Publish on the desktop shell."
+  path="/demo"
+>
+  <section class="section">
+    <h1>Feature demo</h1>
+    <p class="lead">
+      Bind a project · Open vendor doors · Confirm · Next. Silent GIFs land in W3; this stage
+      is the honest placeholder.
+    </p>
+    <div class="demo-stage">
+      <span class="demo-watermark">local app · recorded</span>
+      <div>
+        <h2>Publish spine</h2>
+        <p>Desktop Output Preview · Open/Run → Confirm → Next — GIF shelf coming in W3.</p>
+      </div>
+    </div>
+    <div class="hero-cta" style="margin-top: 1.5rem">
+      <a class="btn btn-primary" href={buyHref}>Buy</a>
+      <a class="btn" href={downloadUrl()}>Download</a>
+      <a class="btn" href="/docs">Read docs</a>
+    </div>
+  </section>
+</BaseLayout>

@@ -147,7 +147,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 | 13 | **Container final-mile run** | ✅ Advanced `container.build` Run (`docker build` / `compose build`); `container.deploy` push Confirm; doctor docker PATH | Unit + dogfood; no `docker push` |
 | 14 | **Cut order + CI/registry Runs** | ✅ Place ci/container after release; `gh run list`; npm/cargo `--dry-run` | Order unit test; dogfood |
 | 15 | **Adaptive doctor + Verify** | ✅ Layout-aware `doctor.ok`; legal/trust/ci/desktop_cut verify; sticky pending baseline | Unit matrix + verify fixtures |
-| 16 | **Desktop Open/Related parity** | ✅ Open navigates Dashboard/Tools/Launch like Related | Code + frontend-spec |
+| 16 | **Desktop Open/Related parity** | ✅ Open navigates Dashboard/Tools/Launch like Related | Code + `docs/frontend/frontend-spec.md` |
 | 17 | **Pulse cut hints** | ✅ Mid-publish Now cues for CI / registry / container / release | Unit `publish_cut_hints_for_ci_and_registry` |
 | 18 | **release.github Run** | ✅ `gh release list` Run + Verify when a release exists | Unit run vector; no create |
 | 19 | **Assist Run notes** | ✅ Checklist cues for gh list / registry dry-run | Unit assist notes |
@@ -198,7 +198,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 - `studio-modes-design.md` — General / Advanced  
 - `deploy-status-skip-design.md` — already-live skip  
 - `project-pulse-design.md` — Dashboard Now  
-- `docs/OPERATOR-NEXT.md` — human gates  
+- `docs/product/OPERATOR-NEXT.md` — human gates  
 - `docs/handoffs/current-session.md` — next atomic step  
 
 

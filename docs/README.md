@@ -1,0 +1,38 @@
+# Ship Studio Documentation
+
+**Start:** [CURRENT.md](./CURRENT.md) → [handoffs/current-session.md](./handoffs/current-session.md)
+
+_Last updated: 2026-09-19 · **0.1.0** · docs shelf layout (Obscur-style)_
+
+---
+
+## Three hops (most questions)
+
+| Hop | Document | Answers |
+|-----|----------|---------|
+| 1 | [CURRENT.md](./CURRENT.md) | Version, idle/active status, where truth lives |
+| 2 | [product/SCOPE-OF-SERVICE.md](./product/SCOPE-OF-SERVICE.md) | What Studio does / does not do |
+| 3 | [product/OPERATOR-NEXT.md](./product/OPERATOR-NEXT.md) | Human gates still on the operator |
+| 3b | [../specs/backend/shipping-hub-north-star.md](../specs/backend/shipping-hub-north-star.md) | Adaptive bands + mission |
+
+Agents: boot [START-HERE.md](./START-HERE.md) → handoff **Next Atomic Step** only. Prefer Publish over Launch.
+
+---
+
+## Shelves
+
+| Shelf | Files | Use |
+|-------|-------|-----|
+| [product/](./product/README.md) | 3 | Scope, product contract, operator checklist |
+| [dogfood/](./dogfood/README.md) | 3 | Offline / Signet / Orbit walk scripts |
+| [frontend/](./frontend/README.md) | 1 | Desktop shell contract |
+| [handoffs/](./handoffs/README.md) | live + evidence | Continuity · L3 proof |
+| [../specs/backend/](../specs/backend/) | designs | North star · release-surface · band designs · [product website charter](../specs/backend/product-website-charter.md) |
+
+Root keeps only front-door docs: `README.md` · `START-HERE.md` · `CURRENT.md` · `DOC-MAINTENANCE.md`.
+
+---
+
+## Maintenance
+
+[DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md) · [START-HERE.md](./START-HERE.md)

@@ -2,7 +2,7 @@
 
 **Status:** Active (product definition)  
 **Updated:** 2026-09-19  
-**Canonical with:** [PRODUCT.md](./PRODUCT.md) · [shipping-hub-north-star.md](../specs/backend/shipping-hub-north-star.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md)
+**Canonical with:** [PRODUCT.md](./PRODUCT.md) · [shipping-hub-north-star.md](../../specs/backend/shipping-hub-north-star.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md)
 
 ## One sentence
 

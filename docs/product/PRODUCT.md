@@ -3,7 +3,7 @@
 **Status:** Active — CLI + TUI + desktop  
 **Updated:** 2026-09-19  
 
-**Scope of service (who / what / boundary):** [docs/SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md)
+**Scope of service (who / what / boundary):** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md)
 
 ```text
 GOAL:     Local shipping hub — final-mile sign → release → deploy (Adaptive Publish spine)

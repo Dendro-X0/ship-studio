@@ -1,0 +1,55 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import {
+  checkoutConfigured,
+  downloadUrl,
+  polarCheckoutUrl,
+  polarPortalUrl,
+} from "../lib/commerce";
+---
+
+<BaseLayout
+  title="Pricing — Ship Studio"
+  description="Solo license via Polar checkout. Refunds within 14 days."
+  path="/pricing"
+>
+  <section class="section">
+    <h1>Pricing</h1>
+    <p class="lead">
+      One Solo plan for the local hub (CLI · TUI · Desktop). Checkout is hosted by Polar — we
+      never see your card number.
+    </p>
+
+    <div class="price-block">
+      <div>
+        <strong>Solo</strong>
+        <p class="price-meta">Perpetual license for one operator · updates on the current major</p>
+      </div>
+      <ul class="list-clean">
+        <li>shipctl CLI, TUI, and Desktop</li>
+        <li>Adaptive Publish · Launch companion · portal honesty</li>
+        <li>Docs + dogfood scripts in the repo</li>
+      </ul>
+      {
+        checkoutConfigured() ? (
+          <a class="btn btn-primary" href={polarCheckoutUrl()} rel="noopener">
+            Checkout with Polar
+          </a>
+        ) : (
+          <>
+            <a class="btn btn-primary btn-disabled" href="#" aria-disabled="true">
+              Checkout with Polar
+            </a>
+            <p class="note">
+              W0 placeholder — set PUBLIC_POLAR_CHECKOUT_URL in apps/website/.env
+            </p>
+          </>
+        )
+      }
+      <p class="price-meta">
+        Prefer trying first? <a href={downloadUrl()}>Download from GitHub Releases</a>
+        · manage billing on <a href={polarPortalUrl()}>Polar</a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>

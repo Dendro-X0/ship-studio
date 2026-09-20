@@ -1,0 +1,30 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { checkoutConfigured, downloadUrl, polarCheckoutUrl } from "../lib/commerce";
+
+const buyHref = checkoutConfigured() ? polarCheckoutUrl() : "/pricing";
+const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
+---
+
+<BaseLayout
+  title="Ship Studio — local shipping hub"
+  description="Final-mile sign → release → deploy on CLI, TUI, and desktop. You finish vendor OAuth; Studio sequences the gates."
+  path="/"
+>
+  <section class="hero" aria-label="Hero">
+    <div class="hero-atmosphere" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <p class="hero-brand">Ship Studio</p>
+      <h1 class="hero-line">The final mile, sequenced.</h1>
+      <p class="hero-support">
+        Local Adaptive Publish for sign → release → deploy. Open vendor doors, Confirm each
+        gate — Studio never replaces Cloudflare, Apple, or Polar.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href={buyHref}>{buyLabel}</a>
+        <a class="btn" href={downloadUrl()}>Download</a>
+        <a class="btn" href="/docs">Docs</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

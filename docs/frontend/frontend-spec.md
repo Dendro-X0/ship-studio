@@ -131,8 +131,26 @@ Fixed `#toast-host` above the status/output chrome (z-index above dock, below cm
 
 DO NOT: toast every `pulse`/`scopes` quiet refresh · block the UI · replace Output dock.
 
+## Output preview
+
+Dock always shows a short console. Operators often need a larger read of JSON / long Runs.
+
+| Control | Behavior |
+|---------|----------|
+| `#btn-output-preview` in `.output-head` | Opens `#output-preview` overlay (modal) |
+| Overlay body `#output-preview-body` | Mirrors `#output` / stream; live-updates while open |
+| `#output-preview-search` | Find-in-preview (case-insensitive); highlights matches; counter + ↑↓ |
+| Enter / Shift+Enter | Next / previous match (when search focused) |
+| Ctrl+F (preview open) | Focus search |
+| Copy / Close | Copy same as `#btn-copy`; Esc or backdrop / Close dismisses |
+| CmdK | “Preview output” action |
+
+DO NOT: open a second OS window this pass · replace the Output nav view · toast on every stream line · filter away non-matching lines (highlight only).
+
+Visual: full-bleed dark overlay (above toast, below cmdk). Panel: wide `min(920px, 94vw)`, search row under title, tall pre `min(70vh)`, mono body, emerald match marks.
+
 ## Proof
 
-- L3: `npm run tauri dev` — Advanced mode · Start publish · walk listing/submit/db/ci/container when markers present · Related → Back to Publish
+- L3: `pnpm dev` — Output **Preview** · search finds JSON keys · Enter cycles matches · Esc closes
 - L2: `cargo run -p shipctl -- publish --mode advanced --project <dogfood-fixture>` lists new step ids
 - Existing button IDs remain clickable after redesign

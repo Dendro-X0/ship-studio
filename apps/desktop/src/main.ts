@@ -503,6 +503,116 @@ function syncOutputMirror() {
     mirror.textContent = out.textContent ?? "";
     mirror.scrollTop = mirror.scrollHeight;
   }
+  syncOutputPreview();
+}
+
+function outputPreviewVisible(): boolean {
+  const root = document.querySelector<HTMLElement>("#output-preview");
+  return Boolean(root && !root.hidden);
+}
+
+let previewSearchQuery = "";
+let previewMatchIndex = 0;
+let previewMatchCount = 0;
+
+function previewSourceText(): string {
+  return streamBuf || outputEl()?.textContent || "";
+}
+
+function renderOutputPreviewBody(opts?: { stickBottom?: boolean }) {
+  const body = document.querySelector<HTMLPreElement>("#output-preview-body");
+  if (!body) return;
+  const text = previewSourceText();
+  const atBottom =
+    opts?.stickBottom ??
+    body.scrollHeight - body.scrollTop - body.clientHeight < 48;
+  const q = previewSearchQuery.trim();
+  previewMatchCount = 0;
+  if (!q) {
+    body.textContent = text;
+    previewMatchIndex = 0;
+    updatePreviewSearchChrome();
+    if (atBottom) body.scrollTop = body.scrollHeight;
+    return;
+  }
+  const lower = text.toLowerCase();
+  const needle = q.toLowerCase();
+  const ranges: Array<{ start: number; end: number }> = [];
+  let from = 0;
+  while (from < text.length) {
+    const found = lower.indexOf(needle, from);
+    if (found === -1) break;
+    ranges.push({ start: found, end: found + needle.length });
+    from = found + needle.length;
+  }
+  previewMatchCount = ranges.length;
+  if (previewMatchCount === 0) previewMatchIndex = 0;
+  else if (previewMatchIndex >= previewMatchCount) {
+    previewMatchIndex = previewMatchCount - 1;
+  }
+  let html = "";
+  let cursor = 0;
+  ranges.forEach((range, idx) => {
+    html += escapeHtml(text.slice(cursor, range.start));
+    const chunk = text.slice(range.start, range.end);
+    const current = idx === previewMatchIndex ? " current" : "";
+    html += `<mark class="preview-hit${current}" data-hit="${idx}">${escapeHtml(chunk)}</mark>`;
+    cursor = range.end;
+  });
+  html += escapeHtml(text.slice(cursor));
+  body.innerHTML = html;
+  updatePreviewSearchChrome();
+  const current = body.querySelector<HTMLElement>(
+    `mark.preview-hit[data-hit="${previewMatchIndex}"]`,
+  );
+  if (current) {
+    current.scrollIntoView({ block: "center", behavior: "smooth" });
+  } else if (atBottom) {
+    body.scrollTop = body.scrollHeight;
+  }
+}
+
+function updatePreviewSearchChrome() {
+  const count = document.querySelector("#output-preview-search-count");
+  const prev = document.querySelector<HTMLButtonElement>("#btn-output-preview-prev");
+  const next = document.querySelector<HTMLButtonElement>("#btn-output-preview-next");
+  const q = previewSearchQuery.trim();
+  if (count) {
+    if (!q) count.textContent = "";
+    else if (previewMatchCount === 0) count.textContent = "0 matches";
+    else count.textContent = `${previewMatchIndex + 1} / ${previewMatchCount}`;
+  }
+  const enabled = previewMatchCount > 0;
+  if (prev) prev.disabled = !enabled;
+  if (next) next.disabled = !enabled;
+}
+
+function stepPreviewMatch(delta: number) {
+  if (previewMatchCount <= 0) return;
+  previewMatchIndex =
+    (previewMatchIndex + delta + previewMatchCount) % previewMatchCount;
+  renderOutputPreviewBody({ stickBottom: false });
+}
+
+function syncOutputPreview() {
+  if (!outputPreviewVisible()) return;
+  renderOutputPreviewBody();
+}
+
+function openOutputPreview() {
+  const root = document.querySelector<HTMLElement>("#output-preview");
+  const search = document.querySelector<HTMLInputElement>("#output-preview-search");
+  if (!root) return;
+  if (cmdkVisible()) cmdkClose();
+  root.hidden = false;
+  renderOutputPreviewBody({ stickBottom: true });
+  search?.focus();
+  search?.select();
+}
+
+function closeOutputPreview() {
+  const root = document.querySelector<HTMLElement>("#output-preview");
+  if (root) root.hidden = true;
 }
 
 function show(text: string) {
@@ -729,6 +839,13 @@ function commandItems(): CmdItem[] {
       keywords: "console log",
       group: "Navigate",
       run: () => setView("output"),
+    },
+    {
+      id: "act-output-preview",
+      title: "Preview output",
+      keywords: "console preview enlarge json",
+      group: "Run",
+      run: () => openOutputPreview(),
     },
     {
       id: "act-open",
@@ -3102,6 +3219,11 @@ window.addEventListener("DOMContentLoaded", () => {
         cmdkClose();
         return;
       }
+      if (outputPreviewVisible()) {
+        ev.preventDefault();
+        closeOutputPreview();
+        return;
+      }
       if (running) {
         ev.preventDefault();
         void invoke<boolean>("cancel_shipctl");
@@ -3109,6 +3231,12 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
     const ctrl = ev.ctrlKey || ev.metaKey;
+    if (ctrl && (ev.key === "f" || ev.key === "F") && outputPreviewVisible()) {
+      ev.preventDefault();
+      document.querySelector<HTMLInputElement>("#output-preview-search")?.focus();
+      document.querySelector<HTMLInputElement>("#output-preview-search")?.select();
+      return;
+    }
     if (ctrl && (ev.key === "k" || ev.key === "K")) {
       ev.preventDefault();
       if (cmdkVisible()) cmdkClose();
@@ -3260,6 +3388,52 @@ window.addEventListener("DOMContentLoaded", () => {
       toast(String(err), "err");
     }
   });
+
+  document.querySelector("#btn-output-preview")?.addEventListener("click", () => {
+    openOutputPreview();
+  });
+  document
+    .querySelector("[data-output-preview-close]")
+    ?.addEventListener("click", () => closeOutputPreview());
+  document
+    .querySelector("#btn-output-preview-close")
+    ?.addEventListener("click", () => closeOutputPreview());
+  document
+    .querySelector("#btn-output-preview-copy")
+    ?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(
+          streamBuf || outputEl()?.textContent || "",
+        );
+        toast("Copied output", "ok", 1800);
+      } catch (err) {
+        toast(String(err), "err");
+      }
+    });
+  document
+    .querySelector("#output-preview-search")
+    ?.addEventListener("input", (ev) => {
+      previewSearchQuery = (ev.target as HTMLInputElement).value;
+      previewMatchIndex = 0;
+      renderOutputPreviewBody({ stickBottom: false });
+    });
+  document
+    .querySelector("#output-preview-search")
+    ?.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        stepPreviewMatch(ev.shiftKey ? -1 : 1);
+      } else if (ev.key === "Escape") {
+        ev.preventDefault();
+        closeOutputPreview();
+      }
+    });
+  document
+    .querySelector("#btn-output-preview-prev")
+    ?.addEventListener("click", () => stepPreviewMatch(-1));
+  document
+    .querySelector("#btn-output-preview-next")
+    ?.addEventListener("click", () => stepPreviewMatch(1));
 
   document.querySelector("#btn-clear")?.addEventListener("click", () => {
     show("");

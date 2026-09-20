@@ -539,14 +539,24 @@
         <section class="output-dock" aria-label="Output">
           <div class="output-head">
             <span>Output</span>
-            <span id="run-state" class="ready">Ready</span>
+            <div class="output-head-actions">
+              <button
+                type="button"
+                id="btn-output-preview"
+                class="ghost output-preview-btn"
+                title="Open a larger preview of the output"
+              >
+                Preview
+              </button>
+              <span id="run-state" class="ready">Ready</span>
+            </div>
           </div>
           <pre id="output">Open a folder to bind a project — or press Ctrl+K.</pre>
         </section>
 
         <footer class="statusbar">
           <span id="shipctl-path" title="Resolved shipctl">shipctl: …</span>
-          <span class="keys">Esc · Ctrl+K search · Ctrl+D doctor · Ctrl+S sign · Ctrl+Enter flow</span>
+          <span class="keys">Esc · Ctrl+K search · Ctrl+D doctor · Ctrl+S sign · Ctrl+Enter flow · Preview</span>
         </footer>
       </div>
     </div>
@@ -563,6 +573,46 @@
         />
         <ul id="cmdk-list" class="cmdk-list" role="listbox"></ul>
         <p class="cmdk-foot">↑↓ navigate · Enter run · Esc close</p>
+      </div>
+    </div>
+
+    <div class="output-preview" id="output-preview" hidden>
+      <div class="output-preview-backdrop" data-output-preview-close></div>
+      <div
+        class="output-preview-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="output-preview-title"
+      >
+        <header class="output-preview-head">
+          <div>
+            <p class="output-preview-kicker">Console</p>
+            <h2 id="output-preview-title">Output preview</h2>
+          </div>
+          <div class="output-preview-actions">
+            <button type="button" id="btn-output-preview-copy" class="ghost">Copy</button>
+            <button type="button" id="btn-output-preview-close">Close</button>
+          </div>
+        </header>
+        <div class="output-preview-search-row">
+          <input
+            id="output-preview-search"
+            type="search"
+            placeholder="Search output…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Search output"
+          />
+          <span id="output-preview-search-count" class="output-preview-search-count" aria-live="polite"></span>
+          <button type="button" id="btn-output-preview-prev" class="ghost" title="Previous match" disabled>
+            ↑
+          </button>
+          <button type="button" id="btn-output-preview-next" class="ghost" title="Next match" disabled>
+            ↓
+          </button>
+        </div>
+        <pre id="output-preview-body" class="output-preview-body" tabindex="0"></pre>
+        <p class="output-preview-foot">Esc closes · Ctrl+F search · Enter next match · live stream mirrors the dock</p>
       </div>
     </div>
 

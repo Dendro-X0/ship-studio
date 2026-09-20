@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "desktop": "tauri dev",
     "desktop:release": "bash ../../scripts/stage-desktop.sh"
   },
   "dependencies": {

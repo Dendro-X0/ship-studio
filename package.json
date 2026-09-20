@@ -1,0 +1,14 @@
+{
+  "name": "ship-studio",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter ship-studio-desktop exec tauri dev",
+    "dev:ui": "pnpm --filter ship-studio-desktop dev",
+    "build:ui": "pnpm --filter ship-studio-desktop build",
+    "desktop:release": "pnpm --filter ship-studio-desktop desktop:release",
+    "website:dev": "pnpm --filter ship-studio-website dev",
+    "website:build": "pnpm --filter ship-studio-website build",
+    "website:preview": "pnpm --filter ship-studio-website preview"
+  },
+  "packageManager": "pnpm@9.15.9"
+}

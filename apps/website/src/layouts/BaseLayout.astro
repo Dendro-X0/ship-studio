@@ -1,0 +1,72 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  path?: string;
+}
+
+const {
+  title,
+  description = "Local shipping hub for the final mile — sign, release, deploy.",
+  path = "/",
+} = Astro.props;
+
+const canonical = new URL(path, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450;9..144,550&family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-nav" id="site-nav">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true"></span>
+          Ship Studio
+        </a>
+        <nav class="nav-links" aria-label="Primary">
+          <a href="/pricing" aria-current={path === "/pricing" ? "page" : undefined}>Pricing</a>
+          <a href="/docs" aria-current={path.startsWith("/docs") ? "page" : undefined}>Docs</a>
+          <a href="/demo" aria-current={path === "/demo" ? "page" : undefined}>Demo</a>
+          <a href="/legal/refunds">Refunds</a>
+          <a class="btn btn-primary" href="/pricing">Buy</a>
+        </nav>
+      </header>
+      <main class="site-main">
+        <slot />
+      </main>
+      <footer class="site-footer">
+        <span>© {new Date().getFullYear()} Ship Studio · local shipping hub</span>
+        <nav aria-label="Legal">
+          <a href="/legal/terms">Terms</a>
+          <a href="/legal/privacy">Privacy</a>
+          <a href="/legal/refunds">Refunds</a>
+          <a href="https://github.com/Dendro-X0/ship-studio">GitHub</a>
+        </nav>
+      </footer>
+    </div>
+    <script>
+      const nav = document.getElementById("site-nav");
+      const onScroll = () => {
+        if (!nav) return;
+        nav.dataset.scrolled = window.scrollY > 8 ? "true" : "false";
+      };
+      onScroll();
+      window.addEventListener("scroll", onScroll, { passive: true });
+    </script>
+  </body>
+</html>

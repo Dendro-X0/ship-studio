@@ -6,12 +6,17 @@ target/
 node_modules/
 dist/
 apps/desktop/dist/
+apps/website/dist/
 apps/desktop/src-tauri/target/
 *.log
 .codectx/
 .env
 .env.*
+!.env.example
+!apps/website/.env.example
 # Encrypted vaults may sit next to a project — never commit them.
 *.km
 ship-secrets.km
 vault-export-tmp.json
+
+apps/website/.astro/

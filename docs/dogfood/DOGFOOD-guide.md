@@ -26,7 +26,7 @@ cargo build -p shipctl --release
 
 ## Human remaining
 
-Paste real Polar/GitHub values when you have them (see [OPERATOR-NEXT.md](./OPERATOR-NEXT.md)):
+Paste real Polar/GitHub values when you have them (see [OPERATOR-NEXT.md](../product/OPERATOR-NEXT.md)):
 
 ```bash
 shipctl human --project "E:/Web Projects/assess-api" --put

@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "Desktop: pnpm dev",
+      "command": "pnpm dev",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "Desktop UI only: pnpm dev:ui",
+      "command": "pnpm dev:ui",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

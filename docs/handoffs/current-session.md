@@ -2,11 +2,13 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main` (synced after push)  
-**Status:** Band #50 Launch legal/trust/graduate/release parity shipped — idle
+**Status:** Product website W0 + docs shelves + desktop pnpm/preview shipped — idle
 
 ## Next Atomic Step
 
-**Idle** — no Studio Adaptive work unless a real ship needs a new portal lane.
+**W1 (when continue):** render `docs/product` Markdown into `/docs/*` on the website.
+
+Or: set `apps/website/.env` `PUBLIC_POLAR_CHECKOUT_URL` for live Buy buttons.
 
 ## PAUSED / CANCELLED
 
@@ -20,12 +22,11 @@
 
 | Band | Commit |
 |------|--------|
-| #48 Launch DB + marketing + suite | `8703416` |
-| #49 Launch CI + container | `782bced` |
 | #50 Launch legal/trust/graduate/release | `81ac97d` |
+| Docs shelves · desktop pnpm/preview · website W0 | (this push) |
 
 ## Boot allowlist
 
 1. This file  
-2. North star · `specs/backend/launch-baseline-release-parity-design.md`  
-3. `docs/OPERATOR-NEXT.md`  
+2. [docs/CURRENT.md](../CURRENT.md) · [specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md)  
+3. `pnpm website:dev`  

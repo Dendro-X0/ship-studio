@@ -4,6 +4,9 @@
 
 ### Added
 
+- **Product website W0** — Astro site at `apps/website` (hero · pricing/Polar stubs · docs index · demo · refunds); `pnpm website:dev` / `website:build`
+- **Desktop pnpm launch** — repo-root `pnpm dev` runs Tauri + Vite; VS Code “Desktop: pnpm dev” launch config
+- **Docs shelf layout** — Obscur-style `docs/` TOC (`README` · `CURRENT` · shelves: product / dogfood / frontend / handoffs)
 - **Launch legal / trust / graduate / release parity** — Guided Launch sequences LICENSE/SECURITY baseline, TRUST pack, graduate notes, `gh release list`, and desktop-cut honesty
 - **Launch CI + container parity** — Guided Launch sequences `gh run list` (read-only) + local `docker build` / compose build; registry push stays Confirm
 - **Launch DB + marketing + suite parity** — Guided Launch sequences DB provision / marketing landing / suite URL sync (Open + Confirm; no DNS or sibling `.env` writes)
@@ -34,7 +37,7 @@
 - **Personal / local ship intent** — `--intent local|public` (orthogonal to General/Advanced); Local omits hosted env/deploy/store lanes; Desktop Local/Public toggle; persists in `.ship/studio.json`
 - **aperio dogfood** — desktop Tauri no longer pulls Play/Android official/submit lanes (MAS + Microsoft Store stay)
 - **Archetype expansion** — PWA manifest / vite-plugin-pwa detection (pulse + assist); Advanced `listing.huggingface` for Hub docs + Confirm (no upload); extended release-surface archetypes + launch matrix doc
-- **Scope of service** — canonical product boundary: detect → plan → sequence final-mile; vendors + humans finish irreversible work ([docs/SCOPE-OF-SERVICE.md](./docs/SCOPE-OF-SERVICE.md))
+- **Scope of service** — canonical product boundary: detect → plan → sequence final-mile; vendors + humans finish irreversible work ([docs/product/SCOPE-OF-SERVICE.md](./docs/product/SCOPE-OF-SERVICE.md))
 - **README hub pointer** — shipping-hub mission + north star / release-surface / Advanced dogfood links for contributors
 - **Assist Run notes** — checklist cues for `gh run/release list`, npm/crates `--dry-run`, and container build
 - **release.github Run** — Advanced `gh release list` (read-only) + Verify when a release exists; never creates releases

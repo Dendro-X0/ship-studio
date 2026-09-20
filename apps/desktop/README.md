@@ -2,25 +2,28 @@
 
 CodaCtrl-shaped shell for the local Ship bridge.
 
-## Run
+## Run (pnpm — preferred)
+
+From the **repo root**:
 
 ```bash
-cd "E:/Web Projects/ship-studio"
-# One-shot release stage (builds shipctl + desktop, copies shipctl beside exe)
+pnpm install
+pnpm dev                 # Tauri window + Vite on :1420
+# pnpm dev:ui            # Vite only (no native shell)
+```
+
+VS Code / Cursor: **Run and Debug → “Desktop: pnpm dev”**.
+
+## Release stage
+
+```bash
 bash scripts/stage-desktop.sh
 ./target/release/ship-studio-desktop.exe
 ```
 
-Dev:
+Or: `pnpm desktop:release` from the repo root.
 
-```bash
-cargo build -p shipctl --release
-cd apps/desktop && npm install && npm run tauri dev
-```
-
-Shell: sidebar dashboard · Ctrl+K command search · Launch / Portal / Ritual / Tools views.
-
-Bare `cargo build -p ship-studio-desktop` keeps `cfg(dev)` → localhost refused. Use `tauri build` / `tauri dev` / `stage-desktop.sh`.
+Bare `cargo build -p ship-studio-desktop` keeps `cfg(dev)` → localhost refused. Use `pnpm dev` / `tauri build` / `stage-desktop.sh`.
 
 Optional env: `SHIPCTL_PATH`, `SIGNET_PATH`, `ORBIT_PATH`.
 

@@ -1,0 +1,41 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { polarPortalUrl } from "../../lib/commerce";
+---
+
+<BaseLayout
+  title="Refunds — Ship Studio"
+  description="14-day refund window via Polar. Studio is a local tool — refunds are money-back, not remote wipe."
+  path="/legal/refunds"
+>
+  <section class="section legal">
+    <h1>Refunds</h1>
+    <p class="lead">
+      If Ship Studio is not right for you, you can request a refund within
+      <strong>14 days</strong> of purchase.
+    </p>
+
+    <h2>How to request</h2>
+    <ol>
+      <li>Open your Polar customer portal and locate the Ship Studio order.</li>
+      <li>Request a refund there, or email the maintainer with your order ID.</li>
+      <li>Approved in-window refunds are processed on Polar (we never hold your card).</li>
+    </ol>
+    <p>
+      Portal: <a href={polarPortalUrl()}>{polarPortalUrl()}</a>
+    </p>
+
+    <h2>What a refund means</h2>
+    <p>
+      Ship Studio runs on your machine. A refund returns your payment — it does not remotely
+      uninstall binaries or erase local projects. Stop using the software if you refund.
+    </p>
+
+    <h2>Non-refundable</h2>
+    <ul>
+      <li>Requests after the 14-day window (unless required by law)</li>
+      <li>Chargebacks after a completed refund</li>
+      <li>Purchases clearly marked as non-refundable promotions (none in W0)</li>
+    </ul>
+  </section>
+</BaseLayout>

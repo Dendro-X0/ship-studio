@@ -4,7 +4,7 @@
 
 **Local shipping hub for the final mile** — sign → release → deploy — on three surfaces: **CLI** (JSON/MCP) · **TUI** · **Desktop**. Same `shipctl` engine (Signet + Orbit adapters). Adaptive **Publish** is the spine (Open/Run → Confirm → Next); Scopes / Env / Sign / Portal are detail panels, not a second wizard.
 
-Boot: [docs/START-HERE.md](./docs/START-HERE.md) · **Scope:** [docs/SCOPE-OF-SERVICE.md](./docs/SCOPE-OF-SERVICE.md) · Contract: [docs/PRODUCT.md](./docs/PRODUCT.md) · Manual gates: [docs/OPERATOR-NEXT.md](./docs/OPERATOR-NEXT.md)
+Boot: [docs/START-HERE.md](./docs/START-HERE.md) · **Index:** [docs/README.md](./docs/README.md) · **Scope:** [docs/product/SCOPE-OF-SERVICE.md](./docs/product/SCOPE-OF-SERVICE.md) · Contract: [docs/product/PRODUCT.md](./docs/product/PRODUCT.md) · Manual gates: [docs/product/OPERATOR-NEXT.md](./docs/product/OPERATOR-NEXT.md)
 
 **Extend the hub (not docs/demos):** [specs/backend/shipping-hub-north-star.md](./specs/backend/shipping-hub-north-star.md) · [specs/backend/release-surface-map.md](./specs/backend/release-surface-map.md) · Advanced dogfood: `bash scripts/dogfood-advanced-publish.sh` · `bash scripts/dogfood-advanced-walk.sh fixtures/advanced-dogfood`
 
@@ -29,15 +29,29 @@ On Windows, binaries are `shipctl.exe` under `target/release/`.
 |------|------|
 | `crates/shipctl` | CLI + TUI + MCP + publish / pulse / portal / secrets / vault |
 | `apps/desktop` | Tauri shell (Publish spine + Related detail panels) |
+| `apps/website` | Official product site (pricing · docs · demo · legal) — [README](./apps/website/README.md) |
+| `docs/` | Front door + shelves (product · dogfood · frontend · handoffs) — [docs/README.md](./docs/README.md) |
 | `specs/backend/` | Design contracts (north star + bands) |
 | `scripts/` | `stage-desktop.sh`, `dogfood-advanced-*.sh`, `dogfood-offline.sh` |
 
 ## Desktop
 
 ```bash
+pnpm install
+pnpm dev                          # Tauri + Vite (from repo root)
+# or release stage:
 bash scripts/stage-desktop.sh
 ./target/release/ship-studio-desktop.exe
 ```
+
+## Website
+
+```bash
+pnpm website:dev                  # http://localhost:4321
+pnpm website:build                # apps/website/dist
+```
+
+Copy `apps/website/.env.example` → `.env` and set `PUBLIC_POLAR_CHECKOUT_URL` when Polar products exist.
 
 ## Vault (Clavis-compatible)
 
