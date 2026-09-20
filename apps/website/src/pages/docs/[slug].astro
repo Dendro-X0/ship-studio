@@ -1,0 +1,19 @@
+---
+import DocLayout from "../../layouts/DocLayout.astro";
+import { DOC_PAGES, docBySlug } from "../../lib/docs";
+
+export function getStaticPaths() {
+  return DOC_PAGES.map((page) => ({
+    params: { slug: page.slug },
+    props: { page },
+  }));
+}
+
+const { page } = Astro.props;
+const resolved = page ?? docBySlug(Astro.params.slug ?? "");
+if (!resolved) {
+  return Astro.redirect("/docs");
+}
+---
+
+<DocLayout page={resolved} path={`/docs/${resolved.slug}`} />

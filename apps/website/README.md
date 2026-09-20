@@ -1,6 +1,6 @@
 # Ship Studio — official website
 
-Public product surface (marketing · pricing · docs · demo · legal).  
+Public product surface (marketing · pricing · docs · demo · legal · checkout).  
 Not part of the local Adaptive Publish hub — see `specs/backend/product-website-charter.md`.
 
 ## Develop
@@ -9,28 +9,36 @@ From repo root:
 
 ```bash
 pnpm install
-pnpm --filter ship-studio-website dev
+pnpm website:dev
 # → http://localhost:4321
 ```
 
-Or: `pnpm website:dev`
+## Polar checkout (W2)
 
-## Env (Polar placeholders)
+Full dogfood steps: [docs/POLAR-SETUP.md](./docs/POLAR-SETUP.md).
 
-Copy `.env.example` → `.env`:
+```bash
+cp apps/website/.env.example apps/website/.env
+# set PUBLIC_POLAR_CHECKOUT_URL (+ portal, price label, support email)
+```
 
 | Variable | Purpose |
 |----------|---------|
-| `PUBLIC_POLAR_CHECKOUT_URL` | Solo checkout link (Polar dashboard) |
-| `PUBLIC_POLAR_PORTAL_URL` | Customer portal (refunds / invoices) |
-| `PUBLIC_DOWNLOAD_URL` | GitHub releases / installer |
+| `PUBLIC_POLAR_CHECKOUT_URL` | Solo checkout link |
+| `PUBLIC_POLAR_PORTAL_URL` | Customer portal |
+| `PUBLIC_POLAR_PRICE_LABEL` | Display price (e.g. `$49`) |
+| `PUBLIC_REFUND_WINDOW_DAYS` | Default `14` |
+| `PUBLIC_SUPPORT_EMAIL` | Refund / support mailto |
+| `PUBLIC_DOWNLOAD_URL` | GitHub releases |
 
-Until set, Buy buttons show a “Checkout not configured” state.
+Polar success/cancel URLs should hit `/checkout/success` and `/checkout/cancel`.
+
+Until `PUBLIC_POLAR_CHECKOUT_URL` is set, Buy stays disabled with a setup note.
 
 ## Build
 
 ```bash
-pnpm --filter ship-studio-website build
+pnpm website:build
 ```
 
-Static output: `apps/website/dist` — deploy to Vercel / Cloudflare Pages / any static host.
+Static output: `apps/website/dist`.

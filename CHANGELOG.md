@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Product website W2** — Polar env-gated checkout · `/checkout/success|cancel` · `/account` portal · configurable refund window; `apps/website/docs/POLAR-SETUP.md`
+- **Product website W1** — `/docs/*` renders repo Markdown (START-HERE · scope · product · human-gates · current)
 - **Product website W0** — Astro site at `apps/website` (hero · pricing/Polar stubs · docs index · demo · refunds); `pnpm website:dev` / `website:build`
 - **Desktop pnpm launch** — repo-root `pnpm dev` runs Tauri + Vite; VS Code “Desktop: pnpm dev” launch config
 - **Docs shelf layout** — Obscur-style `docs/` TOC (`README` · `CURRENT` · shelves: product / dogfood / frontend / handoffs)

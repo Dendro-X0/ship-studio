@@ -1,0 +1,27 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { downloadUrl } from "../../lib/commerce";
+---
+
+<BaseLayout
+  title="Purchase complete — Ship Studio"
+  description="Thanks for buying Ship Studio. Download and start with the docs."
+  path="/checkout/success"
+>
+  <section class="section">
+    <h1>You’re in.</h1>
+    <p class="lead">
+      Polar confirmed the payment. Ship Studio runs on your machine — download the build, then
+      follow Start here.
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href={downloadUrl()} rel="noopener noreferrer">Download</a>
+      <a class="btn" href="/docs/start">Start here</a>
+      <a class="btn" href="/account">Manage order</a>
+    </div>
+    <p class="price-meta" style="margin-top: 1.5rem">
+      Receipts and invoices live in the Polar customer portal. Need a refund?
+      <a href="/legal/refunds">Refund policy</a>.
+    </p>
+  </section>
+</BaseLayout>

@@ -38,6 +38,9 @@ importers:
       astro:
         specifier: ^5.7.10
         version: 5.18.2(rollup@4.63.4)(typescript@5.8.3)
+      unist-util-visit:
+        specifier: ^5.1.0
+        version: 5.1.0
 
 packages:
 
@@ -674,6 +677,7 @@ packages:
 
   '@rollup/rollup-win32-x64-msvc@4.63.2':
     resolution: {integrity: sha512-6NHnk/K3eq2ZFYcU1X8g67s9qIJRCOTT92gwLMVBp08dB2uuuwI1/Q/empzL2Bfr2f2WRLJVwpp90RmacQyFkw==}
+    cpu: [x64]
     os: [win32]
 
   '@rollup/rollup-win32-x64-msvc@4.63.4':
@@ -768,6 +772,7 @@ packages:
   '@tauri-apps/cli-win32-x64-msvc@2.11.4':
     resolution: {integrity: sha512-+vDiqBIU5dMISg/wNvX3sF+ZHfgJGJ5T0AcO+EHNXV9GGAG+P5fzodlDXD3QdKCRgZxMoCm5PPvj3BqLNjBthw==}
     engines: {node: '>= 10'}
+    cpu: [x64]
     os: [win32]
 
   '@tauri-apps/cli@2.11.4':

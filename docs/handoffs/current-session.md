@@ -1,14 +1,12 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-19  
-**Branch:** `main` (synced after push)  
-**Status:** Product website W0 + docs shelves + desktop pnpm/preview shipped — idle
+**Branch:** `main`  
+**Status:** Product website **W2 done** — awaiting commit/push
 
 ## Next Atomic Step
 
-**W1 (when continue):** render `docs/product` Markdown into `/docs/*` on the website.
-
-Or: set `apps/website/.env` `PUBLIC_POLAR_CHECKOUT_URL` for live Buy buttons.
+**W3 (when continue):** feature demo page + first silent GIF set.
 
 ## PAUSED / CANCELLED
 
@@ -22,11 +20,12 @@ Or: set `apps/website/.env` `PUBLIC_POLAR_CHECKOUT_URL` for live Buy buttons.
 
 | Band | Commit |
 |------|--------|
-| #50 Launch legal/trust/graduate/release | `81ac97d` |
-| Docs shelves · desktop pnpm/preview · website W0 | (this push) |
+| Website W0 | `d1dae86` |
+| Website W1 docs pipeline | (pending commit) |
+| Website W2 Polar checkout + refunds | (pending commit) |
 
 ## Boot allowlist
 
 1. This file  
-2. [docs/CURRENT.md](../CURRENT.md) · [specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md)  
-3. `pnpm website:dev`  
+2. [docs/CURRENT.md](../CURRENT.md) · charter  
+3. `pnpm website:dev` → `/pricing` · `/checkout/success` · `/account`  

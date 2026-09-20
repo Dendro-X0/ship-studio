@@ -1,0 +1,31 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import type { DocPage } from "../lib/docs";
+import { getEntry, render } from "astro:content";
+
+interface Props {
+  page: DocPage;
+  path: string;
+}
+
+const { page, path } = Astro.props;
+const entry = await getEntry("docs", page.entryId);
+if (!entry) {
+  throw new Error(`Missing docs entry: ${page.entryId}`);
+}
+const { Content } = await render(entry);
+---
+
+<BaseLayout title={`${page.title} — Ship Studio`} description={page.description} path={path}>
+  <article class="section doc-article">
+    <p class="doc-kicker">Docs</p>
+    <div class="doc-prose">
+      <Content />
+    </div>
+    <nav class="doc-foot" aria-label="Docs">
+      <a href="/docs">All docs</a>
+      <a href="/pricing">Pricing</a>
+      <a href="/demo">Demo</a>
+    </nav>
+  </article>
+</BaseLayout>

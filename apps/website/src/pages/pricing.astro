@@ -5,34 +5,45 @@ import {
   downloadUrl,
   polarCheckoutUrl,
   polarPortalUrl,
+  priceLabel,
+  refundWindowDays,
 } from "../lib/commerce";
 ---
 
 <BaseLayout
   title="Pricing — Ship Studio"
-  description="Solo license via Polar checkout. Refunds within 14 days."
+  description={`Solo license via Polar. ${refundWindowDays()}-day refunds.`}
   path="/pricing"
 >
   <section class="section">
     <h1>Pricing</h1>
     <p class="lead">
-      One Solo plan for the local hub (CLI · TUI · Desktop). Checkout is hosted by Polar — we
-      never see your card number.
+      One Solo plan for the local hub (CLI · TUI · Desktop). Checkout is hosted by
+      <strong>Polar</strong> — we never see your card number.
     </p>
 
     <div class="price-block">
-      <div>
-        <strong>Solo</strong>
-        <p class="price-meta">Perpetual license for one operator · updates on the current major</p>
+      <div class="price-row">
+        <div>
+          <strong>Solo</strong>
+          <p class="price-meta">Perpetual license · one operator · updates on the current major</p>
+        </div>
+        <p class="price-amount">{priceLabel()}</p>
       </div>
       <ul class="list-clean">
         <li>shipctl CLI, TUI, and Desktop</li>
         <li>Adaptive Publish · Launch companion · portal honesty</li>
-        <li>Docs + dogfood scripts in the repo</li>
+        <li>Docs on this site · dogfood scripts in the repo</li>
+        <li>{refundWindowDays()}-day refund window — see <a href="/legal/refunds">refunds</a></li>
       </ul>
       {
         checkoutConfigured() ? (
-          <a class="btn btn-primary" href={polarCheckoutUrl()} rel="noopener">
+          <a
+            class="btn btn-primary"
+            href={polarCheckoutUrl()}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
             Checkout with Polar
           </a>
         ) : (
@@ -41,14 +52,16 @@ import {
               Checkout with Polar
             </a>
             <p class="note">
-              W0 placeholder — set PUBLIC_POLAR_CHECKOUT_URL in apps/website/.env
+              Set PUBLIC_POLAR_CHECKOUT_URL — see apps/website/docs/POLAR-SETUP.md
             </p>
           </>
         )
       }
       <p class="price-meta">
         Prefer trying first? <a href={downloadUrl()}>Download from GitHub Releases</a>
-        · manage billing on <a href={polarPortalUrl()}>Polar</a>
+        · manage orders on <a href="/account">your account</a>
+        ({" "}
+        <a href={polarPortalUrl()} rel="noopener noreferrer">Polar portal</a>)
       </p>
     </div>
   </section>

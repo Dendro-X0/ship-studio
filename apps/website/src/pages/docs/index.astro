@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { DOC_PAGES } from "../../lib/docs";
 ---
 
 <BaseLayout
@@ -10,26 +11,17 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   <section class="section">
     <h1>Documentation</h1>
     <p class="lead">
-      Canonical prose lives in the repo. W0 lists the front door; W1 will render Markdown in
-      place.
+      Canonical prose from the repo — rendered here so you can read without opening GitHub.
     </p>
     <div class="doc-grid">
-      <a href="https://github.com/Dendro-X0/ship-studio/blob/main/docs/START-HERE.md">
-        <strong>Start here</strong>
-        <span>Boot order · publish spine · build</span>
-      </a>
-      <a href="https://github.com/Dendro-X0/ship-studio/blob/main/docs/product/SCOPE-OF-SERVICE.md">
-        <strong>Scope of service</strong>
-        <span>What Studio does and does not do</span>
-      </a>
-      <a href="https://github.com/Dendro-X0/ship-studio/blob/main/docs/product/PRODUCT.md">
-        <strong>Product contract</strong>
-        <span>Commands · surfaces · providers</span>
-      </a>
-      <a href="https://github.com/Dendro-X0/ship-studio/blob/main/docs/product/OPERATOR-NEXT.md">
-        <strong>Human gates</strong>
-        <span>Paste, graduate, deploy — still on you</span>
-      </a>
+      {
+        DOC_PAGES.map((page) => (
+          <a href={`/docs/${page.slug}`}>
+            <strong>{page.title}</strong>
+            <span>{page.description}</span>
+          </a>
+        ))
+      }
       <a href="/demo">
         <strong>Feature demo</strong>
         <span>Silent walk of Desktop Publish</span>

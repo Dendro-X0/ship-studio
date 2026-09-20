@@ -1,6 +1,6 @@
 # Official product website — charter
 
-**Status:** W0 done (first slice) — scaffold + Polar placeholders + static pages  
+**Status:** W2 done — Polar checkout redirects + refund/account path (env-gated)  
 **Updated:** 2026-09-19  
 **Owner:** `apps/website` · commerce via Polar (preferred)  
 **Parent:** product commercialization · separate from Adaptive Publish hub  
@@ -15,9 +15,27 @@
 - [x] `/legal/refunds` · terms · privacy stubs  
 - [x] `pnpm website:build` succeeds  
 
+## W1 acceptance
+
+- [x] Content collection loads `docs/START-HERE` + `docs/product/*`  
+- [x] `/docs/start` · `/docs/scope` · `/docs/product` · `/docs/human-gates` · `/docs/current`  
+- [x] In-repo MD links rewritten to `/docs/*` or GitHub  
+- [x] `pnpm website:build` (12 pages)  
+
+## W2 acceptance
+
+- [x] `/pricing` shows price label + Polar checkout CTA (env-gated)  
+- [x] `/checkout/success` · `/checkout/cancel` redirect targets  
+- [x] `/account` → Polar portal  
+- [x] `/legal/refunds` uses configurable window + support email  
+- [x] Maintainer dogfood guide: `apps/website/docs/POLAR-SETUP.md`  
+- [x] `pnpm website:build` (15 pages)  
+
+> Live sandbox purchase requires maintainer Polar credentials (not stored in git).
+
 ## Next
 
-**W1:** render `docs/product` Markdown into `/docs/*`  
+**W3:** feature demo page + first silent GIF set  
 
 
 ## Boundary (do not conflate)

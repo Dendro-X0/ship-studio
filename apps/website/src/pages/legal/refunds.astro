@@ -1,41 +1,64 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { polarPortalUrl } from "../../lib/commerce";
+import {
+  polarPortalUrl,
+  refundWindowDays,
+  supportEmail,
+} from "../../lib/commerce";
+
+const days = refundWindowDays();
+const email = supportEmail();
 ---
 
 <BaseLayout
   title="Refunds — Ship Studio"
-  description="14-day refund window via Polar. Studio is a local tool — refunds are money-back, not remote wipe."
+  description={`${days}-day refund window via Polar. Money-back only — Studio is a local tool.`}
   path="/legal/refunds"
 >
   <section class="section legal">
     <h1>Refunds</h1>
     <p class="lead">
-      If Ship Studio is not right for you, you can request a refund within
-      <strong>14 days</strong> of purchase.
+      If Ship Studio is not right for you, request a refund within
+      <strong>{days} days</strong> of purchase. All card processing stays on Polar.
     </p>
 
     <h2>How to request</h2>
     <ol>
-      <li>Open your Polar customer portal and locate the Ship Studio order.</li>
-      <li>Request a refund there, or email the maintainer with your order ID.</li>
-      <li>Approved in-window refunds are processed on Polar (we never hold your card).</li>
+      <li>
+        Open the <a href="/account">account</a> page and go to your
+        <a href={polarPortalUrl()} rel="noopener noreferrer">Polar customer portal</a>.
+      </li>
+      <li>Locate the Ship Studio Solo order and request a refund there.</li>
+      <li>
+        Or email
+        {
+          email ? (
+            <a href={`mailto:${email}?subject=Ship%20Studio%20refund`}> {email} </a>
+          ) : (
+            <span> the maintainer </span>
+          )
+        }
+        with your Polar order ID. In-window refunds are approved on Polar — we never hold your
+        card.
+      </li>
     </ol>
-    <p>
-      Portal: <a href={polarPortalUrl()}>{polarPortalUrl()}</a>
-    </p>
 
     <h2>What a refund means</h2>
     <p>
-      Ship Studio runs on your machine. A refund returns your payment — it does not remotely
-      uninstall binaries or erase local projects. Stop using the software if you refund.
+      Ship Studio runs on your machine. A refund returns your payment. It does <strong>not</strong>
+      remotely uninstall binaries, revoke a cloud seat, or erase local projects. Stop using the
+      software if you refund.
     </p>
 
     <h2>Non-refundable</h2>
     <ul>
-      <li>Requests after the 14-day window (unless required by law)</li>
-      <li>Chargebacks after a completed refund</li>
-      <li>Purchases clearly marked as non-refundable promotions (none in W0)</li>
+      <li>Requests after the {days}-day window (unless required by applicable law)</li>
+      <li>Chargebacks filed after a completed Polar refund</li>
+      <li>Purchases explicitly marked non-refundable (none on the Solo plan today)</li>
     </ul>
+
+    <p class="price-meta" style="margin-top: 2rem">
+      Maintainer Polar setup: see <code>apps/website/docs/POLAR-SETUP.md</code> in the repo.
+    </p>
   </section>
 </BaseLayout>

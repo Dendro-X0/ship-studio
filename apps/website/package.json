@@ -9,6 +9,7 @@
     "preview": "astro preview --port 4321"
   },
   "dependencies": {
-    "astro": "^5.7.10"
+    "astro": "^5.7.10",
+    "unist-util-visit": "^5.1.0"
   }
 }

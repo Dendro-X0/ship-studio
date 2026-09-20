@@ -260,10 +260,27 @@ img {
   border-bottom: 1px solid var(--line);
 }
 
+.price-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+}
+
 .price-block strong {
   font-family: var(--font-display);
   font-size: 2rem;
   letter-spacing: -0.03em;
+}
+
+.price-amount {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-weight: 550;
+  letter-spacing: -0.03em;
+  color: var(--accent-bright);
 }
 
 .price-meta {
@@ -308,6 +325,132 @@ img {
 .doc-grid a span {
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.doc-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.doc-article {
+  padding-top: 2.5rem;
+}
+
+.doc-prose {
+  max-width: 46rem;
+}
+
+.doc-prose :global(h1) {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.5vw, 2.5rem);
+  font-weight: 550;
+  letter-spacing: -0.03em;
+  margin: 0 0 1rem;
+  line-height: 1.15;
+}
+
+.doc-prose :global(h2) {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 550;
+  letter-spacing: -0.02em;
+  margin: 2rem 0 0.65rem;
+}
+
+.doc-prose :global(h3) {
+  font-size: 1.05rem;
+  margin: 1.5rem 0 0.45rem;
+}
+
+.doc-prose :global(p),
+.doc-prose :global(li) {
+  color: var(--muted);
+}
+
+.doc-prose :global(strong) {
+  color: var(--ink);
+}
+
+.doc-prose :global(a) {
+  color: var(--accent-bright);
+}
+
+.doc-prose :global(code) {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: #121816;
+  color: var(--ink);
+}
+
+.doc-prose :global(pre) {
+  overflow: auto;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: #0a0e0c;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.doc-prose :global(pre code) {
+  padding: 0;
+  background: transparent;
+}
+
+.doc-prose :global(table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.doc-prose :global(th),
+.doc-prose :global(td) {
+  border: 1px solid var(--line);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc-prose :global(th) {
+  color: var(--ink);
+  background: #121816;
+}
+
+.doc-prose :global(hr) {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 2rem 0;
+}
+
+.doc-prose :global(ul),
+.doc-prose :global(ol) {
+  padding-left: 1.2rem;
+}
+
+.doc-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+.doc-foot a {
+  text-decoration: none;
+  color: var(--muted);
+}
+
+.doc-foot a:hover {
+  color: var(--accent-bright);
 }
 
 .demo-stage {

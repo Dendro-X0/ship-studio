@@ -1,0 +1,21 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Checkout cancelled — Ship Studio"
+  description="No charge was completed. You can return to pricing anytime."
+  path="/checkout/cancel"
+>
+  <section class="section">
+    <h1>Checkout cancelled</h1>
+    <p class="lead">
+      No payment went through. You can try again when ready, or download a build from GitHub first.
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="/pricing">Back to pricing</a>
+      <a class="btn" href="/docs">Docs</a>
+      <a class="btn" href="/">Home</a>
+    </div>
+  </section>
+</BaseLayout>
