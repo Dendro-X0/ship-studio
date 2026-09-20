@@ -35,6 +35,15 @@ Polar success/cancel URLs should hit `/checkout/success` and `/checkout/cancel`.
 
 Until `PUBLIC_POLAR_CHECKOUT_URL` is set, Buy stays disabled with a setup note.
 
+## Feature demo (W3)
+
+`/demo` serves the silent GIF shelf from `public/demo/v0.1.0/`.  
+Script + captions: `docs/assets/demo/v0.1.0/SCRIPT.md`.
+
+```bash
+python scripts/generate-demo-gifs.py   # regenerate stylized GIFs → docs + public
+```
+
 ## Build
 
 ```bash

@@ -1,32 +1,98 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { checkoutConfigured, downloadUrl, polarCheckoutUrl } from "../lib/commerce";
+import { DEMO_STAGES, DEMO_VERSION } from "../lib/demo";
 
 const buyHref = checkoutConfigured() ? polarCheckoutUrl() : "/pricing";
+const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
+const first = DEMO_STAGES[0];
 ---
 
 <BaseLayout
   title="Demo — Ship Studio"
-  description="Feature demo of Adaptive Publish on the desktop shell."
+  description="Silent GIF walk of Adaptive Publish: bind, Open, Confirm, Next, Output Preview."
   path="/demo"
 >
-  <section class="section">
-    <h1>Feature demo</h1>
-    <p class="lead">
-      Bind a project · Open vendor doors · Confirm · Next. Silent GIFs land in W3; this stage
-      is the honest placeholder.
-    </p>
-    <div class="demo-stage">
-      <span class="demo-watermark">local app · recorded</span>
-      <div>
-        <h2>Publish spine</h2>
-        <p>Desktop Output Preview · Open/Run → Confirm → Next — GIF shelf coming in W3.</p>
+  <section class="demo-page" aria-label="Feature demo">
+    <header class="demo-intro">
+      <p class="demo-brand">Ship Studio</p>
+      <h1 class="demo-headline">Publish spine, silent.</h1>
+      <p class="demo-support">
+        Four silent GIFs — bind · Open · Confirm → Next · Output Preview. No cloud Studio; the
+        watermark stays honest.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href={buyHref}>{buyLabel}</a>
+        <a class="btn" href={downloadUrl()} rel="noopener noreferrer">Download</a>
       </div>
-    </div>
-    <div class="hero-cta" style="margin-top: 1.5rem">
-      <a class="btn btn-primary" href={buyHref}>Buy</a>
-      <a class="btn" href={downloadUrl()}>Download</a>
-      <a class="btn" href="/docs">Read docs</a>
+    </header>
+
+    <div class="demo-shelf" data-demo-shelf>
+      <div class="demo-stage demo-stage--live" data-demo-frame>
+        <span class="demo-watermark">local app · recorded</span>
+        <img
+          data-demo-img
+          src={first.src}
+          alt={first.title}
+          width="720"
+          height="420"
+          loading="eager"
+        />
+      </div>
+      <p class="demo-caption" data-demo-caption>
+        <strong data-demo-title>{first.title}</strong>
+        <span data-demo-text>{first.caption}</span>
+      </p>
+      <div class="demo-tabs" role="tablist" aria-label="Demo stages">
+        {
+          DEMO_STAGES.map((stage, i) => (
+            <button
+              type="button"
+              class:list={["demo-tab", i === 0 && "is-active"]}
+              role="tab"
+              aria-selected={i === 0 ? "true" : "false"}
+              data-demo-tab
+              data-src={stage.src}
+              data-title={stage.title}
+              data-caption={stage.caption}
+            >
+              {stage.title}
+            </button>
+          ))
+        }
+      </div>
+      <p class="demo-meta">
+        Script + captions: <code>docs/assets/demo/{DEMO_VERSION}/SCRIPT.md</code>
+        · <a href="/docs/start">Start here</a>
+      </p>
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  const shelf = document.querySelector("[data-demo-shelf]");
+  if (shelf) {
+    const img = shelf.querySelector("[data-demo-img]");
+    const titleEl = shelf.querySelector("[data-demo-title]");
+    const textEl = shelf.querySelector("[data-demo-text]");
+    const tabs = shelf.querySelectorAll("[data-demo-tab]");
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const src = tab.getAttribute("data-src") ?? "";
+        const title = tab.getAttribute("data-title") ?? "";
+        const caption = tab.getAttribute("data-caption") ?? "";
+        if (img instanceof HTMLImageElement) {
+          img.src = src;
+          img.alt = title;
+        }
+        if (titleEl) titleEl.textContent = title;
+        if (textEl) textEl.textContent = caption;
+        tabs.forEach((t) => {
+          t.classList.toggle("is-active", t === tab);
+          t.setAttribute("aria-selected", t === tab ? "true" : "false");
+        });
+      });
+    });
+  }
+</script>

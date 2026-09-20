@@ -469,14 +469,135 @@ img {
   overflow: hidden;
 }
 
+.demo-stage--live {
+  padding: 0;
+  min-height: 0;
+  place-items: stretch;
+}
+
+.demo-stage--live img {
+  width: 100%;
+  height: auto;
+  border-radius: inherit;
+  animation: demo-fade 0.45s ease;
+}
+
 .demo-watermark {
   position: absolute;
   top: 0.85rem;
   right: 0.85rem;
+  z-index: 2;
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--muted) 80%, transparent);
+}
+
+.demo-page {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 2.5rem clamp(1rem, 4vw, 2rem) 4rem;
+}
+
+.demo-intro {
+  margin-bottom: 2rem;
+}
+
+.demo-brand {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-weight: 550;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.demo-headline {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 450;
+  letter-spacing: -0.02em;
+  color: var(--accent-bright);
+}
+
+.demo-support {
+  margin: 0 0 1.25rem;
+  max-width: 36rem;
+  color: var(--muted);
+}
+
+.demo-shelf {
+  display: grid;
+  gap: 1rem;
+}
+
+.demo-caption {
+  margin: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.demo-caption strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.demo-caption span {
+  color: var(--muted);
+}
+
+.demo-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.demo-tab {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.demo-tab:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+}
+
+.demo-tab.is-active {
+  color: var(--accent-bright);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.demo-meta {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.demo-meta a {
+  color: var(--accent-bright);
+}
+
+@keyframes demo-fade {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .legal {

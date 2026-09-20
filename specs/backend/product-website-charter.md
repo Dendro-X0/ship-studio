@@ -1,6 +1,6 @@
 # Official product website — charter
 
-**Status:** W2 done — Polar checkout redirects + refund/account path (env-gated)  
+**Status:** W3 done — feature demo page + first silent GIF set  
 **Updated:** 2026-09-19  
 **Owner:** `apps/website` · commerce via Polar (preferred)  
 **Parent:** product commercialization · separate from Adaptive Publish hub  
@@ -33,9 +33,17 @@
 
 > Live sandbox purchase requires maintainer Polar credentials (not stored in git).
 
+## W3 acceptance
+
+- [x] `/demo` brand-first shelf with silent GIF stages + captions  
+- [x] First GIF set: bind · Open · Confirm→Next · Output Preview (`docs/assets/demo/v0.1.0/`)  
+- [x] Presenter script: `docs/assets/demo/v0.1.0/SCRIPT.md`  
+- [x] Watermark `local app · recorded` · Buy/Download CTA  
+- [x] `pnpm website:build`  
+
 ## Next
 
-**W3:** feature demo page + first silent GIF set  
+**W4:** license delivery (email / key file) + refund path dogfood  
 
 
 ## Boundary (do not conflate)

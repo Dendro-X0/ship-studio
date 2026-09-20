@@ -2,11 +2,11 @@
 
 **Updated:** 2026-09-19  
 **Branch:** `main`  
-**Status:** Product website **W2 done** — next W3 when continue
+**Status:** Product website **W3 done** — awaiting commit/push
 
 ## Next Atomic Step
 
-**W3 (when continue):** feature demo page + first silent GIF set.
+**W4 (when continue):** license delivery (email / key file) + refund path dogfood.
 
 ## PAUSED / CANCELLED
 
@@ -22,9 +22,10 @@
 |------|--------|
 | Website W0 | `d1dae86` |
 | Website W1 docs + W2 Polar checkout | `9ce0989` |
+| Website W3 demo GIF shelf | (pending commit) |
 
 ## Boot allowlist
 
 1. This file  
 2. [docs/CURRENT.md](../CURRENT.md) · charter  
-3. `pnpm website:dev` → `/pricing` · `/checkout/success` · `/account`  
+3. `pnpm website:dev` → `/demo`  

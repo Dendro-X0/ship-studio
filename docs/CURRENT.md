@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0  
 **Updated:** 2026-09-19  
-**Status:** Adaptive hub **idle** · product website **W2 done** (Polar checkout · refunds · account)
+**Status:** Adaptive hub **idle** · product website **W3 done** (demo GIF shelf)
 
 ## Truth pointers
 
