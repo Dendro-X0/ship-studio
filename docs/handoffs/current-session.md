@@ -2,11 +2,11 @@
 
 **Updated:** 2026-09-20  
 **Branch:** `main`  
-**Status:** Desktop Integrations section — awaiting commit/push
+**Status:** Desktop Integrations section done — hub idle
 
 ## Next Atomic Step
 
-**Idle** after this band commits — or Polar live dogfood / deploy preview / Desktop license read.
+**Idle** — or Polar live dogfood / deploy preview / Desktop license read.
 
 ## PAUSED / CANCELLED
 
@@ -25,7 +25,7 @@
 | Website W3 demo GIF shelf | `a25c3ba` |
 | Website W4 license + refund dogfood | `7935a49` |
 | Desktop independent options (Polar + Now quick) | `766925e` |
-| Desktop Integrations (payment + email wizards) | (pending commit) |
+| Desktop Integrations (payment + email wizards) | `c54b298` |
 
 ## Boot allowlist
 
