@@ -2,11 +2,11 @@
 
 **Updated:** 2026-09-20  
 **Branch:** `main`  
-**Status:** Desktop independent options (Polar + Dashboard) — awaiting commit/push
+**Status:** Desktop independent options done — hub idle
 
 ## Next Atomic Step
 
-**Idle** after this band commits — or Polar live dogfood with credentials / deploy preview / Desktop license read.
+**Idle** — or Polar live dogfood with credentials / deploy preview / Desktop license read.
 
 ## PAUSED / CANCELLED
 
@@ -24,7 +24,7 @@
 | Website W1 docs + W2 Polar checkout | `9ce0989` |
 | Website W3 demo GIF shelf | `a25c3ba` |
 | Website W4 license + refund dogfood | `7935a49` |
-| Desktop independent options (Polar + Now quick) | (pending commit) |
+| Desktop independent options (Polar + Now quick) | `766925e` |
 
 ## Boot allowlist
 
