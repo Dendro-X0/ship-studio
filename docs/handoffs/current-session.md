@@ -2,12 +2,11 @@
 
 **Updated:** 2026-09-20  
 **Branch:** `main`  
-**Status:** Desktop modularization **M1** done — awaiting commit/push
+**Status:** Desktop sidebar · icons · modularization M1 done — hub idle
 
 ## Next Atomic Step
 
-**M2 (when continue):** extract `sidebar` · `integrations-ui` · `output-preview` · `cmdk` from `main.ts`.  
-Or commit/push current stack (sidebar + icons + M1).
+**M2 (when continue):** extract `sidebar` · `integrations-ui` · `output-preview` · `cmdk` from `main.ts`.
 
 ## PAUSED / CANCELLED
 
@@ -22,7 +21,7 @@ Or commit/push current stack (sidebar + icons + M1).
 | Band | Commit |
 |------|--------|
 | Desktop Integrations (payment + email wizards) | `c54b298` |
-| Desktop sidebar + local icons + modularization M1 | (pending commit) |
+| Desktop sidebar + local icons + modularization M1 | `374e04e` |
 
 ## Boot allowlist
 
