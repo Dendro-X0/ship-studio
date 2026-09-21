@@ -4,6 +4,9 @@
 
 ### Added
 
+- **Desktop modularization M1** — extract `types` · `util` · `icons` · `integrations-data` · `constants` from `main.ts` (see `specs/frontend/desktop-modularization-design.md`)
+- **Desktop local icons** — sidebar targets and integration wizards use bundled SVGs in `apps/desktop/src/public` (no runtime icon fetch)
+- **Desktop sidebar** — Ship / Targets (monorepo scopes) / Integrations shortcuts / More · click a target to include it in deploy
 - **Desktop Integrations** — Advanced nav section with payment wizards (Polar · Stripe · Gumroad · Lemon · Paddle) and Resend email checklist; Open dashboard only
 - **Desktop independent options** — Dashboard `#now-quick` (Human / Portal / Env / Set up Polar) · clickable detect chips · CmdK “Set up Polar” (Advanced + Public)
 - **Product website W4** — local license key file (`/license` · `scripts/issue-license.py`) + refund dogfood guide; success/account/refunds wired

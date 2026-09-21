@@ -3,202 +3,55 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 
-type CmdResult = {
-  ok: boolean;
-  code: number;
-  stdout: string;
-  stderr: string;
-  shipctl: string;
-  cancelled?: boolean;
-};
-
-type StreamLine = {
-  stream: "stdout" | "stderr" | "meta" | string;
-  text: string;
-};
-
-type ToolStatus = {
-  found?: boolean;
-  path?: string | null;
-  version?: string | null;
-};
-
-type Detected = {
-  signet_toml?: boolean;
-  package_json?: boolean;
-  tauri?: boolean;
-  wrangler?: boolean;
-  vercel?: boolean;
-  netlify?: boolean;
-  github?: boolean;
-  polar?: boolean;
-  orbit_configured?: boolean;
-  hints?: string[];
-};
-
-type DoctorReport = {
-  ok?: boolean;
-  signet?: ToolStatus;
-  orbit?: ToolStatus;
-  notes?: string[];
-  detected?: Detected;
-};
-
-type PortalStep = {
-  id?: string;
-  provider?: string;
-  kind?: string;
-  title?: string;
-  detail?: string;
-  entry_url?: string | null;
-  cli?: string[] | null;
-  human?: boolean;
-};
-
-type PortalPlan = {
-  providers?: string[];
-  steps?: PortalStep[];
-  notes?: string[];
-};
-
-type SecretsPlan = {
-  hints?: Array<{
-    provider?: string;
-    name?: string;
-    put_cli?: string[];
-    entry_url?: string | null;
-    detail?: string;
-    source?: string;
-  }>;
-};
-
-type HumanSprint = {
-  minutes_hint?: string;
-  open_order?: string[];
-  put_queue?: Array<{
-    provider?: string;
-    name?: string;
-    put_cli?: string[];
-    entry_url?: string | null;
-    detail?: string;
-  }>;
-  checklist?: string[];
-};
-
-type LaunchView = {
-  current_index?: number;
-  total?: number;
-  done_count?: number;
-  finished?: boolean;
-  current?: {
-    id?: string;
-    title?: string;
-    kind?: string;
-    detail?: string;
-    entry_url?: string | null;
-    status?: string;
-    verify_hint?: string | null;
-    run?: string[] | null;
-  } | null;
-  steps?: Array<{
-    id?: string;
-    title?: string;
-    status?: string;
-    kind?: string;
-  }>;
-  notes?: string[];
-};
-
-type PublishView = {
-  mode?: string;
-  intent?: string;
-  current_index?: number;
-  total?: number;
-  done_count?: number;
-  minutes_remaining?: number;
-  minutes_total?: number;
-  finished?: boolean;
-  current?: {
-    id?: string;
-    title?: string;
-    kind?: string;
-    detail?: string;
-    entry_url?: string | null;
-    status?: string;
-    minutes?: number;
-    run?: string[] | null;
-    desktop_view?: string | null;
-  } | null;
-  steps?: Array<{
-    id?: string;
-    title?: string;
-    status?: string;
-    kind?: string;
-    minutes?: number;
-  }>;
-  notes?: string[];
-};
-
-type PulseAction = {
-  id?: string;
-  label?: string;
-  kind?: string;
-  view?: string | null;
-  cmd?: string[] | null;
-};
-
-type ProjectPulse = {
-  name?: string;
-  kind?: string;
-  git?: {
-    is_repo?: boolean;
-    branch?: string | null;
-    dirty?: boolean;
-    dirty_count?: number;
-    committed?: boolean;
-    ahead?: number | null;
-    behind?: number | null;
-    last_commit?: { hash?: string; subject?: string; when?: string | null } | null;
-    notes?: string[];
-  };
-  publish?: {
-    present?: boolean;
-    finished?: boolean;
-    current_index?: number;
-    total?: number;
-    done_count?: number;
-    current_id?: string | null;
-    current_title?: string | null;
-    minutes_remaining?: number | null;
-  };
-  launch?: {
-    present?: boolean;
-    finished?: boolean;
-    current_index?: number;
-    total?: number;
-    current_title?: string | null;
-  };
-  deploy?: {
-    signal?: string;
-    detail?: string;
-    urls?: string[];
-    last_run_ok?: boolean | null;
-  };
-  tools?: {
-    signet_found?: boolean;
-    orbit_found?: boolean;
-    signet_version?: string | null;
-    orbit_version?: string | null;
-  };
-  scopes_active?: string[];
-  now?: {
-    title?: string;
-    detail?: string;
-    primary?: PulseAction;
-    actions?: PulseAction[];
-  };
-  notes?: string[];
-};
+import {
+  ACTION_IDS,
+  DEPLOY_KEY,
+  INTENT_KEY,
+  LAST_PROJECT_KEY,
+  MAX_RECENT,
+  MODE_KEY,
+  OFFLINE_KEY,
+  RECENT_KEY,
+  RELATED_VIEW_LABELS,
+  VIEW_META,
+} from "./constants";
+import {
+  integrationIconHtml,
+  SCOPE_KIND_ORDER,
+  scopeIconFile,
+  iconImg,
+} from "./icons";
+import { INTEGRATION_WIZARDS } from "./integrations-data";
+import type {
+  AssistPlan,
+  CmdItem,
+  CmdResult,
+  Detected,
+  DoctorReport,
+  EnvPortal,
+  HumanSprint,
+  IntegrationWizard,
+  LaunchView,
+  PortalPlan,
+  ProjectPulse,
+  PublishView,
+  ScopePlan,
+  SecretsPlan,
+  ShipIntent,
+  ShipState,
+  SignPortal,
+  StreamLine,
+  StudioMode,
+  ToastKind,
+} from "./types";
+import {
+  escapeHtml,
+  joinArgs,
+  parentPath,
+  prettyMaybe,
+  projectName,
+  splitArgs,
+} from "./util";
 
 let lastLaunch: LaunchView | null = null;
 let lastPublish: PublishView | null = null;
@@ -208,35 +61,6 @@ let lastHuman: HumanSprint | null = null;
 let lastPortal: PortalPlan | null = null;
 let lastSecrets: SecretsPlan | null = null;
 let portalFilter: string | null = null;
-
-type ShipState = {
-  project: string;
-  has_ship_dir: boolean;
-  studio: {
-    sign_args?: string[];
-    deploy_args?: string[];
-    notes?: string[];
-    detected?: Detected;
-  } | null;
-  last_run: {
-    ok?: boolean;
-    finished?: boolean;
-    message?: string;
-    steps?: Array<{ id?: string; ok?: boolean; exit_code?: number; detail?: string }>;
-    finished_at?: string;
-  } | null;
-};
-
-const LAST_PROJECT_KEY = "ship-studio.last-project";
-const RECENT_KEY = "ship-studio.recent-projects";
-const OFFLINE_KEY = "ship-studio.offline";
-const DEPLOY_KEY = "ship-studio.include-deploy";
-const MODE_KEY = "ship-studio.mode";
-const INTENT_KEY = "ship-studio.intent";
-const MAX_RECENT = 6;
-
-type StudioMode = "general" | "advanced";
-type ShipIntent = "local" | "public";
 
 function studioMode(): StudioMode {
   return localStorage.getItem(MODE_KEY) === "advanced" ? "advanced" : "general";
@@ -295,7 +119,7 @@ function applyStudioMode(mode: StudioMode, opts?: { rebuild?: boolean }) {
   });
   syncDeployToggle();
   syncNowQuick();
-  const advancedViews = new Set(["assist", "launch", "portal", "integrations", "ritual", "tools"]);
+  const advancedViews = new Set(["assist", "launch", "portal", "ritual", "tools"]);
   if (mode === "general" && advancedViews.has(activeViewId)) {
     setView("dashboard");
   }
@@ -323,50 +147,6 @@ const deployEl = () => document.querySelector<HTMLInputElement>("#opt-deploy");
 const signArgsEl = () => document.querySelector<HTMLInputElement>("#sign-args");
 const deployArgsEl = () => document.querySelector<HTMLInputElement>("#deploy-args");
 
-const ACTION_IDS = [
-  "btn-doctor",
-  "btn-wizard",
-  "btn-ship",
-  "btn-human",
-  "btn-human-open",
-  "btn-human-put",
-  "btn-launch",
-  "btn-launch-open",
-  "btn-launch-verify",
-  "btn-launch-confirm",
-  "btn-launch-next",
-  "btn-publish",
-  "btn-publish-related",
-  "btn-publish-open",
-  "btn-publish-verify",
-  "btn-publish-confirm",
-  "btn-publish-next",
-  "btn-guide",
-  "btn-configure",
-  "btn-portal",
-  "btn-portal-open",
-  "btn-portal-refresh",
-  "btn-portal-open-all",
-  "btn-secrets",
-  "btn-vault",
-  "btn-vault-export",
-  "btn-sign",
-  "btn-deploy",
-  "btn-flow-dry",
-  "btn-flow",
-  "btn-status",
-  "btn-cancel",
-  "btn-copy",
-  "btn-clear",
-  "btn-reveal",
-  "btn-save-args",
-  "btn-assist",
-  "btn-assist-start",
-  "btn-scopes",
-  "btn-scopes-save",
-  "btn-env",
-  "btn-sign-paths",
-] as const;
 
 let running = false;
 let busyWatchdog: number | null = null;
@@ -629,7 +409,6 @@ function show(text: string) {
   syncOutputMirror();
 }
 
-type ToastKind = "ok" | "err" | "info";
 
 function toast(message: string, kind: ToastKind = "info", ms = 3200) {
   const host = document.querySelector<HTMLElement>("#toast-host");
@@ -661,67 +440,7 @@ function appendStream(line: StreamLine) {
   syncOutputMirror();
 }
 
-const VIEW_META: Record<string, { title: string; desc: string }> = {
-  dashboard: {
-    title: "Dashboard",
-    desc: "The repo you’re shipping, and the next human action.",
-  },
-  assist: {
-    title: "Assist",
-    desc: "Checklist overview — Start publishing for the live spine.",
-  },
-  publish: {
-    title: "Publish",
-    desc: "Minute spine — Open/Run → Confirm → Next; Related opens detail panels.",
-  },
-  scopes: {
-    title: "Scopes",
-    desc: "Detail panel — Web / API / Desktop / Mobile / Container directories for the current publish step.",
-  },
-  env: {
-    title: "ENV & tokens",
-    desc: "Detail panel — configure, retrieve, create on official dashboards (incl. DB hosts).",
-  },
-  sign: {
-    title: "Sign",
-    desc: "Detail panel — self-sign, official certificates, or store submit portals for this step.",
-  },
-  launch: {
-    title: "Launch",
-    desc: "Companion stepper — prefer Publish for the full minute path.",
-  },
-  portal: {
-    title: "Portal",
-    desc: "Detail panel — human paste sprint, provider entry, markets & container docs.",
-  },
-  integrations: {
-    title: "Integrations",
-    desc: "Payment and email wizards — open the vendor, then confirm here.",
-  },
-  ritual: {
-    title: "Ritual",
-    desc: "Detail panel — sign_args / deploy_args in .ship/studio.json.",
-  },
-  tools: {
-    title: "Tools",
-    desc: "Pass-through doctor / sign / deploy / flow — not the primary start.",
-  },
-  output: {
-    title: "Output",
-    desc: "Full console for the active shipctl stream.",
-  },
-};
 
-const RELATED_VIEW_LABELS: Record<string, string> = {
-  scopes: "Open Scopes",
-  env: "Open Env",
-  sign: "Open Sign",
-  portal: "Open Portal",
-  ritual: "Open Ritual",
-  tools: "Open Tools",
-  launch: "Open Launch",
-  dashboard: "Open Dashboard",
-};
 
 let activeViewId = "dashboard";
 
@@ -760,15 +479,9 @@ function setView(id: string) {
   syncBackToPublish();
   if (id === "output") syncOutputMirror();
   if (id === "integrations") renderIntegrations();
+  renderSidebarIntegrations();
 }
 
-type CmdItem = {
-  id: string;
-  title: string;
-  keywords: string;
-  group: string;
-  run: () => void;
-};
 
 function commandItems(): CmdItem[] {
   return [
@@ -1088,15 +801,6 @@ function runCmdk(idx: number) {
   item.run();
 }
 
-function prettyMaybe(raw: string): string {
-  const t = raw.trim();
-  if (!t) return "";
-  try {
-    return JSON.stringify(JSON.parse(t), null, 2);
-  } catch {
-    return t;
-  }
-}
 
 function setPill(id: string, kind: "ok" | "bad" | "muted", label: string) {
   const el = document.querySelector<HTMLElement>(`#${id}`);
@@ -1118,34 +822,10 @@ function resetSteps() {
   }
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
 
-function splitArgs(raw: string): string[] {
-  return raw.trim().split(/\s+/).filter(Boolean);
-}
 
-function joinArgs(args: string[] | undefined, fallback: string): string {
-  if (!args || args.length === 0) return fallback;
-  return args.join(" ");
-}
 
-function projectName(path: string): string {
-  const parts = path.replace(/[\\/]+$/, "").split(/[\\/]/);
-  return parts[parts.length - 1] || path;
-}
 
-function parentPath(path: string): string {
-  const clean = path.replace(/[\\/]+$/, "");
-  const parts = clean.split(/[\\/]/);
-  if (parts.length < 2) return "";
-  return parts.slice(0, -1).join("/") || clean;
-}
 
 function describeKind(detected?: Detected): string {
   if (!detected) return "";
@@ -1289,106 +969,6 @@ function setupPolarPortal() {
   selectIntegration("polar");
 }
 
-type IntegrationWizard = {
-  id: string;
-  group: "Payments" | "Email";
-  title: string;
-  blurb: string;
-  provider?: string;
-  openUrl: string;
-  needsPublic: boolean;
-  steps: string[];
-};
-
-const INTEGRATION_WIZARDS: IntegrationWizard[] = [
-  {
-    id: "polar",
-    group: "Payments",
-    title: "Polar",
-    blurb: "Checkout, customer portal, and refunds.",
-    provider: "polar",
-    openUrl: "https://polar.sh/dashboard",
-    needsPublic: true,
-    steps: [
-      "Create a one-time product on Polar.",
-      "Set success URL to /checkout/success and cancel to /checkout/cancel.",
-      "Copy the checkout link and customer portal URL.",
-      "Paste them into the deploy env or apps/website PUBLIC_POLAR_* — Studio does not write those.",
-      "Refunds stay on the Polar portal within your published window.",
-    ],
-  },
-  {
-    id: "stripe",
-    group: "Payments",
-    title: "Stripe",
-    blurb: "Dashboard listing — no Payment Link creation from Studio.",
-    provider: "stripe",
-    openUrl: "https://dashboard.stripe.com",
-    needsPublic: true,
-    steps: [
-      "Open the Stripe dashboard.",
-      "Create or update the product and checkout yourself.",
-      "Copy any publishable or secret names you need — paste values only on the deploy host.",
-      "Return and confirm the listing in Publish when that step is current.",
-    ],
-  },
-  {
-    id: "gumroad",
-    group: "Payments",
-    title: "Gumroad",
-    blurb: "Product listing on Gumroad.",
-    provider: "gumroad",
-    openUrl: "https://app.gumroad.com",
-    needsPublic: true,
-    steps: [
-      "Open Gumroad and create or update the product.",
-      "Copy the product URL if your site or listing needs it.",
-      "Confirm in Publish when the Gumroad listing step is current.",
-    ],
-  },
-  {
-    id: "lemon",
-    group: "Payments",
-    title: "Lemon Squeezy",
-    blurb: "Store and checkout on Lemon.",
-    provider: "lemon",
-    openUrl: "https://app.lemonsqueezy.com",
-    needsPublic: true,
-    steps: [
-      "Open Lemon Squeezy.",
-      "Create or update the product and checkout.",
-      "Confirm fulfillment email works in Lemon — Studio does not send it.",
-      "Confirm the listing step in Publish when it is current.",
-    ],
-  },
-  {
-    id: "paddle",
-    group: "Payments",
-    title: "Paddle",
-    blurb: "Vendor dashboard for Paddle checkout.",
-    provider: "paddle",
-    openUrl: "https://vendors.paddle.com",
-    needsPublic: true,
-    steps: [
-      "Open the Paddle vendor dashboard.",
-      "Create or update the product and checkout yourself.",
-      "Confirm the listing step in Publish when it is current.",
-    ],
-  },
-  {
-    id: "resend",
-    group: "Email",
-    title: "Resend",
-    blurb: "Transactional email API key.",
-    openUrl: "https://resend.com/api-keys",
-    needsPublic: false,
-    steps: [
-      "Open Resend API keys and create a key.",
-      "Put RESEND_API_KEY on the deploy host from Env — do not paste the value into Studio.",
-      "Send a test from Resend. Studio never sends mail.",
-    ],
-  },
-];
 
 let selectedIntegration = "polar";
 
@@ -1408,6 +988,7 @@ function renderIntegrations() {
         .map((w) => {
           const locked = w.needsPublic && shipIntent() !== "public";
           return `<button type="button" class="int-card${selectedIntegration === w.id ? " is-active" : ""}" data-int="${escapeHtml(w.id)}" ${locked ? 'data-locked="true"' : ""}>
+            ${integrationIconHtml(w.id)}
             <span class="int-card-title">${escapeHtml(w.title)}</span>
             <span class="int-card-blurb">${escapeHtml(w.blurb)}</span>
           </button>`;
@@ -2305,53 +1886,9 @@ function renderSwitcher(list: string[]) {
   });
 }
 
-type ScopePlan = {
-  scopes?: Array<{
-    id?: string;
-    kind?: string;
-    label?: string;
-    relative?: string;
-    provider?: string | null;
-    signals?: string[];
-  }>;
-  active?: string[];
-};
 
-type AssistPlan = {
-  sign_path?: string;
-  steps?: Array<{
-    id?: string;
-    title?: string;
-    detail?: string;
-    view?: string;
-    ready?: boolean;
-  }>;
-};
 
-type EnvPortal = {
-  actions?: Array<{
-    id?: string;
-    kind?: string;
-    title?: string;
-    detail?: string;
-    entry_url?: string | null;
-    put_cli?: string[] | null;
-    provider?: string | null;
-    name?: string | null;
-  }>;
-};
 
-type SignPortal = {
-  recommended?: string;
-  paths?: Array<{
-    id?: string;
-    kind?: string;
-    title?: string;
-    detail?: string;
-    entry_url?: string | null;
-    run?: string[] | null;
-  }>;
-};
 
 async function loadJsonCmd(args: string[], opts?: { silent?: boolean }): Promise<unknown | null> {
   const result = await run(args, { quietHeader: true, silent: opts?.silent !== false });
@@ -2403,17 +1940,20 @@ function applyAssist(plan: AssistPlan | null) {
   });
 }
 
+let lastScopes: ScopePlan | null = null;
+
 function applyScopes(plan: ScopePlan | null) {
+  lastScopes = plan;
   const grid = document.querySelector("#scope-grid");
-  if (!grid) return;
-  const scopes = plan?.scopes ?? [];
-  const active = new Set(plan?.active ?? []);
-  grid.innerHTML = scopes.length
-    ? scopes
-        .map((s) => {
-          const id = s.id ?? "";
-          const on = active.has(id) ? "checked" : "";
-          return `<label class="scope-card">
+  if (grid) {
+    const scopes = plan?.scopes ?? [];
+    const active = new Set(plan?.active ?? []);
+    grid.innerHTML = scopes.length
+      ? scopes
+          .map((s) => {
+            const id = s.id ?? "";
+            const on = active.has(id) ? "checked" : "";
+            return `<label class="scope-card">
             <input type="checkbox" data-scope-id="${escapeHtml(id)}" ${on} />
             <div>
               <strong>${escapeHtml(s.label ?? id)}</strong>
@@ -2422,9 +1962,111 @@ function applyScopes(plan: ScopePlan | null) {
               }</span>
             </div>
           </label>`;
+          })
+          .join("")
+      : `<p class="detail empty-hint">No scopes detected.</p>`;
+  }
+  renderSidebarTargets();
+}
+
+function renderSidebarTargets() {
+  const host = document.querySelector<HTMLElement>("#sidebar-targets");
+  if (!host) return;
+  const scopes = lastScopes?.scopes ?? [];
+  if (!projectPath() || !scopes.length) {
+    host.innerHTML = `<p class="nav-tree-empty">${projectPath() ? "No app or API targets detected." : "Bind a repo to list apps and APIs."}</p>`;
+    return;
+  }
+  const active = new Set(lastScopes?.active ?? []);
+  const kinds = [...new Set(scopes.map((s) => (s.kind ?? "root").toLowerCase()))].sort(
+    (a, b) => SCOPE_KIND_ORDER.indexOf(a) - SCOPE_KIND_ORDER.indexOf(b),
+  );
+  host.innerHTML = kinds
+    .map((kind) => {
+      const rows = scopes
+        .filter((s) => (s.kind ?? "root").toLowerCase() === kind)
+        .map((s) => {
+          const id = s.id ?? "";
+          const on = active.has(id);
+          const path = s.relative && s.relative !== "." ? s.relative : s.label ?? id;
+          return `<button type="button" class="nav-target${on ? " is-on" : ""}" data-target="${escapeHtml(id)}" aria-pressed="${on ? "true" : "false"}">
+            ${iconImg(scopeIconFile(s))}
+            <span class="nav-target-mark" aria-hidden="true">${on ? "●" : "○"}</span>
+            <span class="nav-target-text">
+              <span class="nav-target-name">${escapeHtml(s.label ?? id)}</span>
+              <span class="nav-target-path">${escapeHtml(path)}</span>
+            </span>
+          </button>`;
         })
-        .join("")
-    : `<p class="detail empty-hint">No scopes detected.</p>`;
+        .join("");
+      return `<p class="nav-kind">${escapeHtml(kind)}</p>${rows}`;
+    })
+    .join("");
+  host.querySelectorAll<HTMLButtonElement>("[data-target]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-target");
+      if (id) void toggleSidebarTarget(id);
+    });
+  });
+}
+
+async function toggleSidebarTarget(id: string) {
+  const scopes = lastScopes?.scopes ?? [];
+  const active = new Set(lastScopes?.active ?? []);
+  if (active.has(id)) {
+    if (active.size <= 1) {
+      toast("Keep at least one deploy target", "info");
+      return;
+    }
+    active.delete(id);
+  } else {
+    active.add(id);
+  }
+  const ids = scopes.map((s) => s.id ?? "").filter((sid) => active.has(sid));
+  const result = await run(
+    ["scopes", "--project", projectPath(), "set", "--ids", ids.join(",")],
+    { quietHeader: true },
+  );
+  if (result?.stdout) {
+    try {
+      applyScopes(JSON.parse(result.stdout) as ScopePlan);
+    } catch {
+      /* ignore */
+    }
+  }
+  if (result?.ok) toast("Deploy targets updated", "ok");
+}
+
+function renderSidebarIntegrations() {
+  const host = document.querySelector<HTMLElement>("#sidebar-integrations");
+  if (!host) return;
+  const groups = ["Payments", "Email"] as const;
+  host.innerHTML = groups
+    .map((group) => {
+      const rows = INTEGRATION_WIZARDS.filter((w) => w.group === group)
+        .map(
+          (w) =>
+            `<button type="button" class="nav-target${selectedIntegration === w.id && activeViewId === "integrations" ? " is-on" : ""}" data-side-int="${escapeHtml(w.id)}">
+              ${integrationIconHtml(w.id)}
+              <span class="nav-target-name">${escapeHtml(w.title)}</span>
+            </button>`,
+        )
+        .join("");
+      return `<p class="nav-kind">${group}</p>${rows}`;
+    })
+    .join("");
+  host.querySelectorAll<HTMLButtonElement>("[data-side-int]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-side-int");
+      if (!id) return;
+      if (!projectPath()) {
+        toast("Bind a project first", "info");
+        return;
+      }
+      setView("integrations");
+      selectIntegration(id);
+    });
+  });
 }
 
 async function saveScopes() {
@@ -3428,6 +3070,8 @@ window.addEventListener("DOMContentLoaded", () => {
   renderRecent(loadRecent());
   void refreshShipctlPath();
   setView("dashboard");
+  renderSidebarTargets();
+  renderSidebarIntegrations();
   setTitle(null);
   wireWindowChrome();
 
@@ -3743,11 +3387,12 @@ window.addEventListener("DOMContentLoaded", () => {
   document
     .querySelector("#output-preview-search")
     ?.addEventListener("keydown", (ev) => {
-      if (ev.key === "Enter") {
-        ev.preventDefault();
-        stepPreviewMatch(ev.shiftKey ? -1 : 1);
-      } else if (ev.key === "Escape") {
-        ev.preventDefault();
+      const kev = ev as KeyboardEvent;
+      if (kev.key === "Enter") {
+        kev.preventDefault();
+        stepPreviewMatch(kev.shiftKey ? -1 : 1);
+      } else if (kev.key === "Escape") {
+        kev.preventDefault();
         closeOutputPreview();
       }
     });

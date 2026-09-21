@@ -2,11 +2,12 @@
 
 **Updated:** 2026-09-20  
 **Branch:** `main`  
-**Status:** Desktop Integrations section done — hub idle
+**Status:** Desktop modularization **M1** done — awaiting commit/push
 
 ## Next Atomic Step
 
-**Idle** — or Polar live dogfood / deploy preview / Desktop license read.
+**M2 (when continue):** extract `sidebar` · `integrations-ui` · `output-preview` · `cmdk` from `main.ts`.  
+Or commit/push current stack (sidebar + icons + M1).
 
 ## PAUSED / CANCELLED
 
@@ -20,15 +21,12 @@
 
 | Band | Commit |
 |------|--------|
-| Website W0 | `d1dae86` |
-| Website W1 docs + W2 Polar checkout | `9ce0989` |
-| Website W3 demo GIF shelf | `a25c3ba` |
-| Website W4 license + refund dogfood | `7935a49` |
-| Desktop independent options (Polar + Now quick) | `766925e` |
 | Desktop Integrations (payment + email wizards) | `c54b298` |
+| Desktop sidebar + local icons + modularization M1 | (pending commit) |
 
 ## Boot allowlist
 
 1. This file  
 2. [docs/CURRENT.md](../CURRENT.md) · [frontend/frontend-spec.md](../frontend/frontend-spec.md)  
-3. `pnpm dev` → Advanced → **Integrations** (Polar wizard · Resend)  
+3. `specs/frontend/desktop-modularization-design.md`  
+4. `pnpm --filter ship-studio-desktop build`  

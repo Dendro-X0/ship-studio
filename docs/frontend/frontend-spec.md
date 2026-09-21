@@ -46,22 +46,26 @@ DO NOT: hide the project behind “No project” muted chrome · lead with a 1�
 
 ```
 SHIP
-- dashboard — overview, health, workflow, quick actions
-- publish — minute wizard (Open/Run · Confirm · Next) — primary
-- assist — full-stack checklist overview
-- launch — guided open → verify → next (companion)
-- portal — human sprint + provider portal + secrets
-- integrations — payment + email wizards (Open dashboard + checklist)
-- env — ENV/token configure · retrieve · create
-- sign — self-sign vs official vendor paths
+- dashboard — overview
+- publish — minute wizard (primary)
+- sign — certificates / store paths
+- env — ENV/token entry
 
-CONFIG
-- scopes — Web / API / Desktop directories
-- ritual — sign_args / deploy_args presets
-- tools — doctor / sign / deploy / flow / vault / …
+TARGETS
+- detected scopes grouped by kind (api · web · desktop · …)
+- click toggles the deploy/release target (`shipctl scopes set`)
+- each target and integration uses a **bundled** SVG from `apps/desktop/src/public/icons` (no icon CDN)
+- manage scopes — full checkbox panel
+
+INTEGRATIONS
+- payment + email wizard shortcuts (always visible, not Advanced-only)
+- all wizards — Integrations page
+
+MORE (Advanced)
+- assist · launch · portal · ritual · tools
 
 RUN
-- output — full output focus (dock always visible too)
+- output
 ```
 
 Titlebar project name opens a recents switcher for effortless directory binding.
@@ -91,7 +95,7 @@ Topbar segmented control persists in `localStorage` (`ship-studio.mode`).
 
 | General | Advanced |
 |---------|----------|
-| Nav: Dashboard, Publish, Env, Scopes, Sign, Output | + Assist, Launch, Portal, Integrations, Ritual, Tools |
+| Nav: Dashboard, Publish, Sign, Env, Targets, Integrations, Output | + Assist, Launch, Portal, Ritual, Tools |
 | Publish plan via `shipctl publish --mode general` | `--mode advanced` |
 | Hide Deploy toggle; keep Offline | Full toggles |
 

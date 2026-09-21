@@ -378,6 +378,119 @@ body::before {
   transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
 }
 
+.nav-item.nav-sub {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.nav-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0.15rem 0 0.25rem;
+}
+
+.nav-tree-empty {
+  margin: 0.15rem 0.7rem 0.35rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.nav-kind {
+  margin: 0.45rem 0.7rem 0.1rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted) 80%, transparent);
+}
+
+.nav-target {
+  appearance: none;
+  font: inherit;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 0.28rem 0.55rem 0.28rem 0.7rem;
+  cursor: pointer;
+}
+
+.nav-target:hover,
+.nav-target.is-on {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent-dim) 70%, transparent);
+}
+
+.nav-target.is-on .nav-target-mark {
+  color: var(--accent-text);
+}
+
+.nav-target:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.nav-target-mark {
+  width: 0.8rem;
+  flex: none;
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+
+.nav-ico-img {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  object-fit: contain;
+  margin-top: 1px;
+}
+
+.nav-ico-img[data-tone="ink"] {
+  filter: invert(1);
+}
+
+.nav-ico-img.nav-ico-wide {
+  width: 28px;
+  height: 12px;
+}
+
+.int-card .nav-ico-img {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 0.15rem;
+}
+
+.int-card .nav-ico-img.nav-ico-wide {
+  width: 44px;
+  height: 18px;
+}
+
+.nav-target-text {
+  display: grid;
+  min-width: 0;
+}
+
+.nav-target-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.nav-target-path {
+  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-size: 0.65rem;
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .nav-item:hover:not(:disabled) {
   color: var(--text);
   background: rgba(255, 255, 255, 0.03);

@@ -225,7 +225,13 @@ fn consider(project: &Path, dir: &Path, id_hint: &str, out: &mut Vec<Scope>) {
         return;
     }
     if signals.len() == 1 && signals[0] == "node" && !has(dir, "vercel.json") {
-        return;
+        // Bare Node apps at the repo root are too noisy. Workspace packages
+        // (apps/* , packages/*) are real deploy/release targets.
+        let rel_path = rel(project, dir);
+        let workspace_pkg = rel_path.starts_with("apps/") || rel_path.starts_with("packages/");
+        if !workspace_pkg {
+            return;
+        }
     }
     let name = dir
         .file_name()
@@ -310,6 +316,18 @@ pub fn detect(project: &Path) -> Vec<Scope> {
     let apps = project.join("apps");
     if apps.is_dir() {
         if let Ok(entries) = fs::read_dir(&apps) {
+            for ent in entries.flatten() {
+                let p = ent.path();
+                if p.is_dir() && !skip_dir(&ent.file_name().to_string_lossy()) {
+                    consider(&project, &p, &ent.file_name().to_string_lossy(), &mut out);
+                }
+            }
+        }
+    }
+
+    let packages = project.join("packages");
+    if packages.is_dir() {
+        if let Ok(entries) = fs::read_dir(&packages) {
             for ent in entries.flatten() {
                 let p = ent.path();
                 if p.is_dir() && !skip_dir(&ent.file_name().to_string_lossy()) {
@@ -461,6 +479,32 @@ mod tests {
         assert!(plan.scopes.iter().any(|s| s.kind == ScopeKind::Api));
         assert!(plan.scopes.iter().any(|s| s.provider.as_deref() == Some("cloudflare")));
         assert!(plan.scopes.iter().any(|s| s.provider.as_deref() == Some("vercel")));
+    }
+
+    #[test]
+    fn detects_workspace_node_apps() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-scopes-ws-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("apps/website")).unwrap();
+        fs::write(dir.join("apps/website/package.json"), "{}\n").unwrap();
+        fs::create_dir_all(dir.join("noise")).unwrap();
+        fs::write(dir.join("noise/package.json"), "{}\n").unwrap();
+        let plan = plan_for(&dir);
+        assert!(
+            plan.scopes.iter().any(|s| s.relative.replace('\\', "/") == "apps/website"),
+            "expected apps/website, got {:?}",
+            plan.scopes.iter().map(|s| s.relative.clone()).collect::<Vec<_>>()
+        );
+        assert!(
+            plan.scopes.iter().all(|s| s.relative.replace('\\', "/") != "noise"),
+            "root-level node dirs should stay hidden"
+        );
     }
 
     #[test]
