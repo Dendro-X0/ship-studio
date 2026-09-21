@@ -111,6 +111,36 @@ Hero action for the publish spine — not a quiet peer of “Switch project”.
 
 Visual: large emerald CTA (`.cta-launch`) with arrow, soft breathe when ready to start/continue; secondary Switch stays muted. `#now-primary` id preserved.
 
+### Dashboard independent options (`#now-quick`)
+
+Secondary row under Switch — **independent** helpers, not peers of the publish CTA.
+
+| Control | When visible | Action |
+|---------|--------------|--------|
+| Human portal | Bound | Portal view · start Human sprint (opens Polar→GitHub sources) |
+| Portal | Bound | Load full portal plan |
+| Env | Bound | Env / tokens view + refresh |
+| Set up Polar | Bound · **Advanced** · **Public** | Portal filtered to `polar` via `shipctl portal --provider polar` |
+| Switch project | Always | Existing `#now-switch` |
+
+Honesty: Set up Polar opens dashboard steps only — operator creates checkout/refunds on polar.sh; Studio does not write `PUBLIC_POLAR_*`.
+
+### Detect chips (clickable)
+
+`#detect-chips` renders `<button type="button" class="chip on">` (keyboard focusable).
+
+| Chip | Routes to |
+|------|-----------|
+| `polar` | Same as Set up Polar |
+| `wrangler` / `vercel` / `netlify` / `github` | Portal filtered to that provider |
+| `package.json` / `signet.toml` | Publish |
+| `tauri` | Sign |
+| `orbit` | Dashboard (deploy health already on Now) |
+
+CmdK: **Set up Polar** (same Advanced+Public gate when run from palette — still callable; if Local/General, toast that Public+Advanced is required).
+
+DO NOT: make chips the primary nav · bury Polar only inside mid-Publish `listing.polar` · open a fake payment wizard that creates SKUs.
+
 ## Motion (≥2 intentional)
 
 1. Active nav accent bar slide / fade
@@ -151,6 +181,7 @@ Visual: full-bleed dark overlay (above toast, below cmdk). Panel: wide `min(920p
 
 ## Proof
 
+- L3: `pnpm dev` — Dashboard **Set up Polar** (Advanced+Public) · clickable detect chips · `#now-quick` secondaries
 - L3: `pnpm dev` — Output **Preview** · search finds JSON keys · Enter cycles matches · Esc closes
 - L2: `cargo run -p shipctl -- publish --mode advanced --project <dogfood-fixture>` lists new step ids
 - Existing button IDs remain clickable after redesign

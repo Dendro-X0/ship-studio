@@ -2,11 +2,11 @@
 
 **Updated:** 2026-09-20  
 **Branch:** `main`  
-**Status:** Product website **W4 done** — hub idle
+**Status:** Desktop independent options (Polar + Dashboard) — awaiting commit/push
 
 ## Next Atomic Step
 
-**Idle** — website W0–W4 complete. Queue a new band (e.g. Polar live dogfood with credentials, Desktop license read, deploy preview) before inventing work.
+**Idle** after this band commits — or Polar live dogfood with credentials / deploy preview / Desktop license read.
 
 ## PAUSED / CANCELLED
 
@@ -24,9 +24,10 @@
 | Website W1 docs + W2 Polar checkout | `9ce0989` |
 | Website W3 demo GIF shelf | `a25c3ba` |
 | Website W4 license + refund dogfood | `7935a49` |
+| Desktop independent options (Polar + Now quick) | (pending commit) |
 
 ## Boot allowlist
 
 1. This file  
-2. [docs/CURRENT.md](../CURRENT.md) · charter  
-3. `pnpm website:dev` → `/license` · `/checkout/success`  
+2. [docs/CURRENT.md](../CURRENT.md) · [frontend/frontend-spec.md](../frontend/frontend-spec.md)  
+3. `pnpm dev` → Dashboard · Advanced · Public → **Set up Polar**  

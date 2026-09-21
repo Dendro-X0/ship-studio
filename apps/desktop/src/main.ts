@@ -265,6 +265,7 @@ function applyShipIntent(intent: ShipIntent, opts?: { rebuild?: boolean }) {
   document.querySelectorAll<HTMLButtonElement>(".intent-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.intent === intent);
   });
+  syncNowQuick();
   if (opts?.rebuild && projectPath()) {
     void (async () => {
       const result = await run(publishArgs(["reset"]), { quietHeader: true });
@@ -293,6 +294,7 @@ function applyStudioMode(mode: StudioMode, opts?: { rebuild?: boolean }) {
     btn.classList.toggle("active", btn.dataset.mode === mode);
   });
   syncDeployToggle();
+  syncNowQuick();
   const advancedViews = new Set(["assist", "launch", "portal", "ritual", "tools"]);
   if (mode === "general" && advancedViews.has(activeViewId)) {
     setView("dashboard");
@@ -398,6 +400,7 @@ function setBusy(busy: boolean, label = "Ready", failed = false) {
   }
   // Always re-sync disabled state — Cancel / Clear / errors must unlock Refresh.
   setProjectUi(Boolean(projectPath()));
+  syncNowQuick();
   clearBusyWatchdog();
   if (busy) {
     busyWatchdog = window.setTimeout(() => {
@@ -418,6 +421,7 @@ function forceUnlockUi(reason = "Unlocked") {
     el.className = "ready";
   }
   setProjectUi(Boolean(projectPath()));
+  syncNowQuick();
 }
 
 function setProjectUi(on: boolean) {
@@ -902,6 +906,13 @@ function commandItems(): CmdItem[] {
       },
     },
     {
+      id: "act-polar",
+      title: "Set up Polar",
+      keywords: "commerce checkout refund listing polar dashboard",
+      group: "Ship",
+      run: () => setupPolarPortal(),
+    },
+    {
       id: "act-doctor",
       title: "Run Doctor",
       keywords: "signet orbit health",
@@ -1209,12 +1220,89 @@ function syncProjectIdentity() {
       );
     }
   }
+  syncNowQuick();
 }
 
 function setCtaLabel(btn: HTMLButtonElement, label: string) {
   const span = btn.querySelector<HTMLElement>(".cta-label");
   if (span) span.textContent = label;
   else btn.textContent = label;
+}
+
+function canShowPolarSetup(): boolean {
+  return Boolean(projectPath()) && studioMode() === "advanced" && shipIntent() === "public";
+}
+
+function syncNowQuick() {
+  const quick = document.querySelector<HTMLElement>("#now-quick");
+  const polarBtn = document.querySelector<HTMLButtonElement>("#now-polar");
+  const bound = Boolean(projectPath());
+  if (quick) quick.hidden = !bound;
+  if (polarBtn) polarBtn.hidden = !canShowPolarSetup();
+  for (const id of ["now-human", "now-portal", "now-env", "now-polar"] as const) {
+    const btn = document.querySelector<HTMLButtonElement>(`#${id}`);
+    if (btn) btn.disabled = !bound || running;
+  }
+}
+
+/** Load portal plan for one provider and open Portal view. */
+async function openPortalProvider(provider: string) {
+  const project = projectPath();
+  if (!project) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  portalFilter = provider;
+  const result = await run(
+    ["portal", "--project", project, "--provider", provider],
+    { step: "portal" },
+  );
+  if (!result?.ok || !result.stdout) return;
+  try {
+    const plan = JSON.parse(result.stdout) as PortalPlan;
+    applyPortalPlan(plan);
+    setStep("portal", "done");
+    toast(`Portal · ${provider}`, "ok");
+  } catch {
+    /* plan already in output */
+  }
+}
+
+function setupPolarPortal() {
+  if (!canShowPolarSetup()) {
+    toast("Set up Polar needs Advanced mode + Public intent", "info");
+    return;
+  }
+  void openPortalProvider("polar");
+}
+
+function routeDetectChip(label: string) {
+  const key = label.trim().toLowerCase();
+  switch (key) {
+    case "polar":
+      setupPolarPortal();
+      return;
+    case "wrangler":
+    case "vercel":
+    case "netlify":
+    case "github":
+      void openPortalProvider(key === "wrangler" ? "cloudflare" : key);
+      return;
+    case "package.json":
+    case "signet.toml":
+      setView("publish");
+      void refreshPublish();
+      return;
+    case "tauri":
+      setView("sign");
+      return;
+    case "orbit":
+      setView("dashboard");
+      return;
+    default:
+      setView("portal");
+      void loadPortal(false);
+  }
 }
 
 function polishCtaLabel(raw: string): string {
@@ -2893,8 +2981,17 @@ function applyDetected(detected?: Detected) {
     host.innerHTML = "";
   } else {
     host.innerHTML = onFlags
-      .map(([label]) => `<span class="chip on">${escapeHtml(label)}</span>`)
+      .map(
+        ([label]) =>
+          `<button type="button" class="chip on" data-chip="${escapeHtml(label)}" title="Open ${escapeHtml(label)}">${escapeHtml(label)}</button>`,
+      )
       .join("");
+    host.querySelectorAll<HTMLButtonElement>("[data-chip]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const chip = btn.getAttribute("data-chip");
+        if (chip) routeDetectChip(chip);
+      });
+    });
   }
   syncProjectIdentity();
 }
@@ -3206,6 +3303,20 @@ window.addEventListener("DOMContentLoaded", () => {
     toggleProjectSwitcher(true);
     document.querySelector<HTMLButtonElement>("#chrome-project")?.focus();
     toast("Choose a project", "info");
+  });
+  document.querySelector("#now-human")?.addEventListener("click", () => {
+    void runHumanPortal({ openSources: true });
+  });
+  document.querySelector("#now-portal")?.addEventListener("click", () => {
+    void loadPortal(false);
+  });
+  document.querySelector("#now-env")?.addEventListener("click", async () => {
+    setView("env");
+    const plan = (await loadJsonCmd(["env", "--project", projectPath()])) as EnvPortal | null;
+    applyEnv(plan);
+  });
+  document.querySelector("#now-polar")?.addEventListener("click", () => {
+    setupPolarPortal();
   });
 
   void listen<StreamLine>("shipctl-line", (event) => {

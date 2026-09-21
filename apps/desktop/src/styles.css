@@ -781,6 +781,55 @@ button.cta-launch.cta-compact {
   margin-top: 0.75rem;
 }
 
+.now-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.now-quick[hidden] {
+  display: none !important;
+}
+
+.now-quick-btn {
+  appearance: none;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.now-quick-btn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-soft));
+  background: color-mix(in srgb, var(--accent-dim) 55%, transparent);
+}
+
+.now-quick-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.now-quick-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.now-quick-btn.now-polar:not([hidden]) {
+  color: var(--accent-text);
+  border-color: rgba(63, 157, 110, 0.45);
+}
+
 .now-switch {
   background: transparent;
   border-color: var(--border-soft);
@@ -859,6 +908,26 @@ button.cta-launch.cta-compact {
   border: 1px solid var(--border-soft);
   background: var(--panel);
   color: var(--muted);
+}
+
+button.chip {
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+button.chip:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-soft));
+}
+
+button.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .chips .chip.on {
