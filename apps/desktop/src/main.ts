@@ -295,7 +295,7 @@ function applyStudioMode(mode: StudioMode, opts?: { rebuild?: boolean }) {
   });
   syncDeployToggle();
   syncNowQuick();
-  const advancedViews = new Set(["assist", "launch", "portal", "ritual", "tools"]);
+  const advancedViews = new Set(["assist", "launch", "portal", "integrations", "ritual", "tools"]);
   if (mode === "general" && advancedViews.has(activeViewId)) {
     setView("dashboard");
   }
@@ -694,6 +694,10 @@ const VIEW_META: Record<string, { title: string; desc: string }> = {
     title: "Portal",
     desc: "Detail panel — human paste sprint, provider entry, markets & container docs.",
   },
+  integrations: {
+    title: "Integrations",
+    desc: "Payment and email wizards — open the vendor, then confirm here.",
+  },
   ritual: {
     title: "Ritual",
     desc: "Detail panel — sign_args / deploy_args in .ship/studio.json.",
@@ -755,6 +759,7 @@ function setView(id: string) {
   syncProjectIdentity();
   syncBackToPublish();
   if (id === "output") syncOutputMirror();
+  if (id === "integrations") renderIntegrations();
 }
 
 type CmdItem = {
@@ -822,6 +827,13 @@ function commandItems(): CmdItem[] {
       keywords: "human secrets oauth paste",
       group: "Navigate",
       run: () => setView("portal"),
+    },
+    {
+      id: "nav-integrations",
+      title: "Go to Integrations",
+      keywords: "payment email polar stripe resend wizard",
+      group: "Navigate",
+      run: () => setView("integrations"),
     },
     {
       id: "nav-ritual",
@@ -1273,7 +1285,184 @@ function setupPolarPortal() {
     toast("Set up Polar needs Advanced mode + Public intent", "info");
     return;
   }
-  void openPortalProvider("polar");
+  setView("integrations");
+  selectIntegration("polar");
+}
+
+type IntegrationWizard = {
+  id: string;
+  group: "Payments" | "Email";
+  title: string;
+  blurb: string;
+  provider?: string;
+  openUrl: string;
+  needsPublic: boolean;
+  steps: string[];
+};
+
+const INTEGRATION_WIZARDS: IntegrationWizard[] = [
+  {
+    id: "polar",
+    group: "Payments",
+    title: "Polar",
+    blurb: "Checkout, customer portal, and refunds.",
+    provider: "polar",
+    openUrl: "https://polar.sh/dashboard",
+    needsPublic: true,
+    steps: [
+      "Create a one-time product on Polar.",
+      "Set success URL to /checkout/success and cancel to /checkout/cancel.",
+      "Copy the checkout link and customer portal URL.",
+      "Paste them into the deploy env or apps/website PUBLIC_POLAR_* — Studio does not write those.",
+      "Refunds stay on the Polar portal within your published window.",
+    ],
+  },
+  {
+    id: "stripe",
+    group: "Payments",
+    title: "Stripe",
+    blurb: "Dashboard listing — no Payment Link creation from Studio.",
+    provider: "stripe",
+    openUrl: "https://dashboard.stripe.com",
+    needsPublic: true,
+    steps: [
+      "Open the Stripe dashboard.",
+      "Create or update the product and checkout yourself.",
+      "Copy any publishable or secret names you need — paste values only on the deploy host.",
+      "Return and confirm the listing in Publish when that step is current.",
+    ],
+  },
+  {
+    id: "gumroad",
+    group: "Payments",
+    title: "Gumroad",
+    blurb: "Product listing on Gumroad.",
+    provider: "gumroad",
+    openUrl: "https://app.gumroad.com",
+    needsPublic: true,
+    steps: [
+      "Open Gumroad and create or update the product.",
+      "Copy the product URL if your site or listing needs it.",
+      "Confirm in Publish when the Gumroad listing step is current.",
+    ],
+  },
+  {
+    id: "lemon",
+    group: "Payments",
+    title: "Lemon Squeezy",
+    blurb: "Store and checkout on Lemon.",
+    provider: "lemon",
+    openUrl: "https://app.lemonsqueezy.com",
+    needsPublic: true,
+    steps: [
+      "Open Lemon Squeezy.",
+      "Create or update the product and checkout.",
+      "Confirm fulfillment email works in Lemon — Studio does not send it.",
+      "Confirm the listing step in Publish when it is current.",
+    ],
+  },
+  {
+    id: "paddle",
+    group: "Payments",
+    title: "Paddle",
+    blurb: "Vendor dashboard for Paddle checkout.",
+    provider: "paddle",
+    openUrl: "https://vendors.paddle.com",
+    needsPublic: true,
+    steps: [
+      "Open the Paddle vendor dashboard.",
+      "Create or update the product and checkout yourself.",
+      "Confirm the listing step in Publish when it is current.",
+    ],
+  },
+  {
+    id: "resend",
+    group: "Email",
+    title: "Resend",
+    blurb: "Transactional email API key.",
+    openUrl: "https://resend.com/api-keys",
+    needsPublic: false,
+    steps: [
+      "Open Resend API keys and create a key.",
+      "Put RESEND_API_KEY on the deploy host from Env — do not paste the value into Studio.",
+      "Send a test from Resend. Studio never sends mail.",
+    ],
+  },
+];
+
+let selectedIntegration = "polar";
+
+function integrationAllowed(wiz: IntegrationWizard): boolean {
+  if (!projectPath()) return false;
+  if (wiz.needsPublic && (studioMode() !== "advanced" || shipIntent() !== "public")) return false;
+  return true;
+}
+
+function renderIntegrations() {
+  const host = document.querySelector<HTMLElement>("#integrations-catalog");
+  if (!host) return;
+  const groups = ["Payments", "Email"] as const;
+  host.innerHTML = groups
+    .map((group) => {
+      const cards = INTEGRATION_WIZARDS.filter((w) => w.group === group)
+        .map((w) => {
+          const locked = w.needsPublic && shipIntent() !== "public";
+          return `<button type="button" class="int-card${selectedIntegration === w.id ? " is-active" : ""}" data-int="${escapeHtml(w.id)}" ${locked ? 'data-locked="true"' : ""}>
+            <span class="int-card-title">${escapeHtml(w.title)}</span>
+            <span class="int-card-blurb">${escapeHtml(w.blurb)}</span>
+          </button>`;
+        })
+        .join("");
+      return `<section class="int-group"><h2>${group}</h2><div class="int-grid">${cards}</div></section>`;
+    })
+    .join("");
+  host.querySelectorAll<HTMLButtonElement>("[data-int]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-int");
+      if (!id) return;
+      if (btn.dataset.locked === "true") {
+        toast("Payment wizards need Public intent", "info");
+        return;
+      }
+      selectIntegration(id);
+    });
+  });
+  paintIntegrationWizard();
+}
+
+function selectIntegration(id: string) {
+  const wiz = INTEGRATION_WIZARDS.find((w) => w.id === id);
+  if (!wiz) return;
+  if (wiz.needsPublic && shipIntent() !== "public") {
+    toast("Payment wizards need Public intent", "info");
+    return;
+  }
+  if (!projectPath()) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  selectedIntegration = id;
+  if (activeViewId !== "integrations") setView("integrations");
+  else {
+    renderIntegrations();
+  }
+}
+
+function paintIntegrationWizard() {
+  const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration);
+  const panel = document.querySelector<HTMLElement>("#integrations-wizard");
+  if (!panel || !wiz) return;
+  panel.hidden = false;
+  const title = document.querySelector("#int-wizard-title");
+  const blurb = document.querySelector("#int-wizard-blurb");
+  const steps = document.querySelector("#int-wizard-steps");
+  const portalBtn = document.querySelector<HTMLButtonElement>("#int-portal-steps");
+  if (title) title.textContent = wiz.title;
+  if (blurb) blurb.textContent = wiz.blurb;
+  if (steps) {
+    steps.innerHTML = wiz.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("");
+  }
+  if (portalBtn) portalBtn.hidden = !wiz.provider;
 }
 
 function routeDetectChip(label: string) {
@@ -3317,6 +3506,29 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   document.querySelector("#now-polar")?.addEventListener("click", () => {
     setupPolarPortal();
+  });
+  document.querySelector("#int-open")?.addEventListener("click", async () => {
+    const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration);
+    if (!wiz) return;
+    if (!integrationAllowed(wiz) && wiz.needsPublic) {
+      toast(
+        studioMode() !== "advanced"
+          ? "Payment wizards need Advanced mode"
+          : "Payment wizards need Public intent",
+        "info",
+      );
+      return;
+    }
+    if (!projectPath()) {
+      toast("Bind a project first", "info");
+      return;
+    }
+    await openUrl(wiz.openUrl);
+    toast(`Opened ${wiz.title}`, "ok");
+  });
+  document.querySelector("#int-portal-steps")?.addEventListener("click", () => {
+    const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration);
+    if (wiz?.provider) void openPortalProvider(wiz.provider);
   });
 
   void listen<StreamLine>("shipctl-line", (event) => {

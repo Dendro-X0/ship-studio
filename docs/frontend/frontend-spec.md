@@ -51,6 +51,7 @@ SHIP
 - assist — full-stack checklist overview
 - launch — guided open → verify → next (companion)
 - portal — human sprint + provider portal + secrets
+- integrations — payment + email wizards (Open dashboard + checklist)
 - env — ENV/token configure · retrieve · create
 - sign — self-sign vs official vendor paths
 
@@ -90,7 +91,7 @@ Topbar segmented control persists in `localStorage` (`ship-studio.mode`).
 
 | General | Advanced |
 |---------|----------|
-| Nav: Dashboard, Publish, Env, Scopes, Sign, Output | + Assist, Launch, Portal, Ritual, Tools |
+| Nav: Dashboard, Publish, Env, Scopes, Sign, Output | + Assist, Launch, Portal, Integrations, Ritual, Tools |
 | Publish plan via `shipctl publish --mode general` | `--mode advanced` |
 | Hide Deploy toggle; keep Offline | Full toggles |
 
@@ -140,6 +141,19 @@ Honesty: Set up Polar opens dashboard steps only — operator creates checkout/r
 CmdK: **Set up Polar** (same Advanced+Public gate when run from palette — still callable; if Local/General, toast that Public+Advanced is required).
 
 DO NOT: make chips the primary nav · bury Polar only inside mid-Publish `listing.polar` · open a fake payment wizard that creates SKUs.
+
+### Integrations (Advanced)
+
+Own nav item — not nested inside Portal. Groups:
+
+| Group | Wizards | Behavior |
+|-------|---------|----------|
+| Payments | Polar · Stripe · Gumroad · Lemon · Paddle | Checklist + **Open dashboard**. Public intent required. Optional **Portal steps** loads `shipctl portal --provider`. |
+| Email | Resend | Checklist + open `https://resend.com/api-keys`. Put `RESEND_API_KEY` on the deploy host via Env — never paste the value in Studio. |
+
+Dashboard **Set up Polar** and the `polar` chip open this view on the Polar wizard (Advanced + Public).
+
+Honesty: wizards sequence prompts and portals. They do not create SKUs, checkout links, refunds, or send mail.
 
 ## Motion (≥2 intentional)
 

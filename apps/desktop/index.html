@@ -77,6 +77,10 @@
             <span class="nav-ico" aria-hidden="true">◇</span>
             Portal
           </button>
+          <button type="button" class="nav-item nav-advanced" data-nav="integrations">
+            <span class="nav-ico" aria-hidden="true">⧉</span>
+            Integrations
+          </button>
           <button type="button" class="nav-item" data-nav="env">
             <span class="nav-ico" aria-hidden="true">⌘</span>
             Env / tokens
@@ -483,6 +487,25 @@
                 <ul class="portal-steps" id="secrets-steps"></ul>
               </div>
             </section>
+          </section>
+
+          <section class="view" data-view="integrations" aria-label="Integrations" hidden>
+            <p class="hint">
+              Pick a wizard, follow the checklist, then open the vendor dashboard. Studio does not
+              create products, issue API keys, or send email.
+            </p>
+            <div class="int-layout">
+              <div id="integrations-catalog"></div>
+              <aside class="int-wizard" id="integrations-wizard" hidden>
+                <h2 id="int-wizard-title">Wizard</h2>
+                <p class="hint" id="int-wizard-blurb"></p>
+                <ol class="int-steps" id="int-wizard-steps"></ol>
+                <div class="hero-cta int-actions">
+                  <button type="button" class="primary" id="int-open">Open dashboard</button>
+                  <button type="button" id="int-portal-steps" hidden>Portal steps</button>
+                </div>
+              </aside>
+            </div>
           </section>
 
           <section class="view" data-view="ritual" aria-label="Ritual" hidden>

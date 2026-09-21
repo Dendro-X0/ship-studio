@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0  
 **Updated:** 2026-09-20  
-**Status:** Adaptive hub **idle** · Desktop **independent options** (Polar + Now quick) shipping
+**Status:** Adaptive hub **idle** · Desktop **Integrations** section (payment + email wizards)
 
 ## Truth pointers
 

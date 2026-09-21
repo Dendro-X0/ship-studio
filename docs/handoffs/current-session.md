@@ -2,11 +2,11 @@
 
 **Updated:** 2026-09-20  
 **Branch:** `main`  
-**Status:** Desktop independent options done — hub idle
+**Status:** Desktop Integrations section — awaiting commit/push
 
 ## Next Atomic Step
 
-**Idle** — or Polar live dogfood with credentials / deploy preview / Desktop license read.
+**Idle** after this band commits — or Polar live dogfood / deploy preview / Desktop license read.
 
 ## PAUSED / CANCELLED
 
@@ -25,9 +25,10 @@
 | Website W3 demo GIF shelf | `a25c3ba` |
 | Website W4 license + refund dogfood | `7935a49` |
 | Desktop independent options (Polar + Now quick) | `766925e` |
+| Desktop Integrations (payment + email wizards) | (pending commit) |
 
 ## Boot allowlist
 
 1. This file  
 2. [docs/CURRENT.md](../CURRENT.md) · [frontend/frontend-spec.md](../frontend/frontend-spec.md)  
-3. `pnpm dev` → Dashboard · Advanced · Public → **Set up Polar**  
+3. `pnpm dev` → Advanced → **Integrations** (Polar wizard · Resend)  
