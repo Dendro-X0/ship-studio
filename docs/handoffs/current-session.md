@@ -11,9 +11,9 @@ Stranger-facing v0.1.0: understand product → `/demo` live GIFs → Download re
 
 ## Next Atomic Step
 
-**S0.4 + S0.5:** `/pricing` paid delta ($29 vs OSS) + hero brand disambiguation.
+**S0.3:** GitHub Release for v0.1.0 (desktop and/or shipctl zip + SHA256) · wire `PUBLIC_DOWNLOAD_URL`.
 
-Then: **S0.3** GitHub Release + SHA256 → **S1.1** live demo GIFs → deploy site + Polar Success/Return URLs.
+Then: **S1.1** live demo GIFs → deploy site + Polar Success/Return URLs.
 
 ## PAUSED / CANCELLED
 
@@ -30,7 +30,7 @@ Then: **S0.3** GitHub Release + SHA256 → **S1.1** live demo GIFs → deploy si
 |------|--------|
 | Desktop Integrations (payment + email wizards) | `c54b298` |
 | Desktop sidebar + local icons + modularization M1 | `374e04e` |
-| Desktop shell boot + Stripe icon slot + Polar portal URLs | uncommitted → this release-week commit |
+| Desktop shell boot + Stripe icon + Polar portal URLs + S0.4/S0.5 | `28f696e` |
 
 ## Boot allowlist
 
