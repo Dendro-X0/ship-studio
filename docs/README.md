@@ -23,7 +23,7 @@ Agents: boot [START-HERE.md](./START-HERE.md) → handoff **Next Atomic Step** o
 
 | Shelf | Files | Use |
 |-------|-------|-----|
-| [product/](./product/README.md) | 3 | Scope, product contract, operator checklist |
+| [product/](./product/README.md) | 4 | Scope, product contract, operator checklist, [improvement backlog](./product/improvement-backlog.md) |
 | [dogfood/](./dogfood/README.md) | 3 | Offline / Signet / Orbit walk scripts |
 | [frontend/](./frontend/README.md) | 1 | Desktop shell contract |
 | [handoffs/](./handoffs/README.md) | live + evidence | Continuity · L3 proof |

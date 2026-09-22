@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ship Studio</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg0: #0a0c0b;
+        --shell: #0e1210;
+        --border-soft: #222b27;
+        --text: #e8eee9;
+        --muted: #8b9a91;
+        --accent: #3f9d6e;
+        --accent-bright: #5ecf94;
+        --accent-dim: #163528;
+        --panel: #141a17;
+        --danger: #d97878;
+        font-family: "Sora", "Segoe UI", ui-sans-serif, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        color: var(--text);
+        background:
+          radial-gradient(900px 480px at 18% -10%, rgba(63, 157, 110, 0.16), transparent 55%),
+          radial-gradient(700px 420px at 92% 8%, rgba(212, 162, 76, 0.06), transparent 50%),
+          var(--shell);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        user-select: none;
+      }
+      .titlebar {
+        height: 46px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 0.85rem;
+        border-bottom: 1px solid var(--border-soft);
+        background: rgba(8, 10, 9, 0.72);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+        flex: 1;
+        height: 100%;
+      }
+      .brand svg {
+        width: 22px;
+        height: 22px;
+        flex-shrink: 0;
+      }
+      .brand-name {
+        font-size: 0.72rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .window-controls {
+        display: flex;
+        height: 100%;
+      }
+      .win-btn {
+        width: 46px;
+        height: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+      .win-btn:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+      }
+      .win-close:hover {
+        background: #c42b2b;
+        color: #fff;
+      }
+      .win-btn svg {
+        width: 12px;
+        height: 12px;
+      }
+      main {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        padding: 2rem;
+      }
+      .panel {
+        width: min(420px, 100%);
+        text-align: center;
+      }
+      .mark {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 1.25rem;
+        filter: drop-shadow(0 12px 28px rgba(63, 157, 110, 0.35));
+        animation: breathe 2.4s ease-in-out infinite;
+      }
+      @keyframes breathe {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.04);
+          opacity: 0.88;
+        }
+      }
+      h1 {
+        margin: 0 0 0.4rem;
+        font-size: 1.35rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      #status {
+        margin: 0 0 1.5rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.45;
+        min-height: 2.7em;
+      }
+      #status[data-state="error"] {
+        color: #e8b4b4;
+      }
+      .actions {
+        display: flex;
+        gap: 0.6rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      button.primary,
+      button.ghost {
+        border-radius: 10px;
+        font: inherit;
+        font-weight: 500;
+        font-size: 0.88rem;
+        padding: 0.55rem 1rem;
+        cursor: pointer;
+      }
+      button.primary {
+        border: 1px solid transparent;
+        background: var(--accent);
+        color: #06140e;
+      }
+      button.primary:hover {
+        background: var(--accent-bright);
+      }
+      button.ghost {
+        border: 1px solid var(--border-soft);
+        background: var(--panel);
+        color: var(--text);
+      }
+      button.ghost:hover {
+        border-color: var(--accent-dim);
+      }
+      .pulse {
+        display: inline-flex;
+        gap: 0.35rem;
+        margin-top: 1.25rem;
+        justify-content: center;
+      }
+      .pulse i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        opacity: 0.35;
+        animation: dot 1.2s ease-in-out infinite;
+      }
+      .pulse i:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .pulse i:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      @keyframes dot {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: translateY(0);
+        }
+        50% {
+          opacity: 1;
+          transform: translateY(-3px);
+        }
+      }
+      .pulse[hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="titlebar" data-tauri-drag-region>
+      <div class="brand" data-tauri-drag-region>
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <defs>
+            <linearGradient id="g" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#6FDBA4" />
+              <stop offset="0.5" stop-color="#3F9D6E" />
+              <stop offset="1" stop-color="#1B4D34" />
+            </linearGradient>
+          </defs>
+          <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#g)" />
+          <path
+            d="M18.5 33.2 27.2 41.6 46.2 21.4"
+            stroke="#F4FBF7"
+            stroke-width="5.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            fill="none"
+          />
+        </svg>
+        <span class="brand-name" data-tauri-drag-region>Ship Studio</span>
+      </div>
+      <div class="window-controls">
+        <button type="button" class="win-btn" id="win-min" title="Minimize" aria-label="Minimize">
+          <svg viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M2 6h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+          </svg>
+        </button>
+        <button type="button" class="win-btn" id="win-max" title="Maximize" aria-label="Maximize">
+          <svg viewBox="0 0 12 12" aria-hidden="true">
+            <rect
+              x="2.2"
+              y="2.2"
+              width="7.6"
+              height="7.6"
+              rx="1.1"
+              stroke="currentColor"
+              stroke-width="1.2"
+              fill="none"
+            />
+          </svg>
+        </button>
+        <button type="button" class="win-btn win-close" id="win-close" title="Close" aria-label="Close">
+          <svg viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M3 3l6 6M9 3L3 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <div class="panel">
+        <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+          <defs>
+            <linearGradient id="g2" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#6FDBA4" />
+              <stop offset="0.5" stop-color="#3F9D6E" />
+              <stop offset="1" stop-color="#1B4D34" />
+            </linearGradient>
+          </defs>
+          <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#g2)" />
+          <path
+            d="M18.5 33.2 27.2 41.6 46.2 21.4"
+            stroke="#F4FBF7"
+            stroke-width="5.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            fill="none"
+          />
+        </svg>
+        <h1>Ship Studio</h1>
+        <p id="status" data-state="wait">Starting the local UI…</p>
+        <div class="actions">
+          <button type="button" class="primary" id="btn-retry">Retry</button>
+          <button type="button" class="ghost" id="btn-open-ui" hidden>Open UI</button>
+        </div>
+        <div class="pulse" id="pulse" aria-hidden="true"><i></i><i></i><i></i></div>
+      </div>
+    </main>
+
+    <script>
+      const VITE = "http://localhost:1420/";
+      const statusEl = document.getElementById("status");
+      const pulse = document.getElementById("pulse");
+      const openBtn = document.getElementById("btn-open-ui");
+
+      function getWin() {
+        try {
+          return window.__TAURI__?.window?.getCurrentWindow?.() ?? null;
+        } catch {
+          return null;
+        }
+      }
+
+      function setStatus(text, state) {
+        statusEl.textContent = text;
+        statusEl.dataset.state = state;
+        pulse.hidden = state === "error";
+        openBtn.hidden = state !== "ready";
+      }
+
+      async function probe() {
+        try {
+          await fetch(VITE, { mode: "no-cors", cache: "no-store" });
+          return true;
+        } catch {
+          return false;
+        }
+      }
+
+      async function goUi() {
+        setStatus("Opening Ship Studio…", "wait");
+        location.replace(VITE);
+      }
+
+      document.getElementById("win-min")?.addEventListener("click", () => {
+        void getWin()?.minimize?.();
+      });
+      document.getElementById("win-max")?.addEventListener("click", () => {
+        void getWin()?.toggleMaximize?.();
+      });
+      document.getElementById("win-close")?.addEventListener("click", () => {
+        void getWin()?.close?.();
+      });
+      document.querySelector(".titlebar")?.addEventListener("dblclick", (ev) => {
+        if (ev.target.closest(".window-controls")) return;
+        void getWin()?.toggleMaximize?.();
+      });
+
+      document.getElementById("btn-retry")?.addEventListener("click", () => {
+        void (async () => {
+          setStatus("Checking for the UI server…", "wait");
+          if (await probe()) await goUi();
+          else
+            setStatus(
+              "Still waiting for the local UI (Vite on port 1420). Keep this window open — it will connect when ready.",
+              "error"
+            );
+        })();
+      });
+      openBtn?.addEventListener("click", () => void goUi());
+
+      (async () => {
+        for (let i = 0; i < 180; i++) {
+          if (await probe()) {
+            setStatus("UI server is ready.", "ready");
+            await goUi();
+            return;
+          }
+          if (i === 8) {
+            setStatus(
+              "Waiting for the local UI server… Run Desktop with tauri dev, or start Vite on port 1420.",
+              "wait"
+            );
+          }
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+        setStatus(
+          "Timed out waiting for the UI. Start the Vite server, then press Retry.",
+          "error"
+        );
+      })();
+    </script>
+  </body>
+</html>

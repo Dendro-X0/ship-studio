@@ -1,12 +1,18 @@
 use serde::Serialize;
 use std::fs;
 use std::io::{BufRead, BufReader};
+#[cfg(debug_assertions)]
+use std::net::TcpStream;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Mutex;
 use std::thread;
-use tauri::{AppHandle, Emitter, State};
+#[cfg(debug_assertions)]
+use std::time::Duration;
+use tauri::{AppHandle, Emitter, Manager, State};
+#[cfg(debug_assertions)]
+use tauri::Url;
 
 /// Tracks the active shipctl process for cancel.
 struct ActiveRun {
@@ -684,11 +690,118 @@ fn run_git(project: String, args: Vec<String>) -> Result<CmdResult, String> {
     })
 }
 
+/// Dev UI (Vite). Kept in sync with `tauri.conf.json` `build.devUrl`.
+#[cfg(debug_assertions)]
+const DEV_UI: &str = "http://localhost:1420/";
+
+const BOOT_HTML: &str = include_str!("../boot/shell.html");
+
+#[cfg(debug_assertions)]
+fn dev_ui_reachable() -> bool {
+    let timeout = Duration::from_millis(200);
+    for raw in ["127.0.0.1:1420", "[::1]:1420"] {
+        let Ok(addr) = raw.parse::<std::net::SocketAddr>() else {
+            continue;
+        };
+        if TcpStream::connect_timeout(&addr, timeout).is_ok() {
+            return true;
+        }
+    }
+    false
+}
+
+#[cfg(debug_assertions)]
+fn boot_shell_url() -> Url {
+    // WebView2 maps custom schemes to http://<scheme>.localhost/.
+    #[cfg(windows)]
+    let raw = "http://shipboot.localhost/";
+    #[cfg(not(windows))]
+    let raw = "shipboot://localhost/";
+    Url::parse(raw).expect("boot shell url")
+}
+
+#[cfg(debug_assertions)]
+fn dev_ui_url() -> Url {
+    Url::parse(DEV_UI).expect("dev ui url")
+}
+
+#[cfg(debug_assertions)]
+fn is_boot_shell(url: &Url) -> bool {
+    url.scheme() == "shipboot" || url.host_str() == Some("shipboot.localhost")
+}
+
+/// Debug only: if Vite is down, leave Edge's connection-refused page for the branded shell.
+#[cfg(debug_assertions)]
+fn guard_dev_shell(window: &tauri::WebviewWindow) {
+    let Ok(url) = window.url() else {
+        return;
+    };
+    if dev_ui_reachable() {
+        if is_boot_shell(&url) {
+            let _ = window.navigate(dev_ui_url());
+        }
+    } else if !is_boot_shell(&url) {
+        // Includes `http://localhost:1420` and WebView2's `chrome-error://` document.
+        let _ = window.navigate(boot_shell_url());
+    }
+}
+
+#[cfg(debug_assertions)]
+fn spawn_dev_shell_watchdog(app: AppHandle) {
+    thread::spawn(move || {
+        loop {
+            thread::sleep(Duration::from_millis(750));
+            let Some(window) = app.get_webview_window("main") else {
+                break;
+            };
+            guard_dev_shell(&window);
+        }
+    });
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .register_asynchronous_uri_scheme_protocol("shipboot", |_ctx, _request, responder| {
+            responder.respond(
+                tauri::http::Response::builder()
+                    .status(tauri::http::StatusCode::OK)
+                    .header(
+                        tauri::http::header::CONTENT_TYPE,
+                        "text/html; charset=utf-8",
+                    )
+                    .body(BOOT_HTML.as_bytes().to_vec())
+                    .expect("boot shell response"),
+            );
+        })
         .manage(ActiveRun::new())
+        .setup(|app| {
+            if let Some(window) = app.get_webview_window("main") {
+                #[cfg(debug_assertions)]
+                {
+                    guard_dev_shell(&window);
+                    spawn_dev_shell_watchdog(app.handle().clone());
+                    // Reveal after the boot navigation has a chance to replace the error page.
+                    if !dev_ui_reachable() {
+                        let handle = app.handle().clone();
+                        thread::spawn(move || {
+                            thread::sleep(Duration::from_millis(180));
+                            if let Some(window) = handle.get_webview_window("main") {
+                                let _ = window.show();
+                            }
+                        });
+                    } else {
+                        let _ = window.show();
+                    }
+                }
+                #[cfg(not(debug_assertions))]
+                {
+                    let _ = window.show();
+                }
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             pick_project,
             pick_vault_save,

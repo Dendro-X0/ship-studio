@@ -333,7 +333,9 @@ mod tests {
     #[test]
     fn source_url_github_not_cloudflare() {
         assert!(portal::source_url_for_secret_name("GITHUB_TOKEN").contains("github.com"));
-        assert!(portal::source_url_for_secret_name("POLAR_WEBHOOK_SECRET").contains("polar.sh"));
+        assert!(portal::source_url_for_secret_name("POLAR_WEBHOOK_SECRET")
+            .contains("webhooks"));
+        assert!(portal::source_url_for_secret_name("POLAR_ACCESS_TOKEN").contains("oat"));
     }
 
     #[test]

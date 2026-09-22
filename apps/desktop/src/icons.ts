@@ -7,17 +7,16 @@ export function localIconSrc(file: string): string {
   return `/icons/${encodeURIComponent(file)}`;
 }
 
-export type LocalIcon = { file: string; tone?: "color" | "ink"; wide?: boolean };
+export type LocalIcon = { file: string; tone?: "color" | "ink" };
 
-export function iconImg(file: string, opts?: { tone?: "color" | "ink"; wide?: boolean }): string {
+export function iconImg(file: string, opts?: { tone?: "color" | "ink" }): string {
   const tone = opts?.tone ?? "color";
-  const wide = opts?.wide ? " nav-ico-wide" : "";
-  return `<img class="nav-ico-img${wide}" data-tone="${tone}" src="${escapeHtml(localIconSrc(file))}" alt="" width="16" height="16" />`;
+  return `<img class="nav-ico-img" data-tone="${tone}" src="${escapeHtml(localIconSrc(file))}" alt="" width="16" height="16" />`;
 }
 
 const INTEGRATION_ICONS: Record<string, LocalIcon> = {
   polar: { file: "Polar_dark.svg" },
-  stripe: { file: "stripe_wordmark.svg", wide: true },
+  stripe: { file: "stripe.svg" },
   gumroad: { file: "gumroad.svg", tone: "ink" },
   lemon: { file: "lemonsqueezy.svg" },
   paddle: { file: "paddle.svg", tone: "ink" },
@@ -30,7 +29,7 @@ export function integrationIcon(id: string): LocalIcon {
 
 export function integrationIconHtml(id: string): string {
   const icon = integrationIcon(id);
-  return iconImg(icon.file, { tone: icon.tone, wide: icon.wide });
+  return iconImg(icon.file, { tone: icon.tone });
 }
 
 export function scopeIconFile(scope: {

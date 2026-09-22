@@ -1457,6 +1457,38 @@ fn env_key_prefix(project: &Path, prefix: &str) -> bool {
     false
 }
 
+/// First non-empty value for `key` in project env files (local read only).
+pub fn env_key_value(project: &Path, key: &str) -> Option<String> {
+    let want = key.to_ascii_uppercase();
+    for path in env_files(project) {
+        let Ok(raw) = fs::read_to_string(&path) else {
+            continue;
+        };
+        for line in raw.lines() {
+            let t = line.trim();
+            if t.is_empty() || t.starts_with('#') {
+                continue;
+            }
+            let Some((k, v)) = t.split_once('=') else {
+                continue;
+            };
+            if k.trim().to_ascii_uppercase() != want {
+                continue;
+            }
+            let mut val = v.trim().to_string();
+            if (val.starts_with('"') && val.ends_with('"'))
+                || (val.starts_with('\'') && val.ends_with('\''))
+            {
+                val = val[1..val.len() - 1].to_string();
+            }
+            if !val.is_empty() {
+                return Some(val);
+            }
+        }
+    }
+    None
+}
+
 fn env_value_contains(project: &Path, needle: &str) -> bool {
     let n = needle.to_ascii_lowercase();
     for path in env_files(project) {

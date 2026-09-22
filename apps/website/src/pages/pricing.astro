@@ -31,12 +31,37 @@ import {
         <p class="price-amount">{priceLabel()}</p>
       </div>
       <ul class="list-clean">
-        <li>shipctl CLI, TUI, and Desktop</li>
-        <li>Adaptive Publish · Launch companion · portal honesty</li>
+        <li>shipctl CLI, TUI, and Desktop — Adaptive Publish spine</li>
+        <li>Launch companion · provider portal · env honesty · local vault export</li>
         <li>Docs on this site · dogfood scripts in the repo</li>
+        <li>Local <a href="/license">license key file</a> after checkout (email / Polar benefit)</li>
         <li>{refundWindowDays()}-day refund window — see <a href="/legal/refunds">refunds</a></li>
-        <li>Local <a href="/license">license key file</a> delivered by email after checkout</li>
       </ul>
+
+      <h2 class="price-delta-title">What $29 buys vs building from source</h2>
+      <div class="price-delta">
+        <div>
+          <p class="price-delta-label">Solo license</p>
+          <ul class="list-clean">
+            <li>Supported download builds + license file for this major</li>
+            <li>Polar-hosted checkout · invoices · refunds in the published window</li>
+            <li>Packaged Desktop / CLI without assembling the toolchain yourself</li>
+          </ul>
+        </div>
+        <div>
+          <p class="price-delta-label">OSS / build-from-source</p>
+          <ul class="list-clean">
+            <li>Full source on GitHub — clone, build, run for free</li>
+            <li>Same sequencing honesty; you own compile, signing, and updates</li>
+            <li>No Solo license file · no commercial support path</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note">
+        Studio never writes secrets, never auto-publishes to npm/crates/stores, and never
+        replaces vendor UIs. Paying is for the packaged Solo loop — not a paywall on the
+        publish sequence itself.
+      </p>
       {
         checkoutConfigured() ? (
           <a

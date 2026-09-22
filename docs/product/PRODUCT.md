@@ -80,7 +80,7 @@ Design: `specs/backend/shipping-hub-north-star.md` · `specs/backend/surfaces-cl
 | Vercel | vercel.json / `.vercel` | vercel / orbit login | account tokens |
 | Netlify | netlify.toml / `.netlify` | netlify / orbit login | PATs |
 | GitHub | `.git` | `gh auth login` | settings/tokens |
-| Polar | `POLAR_*` / polar.sh markers | dashboard (no CLI OAuth) | polar.sh/dashboard |
+| Polar | `POLAR_*` / polar.sh markers | dashboard (no CLI OAuth) | dashboard · OAT docs · webhook docs (or `{slug}/products|settings|webhooks` when `POLAR_ORGANIZATION_SLUG` is set) |
 | Gumroad | markets / `GUMROAD_*` | dashboard (no CLI OAuth) | app.gumroad.com |
 | Lemon | markets / `LEMON_*` | dashboard (no CLI OAuth) | app.lemonsqueezy.com |
 | Stripe | markets / `STRIPE_*` | dashboard (no CLI OAuth) | dashboard.stripe.com |

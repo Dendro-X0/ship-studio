@@ -7,18 +7,19 @@ const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
 ---
 
 <BaseLayout
-  title="Ship Studio — local shipping hub"
-  description="Final-mile sign → release → deploy on CLI, TUI, and desktop. You finish vendor OAuth; Studio sequences the gates."
+  title="Ship Studio — local final-mile shipping hub"
+  description="Local Adaptive Publish for sign → release → deploy. Not the agentic ship.studio product. Vendors and humans still finish OAuth and review."
   path="/"
 >
   <section class="hero" aria-label="Hero">
     <div class="hero-atmosphere" aria-hidden="true"></div>
     <div class="hero-inner">
       <p class="hero-brand">Ship Studio</p>
-      <h1 class="hero-line">The final mile, sequenced.</h1>
+      <h1 class="hero-line">Local final-mile shipping hub.</h1>
       <p class="hero-support">
-        Local Adaptive Publish for sign → release → deploy. Open vendor doors, Confirm each
-        gate — Studio never replaces Cloudflare, Apple, or Polar.
+        Sequence sign → release → deploy on CLI, TUI, and Desktop. You Open vendor doors and
+        Confirm each gate — Studio does not replace Cloudflare, Apple, or Polar. Not the
+        unrelated agentic product at ship.studio.
       </p>
       <div class="hero-cta">
         <a class="btn btn-primary" href={buyHref}>{buyLabel}</a>

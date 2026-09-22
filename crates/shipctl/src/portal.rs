@@ -279,14 +279,18 @@ static POLAR: ProviderCatalog = ProviderCatalog {
     label: "Polar",
     oauth_cli: &[],
     orbit_login: None,
+    // Overview entry — deep links need POLAR_ORGANIZATION_SLUG (see polar_entry_urls).
     token_url: "https://polar.sh/dashboard",
-    create_url: "https://polar.sh/dashboard",
+    create_url: "https://polar.sh/docs/integrate/oat",
     docs_url: "https://docs.polar.sh/",
-    oauth_hint: "Open the Polar dashboard — copy checkout URL and webhook signing secret from product/webhook settings.",
+    oauth_hint: "Open the Polar dashboard — create products and checkout links on Products.",
     env_hint: "Put POLAR_CHECKOUT_URL and POLAR_WEBHOOK_SECRET on the deploy target (e.g. wrangler secret put).",
     secret_shown_once: false,
-    once_hint: "Checkout URL is usually visible again in the product settings. Webhook secrets may need regeneration if lost — check Polar webhook settings.",
+    once_hint: "Organization Access Tokens: Settings → Developers (docs: integrate/oat). Webhook secrets: Settings → Webhooks — regenerate if lost.",
 };
+
+/// Webhook setup docs when no org slug is available for a dashboard deep link.
+const POLAR_WEBHOOK_DOCS: &str = "https://polar.sh/docs/integrate/webhooks/endpoints";
 
 static NEON: ProviderCatalog = ProviderCatalog {
     label: "Neon",
@@ -560,8 +564,11 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
     if upper == "GITHUB_TOKEN" || upper.starts_with("GH_") {
         return Some(GITHUB.create_url);
     }
+    if upper.starts_with("POLAR_WEBHOOK") {
+        return Some(POLAR_WEBHOOK_DOCS);
+    }
     if upper.starts_with("POLAR_") {
-        return Some(POLAR.token_url);
+        return Some(POLAR.create_url);
     }
     if upper.starts_with("NEON_") || upper.contains("NEON") {
         return Some(NEON.create_url);
@@ -658,7 +665,7 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
         Some(ProviderId::Vercel) => Some(VERCEL.create_url),
         Some(ProviderId::Netlify) => Some(NETLIFY.create_url),
         Some(ProviderId::Github) => Some(GITHUB.create_url),
-        Some(ProviderId::Polar) => Some(POLAR.token_url),
+        Some(ProviderId::Polar) => Some(POLAR.create_url),
         Some(ProviderId::Neon) => Some(NEON.create_url),
         Some(ProviderId::Supabase) => Some(SUPABASE.create_url),
         Some(ProviderId::D1) => Some(CLOUDFLARE.create_url),
@@ -717,6 +724,66 @@ pub fn once_hint_for_secret_name(name: &str) -> &'static str {
         return "Create on the commerce dashboard; put keys on the deploy target — never in .ship/.";
     }
     "Copy the value when the provider shows it — many platforms never display it again."
+}
+
+fn env_entry_url(id: ProviderId, cat: &ProviderCatalog) -> &'static str {
+    match id {
+        ProviderId::Polar => POLAR_WEBHOOK_DOCS,
+        _ => cat.token_url,
+    }
+}
+
+/// Optional org slug from local env — enables Polar dashboard deep links (no vendor HTTPS).
+fn polar_organization_slug(project: &Path) -> Option<String> {
+    config::env_key_value(project, "POLAR_ORGANIZATION_SLUG")
+        .or_else(|| config::env_key_value(project, "POLAR_ORG_SLUG"))
+        .map(|s| {
+            s.trim()
+                .trim_matches('/')
+                .split('/')
+                .next()
+                .unwrap_or("")
+                .to_string()
+        })
+        .filter(|s| {
+            !s.is_empty()
+                && s.chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        })
+}
+
+fn apply_polar_deep_links(project: &Path, steps: &mut [PortalStep]) {
+    let Some(slug) = polar_organization_slug(project) else {
+        return;
+    };
+    let base = format!("https://polar.sh/dashboard/{slug}");
+    for step in steps.iter_mut().filter(|s| s.provider == "polar") {
+        let url = match step.kind.as_str() {
+            "dashboard" => format!("{base}/products"),
+            "token_page" => format!("{base}/settings"),
+            "env" => format!("{base}/settings/webhooks"),
+            _ => continue,
+        };
+        step.entry_url = Some(url);
+        match step.kind.as_str() {
+            "dashboard" => {
+                step.detail =
+                    "Products — create/update listing and checkout URL on polar.sh.".into();
+            }
+            "token_page" => {
+                step.detail = format!(
+                    "Org settings — scroll to Developers for Organization Access Tokens. Docs: {}",
+                    POLAR.create_url
+                );
+            }
+            "env" => {
+                step.detail = format!(
+                    "Webhooks — add endpoint and copy signing secret. Docs: {POLAR_WEBHOOK_DOCS}"
+                );
+            }
+            _ => {}
+        }
+    }
 }
 
 pub fn detected_providers(detected: &Detected) -> Vec<ProviderId> {
@@ -890,11 +957,13 @@ pub fn plan_for_providers(project: &Path, providers: &[ProviderId]) -> Result<Po
             kind: "env".into(),
             title: format!("{} environment / secrets", cat.label),
             human: true,
-            entry_url: Some(cat.token_url.into()),
+            entry_url: Some(env_entry_url(*id, cat).into()),
             cli: None,
             detail: cat.env_hint.into(),
         });
     }
+
+    apply_polar_deep_links(&project, &mut steps);
 
     // Prefer GHCR docs when the project looks GitHub-backed.
     let container_docs = config::container_docs_url(&project);
@@ -1102,11 +1171,44 @@ mod tests {
         let dir = tempfile_dir();
         let plan = plan_for(&dir, Some(ProviderId::Polar)).unwrap();
         assert_eq!(plan.providers, vec!["polar".to_string()]);
-        assert!(plan.steps.iter().any(|s| s.kind == "dashboard"));
-        assert!(plan
+        let dash = plan
             .steps
             .iter()
-            .any(|s| s.entry_url.as_deref() == Some(POLAR.token_url)));
+            .find(|s| s.kind == "dashboard")
+            .expect("dashboard");
+        let token = plan
+            .steps
+            .iter()
+            .find(|s| s.kind == "token_page")
+            .expect("token_page");
+        let env = plan.steps.iter().find(|s| s.kind == "env").expect("env");
+        assert_eq!(dash.entry_url.as_deref(), Some(POLAR.token_url));
+        assert_eq!(token.entry_url.as_deref(), Some(POLAR.create_url));
+        assert_eq!(env.entry_url.as_deref(), Some(POLAR_WEBHOOK_DOCS));
+        assert_ne!(dash.entry_url, token.entry_url);
+        assert_ne!(token.entry_url, env.entry_url);
+        assert_ne!(dash.entry_url, env.entry_url);
+    }
+
+    #[test]
+    fn polar_org_slug_deep_links() {
+        let dir = tempfile_dir();
+        fs::write(dir.join(".env"), "POLAR_ORGANIZATION_SLUG=dendro-x0\n").unwrap();
+        let plan = plan_for(&dir, Some(ProviderId::Polar)).unwrap();
+        let url = |kind: &str| {
+            plan.steps
+                .iter()
+                .find(|s| s.kind == kind)
+                .and_then(|s| s.entry_url.as_deref())
+                .unwrap()
+                .to_string()
+        };
+        assert_eq!(url("dashboard"), "https://polar.sh/dashboard/dendro-x0/products");
+        assert_eq!(url("token_page"), "https://polar.sh/dashboard/dendro-x0/settings");
+        assert_eq!(
+            url("env"),
+            "https://polar.sh/dashboard/dendro-x0/settings/webhooks"
+        );
     }
 
     #[test]

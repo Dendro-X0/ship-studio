@@ -7,15 +7,20 @@ End-to-end money path without putting card data on Ship Studio servers.
 1. Open [Polar dashboard](https://polar.sh/dashboard) (sandbox org if available).  
 2. Create product **Ship Studio Solo** — one-time purchase.  
 3. Copy the **Checkout** link (or Checkout API URL).  
+4. Optional for Ship Studio Portal deep links: set `POLAR_ORGANIZATION_SLUG=<your-org-slug>` in the project `.env` so Open goes to Products / Settings / Webhooks instead of Overview.  
 
-## 2. Wire redirect URLs in Polar
+## 2. Wire redirect URLs on the Checkout Link
 
-| Polar setting | Value |
-|---------------|--------|
-| Success URL | `https://<host>/checkout/success` |
-| Cancel URL | `https://<host>/checkout/cancel` |
+In Polar → **Products** → **Checkout Links** → your link → fill and **Save Link**:
 
-Local dogfood: use a tunnel (e.g. Cloudflare Tunnel) or Polar’s allowed localhost if supported; otherwise test redirects after first static deploy.
+| Polar field | Value (local dogfood) | Value (deployed site) |
+|-------------|----------------------|------------------------|
+| **Success URL** | `http://localhost:4321/checkout/success?checkout_id={CHECKOUT_ID}` | `https://<your-host>/checkout/success?checkout_id={CHECKOUT_ID}` |
+| **Return URL** | `http://localhost:4321/checkout/cancel` | `https://<your-host>/checkout/cancel` |
+
+Keep the literal `{CHECKOUT_ID}` tag in Success URL — Polar replaces it after payment.
+
+If Polar rejects localhost, leave redirects blank for now, buy with a test card, then set Success/Return after the site is deployed.
 
 ## 3. Env on the website
 

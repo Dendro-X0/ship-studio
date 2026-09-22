@@ -39,8 +39,9 @@
 - Sidebar footer: “Working in” + name + full path (mono) + Open / recents.
 - Topbar: view title + crumb `{name} · {path}` so you never lose the repo after navigating.
 - Dashboard first viewport: **Working in {name}** (or bind empty state). No numbered pipeline.
+- **Dev boot:** if Vite (`localhost:1420`) is down, the window stays hidden until a branded waiting shell replaces Edge’s connection-refused page. Same titlebar (drag, min, max, close). When the UI server answers, the shell navigates back by itself. Release builds load `frontendDist` and skip this guard.
 
-DO NOT: hide the project behind “No project” muted chrome · lead with a 1–5 Doctor/Portal/Paste/Sign/Deploy strip · treat the dashboard as a CLI button grid.
+DO NOT: hide the project behind “No project” muted chrome · lead with a 1–5 Doctor/Portal/Paste/Sign/Deploy strip · treat the dashboard as a CLI button grid · show the browser’s network error page inside the frameless window.
 
 ### Nav groups
 

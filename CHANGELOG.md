@@ -4,6 +4,10 @@
 
 ### Added
 
+- **Website S0.4 / S0.5** — `/pricing` paid delta ($29 vs OSS) + hero disambiguation vs unrelated ship.studio
+- **Polar portal entry URLs** — dashboard / credentials / env Open to distinct pages (OAT + webhook docs, or org deep links when `POLAR_ORGANIZATION_SLUG` is in `.env`)
+- **Desktop Stripe icon** — symbol uses the same 16px sidebar and 22px card slot as the other vendors (the wide wordmark box was shifting the row and shrinking the mark)
+- **Desktop shell boot** — debug window stays hidden until Vite answers; otherwise a branded waiting shell (titlebar + retry) replaces Edge `ERR_CONNECTION_REFUSED`, then returns to the UI when port 1420 is up
 - **Desktop modularization M1** — extract `types` · `util` · `icons` · `integrations-data` · `constants` from `main.ts` (see `specs/frontend/desktop-modularization-design.md`)
 - **Desktop local icons** — sidebar targets and integration wizards use bundled SVGs in `apps/desktop/src/public` (no runtime icon fetch)
 - **Desktop sidebar** — Ship / Targets (monorepo scopes) / Integrations shortcuts / More · click a target to include it in deploy

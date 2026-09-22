@@ -31,7 +31,7 @@ Extend lanes: [../specs/backend/release-surface-map.md](../specs/backend/release
 
 | Shelf | When to open |
 |-------|----------------|
-| [product/README.md](./product/README.md) | Scope · contract · operator checklist |
+| [product/README.md](./product/README.md) | Scope · contract · operator checklist · [improvement backlog](./product/improvement-backlog.md) |
 | [dogfood/README.md](./dogfood/README.md) | Walk scripts / paste paths |
 | [frontend/README.md](./frontend/README.md) | Desktop shell |
 | [handoffs/README.md](./handoffs/README.md) | Continuity + L3 evidence |

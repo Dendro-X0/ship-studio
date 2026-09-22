@@ -456,20 +456,10 @@ body::before {
   filter: invert(1);
 }
 
-.nav-ico-img.nav-ico-wide {
-  width: 28px;
-  height: 12px;
-}
-
 .int-card .nav-ico-img {
   width: 22px;
   height: 22px;
   margin-bottom: 0.15rem;
-}
-
-.int-card .nav-ico-img.nav-ico-wide {
-  width: 44px;
-  height: 18px;
 }
 
 .nav-target-text {
