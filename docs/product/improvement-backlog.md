@@ -33,7 +33,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 |----|------|-------|
 | S0.1 | **W4 — license delivery** | Built; live email dogfood when Polar charge/free checkout works |
 | S0.2 | **Refund path dogfood** | Built; E2E deferred on Polar `payment_ready` |
-| S0.3 | **Public download path** | Done — [v0.1.0 Windows zip](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.1.0) + SHA256 (stay until v0.2.0 ships) |
+| S0.3 | **Public download path** | Done — [v0.2.0 Windows zip](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.0) + SHA256 (v0.1.0 retained) |
 | S0.4 | **Paid delta on `/pricing`** | Done (`28f696e`) |
 | S0.5 | **Brand disambiguation** | Done (`28f696e`) |
 | S0.6 | **Polar env wizard → deploy** | Checklist already in Desktop Integrations; one dogfood that `PUBLIC_POLAR_*` lands on website deploy without Studio writing secrets |
