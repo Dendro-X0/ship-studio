@@ -13,6 +13,18 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager, State};
 #[cfg(debug_assertions)]
 use tauri::Url;
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+
+/// Hide console windows when the GUI shell spawns `shipctl` / helpers (Windows).
+#[cfg(windows)]
+fn silence_console(cmd: &mut Command) {
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    cmd.creation_flags(CREATE_NO_WINDOW);
+}
+
+#[cfg(not(windows))]
+fn silence_console(_cmd: &mut Command) {}
 
 /// Tracks the active shipctl process for cancel.
 struct ActiveRun {
@@ -148,11 +160,12 @@ fn kill_process_tree(pid: u32) {
     }
     #[cfg(windows)]
     {
-        let _ = Command::new("taskkill")
-            .args(["/PID", &pid.to_string(), "/T", "/F"])
+        let mut cmd = Command::new("taskkill");
+        cmd.args(["/PID", &pid.to_string(), "/T", "/F"])
             .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status();
+            .stderr(Stdio::null());
+        silence_console(&mut cmd);
+        let _ = cmd.status();
     }
     #[cfg(unix)]
     {
@@ -369,6 +382,7 @@ fn run_shipctl_env(
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
+        silence_console(&mut cmd);
         for (k, v) in &env {
             cmd.env(k, v);
         }
@@ -486,12 +500,14 @@ fn run_shipctl(
             &format!("$ {} {}", shipctl.display(), args.join(" ")),
         );
 
-        let child = Command::new(&shipctl)
-            .current_dir(project_path)
+        let mut cmd = Command::new(&shipctl);
+        cmd.current_dir(project_path)
             .args(&args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
+            .stderr(Stdio::piped());
+        silence_console(&mut cmd);
+        let child = cmd
             .spawn()
             .map_err(|e| format!("spawn {}: {e}", shipctl.display()))?;
 
@@ -679,11 +695,10 @@ fn run_git(project: String, args: Vec<String>) -> Result<CmdResult, String> {
     } else {
         args
     };
-    let output = Command::new("git")
-        .args(&argv)
-        .current_dir(&project_path)
-        .output()
-        .map_err(|e| format!("git: {e}"))?;
+    let mut cmd = Command::new("git");
+    cmd.args(&argv).current_dir(&project_path);
+    silence_console(&mut cmd);
+    let output = cmd.output().map_err(|e| format!("git: {e}"))?;
     Ok(CmdResult {
         ok: output.status.success(),
         code: output.status.code().unwrap_or(1),
