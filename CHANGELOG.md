@@ -4,7 +4,6 @@
 
 ### Planned (follow-up on this track)
 
-- **Windows installer** — packaged install path beside (or replacing) the portable zip for Solo downloads
 - **In-app update check** — Desktop notices newer GitHub Releases without silent auto-force install
 
 ### Fixed
@@ -14,7 +13,8 @@
 
 ### Added
 
-- **Release v0.2.0** — Windows x64 portable zip (`ship-studio-desktop.exe` + `shipctl.exe`) + SHA256 on GitHub Releases
+- **Release v0.2.0** — Windows x64 **NSIS installer** + portable zip (`ship-studio-desktop.exe` + `shipctl.exe`) + SHA256 on GitHub Releases
+- **S0.7 Windows installer** — `tauri build` NSIS (`currentUser`); `shipctl` bundled under `resources/`; `pnpm desktop:installer` / `scripts/stage-desktop.sh --installer`
 
 ## 0.1.0 — 2026-09-14
 

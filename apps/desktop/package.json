@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "desktop": "tauri dev",
-    "desktop:release": "bash ../../scripts/stage-desktop.sh"
+    "desktop:release": "bash ../../scripts/stage-desktop.sh",
+    "desktop:installer": "bash ../../scripts/stage-desktop.sh --installer"
   },
   "dependencies": {
     "@tauri-apps/api": "2.11.1",

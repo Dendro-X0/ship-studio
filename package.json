@@ -6,6 +6,7 @@
     "dev:ui": "pnpm --filter ship-studio-desktop dev",
     "build:ui": "pnpm --filter ship-studio-desktop build",
     "desktop:release": "pnpm --filter ship-studio-desktop desktop:release",
+    "desktop:installer": "pnpm --filter ship-studio-desktop desktop:installer",
     "website:dev": "pnpm --filter ship-studio-website dev",
     "website:build": "pnpm --filter ship-studio-website build",
     "website:preview": "pnpm --filter ship-studio-website preview"

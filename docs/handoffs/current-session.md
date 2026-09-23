@@ -2,11 +2,11 @@
 
 **Updated:** 2026-09-22  
 **Branch:** `main`  
-**Status:** **v0.2.0** — GitHub Release published (portable zip)
+**Status:** **v0.2.0** — GitHub Release published (NSIS installer + portable zip)
 
 ## Next Atomic Step
 
-**Desktop nav L2:** Dogfood aperio — spam Dashboard ↔ Publish ↔ Env on the **v0.2.0** build; confirm chrome responds without multi-second freeze ([audit](../../specs/frontend/desktop-nav-performance-audit.md)). Then design **S0.7 Windows installer** + **S0.8 in-app update check**.
+**Desktop nav L2:** Dogfood aperio on the **v0.2.0 installer** build — spam Dashboard ↔ Publish ↔ Env; confirm chrome responds without multi-second freeze ([audit](../../specs/frontend/desktop-nav-performance-audit.md)). Then design **S0.8 in-app update check**.
 
 ## PAUSED / CANCELLED
 
@@ -27,6 +27,7 @@
 | Desktop nav hot-path cut (audit) | `e8cfaa9` |
 | Version bump 0.2.0 | `029c162` |
 | **v0.2.0** Windows portable Release | [v0.2.0](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.0) |
+| **S0.7** Windows NSIS installer on v0.2.0 | [setup.exe](https://github.com/Dendro-X0/ship-studio/releases/download/v0.2.0/ship-studio-v0.2.0-windows-x64-setup.exe) |
 
 ## Boot allowlist
 

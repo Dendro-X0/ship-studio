@@ -37,7 +37,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S0.4 | **Paid delta on `/pricing`** | Done (`28f696e`) |
 | S0.5 | **Brand disambiguation** | Done (`28f696e`) |
 | S0.6 | **Polar env wizard → deploy** | Checklist already in Desktop Integrations; one dogfood that `PUBLIC_POLAR_*` lands on website deploy without Studio writing secrets |
-| S0.7 | **Windows installer** | **v0.2.0** — MSI/NSIS (or Tauri bundle) beside portable zip; update download + SHA story |
+| S0.7 | **Windows installer** | Done — NSIS `ship-studio-v0.2.0-windows-x64-setup.exe` on [v0.2.0](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.0) |
 | S0.8 | **In-app update check** | **v0.2.0** — notice newer GitHub Releases; no silent force-install; human Confirm to open download |
 
 ---
@@ -107,12 +107,11 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 ## Suggested order (v0.2.0 — active)
 
 ```text
-1. S1.0a      Desktop nav L2 (aperio spam) before GIFs / installer polish
-2. S0.7       Windows installer (design → bundle → download URL)
-3. S0.8       In-app update check (GitHub Releases notice · Confirm open)
-4. S1.1       Live silent demo GIFs (replace stylized set)
-5. Deploy site · Polar Success/Return URLs
-6. S0.1–S0.2  Live buy/refund only when Polar payment_ready (not a release blocker)
+1. S1.0a      Desktop nav L2 (aperio spam) on installer build
+2. S0.8       In-app update check (GitHub Releases notice · Confirm open)
+3. S1.1       Live silent demo GIFs (replace stylized set)
+4. Deploy site · Polar Success/Return URLs
+5. S0.1–S0.2  Live buy/refund only when Polar payment_ready (not a release blocker)
 ```
 
 Earlier default order (commerce-first) stays valid after Polar unlocks; do not block the week on Pay now.

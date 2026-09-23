@@ -66,13 +66,17 @@ fn resolve_shipctl() -> Result<PathBuf, String> {
 
     let mut candidates: Vec<PathBuf> = Vec::new();
 
-    // Portable sidecar (stage-desktop) — still competed by mtime vs repo builds.
+    // Portable / installer layout — Desktop + shipctl in the same folder (or resources/).
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             for name in ["shipctl.exe", "shipctl"] {
                 let cand = dir.join(name);
                 if cand.is_file() {
                     candidates.push(cand);
+                }
+                let nested = dir.join("resources").join(name);
+                if nested.is_file() {
+                    candidates.push(nested);
                 }
             }
         }

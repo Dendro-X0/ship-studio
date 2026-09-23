@@ -1,0 +1,3 @@
+# Copied at build time by scripts/stage-desktop.sh — do not commit binaries.
+*
+!.gitignore
