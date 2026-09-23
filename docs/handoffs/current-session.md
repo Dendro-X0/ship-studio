@@ -2,11 +2,13 @@
 
 **Updated:** 2026-09-22  
 **Branch:** `main`  
-**Status:** **v0.1.0 release week** — fix CI doctor smoke, then S0.3 Release
+**Status:** **v0.1.0 release week** — CI doctor gate fixed (`503add0`)
 
 ## Next Atomic Step
 
-**CI:** green `shipctl test` (doctor on `fixtures/ci-smoke`) → then **S0.3** GitHub Release + SHA256.
+**S0.3:** GitHub Release for v0.1.0 (desktop and/or shipctl zip + SHA256) · wire `PUBLIC_DOWNLOAD_URL`.
+
+Then: **S1.1** live demo GIFs → deploy site + Polar Success/Return URLs.
 
 ## PAUSED / CANCELLED
 
