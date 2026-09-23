@@ -1,6 +1,6 @@
 [package]
 name = "ship-studio-desktop"
-version = "0.2.0"
+version = "0.2.1"
 description = "Ship Studio — local Signet+Orbit bridge shell"
 authors = ["Dendro-X0"]
 edition = "2021"

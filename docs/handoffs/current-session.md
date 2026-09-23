@@ -2,11 +2,11 @@
 
 **Updated:** 2026-09-22  
 **Branch:** `main`  
-**Status:** **v0.2.0** — GitHub Release published (NSIS installer + portable zip)
+**Status:** **v0.2.1** — GitHub Release published (demo-ready installer)
 
 ## Next Atomic Step
 
-**Desktop nav L2:** Dogfood aperio on the **v0.2.0 installer** build — spam Dashboard ↔ Publish ↔ Env; confirm chrome responds without multi-second freeze ([audit](../../specs/frontend/desktop-nav-performance-audit.md)). Then design **S0.8 in-app update check**.
+**S1.1:** Record live silent demo GIFs on the **v0.2.1 installer** (bind → Open → Confirm → Next → Output). Then deploy site + Polar Success/Return URLs → design **S0.8 in-app update check**.
 
 ## PAUSED / CANCELLED
 
@@ -21,13 +21,10 @@
 
 | Band | Commit / link |
 |------|--------|
-| Desktop shell boot + Stripe icon + Polar portal URLs + S0.4/S0.5 | `28f696e` |
-| CI doctor gate (Signet only if signet.toml) | `503add0` |
-| **S0.3** Windows portable Release | [v0.1.0](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.1.0) |
 | Desktop nav hot-path cut (audit) | `e8cfaa9` |
-| Version bump 0.2.0 | `029c162` |
-| **v0.2.0** Windows portable Release | [v0.2.0](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.0) |
-| **S0.7** Windows NSIS installer on v0.2.0 | [setup.exe](https://github.com/Dendro-X0/ship-studio/releases/download/v0.2.0/ship-studio-v0.2.0-windows-x64-setup.exe) |
+| **v0.2.0** NSIS + portable | [v0.2.0](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.0) |
+| Silent spawn + nav paint / mirror / sidecar prefer | (this cut) |
+| **v0.2.1** demo-ready Release | [v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1) |
 
 ## Boot allowlist
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.1 — 2026-09-22
+
+### Fixed
+
+- **Silent shipctl / git spawn** — Windows `CREATE_NO_WINDOW` on Desktop background runs so page loads / Verify / doctor no longer flash a console (Open / Run still opens an intentional terminal)
+- **Installer shipctl preference** — installed / portable sidecar beside the Desktop exe (or under `resources/`) always wins over a newer workspace build by mtime
+- **Nav paint before shipctl** — Publish refresh and related-page loads wait for a paint frame before invoking shipctl
+- **Output mirror weight** — Output page mirrors only the last ~120KB of the log for snappy opens (full stream remains in the live pane)
+
+### Added
+
+- **Release v0.2.1** — Windows x64 NSIS installer + portable zip + SHA256 (demo-ready cut)
+
 ## 0.2.0 — 2026-09-22
 
 ### Planned (follow-up on this track)
@@ -10,7 +23,6 @@
 
 - **Desktop nav freeze** — `setView` no longer rebuilds sidebar integrations or runs full identity sync on every page switch; inactive views get `content-visibility` / contain (see `specs/frontend/desktop-nav-performance-audit.md`)
 - **Desktop sidebar scroll** — thin trackless themed scrollbar on `.nav` (replaces OS chrome on long Targets lists)
-- **Silent shipctl / git spawn** — Windows `CREATE_NO_WINDOW` on Desktop background runs so page loads / Verify / doctor no longer flash a console window (Open/Run still opens an intentional terminal)
 
 ### Added
 

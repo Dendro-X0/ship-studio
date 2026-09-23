@@ -280,11 +280,16 @@ function isTypingTarget(t: EventTarget | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || t.isContentEditable;
 }
 
+const OUTPUT_MIRROR_MAX = 120_000;
+
 function syncOutputMirror() {
   const mirror = document.querySelector<HTMLPreElement>("#output-focus");
   const out = outputEl();
   if (mirror && out) {
-    mirror.textContent = out.textContent ?? "";
+    const full = out.textContent ?? "";
+    // Keep the live Output pane full; mirror only the tail so opening Output stays snappy.
+    mirror.textContent =
+      full.length > OUTPUT_MIRROR_MAX ? full.slice(full.length - OUTPUT_MIRROR_MAX) : full;
     mirror.scrollTop = mirror.scrollHeight;
   }
   syncOutputPreview();
@@ -454,6 +459,12 @@ function syncBackToPublish() {
   const show = publishMidFlight() && activeViewId !== "publish" && Boolean(projectPath());
   btn.hidden = !show;
   btn.disabled = !show;
+}
+
+function afterPaint(fn: () => void) {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(fn);
+  });
 }
 
 function setView(id: string) {
@@ -1618,6 +1629,8 @@ async function openRelatedStudioView(view: string): Promise<boolean> {
   setView(id);
   const project = projectPath();
   if (!project) return true;
+  // Paint the page first; then load shipctl JSON so chrome does not hitch with the console work.
+  await new Promise<void>((resolve) => afterPaint(() => resolve()));
   if (id === "scopes") {
     applyScopes((await loadJsonCmd(["scopes", "--project", project])) as ScopePlan | null);
   } else if (id === "env") {
@@ -3091,15 +3104,20 @@ window.addEventListener("DOMContentLoaded", () => {
       if (!id) return;
       setView(id);
       if (id === "publish" && projectPath() && !lastPublish?.steps?.length) {
-        void refreshPublish();
+        afterPaint(() => {
+          void refreshPublish();
+        });
       }
     });
   });
 
   document.querySelector("#btn-back-publish")?.addEventListener("click", () => {
     setView("publish");
-    if (!lastPublish?.steps?.length) void refreshPublish();
-    else toast("Back on Publish", "info", 1800);
+    if (!lastPublish?.steps?.length) {
+      afterPaint(() => {
+        void refreshPublish();
+      });
+    } else toast("Back on Publish", "info", 1800);
   });
   document.querySelector("#btn-search")?.addEventListener("click", () => cmdkOpen());
   document.querySelector("[data-cmdk-close]")?.addEventListener("click", () => cmdkClose());

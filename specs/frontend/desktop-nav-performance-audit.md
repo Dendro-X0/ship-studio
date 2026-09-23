@@ -1,9 +1,9 @@
 # Desktop nav freeze — performance audit
 
-**Status:** Investigation + hot-path cut applied (L2 dogfood pending)  
-**Owner:** `apps/desktop/src/main.ts` · `styles.css`  
-**Surface:** Tauri WebView2 · aperio-class monorepos (many scopes + long Publish plan)  
-**Symptom:** Switching sidebar pages freezes the window for several seconds.
+**Status:** Shipped through **v0.2.1** (hot-path · silent spawn · paint-before-shipctl · output mirror truncate)  
+**Owner:** `apps/desktop/src/main.ts` · `styles.css` · `apps/desktop/src-tauri/src/lib.rs`  
+**Surface:** Tauri WebView2 · aperio-class monorepos  
+**Symptom (original):** Switching sidebar pages froze the window for several seconds; Windows flashed a console on shipctl.
 
 ## Method
 

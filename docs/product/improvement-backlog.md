@@ -33,12 +33,12 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 |----|------|-------|
 | S0.1 | **W4 — license delivery** | Built; live email dogfood when Polar charge/free checkout works |
 | S0.2 | **Refund path dogfood** | Built; E2E deferred on Polar `payment_ready` |
-| S0.3 | **Public download path** | Done — [v0.2.0 Windows zip](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.0) + SHA256 (v0.1.0 retained) |
+| S0.3 | **Public download path** | Done — [v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1) installer + zip (v0.2.0 / v0.1.0 retained) |
 | S0.4 | **Paid delta on `/pricing`** | Done (`28f696e`) |
 | S0.5 | **Brand disambiguation** | Done (`28f696e`) |
 | S0.6 | **Polar env wizard → deploy** | Checklist already in Desktop Integrations; one dogfood that `PUBLIC_POLAR_*` lands on website deploy without Studio writing secrets |
-| S0.7 | **Windows installer** | Done — NSIS `ship-studio-v0.2.0-windows-x64-setup.exe` on [v0.2.0](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.0) |
-| S0.8 | **In-app update check** | **v0.2.0** — notice newer GitHub Releases; no silent force-install; human Confirm to open download |
+| S0.7 | **Windows installer** | Done — NSIS on [v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1) |
+| S0.8 | **In-app update check** | Next after demo GIFs — notice newer GitHub Releases; no silent force-install; human Confirm to open download |
 
 ---
 
@@ -46,8 +46,8 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 | ID | Idea | Notes |
 |----|------|-------|
-| S1.1 | **Demo shelf = multi-target tedium** | GIF/script shows Desktop + Docs/website + Polar Confirm chain — proof a chatbot can’t hold mid-flight state · **blocked on nav L2** ([desktop-nav-performance-audit](../../specs/frontend/desktop-nav-performance-audit.md)) |
-| S1.0a | **Desktop nav freeze** | Hot-path cut shipped (no sidebar rebuild / identity sync per `setView`); remaining: output mirror weight · target virtualization if still slow |
+| S1.1 | **Demo shelf = multi-target tedium** | GIF/script shows Desktop + Docs/website + Polar Confirm chain — **record on v0.2.1 installer** ([desktop-nav-performance-audit](../../specs/frontend/desktop-nav-performance-audit.md)) |
+| S1.0a | **Desktop nav freeze** | Hot-path + silent spawn + paint-before-shipctl + output mirror truncate shipped in **v0.2.1** |
 | S1.2 | **Dashboard honesty polish** | Surface Signet ok / Orbit missing, dirty git, step N/M without fake “all shipped” |
 | S1.3 | **Never-say block on site + README** | No “one-click deploy” · no “we silence SmartScreen” · no “replaces Cloudflare/Polar” · Studio does not write secrets |
 | S1.4 | **One intent page** | “Multi-surface final-mile vs CI-only / checklist” — SEO without belonging theater |
@@ -104,14 +104,13 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 ---
 
-## Suggested order (v0.2.0 — active)
+## Suggested order (v0.2.1 — active)
 
 ```text
-1. S1.0a      Desktop nav L2 (aperio spam) on installer build
-2. S0.8       In-app update check (GitHub Releases notice · Confirm open)
-3. S1.1       Live silent demo GIFs (replace stylized set)
-4. Deploy site · Polar Success/Return URLs
-5. S0.1–S0.2  Live buy/refund only when Polar payment_ready (not a release blocker)
+1. S1.1       Live silent demo GIFs on v0.2.1 installer (replace stylized set)
+2. Deploy site · Polar Success/Return URLs · PUBLIC_DOWNLOAD_URL → v0.2.1
+3. S0.8       In-app update check (GitHub Releases notice · Confirm open)
+4. S0.1–S0.2  Live buy/refund only when Polar payment_ready (not a release blocker)
 ```
 
 Earlier default order (commerce-first) stays valid after Polar unlocks; do not block the week on Pay now.

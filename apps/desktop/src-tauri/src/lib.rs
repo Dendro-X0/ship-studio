@@ -76,24 +76,23 @@ fn resolve_shipctl() -> Result<PathBuf, String> {
         }
     }
 
-    let mut candidates: Vec<PathBuf> = Vec::new();
-
-    // Portable / installer layout — Desktop + shipctl in the same folder (or resources/).
+    // Installed / portable layout wins — never lose to a newer repo build by mtime.
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             for name in ["shipctl.exe", "shipctl"] {
-                let cand = dir.join(name);
-                if cand.is_file() {
-                    candidates.push(cand);
+                let beside = dir.join(name);
+                if beside.is_file() {
+                    return Ok(beside);
                 }
                 let nested = dir.join("resources").join(name);
                 if nested.is_file() {
-                    candidates.push(nested);
+                    return Ok(nested);
                 }
             }
         }
     }
 
+    let mut candidates: Vec<PathBuf> = Vec::new();
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let repo = manifest_dir.join("../../..");
     for c in [
@@ -107,7 +106,7 @@ fn resolve_shipctl() -> Result<PathBuf, String> {
         }
     }
 
-    // Prefer the newest binary so a stale sidecar cannot hide a fresh `cargo build -p shipctl`.
+    // Dev: prefer the newest workspace binary so a stale debug cannot hide a fresh release.
     let mut best: Option<(PathBuf, std::time::SystemTime)> = None;
     for c in candidates {
         let modified = std::fs::metadata(&c)
