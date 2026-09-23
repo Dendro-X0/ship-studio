@@ -44,7 +44,8 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 | ID | Idea | Notes |
 |----|------|-------|
-| S1.1 | **Demo shelf = multi-target tedium** | GIF/script shows Desktop + Docs/website + Polar Confirm chain — proof a chatbot can’t hold mid-flight state |
+| S1.1 | **Demo shelf = multi-target tedium** | GIF/script shows Desktop + Docs/website + Polar Confirm chain — proof a chatbot can’t hold mid-flight state · **blocked on nav L2** ([desktop-nav-performance-audit](../../specs/frontend/desktop-nav-performance-audit.md)) |
+| S1.0a | **Desktop nav freeze** | Hot-path cut shipped (no sidebar rebuild / identity sync per `setView`); remaining: output mirror weight · target virtualization if still slow |
 | S1.2 | **Dashboard honesty polish** | Surface Signet ok / Orbit missing, dirty git, step N/M without fake “all shipped” |
 | S1.3 | **Never-say block on site + README** | No “one-click deploy” · no “we silence SmartScreen” · no “replaces Cloudflare/Polar” · Studio does not write secrets |
 | S1.4 | **One intent page** | “Multi-surface final-mile vs CI-only / checklist” — SEO without belonging theater |
@@ -104,11 +105,12 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 ## Suggested order (v0.1.0 release week — active)
 
 ```text
-1. S0.4–S0.5  Paid delta + brand disambiguation   ← now
-2. S0.3       GitHub Release + SHA256 + download URL
-3. S1.1       Live silent demo GIFs (replace stylized set)
-4. Deploy site · Polar Success/Return URLs
-5. S0.1–S0.2  Live buy/refund only when Polar payment_ready (not a release blocker)
+1. S0.4–S0.5  Paid delta + brand disambiguation   ← done
+2. S0.3       GitHub Release + SHA256 + download URL ← done
+3. S1.0a      Desktop nav L2 (aperio spam) before GIFs
+4. S1.1       Live silent demo GIFs (replace stylized set)
+5. Deploy site · Polar Success/Return URLs
+6. S0.1–S0.2  Live buy/refund only when Polar payment_ready (not a release blocker)
 ```
 
 Earlier default order (commerce-first) stays valid after Polar unlocks; do not block the week on Pay now.

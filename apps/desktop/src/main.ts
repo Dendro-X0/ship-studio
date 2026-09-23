@@ -458,6 +458,7 @@ function syncBackToPublish() {
 
 function setView(id: string) {
   if (!VIEW_META[id]) return;
+  const prev = activeViewId;
   activeViewId = id;
   document.querySelectorAll<HTMLElement>(".view").forEach((el) => {
     const on = el.dataset.view === id;
@@ -475,11 +476,19 @@ function setView(id: string) {
     const path = projectPath();
     desc.textContent = path ? `${projectName(path)} · ${meta.desc}` : meta.desc;
   }
-  syncProjectIdentity();
+  // Avoid full identity + sidebar rebuild on every nav (multi-second freeze on large projects).
   syncBackToPublish();
   if (id === "output") syncOutputMirror();
   if (id === "integrations") renderIntegrations();
-  renderSidebarIntegrations();
+  if (id === "integrations" || prev === "integrations") highlightSidebarIntegration();
+}
+
+function highlightSidebarIntegration() {
+  document.querySelectorAll<HTMLButtonElement>("#sidebar-integrations [data-side-int]").forEach((btn) => {
+    const on =
+      btn.getAttribute("data-side-int") === selectedIntegration && activeViewId === "integrations";
+    btn.classList.toggle("is-on", on);
+  });
 }
 
 
@@ -1026,6 +1035,7 @@ function selectIntegration(id: string) {
   if (activeViewId !== "integrations") setView("integrations");
   else {
     renderIntegrations();
+    highlightSidebarIntegration();
   }
 }
 

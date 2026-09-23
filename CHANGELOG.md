@@ -2,6 +2,11 @@
 
 ## 0.1.0 — 2026-09-14
 
+### Fixed
+
+- **Desktop nav freeze** — `setView` no longer rebuilds sidebar integrations or runs full identity sync on every page switch; inactive views get `content-visibility` / contain (see `specs/frontend/desktop-nav-performance-audit.md`)
+- **Desktop sidebar scroll** — thin trackless themed scrollbar on `.nav` (replaces OS chrome on long Targets lists)
+
 ### Added
 
 - **Release v0.1.0** — Windows x64 portable zip (`ship-studio-desktop.exe` + `shipctl.exe`) + SHA256 on GitHub Releases
