@@ -163,9 +163,13 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
     let mut notes = Vec::new();
     notes.push("Bridge is offline-first: it does not call vendor HTTPS itself.".into());
     if !signet.found {
-        let wants_signet = detected.tauri || detected.signet_toml;
-        if wants_signet {
+        if detected.signet_toml {
             notes.push("signet not on PATH — install Signet or set SIGNET_PATH.".into());
+        } else if detected.tauri {
+            notes.push(
+                "signet not on PATH — optional until `signet init` / signet.toml (Tauri layout noted)."
+                    .into(),
+            );
         } else {
             notes.push("signet not on PATH — optional for this layout (no Tauri/signet.toml).".into());
         }
@@ -343,7 +347,7 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
             .into(),
     );
 
-    let wants_signet = detected.tauri || detected.signet_toml;
+    let wants_signet = detected.signet_toml;
     let needs_host = detected.wrangler || detected.vercel || detected.netlify;
     let provider_cli_ok = provider_clis.iter().any(|c| {
         c.found

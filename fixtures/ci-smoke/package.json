@@ -1,0 +1,5 @@
+{
+  "name": "ship-studio-ci-smoke",
+  "private": true,
+  "description": "Minimal fixture for CI doctor/guide smoke — no Tauri/Signet required"
+}
