@@ -25,6 +25,10 @@ Desktop: topbar **Local | Public** next to General/Advanced. Persists in `.ship/
 ```bash
 cd "E:/Web Projects/ship-studio"
 ./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api"
+# Fast path — burn Auto/ready gates (stops at Human/Open):
+./target/release/shipctl.exe publish --mode general --intent local --project "E:/Web Projects/assess-api" continue --chain 20
+# or: bash scripts/publish-fast.sh "E:/Web Projects/assess-api"
+# Windows: powershell -ExecutionPolicy Bypass -File scripts/publish-fast.ps1 -Project "E:/Web Projects/assess-api"
 ./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" open
 ./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" verify
 # after paste / listing / live release / deploy on vendor UIs…
@@ -35,7 +39,7 @@ cd "E:/Web Projects/ship-studio"
 ./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" watch --interval-secs 15
 ```
 
-Desktop: topbar **Advanced** · **Publish** (spine) · **Watch** toggle polls Verify every 15s and toasts when Confirm is ready · Related opens Env / Sign / Portal / Scopes / Dashboard · **Back to Publish**.  
+Desktop: topbar **General** (default) · **Local** (first-run default) · **Publish** · primary **Continue** · Watch toggle · Related opens Env / Sign / Portal / Scopes / Dashboard · **Back to Publish**.  
 TUI: Publish (`P`) → o / v / c / n · **`w` Watch** (local Verify poll, READY when Confirm is safe).  
 MCP: `ship_publish_watch` — one local Verify probe per call (agents poll; optional `auto_confirm`).
 

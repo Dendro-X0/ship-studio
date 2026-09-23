@@ -1,7 +1,7 @@
 # Feature demo — v0.2.1 (Part 1)
 
 **Status:** Recording plan for S1.1 live GIFs  
-**Build:** [v0.2.2 installer](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.2) (Confirm/Next gate fix — prefer over v0.2.1)  
+**Build:** [v0.2.3 installer](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3) (Publish **Continue** — prefer over v0.2.2)  
 **Watermark:** `local app · recorded`  
 **Replace:** stylized `docs/assets/demo/v0.1.0/` → live clips under `docs/assets/demo/v0.2.1/` (same file names when possible)
 
@@ -27,7 +27,7 @@ Studio keeps **mid-flight order** across surfaces: you Open vendor doors, Confir
 | 2 | **Targets sidebar** | Multi-surface detection (Web / API / Desktop cues in fixture) |
 | 3 | **Publish portal** | Step N/M spine — doctor → scopes → env → sign → … |
 | 4 | **Open / Run** | Browser/terminal for the *human* gate (Studio does not OAuth) |
-| 5 | **Verify → Confirm → Next** | Honest gatekeeping; state advances only when you Confirm |
+| 5 | **Continue** (+ Confirm when Human) | Fast path burns Auto gates; Open→Confirm only for honesty |
 | 6 | **Output Preview** | Local artifact / plan JSON before the next Confirm |
 | 7 | **Back to Publish** (optional 5th clip) | Mid-flight return after visiting Env / Sign — chatbot-killer |
 
@@ -62,7 +62,7 @@ Crop rule if the window must stay larger: keep **sidebar + Publish header + step
 
 ### Prep
 
-1. Install **v0.2.2** from GitHub Releases (clean install; quit any older Desktop).  
+1. Install **v0.2.3** from GitHub Releases (clean install; quit any older Desktop).  
 2. Reset fixture state if needed: delete `fixtures/advanced-dogfood/.ship/` (or bind fresh).  
 3. Set capture size per **Capture resolution** above; dark theme as shipped; hide personal paths if possible (`…\fixtures\advanced-dogfood`).  
 4. Capture tool: silent GIF or short MP4→GIF; no voiceover required for `/demo` shelf.

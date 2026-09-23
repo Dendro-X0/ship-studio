@@ -2,11 +2,11 @@
 
 **Updated:** 2026-09-23  
 **Branch:** `main`  
-**Status:** **v0.2.2** — Publish wizard reliability (Confirm/Next gates)
+**Status:** **v0.2.3** cut — Publish Continue (L1+L2)
 
 ## Next Atomic Step
 
-**S1.1:** Record live silent demo GIFs per [demo v0.2.1 SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) on the **v0.2.2 installer** (Confirm/Next fixed). Then deploy site → **S0.8** in-app update check.
+**S1.1:** Record live silent demo GIFs per [demo SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) on the **v0.2.3 installer** (Continue primary). Then deploy site → **S0.8** in-app update check.
 
 ## PAUSED / CANCELLED
 
@@ -21,8 +21,9 @@
 
 | Band | Commit / link |
 |------|--------|
+| **v0.2.3** Publish Continue fast path | [publish-fast-path-design](../../specs/frontend/publish-fast-path-design.md) · L2 fixture proof |
+| **v0.2.2** Confirm/Next + doctor Done | [v0.2.2](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.2) |
 | **v0.2.1** demo-ready Release | [v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1) |
-| Publish wizard Confirm/Next + doctor Done + pulse copy | [publish-wizard-reliability-design](../../specs/frontend/publish-wizard-reliability-design.md) |
 
 ## Boot allowlist
 

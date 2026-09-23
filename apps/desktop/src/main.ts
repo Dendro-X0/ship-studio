@@ -67,7 +67,8 @@ function studioMode(): StudioMode {
 }
 
 function shipIntent(): ShipIntent {
-  return localStorage.getItem(INTENT_KEY) === "local" ? "local" : "public";
+  // First run / unset → Local (shortest path). Explicit "public" stays Public.
+  return localStorage.getItem(INTENT_KEY) === "public" ? "public" : "local";
 }
 
 function publishArgs(extra: string[] = []): string[] {
@@ -220,8 +221,12 @@ function setProjectUi(on: boolean) {
       btn.disabled = !on;
       continue;
     }
-    // Confirm / Next: syncPublishGateButtons owns enable + primary.
-    if (id === "btn-publish-confirm" || id === "btn-publish-next") {
+    // Confirm / Next / Continue: syncPublishGateButtons owns enable + primary.
+    if (
+      id === "btn-publish-confirm" ||
+      id === "btn-publish-next" ||
+      id === "btn-publish-continue"
+    ) {
       continue;
     }
     btn.disabled = !on || running;
@@ -243,8 +248,9 @@ function setProjectUi(on: boolean) {
   syncBackToPublish();
 }
 
-/** Pending → Confirm primary; Done → Next primary. Stops Next-on-pending demo fails. */
+/** Continue is the fast path; Confirm/Next stay for explicit control. */
 function syncPublishGateButtons() {
+  const continueBtn = document.querySelector<HTMLButtonElement>("#btn-publish-continue");
   const confirmBtn = document.querySelector<HTMLButtonElement>("#btn-publish-confirm");
   const nextBtn = document.querySelector<HTMLButtonElement>("#btn-publish-next");
   if (!confirmBtn || !nextBtn) return;
@@ -252,13 +258,30 @@ function syncPublishGateButtons() {
   const cur = lastPublish?.current;
   const finished = Boolean(lastPublish?.finished);
   const status = (cur?.status ?? "").toLowerCase();
+  const kind = (cur?.kind ?? "").toLowerCase();
   const pending = !finished && Boolean(lastPublish?.steps?.length) && status === "pending";
   const done =
     !finished && Boolean(lastPublish?.steps?.length) && (status === "done" || status === "skipped");
+  const humanGate =
+    pending &&
+    (kind === "human" ||
+      kind === "oauth" ||
+      kind === "deploy" ||
+      kind === "list" ||
+      kind === "check" ||
+      (kind === "sign" && (cur?.id ?? "").includes("release") && !(cur?.id ?? "").includes("dry")));
   confirmBtn.disabled = !on || running || !pending;
   nextBtn.disabled = !on || running || !done;
-  confirmBtn.classList.toggle("primary", pending);
-  nextBtn.classList.toggle("primary", done || (!pending && !done && on && !finished));
+  if (continueBtn) {
+    continueBtn.disabled = !on || running || finished || (!pending && !done);
+    continueBtn.classList.add("primary");
+    continueBtn.textContent = humanGate ? "Needs Open" : "Continue";
+    continueBtn.title = humanGate
+      ? "Human gate — use Open / Run, then Confirm"
+      : "Advance Auto gates (stops at Human/Open)";
+  }
+  confirmBtn.classList.toggle("primary", false);
+  nextBtn.classList.toggle("primary", false);
   if (!pending) confirmBtn.classList.remove("watch-ready");
 }
 
@@ -1699,8 +1722,13 @@ async function runPulseAction(id: string, view: string) {
     return;
   }
   if (id === "doctor") {
-    // Stay on current surface — Tools is a detail panel, not the start.
     void run(["doctor", "--project", projectPath()], { step: "doctor" });
+    return;
+  }
+  if (id === "publish_continue") {
+    setView("publish");
+    if (!lastPublish?.steps?.length) await refreshPublish();
+    void publishContinue(12);
     return;
   }
   const target = view || "publish";
@@ -2490,7 +2518,7 @@ function applyPublishView(view: PublishView | null) {
             : "Public";
     hint.textContent = view.finished
       ? "Publish workflow finished — live check confirmed."
-      : `${modeLabel} · ${intentLabel} · Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ~${view.minutes_remaining ?? 0} min left · ${view.done_count ?? 0} done — Confirm pending gates, then Next.`;
+      : `${modeLabel} · ${intentLabel} · Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ~${view.minutes_remaining ?? 0} min left · ${view.done_count ?? 0} done — Continue Auto gates; Open/Confirm for human.`;
   }
   if (mins) {
     mins.hidden = false;
@@ -2620,9 +2648,36 @@ function startPublishWatch() {
   }, 15_000);
 }
 
+async function publishContinue(chain = 12) {
+  const result = await run([...publishArgs(["continue"]), "--chain", String(chain)], {
+    step: "paste",
+  });
+  if (!result?.stdout) return;
+  try {
+    const parsed = JSON.parse(result.stdout) as {
+      ok?: boolean;
+      message?: string;
+      stopped?: string;
+      advanced?: number;
+      publish?: PublishView;
+    };
+    if (parsed.publish) applyPublishView(parsed.publish);
+    const msg = parsed.message ?? (parsed.ok === false ? "Continue failed" : "Continued");
+    if (parsed.stopped === "human_gate") {
+      toast(msg, "info", 5000);
+    } else if (parsed.ok === false) {
+      toast(msg, "err");
+    } else {
+      toast(msg, "ok");
+    }
+    await refreshSessionNow();
+  } catch {
+    /* raw output shown */
+  }
+}
+
 async function publishAction(sub: string[]) {
-  const ordered =
-    sub.length === 0 ? publishArgs() : publishArgs(sub);
+  const ordered = sub.length === 0 ? publishArgs() : publishArgs(sub);
   const result = await run(ordered, { step: "paste" });
   if (!result?.stdout) return;
   try {
@@ -2636,7 +2691,6 @@ async function publishAction(sub: string[]) {
       appendStream({ stream: "meta", text: parsed.message });
       toast(parsed.message, parsed.ok === false ? "err" : "ok");
     }
-    // Keep Dashboard Now honest after Confirm / Next / Open / Verify.
     await refreshSessionNow();
   } catch {
     /* raw output shown */
@@ -3624,6 +3678,23 @@ async function runWizard() {
     } else {
       stopPublishWatch();
     }
+  });
+  document.querySelector("#btn-publish-continue")?.addEventListener("click", () => {
+    const cur = lastPublish?.current;
+    const kind = (cur?.kind ?? "").toLowerCase();
+    const pending = (cur?.status ?? "").toLowerCase() === "pending";
+    const humanGate =
+      pending &&
+      (kind === "human" ||
+        kind === "oauth" ||
+        kind === "deploy" ||
+        kind === "list" ||
+        kind === "check");
+    if (humanGate) {
+      document.querySelector<HTMLButtonElement>("#btn-publish-open")?.click();
+      return;
+    }
+    void publishContinue(12);
   });
   document.querySelector("#btn-publish-confirm")?.addEventListener("click", () => {
     void publishAction(["confirm"]);

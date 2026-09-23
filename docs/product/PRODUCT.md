@@ -30,11 +30,13 @@ Full definition: [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · Human gates: [O
 
 ## UX principle — minimal actions, one spine
 
-Access a wide range of shipping functions through **few deliberate actions**. Publish is the integrated workflow: Open/Run → (vendor UI) → Confirm → Next. Scopes, Env, Sign, Portal, Ritual, and Tools are **detail panels** opened from the current publish step (`desktop_view`), not competing start points. Assist is a checklist overview; Launch is a companion stepper — prefer Publish for the full minute path.
+Access a wide range of shipping functions through **few deliberate actions**. Publish is the integrated workflow. Prefer **Continue** (`shipctl publish continue`) to burn through Auto/ready gates; **Open → Confirm** only for human/vendor gates. Scopes, Env, Sign, Portal, Ritual, and Tools are **detail panels** opened from the current publish step (`desktop_view`), not competing start points.
 
 **Modes:** **General** (default) — shortest publish plan + focused nav. **Advanced** — full OAuth/official-sign/listing plan + Assist/Launch/Portal/Ritual/Tools. See `specs/backend/studio-modes-design.md`.
 
-DO NOT: make operators reassemble the release from eight peer nav destinations · force Assist → Scopes → Env → Sign → Portal → Publish as the happy path.
+**Fast path:** [publish-fast-path-design.md](../../specs/frontend/publish-fast-path-design.md)
+
+DO NOT: make operators reassemble the release from eight peer nav destinations · force Assist → Scopes → Env → Sign → Portal → Publish as the happy path · auto-Confirm OAuth/deploy/store gates.
 ## Architecture
 
 ```text

@@ -241,6 +241,12 @@ enum PublishCmd {
     Verify,
     /// Mark current step done (operator attestation).
     Confirm,
+    /// Smart advance: Confirm+Next for Auto gates; stop at Human/Open (see --chain).
+    Continue {
+        /// How many Continue units to run (default 1). Use higher for scripts / Desktop fast path.
+        #[arg(long, default_value_t = 1)]
+        chain: u32,
+    },
     /// Advance to the next pending step (requires done, or --force).
     Next {
         #[arg(long, default_value_t = false)]
@@ -501,6 +507,21 @@ fn main() -> Result<()> {
                         publish::load_or_build_with_options(&project, mode, intent)?;
                     let view = publish::confirm_current(&project)?;
                     println!("{}", serde_json::to_string_pretty(&view)?);
+                }
+                PublishCmd::Continue { chain } => {
+                    let _ =
+                        publish::load_or_build_with_options(&project, mode, intent)?;
+                    let event = publish::continue_publish(&project, chain.max(1))?;
+                    println!("{}", serde_json::to_string_pretty(&event)?);
+                    if event.get("ok").and_then(|v| v.as_bool()) == Some(false) {
+                        bail!(
+                            "{}",
+                            event
+                                .get("message")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("continue failed")
+                        );
+                    }
                 }
                 PublishCmd::Next { force } => {
                     let _ =

@@ -1,10 +1,16 @@
 # Changelog
 
+## 0.2.3 — 2026-09-23
+
+### Added
+
+- **Publish Continue** — `shipctl publish continue [--chain N]` advances Auto/ready gates (Verify→Confirm→Next); stops at Human/Open. Desktop primary **Continue** (+ Dashboard mid-flight CTA) · Confirm/Next remain for explicit control · `scripts/publish-fast.sh|.ps1` · first-run Desktop intent defaults to **Local** ([publish-fast-path-design](./specs/frontend/publish-fast-path-design.md))
+
 ## 0.2.2 — 2026-09-23
 
 ### Fixed
 
-- **Publish Confirm/Next gating** — Pending steps make Confirm primary and disable Next; Done enables Next (stops Next-on-pending FAILED demos)
+- **Publish Confirm/Next gating** — Pending steps make Confirm available and disable Next until Done
 - **Doctor Auto when tools ok** — new plans mark doctor Done so the spine opens on the first real gate
 - **Dashboard mid-publish copy** — “local already deployed” only when intent is Local
 - **Human Next errors** — toast “Confirm this step first” instead of raw CLI FAILED for pending gates

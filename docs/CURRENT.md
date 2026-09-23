@@ -1,8 +1,8 @@
 # CURRENT — Ship Studio
 
-**Version:** 0.2.2  
+**Version:** 0.2.3  
 **Updated:** 2026-09-23  
-**Status:** **[Release v0.2.2](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.2)** — Publish wizard Confirm/Next reliability · next: S1.1 demo GIFs
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** — Publish Continue fast path · next: S1.1 demo GIFs
 
 ## Truth pointers
 

@@ -1876,6 +1876,87 @@ pub fn confirm_current(project: &Path) -> Result<PublishView> {
     Ok(view(&state))
 }
 
+/// One-click advance: Confirm+Next for Auto-ready gates; stop at Human/Open.
+/// `chain` = how many such units to run (Desktop fast path uses a higher chain).
+pub fn continue_publish(project: &Path, chain: u32) -> Result<serde_json::Value> {
+    let project = fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
+    let chain = chain.max(1);
+    let mut advanced: u32 = 0;
+    let mut log: Vec<String> = Vec::new();
+
+    while advanced < chain {
+        let state = load_state(&project, false, None, None)?;
+        let finished = !state.steps.is_empty()
+            && state
+                .steps
+                .iter()
+                .all(|s| s.status == PubStatus::Done || s.status == PubStatus::Skipped);
+        if finished {
+            return Ok(serde_json::json!({
+                "ok": true,
+                "advanced": advanced,
+                "stopped": "finished",
+                "message": "Publish workflow finished.",
+                "log": log,
+                "publish": view(&state),
+            }));
+        }
+        let Some(step) = state.steps.get(state.current) else {
+            bail!("no current step");
+        };
+        match step.status {
+            PubStatus::Done | PubStatus::Skipped => {
+                let id = step.id.clone();
+                let _ = next(&project, false)?;
+                log.push(format!("next · {id}"));
+                advanced += 1;
+            }
+            PubStatus::Pending => {
+                if !auto_done_after_run(step) {
+                    return Ok(serde_json::json!({
+                        "ok": true,
+                        "advanced": advanced,
+                        "stopped": "human_gate",
+                        "message": format!(
+                            "Open/finish «{}», then Confirm — Continue won’t attest human gates.",
+                            step.title
+                        ),
+                        "log": log,
+                        "publish": view(&state),
+                    }));
+                }
+                let id = step.id.clone();
+                let title = step.title.clone();
+                let (ok, msg, _) = verify_current(&project)?;
+                if !ok {
+                    return Ok(serde_json::json!({
+                        "ok": false,
+                        "advanced": advanced,
+                        "stopped": "verify_failed",
+                        "message": msg,
+                        "log": log,
+                        "publish": view(&load_state(&project, false, None, None)?),
+                    }));
+                }
+                let _ = confirm_current(&project)?;
+                let _ = next(&project, false)?;
+                log.push(format!("continue · {id} ({title})"));
+                advanced += 1;
+            }
+        }
+    }
+
+    let state = load_state(&project, false, None, None)?;
+    Ok(serde_json::json!({
+        "ok": true,
+        "advanced": advanced,
+        "stopped": "chain_limit",
+        "message": format!("Advanced {advanced} gate(s)."),
+        "log": log,
+        "publish": view(&state),
+    }))
+}
+
 pub fn next(project: &Path, force: bool) -> Result<PublishView> {
     let mut state = load_state(project, false, None, None)?;
     let idx = state.current;
@@ -3095,6 +3176,69 @@ mod tests {
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "listing.stripe"));
         assert!(!general.steps.iter().any(|s| s.id == "listing.paddle"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn continue_advances_auto_doctor_when_ok() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-continue-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let _ = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        let event = continue_publish(&dir, 3).unwrap();
+        assert_eq!(event.get("ok").and_then(|v| v.as_bool()), Some(true));
+        let advanced = event.get("advanced").and_then(|v| v.as_u64()).unwrap_or(0);
+        assert!(advanced >= 1, "expected at least one continue unit: {event}");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn continue_stops_at_human_pending_without_confirm() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-continue-human-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let mut state = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let gate = state
+            .steps
+            .iter()
+            .position(|s| s.kind == PubKind::Human)
+            .expect("advanced plan has a human gate");
+        for (i, step) in state.steps.iter_mut().enumerate() {
+            step.status = if i < gate {
+                PubStatus::Done
+            } else if i == gate {
+                PubStatus::Pending
+            } else {
+                step.status.clone()
+            };
+        }
+        state.current = gate;
+        save_state(&dir, &state).unwrap();
+        let event = continue_publish(&dir, 8).unwrap();
+        assert_eq!(event.get("ok").and_then(|v| v.as_bool()), Some(true));
+        assert_eq!(
+            event.get("stopped").and_then(|v| v.as_str()),
+            Some("human_gate")
+        );
+        assert_eq!(event.get("advanced").and_then(|v| v.as_u64()), Some(0));
+        let after = load_saved(&dir).unwrap();
+        assert_eq!(
+            after.steps[gate].status,
+            PubStatus::Pending,
+            "Continue must not mark Human Done: {event}"
+        );
         let _ = fs::remove_dir_all(&dir);
     }
 

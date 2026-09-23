@@ -8,4 +8,17 @@ Offline and Advanced Publish walks. Scripts live under `scripts/`; these docs ex
 | [DOGFOOD-signet.md](./DOGFOOD-signet.md) | Signet-focused walk |
 | [DOGFOOD-orbit-assess-api.md](./DOGFOOD-orbit-assess-api.md) | Orbit / assess-api style host |
 
-Scripts: `scripts/dogfood-advanced-publish.sh|.ps1` · `scripts/dogfood-advanced-walk.sh` · `scripts/dogfood-offline.sh`
+Scripts: `scripts/dogfood-advanced-publish.sh|.ps1` · `scripts/dogfood-advanced-walk.sh` · `scripts/dogfood-offline.sh` · **`scripts/publish-fast.sh|.ps1`** (Continue chain)
+
+### Fast path (minimal clicks)
+
+```bash
+# Burn Auto gates; stops at Human/Open — then Open → Confirm on that gate
+bash scripts/publish-fast.sh fixtures/advanced-dogfood --mode general --intent local --chain 20
+# Windows:
+# powershell -ExecutionPolicy Bypass -File scripts/publish-fast.ps1 -Project fixtures/advanced-dogfood
+# or:
+shipctl publish --mode general --intent local --project . continue --chain 20
+```
+
+Desktop: bind folder → **Continue** (primary). Human gates show **Needs Open**.

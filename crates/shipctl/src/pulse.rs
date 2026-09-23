@@ -793,7 +793,7 @@ fn decide_now(
             .map(publish_cut_hint)
             .unwrap_or("");
         let detail = format!(
-            "Publish step {}/{}{mins}.{linked}{cut} Open/Run on the vendor UI or local CLI, Confirm, Next.",
+            "Publish step {}/{}{mins}.{linked}{cut} Continue advances Auto gates; Open/Confirm only for human/vendor work.",
             publish.current_index + 1,
             publish.total
         );
@@ -805,7 +805,14 @@ fn decide_now(
                 "Continue publishing",
                 "nav",
                 Some("publish"),
-                Some(vec!["publish".into(), "--project".into(), ".".into()]),
+                Some(vec![
+                    "publish".into(),
+                    "--project".into(),
+                    ".".into(),
+                    "continue".into(),
+                    "--chain".into(),
+                    "12".into(),
+                ]),
             ),
             actions,
         };

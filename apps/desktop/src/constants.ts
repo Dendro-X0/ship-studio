@@ -24,6 +24,7 @@ export const ACTION_IDS = [
   "btn-publish-related",
   "btn-publish-open",
   "btn-publish-verify",
+  "btn-publish-continue",
   "btn-publish-confirm",
   "btn-publish-next",
   "btn-guide",

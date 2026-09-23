@@ -155,10 +155,10 @@
               </button>
             </div>
             <div class="mode-switch intent-switch" role="group" aria-label="Ship intent">
-              <button type="button" id="intent-local" class="intent-btn" data-intent="local" title="Local cut — no hosted env/deploy/stores">
+              <button type="button" id="intent-local" class="intent-btn active" data-intent="local" title="Local cut — no hosted env/deploy/stores">
                 Local
               </button>
-              <button type="button" id="intent-public" class="intent-btn active" data-intent="public" title="Public final-mile when signals match">
+              <button type="button" id="intent-public" class="intent-btn" data-intent="public" title="Public final-mile when signals match">
                 Public
               </button>
             </div>
@@ -288,11 +288,11 @@
                 <div>
                   <label>Publish portal</label>
                   <p class="hint" id="publish-hint">
-                    Minute-oriented path — Open/Run on official platforms or local CLIs, Confirm, Next.
+                    Minute path — Continue advances Auto gates; Open + Confirm for human gates.
                   </p>
                 </div>
                 <div class="portal-actions">
-                  <button type="button" id="btn-publish" class="primary" disabled title="Refresh publish plan">
+                  <button type="button" id="btn-publish" disabled title="Refresh publish plan">
                     Refresh
                   </button>
                   <button type="button" id="btn-publish-related" disabled hidden>Related</button>
@@ -302,8 +302,11 @@
                     <input type="checkbox" id="opt-publish-watch" />
                     Watch
                   </label>
+                  <button type="button" id="btn-publish-continue" class="primary" disabled title="Advance Auto gates (stops at Human/Open)">
+                    Continue
+                  </button>
                   <button type="button" id="btn-publish-confirm" disabled>Confirm</button>
-                  <button type="button" id="btn-publish-next" class="primary" disabled>Next</button>
+                  <button type="button" id="btn-publish-next" disabled>Next</button>
                 </div>
               </div>
               <div class="minutes-strip" id="publish-minutes" hidden></div>
