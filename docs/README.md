@@ -2,7 +2,7 @@
 
 **Start:** [CURRENT.md](./CURRENT.md) → [handoffs/current-session.md](./handoffs/current-session.md)
 
-_Last updated: 2026-09-22 · **0.2.1** · docs shelf layout (Obscur-style)_
+_Last updated: 2026-09-22 · **0.2.2** · docs shelf layout (Obscur-style)_
 
 ---
 

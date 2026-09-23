@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.2 — 2026-09-23
+
+### Fixed
+
+- **Publish Confirm/Next gating** — Pending steps make Confirm primary and disable Next; Done enables Next (stops Next-on-pending FAILED demos)
+- **Doctor Auto when tools ok** — new plans mark doctor Done so the spine opens on the first real gate
+- **Dashboard mid-publish copy** — “local already deployed” only when intent is Local
+- **Human Next errors** — toast “Confirm this step first” instead of raw CLI FAILED for pending gates
+
 ## 0.2.1 — 2026-09-22
 
 ### Fixed

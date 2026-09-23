@@ -1,12 +1,12 @@
 # Current session — Ship Studio
 
-**Updated:** 2026-09-22  
+**Updated:** 2026-09-23  
 **Branch:** `main`  
-**Status:** **v0.2.1** — GitHub Release published (demo-ready installer)
+**Status:** **v0.2.2** — Publish wizard reliability (Confirm/Next gates)
 
 ## Next Atomic Step
 
-**S1.1:** Record live silent demo GIFs on the **v0.2.1 installer** (bind → Open → Confirm → Next → Output). Then deploy site + Polar Success/Return URLs → design **S0.8 in-app update check**.
+**S1.1:** Record live silent demo GIFs per [demo v0.2.1 SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) on the **v0.2.2 installer** (Confirm/Next fixed). Then deploy site → **S0.8** in-app update check.
 
 ## PAUSED / CANCELLED
 
@@ -21,10 +21,8 @@
 
 | Band | Commit / link |
 |------|--------|
-| Desktop nav hot-path cut (audit) | `e8cfaa9` |
-| **v0.2.0** NSIS + portable | [v0.2.0](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.0) |
-| Silent spawn + nav paint / mirror / sidecar prefer | (this cut) |
 | **v0.2.1** demo-ready Release | [v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1) |
+| Publish wizard Confirm/Next + doctor Done + pulse copy | [publish-wizard-reliability-design](../../specs/frontend/publish-wizard-reliability-design.md) |
 
 ## Boot allowlist
 

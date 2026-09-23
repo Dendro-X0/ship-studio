@@ -271,12 +271,12 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
         });
 
     let mut steps = Vec::new();
-    steps.push(step(
+    let mut doctor_step = step(
         "doctor",
         "Doctor — tools for this layout",
         PubKind::Auto,
         if doctor.ok {
-            "Required tools for this project are ready. Confirm and continue."
+            "Tools ready for this layout."
         } else {
             "Install missing tools for this layout (see doctor notes), then Verify."
         },
@@ -289,7 +289,12 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             ".".into(),
         ]),
         Some("tools"),
-    ));
+    );
+    if doctor.ok {
+        doctor_step.status = PubStatus::Done;
+        doctor_step.verified_at = Some(now_rfc3339());
+    }
+    steps.push(doctor_step);
 
     if sc.scopes.len() > 1
         || sc
@@ -1879,8 +1884,8 @@ pub fn next(project: &Path, force: bool) -> Result<PublishView> {
     };
     if !force && step.status == PubStatus::Pending {
         bail!(
-            "current step '{}' is still pending — verify, confirm, or next --force",
-            step.id
+            "Confirm or Verify «{}» before Next (step is still pending)",
+            step.title
         );
     }
     if force {

@@ -1,8 +1,8 @@
 # CURRENT — Ship Studio
 
-**Version:** 0.2.1  
-**Updated:** 2026-09-22  
-**Status:** **[Release v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1)** — demo-ready (silent spawn + nav polish) · next: record S1.1 GIFs → S0.8 in-app update check
+**Version:** 0.2.2  
+**Updated:** 2026-09-23  
+**Status:** **[Release v0.2.2](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.2)** — Publish wizard Confirm/Next reliability · next: S1.1 demo GIFs
 
 ## Truth pointers
 

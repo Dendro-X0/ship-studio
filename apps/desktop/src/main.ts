@@ -220,6 +220,10 @@ function setProjectUi(on: boolean) {
       btn.disabled = !on;
       continue;
     }
+    // Confirm / Next: syncPublishGateButtons owns enable + primary.
+    if (id === "btn-publish-confirm" || id === "btn-publish-next") {
+      continue;
+    }
     btn.disabled = !on || running;
   }
   const sa = signArgsEl();
@@ -234,8 +238,28 @@ function setProjectUi(on: boolean) {
   const dashOpen = document.querySelector<HTMLButtonElement>("#dash-open");
   if (dashOpen) dashOpen.disabled = running;
   syncDeployToggle();
+  syncPublishGateButtons();
   syncPublishRelated();
   syncBackToPublish();
+}
+
+/** Pending → Confirm primary; Done → Next primary. Stops Next-on-pending demo fails. */
+function syncPublishGateButtons() {
+  const confirmBtn = document.querySelector<HTMLButtonElement>("#btn-publish-confirm");
+  const nextBtn = document.querySelector<HTMLButtonElement>("#btn-publish-next");
+  if (!confirmBtn || !nextBtn) return;
+  const on = Boolean(projectPath());
+  const cur = lastPublish?.current;
+  const finished = Boolean(lastPublish?.finished);
+  const status = (cur?.status ?? "").toLowerCase();
+  const pending = !finished && Boolean(lastPublish?.steps?.length) && status === "pending";
+  const done =
+    !finished && Boolean(lastPublish?.steps?.length) && (status === "done" || status === "skipped");
+  confirmBtn.disabled = !on || running || !pending;
+  nextBtn.disabled = !on || running || !done;
+  confirmBtn.classList.toggle("primary", pending);
+  nextBtn.classList.toggle("primary", done || (!pending && !done && on && !finished));
+  if (!pending) confirmBtn.classList.remove("watch-ready");
 }
 
 function syncDeployToggle() {
@@ -2441,24 +2465,39 @@ function applyPublishView(view: PublishView | null) {
     if (mins) mins.hidden = true;
     syncPublishRelated();
     syncBackToPublish();
+    syncPublishGateButtons();
     applyNow(view);
     return;
   }
   setView("publish");
   const cur = view.current;
   if (hint) {
-    const modeLabel = studioMode() === "general" ? "General" : "Advanced";
-    const intentLabel = shipIntent() === "local" ? "Local" : "Public";
+    const modeLabel =
+      (view.mode ?? "").toLowerCase() === "general"
+        ? "General"
+        : (view.mode ?? "").toLowerCase() === "advanced"
+          ? "Advanced"
+          : studioMode() === "general"
+            ? "General"
+            : "Advanced";
+    const intentLabel =
+      (view.intent ?? "").toLowerCase() === "local"
+        ? "Local"
+        : (view.intent ?? "").toLowerCase() === "public"
+          ? "Public"
+          : shipIntent() === "local"
+            ? "Local"
+            : "Public";
     hint.textContent = view.finished
       ? "Publish workflow finished — live check confirmed."
-      : `${modeLabel} · ${intentLabel} · Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ~${view.minutes_remaining ?? 0} min left · ${view.done_count ?? 0} done — Related opens detail panels without leaving the spine.`;
+      : `${modeLabel} · ${intentLabel} · Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ~${view.minutes_remaining ?? 0} min left · ${view.done_count ?? 0} done — Confirm pending gates, then Next.`;
   }
   if (mins) {
     mins.hidden = false;
     mins.textContent = `~${view.minutes_remaining ?? 0} min remaining · ${view.minutes_total ?? 0} min total`;
   }
   currentEl.innerHTML = cur
-    ? `<div class="title"><span class="kind">${escapeHtml(cur.kind ?? "")}</span>${escapeHtml(cur.title ?? "")}${
+    ? `<div class="title"><span class="kind">${escapeHtml(cur.status ?? cur.kind ?? "")}</span>${escapeHtml(cur.title ?? "")}${
         cur.minutes ? ` · ~${cur.minutes}m` : ""
       }</div>
        <p class="detail">${escapeHtml(cur.detail ?? "")}${
@@ -2481,6 +2520,7 @@ function applyPublishView(view: PublishView | null) {
     .join("");
   syncPublishRelated();
   syncBackToPublish();
+  syncPublishGateButtons();
   applyNow(view);
 }
 
@@ -3018,7 +3058,14 @@ async function run(args: string[], opts?: { step?: string; quietHeader?: boolean
       const cmd = args[0] ?? "shipctl";
       if (result.cancelled) toast(`${cmd} cancelled`, "err");
       else if (result.ok) toast(`${cmd} · done`, "ok");
-      else toast(`${cmd} failed`, "err");
+      else {
+        const err = `${result.stderr}\n${result.stdout}`.trim();
+        if (/Confirm or Verify|still pending/i.test(err)) {
+          toast("Confirm this step first (or Verify), then Next", "err");
+          endLabel = "READY";
+          endFailed = false;
+        } else toast(`${cmd} failed`, "err");
+      }
     }
     return result;
   } catch (err) {

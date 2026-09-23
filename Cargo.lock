@@ -3754,7 +3754,7 @@ dependencies = [
 
 [[package]]
 name = "ship-studio-desktop"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "rfd",
  "serde",
@@ -3767,7 +3767,7 @@ dependencies = [
 
 [[package]]
 name = "shipctl"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "aes-gcm",
  "anyhow",

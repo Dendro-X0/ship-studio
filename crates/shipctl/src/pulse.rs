@@ -47,6 +47,9 @@ pub struct WizardPulse {
     pub current_title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub minutes_remaining: Option<u32>,
+    /// From publish.json `intent` when present (`local` | `public`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub intent: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -212,6 +215,7 @@ fn wizard_from_file(path: &Path, with_minutes: bool) -> WizardPulse {
             current_id: None,
             current_title: None,
             minutes_remaining: None,
+            intent: None,
         };
     };
     let Ok(v) = serde_json::from_str::<serde_json::Value>(&raw) else {
@@ -224,6 +228,7 @@ fn wizard_from_file(path: &Path, with_minutes: bool) -> WizardPulse {
             current_id: None,
             current_title: None,
             minutes_remaining: None,
+            intent: None,
         };
     };
     let steps = v
@@ -271,6 +276,10 @@ fn wizard_from_file(path: &Path, with_minutes: bool) -> WizardPulse {
             .and_then(|x| x.as_str())
             .map(|s| s.to_string()),
         minutes_remaining,
+        intent: v
+            .get("intent")
+            .and_then(|x| x.as_str())
+            .map(|s| s.to_string()),
     }
 }
 
@@ -768,7 +777,12 @@ fn decide_now(
             .minutes_remaining
             .map(|m| format!(" · ~{m} min left"))
             .unwrap_or_default();
-        let linked = if provider_linked(deploy) {
+        let linked = if provider_linked(deploy)
+            && publish
+                .intent
+                .as_deref()
+                .is_some_and(|i| i.eq_ignore_ascii_case("local"))
+        {
             " Local provider state already looks deployed."
         } else {
             ""
@@ -1199,6 +1213,7 @@ mod tests {
             current_id: Some("env.sprint".into()),
             current_title: Some("ENV & tokens".into()),
             minutes_remaining: Some(12),
+            intent: None,
         };
         let launch = WizardPulse {
             present: false,
@@ -1209,6 +1224,7 @@ mod tests {
             current_id: None,
             current_title: None,
             minutes_remaining: None,
+            intent: None,
         };
         let deploy = DeployPulse {
             signal: "unknown".into(),
@@ -1264,6 +1280,7 @@ mod tests {
             current_id: Some("ci.release".into()),
             current_title: Some("CI — GitHub Actions release".into()),
             minutes_remaining: Some(5),
+        intent: None,
         };
         let launch = WizardPulse {
             present: false,
@@ -1274,6 +1291,7 @@ mod tests {
             current_id: None,
             current_title: None,
             minutes_remaining: None,
+        intent: None,
         };
         let deploy = DeployPulse {
             signal: "unknown".into(),
@@ -1318,6 +1336,7 @@ mod tests {
             current_id: None,
             current_title: None,
             minutes_remaining: None,
+        intent: None,
         };
         let launch = WizardPulse {
             present: false,
@@ -1328,6 +1347,7 @@ mod tests {
             current_id: None,
             current_title: None,
             minutes_remaining: None,
+        intent: None,
         };
         let deploy = DeployPulse {
             signal: "orbit_deployed".into(),
