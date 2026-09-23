@@ -1,11 +1,18 @@
 # Changelog
 
-## 0.1.0 — 2026-09-14
+## 0.2.0 — Unreleased
 
-### Fixed
+### Planned
+
+- **Windows installer** — packaged install path beside (or replacing) the portable zip for Solo downloads
+- **In-app update check** — Desktop notices newer GitHub Releases without silent auto-force install
+
+### Fixed (post-v0.1.0 tree)
 
 - **Desktop nav freeze** — `setView` no longer rebuilds sidebar integrations or runs full identity sync on every page switch; inactive views get `content-visibility` / contain (see `specs/frontend/desktop-nav-performance-audit.md`)
 - **Desktop sidebar scroll** — thin trackless themed scrollbar on `.nav` (replaces OS chrome on long Targets lists)
+
+## 0.1.0 — 2026-09-14
 
 ### Added
 

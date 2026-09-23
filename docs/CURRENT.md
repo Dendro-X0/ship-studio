@@ -1,8 +1,8 @@
 # CURRENT — Ship Studio
 
-**Version:** 0.1.0  
+**Version:** 0.2.0 (Unreleased)  
 **Updated:** 2026-09-22  
-**Status:** **v0.1.0 release week** · [Release v0.1.0](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.1.0) published · next Desktop nav L2 then S1.1 live GIFs
+**Status:** **v0.2.0 track** · [v0.1.0](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.1.0) remains the public download · next: Desktop nav L2 → installer + in-app update check
 
 ## Truth pointers
 
