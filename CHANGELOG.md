@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Release v0.1.0** — Windows x64 portable zip (`ship-studio-desktop.exe` + `shipctl.exe`) + SHA256 on GitHub Releases
 - **CI / Doctor** — Signet is hard-required only when `signet.toml` exists (Tauri-without-init is a note). Unblocks `shipctl doctor --project .` on ubuntu CI for this monorepo; `fixtures/ci-smoke` available for tighter smoke later
 - **Website S0.4 / S0.5** — `/pricing` paid delta ($29 vs OSS) + hero disambiguation vs unrelated ship.studio
 - **Polar portal entry URLs** — dashboard / credentials / env Open to distinct pages (OAT + webhook docs, or org deep links when `POLAR_ORGANIZATION_SLUG` is in `.env`)

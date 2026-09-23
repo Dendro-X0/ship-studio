@@ -2,13 +2,11 @@
 
 **Updated:** 2026-09-22  
 **Branch:** `main`  
-**Status:** **v0.1.0 release week** — CI doctor gate fixed (`503add0`)
+**Status:** **v0.1.0 release week** — GitHub Release published
 
 ## Next Atomic Step
 
-**S0.3:** GitHub Release for v0.1.0 (desktop and/or shipctl zip + SHA256) · wire `PUBLIC_DOWNLOAD_URL`.
-
-Then: **S1.1** live demo GIFs → deploy site + Polar Success/Return URLs.
+**S1.1:** Live silent demo GIFs (replace stylized set) → then deploy site + Polar Success/Return URLs.
 
 ## PAUSED / CANCELLED
 
@@ -21,11 +19,11 @@ Then: **S1.1** live demo GIFs → deploy site + Polar Success/Return URLs.
 
 ## Last closed
 
-| Band | Commit |
+| Band | Commit / link |
 |------|--------|
-| Desktop Integrations (payment + email wizards) | `c54b298` |
-| Desktop sidebar + local icons + modularization M1 | `374e04e` |
 | Desktop shell boot + Stripe icon + Polar portal URLs + S0.4/S0.5 | `28f696e` |
+| CI doctor gate (Signet only if signet.toml) | `503add0` |
+| **S0.3** Windows portable Release | [v0.1.0](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.1.0) |
 
 ## Boot allowlist
 

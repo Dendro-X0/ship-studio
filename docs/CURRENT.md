@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0  
 **Updated:** 2026-09-22  
-**Status:** **v0.1.0 release week** · Polar Pay deferred · next S0.4/S0.5 pricing + brand
+**Status:** **v0.1.0 release week** · [Release v0.1.0](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.1.0) published · next S1.1 live GIFs
 
 ## Truth pointers
 
