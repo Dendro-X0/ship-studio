@@ -60,6 +60,85 @@ pub enum PubStatus {
     Skipped,
 }
 
+/// Graduated status detection — not CI proof L1–L4.
+/// See `specs/backend/verify-status-layers-design.md`.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum VerifyStatus {
+    /// Project files / `.ship` metadata (no secret values).
+    #[default]
+    Disk,
+    /// Local tools Studio already shells (Signet, doctor, deploy pulse).
+    LocalCli,
+    /// Read-only probe via operator-authenticated CLIs (`gh`, `wrangler whoami`, …).
+    OperatorCli,
+    /// No automated green light — Open official UI, then Confirm.
+    HumanAttest,
+}
+
+impl VerifyStatus {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Disk => "disk",
+            Self::LocalCli => "local_cli",
+            Self::OperatorCli => "operator_cli",
+            Self::HumanAttest => "human_attest",
+        }
+    }
+
+    #[allow(dead_code)] // reserved for TUI / richer CLI formatting
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Disk => "Disk",
+            Self::LocalCli => "Local CLI",
+            Self::OperatorCli => "Official CLI probe",
+            Self::HumanAttest => "Human attest",
+        }
+    }
+}
+
+/// Infer how Verify inspects this gate (secrets path stays Open → Confirm).
+pub fn infer_verify_status(id: &str, kind: &PubKind) -> VerifyStatus {
+    let id = id.to_ascii_lowercase();
+    match kind {
+        PubKind::Oauth
+            if id.contains("cloudflare")
+                || id.contains("vercel")
+                || id.contains("netlify")
+                || id.contains("fly")
+                || id.contains("railway") =>
+        {
+            VerifyStatus::OperatorCli
+        }
+        PubKind::Check if id == "ci.release" => VerifyStatus::OperatorCli,
+        PubKind::Human if id == "release.github" => VerifyStatus::OperatorCli,
+        PubKind::List | PubKind::Check if id.contains("submit") || id.contains("listing") => {
+            VerifyStatus::HumanAttest
+        }
+        PubKind::Human
+            if id.contains("env")
+                || id.contains("oauth")
+                || id.contains("paste")
+                || id.contains("commerce")
+                || id.contains("polar")
+                || id.contains("stripe")
+                || id.contains("listing")
+                || id.contains("submit")
+                || id.contains("marketing") =>
+        {
+            VerifyStatus::HumanAttest
+        }
+        PubKind::Oauth => VerifyStatus::HumanAttest,
+        PubKind::List => VerifyStatus::HumanAttest,
+        PubKind::Auto if id == "doctor" => VerifyStatus::LocalCli,
+        PubKind::Sign => VerifyStatus::LocalCli,
+        PubKind::Deploy => VerifyStatus::LocalCli,
+        PubKind::Check if id == "live_check" => VerifyStatus::LocalCli,
+        PubKind::Check if id == "ship.desktop_cut" => VerifyStatus::Disk,
+        _ => VerifyStatus::Disk,
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PubStep {
     pub id: String,
@@ -76,6 +155,9 @@ pub struct PubStep {
     pub status: PubStatus,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub verified_at: Option<String>,
+    /// How Verify inspects this gate (disk · local_cli · operator_cli · human_attest).
+    #[serde(default)]
+    pub verify_status: VerifyStatus,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -167,8 +249,11 @@ fn step(
     run: Option<Vec<String>>,
     desktop_view: Option<&str>,
 ) -> PubStep {
+    let id_s = id.into();
+    let kind = kind;
+    let verify_status = infer_verify_status(&id_s, &kind);
     PubStep {
-        id: id.into(),
+        id: id_s,
         title: title.into(),
         kind,
         detail: detail.into(),
@@ -178,6 +263,7 @@ fn step(
         desktop_view: desktop_view.map(|s| s.into()),
         status: PubStatus::Pending,
         verified_at: None,
+        verify_status,
     }
 }
 
@@ -1421,6 +1507,8 @@ fn load_state(
         intent_note.into(),
         format!("~{minutes_total} min guided publish — you finish vendor UIs; shipctl sequences."),
         "Open/Run → work on official platform or local CLI → Confirm → Next.".into(),
+        "Status layers: disk · local CLI · official CLI probe · human attest — Verify never holds secrets."
+            .into(),
     ];
     if intent == ShipIntent::Local {
         notes.push("Local intent — hosted deploy skipped.".into());
@@ -1565,7 +1653,7 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
         .cloned()
         .ok_or_else(|| anyhow::anyhow!("no current step"))?;
 
-    let (ok, msg) = match step.kind {
+    let (ok, raw_msg) = match step.kind {
         PubKind::Auto if step.id == "doctor" => {
             let report = adapters::doctor(project)?;
             (
@@ -1764,15 +1852,17 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
                 )
             } else {
                 let d = config::probe(project);
-                if (d.tauri || d.signet_toml) && !(d.wrangler || d.vercel || d.netlify) {
+                let desktop_only =
+                    (d.tauri || d.signet_toml) && !(d.wrangler || d.vercel || d.netlify);
+                if desktop_only {
                     (
                         false,
-                        "Smoke the GitHub Release / download URL, then Confirm (no Orbit host)".into(),
+                        "No hosted deploy evidence (Deploy still empty). Switch intent to Local for a desktop-only cut, or deploy / link a host, then Confirm.".into(),
                     )
                 } else {
                     (
                         false,
-                        "Open the live site/API and Confirm when it looks right".into(),
+                        "No live URL yet — deploy or open the site/API, then Confirm when it looks right.".into(),
                     )
                 }
             }
@@ -1813,7 +1903,11 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
         _ => (false, "use confirm for this step".into()),
     };
 
-    if ok {
+    let layer = step.verify_status;
+    let msg = format!("[{}] {raw_msg}", layer.as_str());
+
+    if ok && auto_done_after_run(&step) {
+        // Auto / safe-Sign only — Human · OAuth · Deploy · List · Check stay Pending until Confirm.
         if let Some(s) = state.steps.get_mut(idx) {
             s.status = PubStatus::Done;
             s.verified_at = Some(now_rfc3339());
@@ -1865,6 +1959,23 @@ fn run_capture(bin: &str, args: &[&str], cwd: &Path) -> Result<(i32, String)> {
 }
 
 pub fn confirm_current(project: &Path) -> Result<PublishView> {
+    let state = load_state(project, true, None, None)?;
+    let idx = state.current;
+    let Some(step) = state.steps.get(idx) else {
+        bail!("no current step");
+    };
+    // Deploy / live check cannot be blind-attested — Verify must see evidence first.
+    // (Human scopes/listings stay Confirm-after-Open without this gate.)
+    let must_verify = step.id == "live_check"
+        || step.kind == PubKind::Deploy
+        || step.id.starts_with("deploy.");
+    if must_verify {
+        let (ok, msg, _) = verify_current(project)?;
+        if !ok {
+            bail!("{msg}");
+        }
+    }
+
     let mut state = load_state(project, true, None, None)?;
     let idx = state.current;
     let Some(step) = state.steps.get_mut(idx) else {
@@ -2240,6 +2351,51 @@ mod tests {
         assert_eq!(
             live.entry_url.as_deref(),
             Some("https://api.example.workers.dev")
+        );
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn confirm_live_check_requires_deploy_evidence() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-live-confirm-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("apps/desktop/src-tauri")).unwrap();
+        fs::create_dir_all(dir.join("apps/website")).unwrap();
+        fs::write(dir.join("signet.toml"), "name = \"harbor\"\n").unwrap();
+        fs::write(
+            dir.join("apps/website/package.json"),
+            r#"{"name":"site","private":true}"#,
+        )
+        .unwrap();
+        let _ = load_or_build_with_options(&dir, StudioMode::General, Some(ShipIntent::Public))
+            .unwrap();
+        let mut state = load_state(&dir, true, Some(StudioMode::General), Some(ShipIntent::Public))
+            .unwrap();
+        let idx = state
+            .steps
+            .iter()
+            .position(|s| s.id == "live_check")
+            .expect("live_check on Public");
+        // Mark prior steps done so current is live_check.
+        for (i, step) in state.steps.iter_mut().enumerate() {
+            if i < idx {
+                step.status = PubStatus::Done;
+            }
+        }
+        state.current = idx;
+        save_state(&dir, &state).unwrap();
+        let err = confirm_current(&dir).unwrap_err().to_string();
+        assert!(
+            err.to_lowercase().contains("deploy")
+                || err.to_lowercase().contains("local")
+                || err.to_lowercase().contains("live"),
+            "blind Confirm must fail without deploy evidence: {err}"
         );
         let _ = fs::remove_dir_all(&dir);
     }
@@ -3243,6 +3399,64 @@ mod tests {
     }
 
     #[test]
+    fn verify_ok_does_not_attest_human_scopes() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-verify-human-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("android")).unwrap();
+        fs::write(dir.join("android/build.gradle"), "// stub\n").unwrap();
+        fs::write(dir.join("wrangler.toml"), "name = \"x\"\n").unwrap();
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(
+            dir.join(".ship/scopes.json"),
+            r#"{"active":["web.root","api.root","mobile.android"]}"#,
+        )
+        .unwrap();
+        let mut state = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        let gate = state
+            .steps
+            .iter()
+            .position(|s| s.id == "scopes")
+            .expect("scopes");
+        for (i, step) in state.steps.iter_mut().enumerate() {
+            step.status = if i < gate {
+                PubStatus::Done
+            } else if i == gate {
+                PubStatus::Pending
+            } else {
+                step.status.clone()
+            };
+        }
+        state.current = gate;
+        save_state(&dir, &state).unwrap();
+        let (ok, msg, view) = verify_current(&dir).unwrap();
+        assert!(ok, "scopes with active selection should verify: {msg}");
+        assert_eq!(
+            view.current.as_ref().map(|c| c.status.clone()),
+            Some(PubStatus::Pending),
+            "Verify must not Confirm Human gates: {view:?}"
+        );
+        let probe = watch_probe(&dir, false).unwrap();
+        assert_eq!(probe.get("ok").and_then(|v| v.as_bool()), Some(true));
+        assert_eq!(
+            probe.get("auto_confirmed").and_then(|v| v.as_bool()),
+            Some(false)
+        );
+        let after = load_saved(&dir).unwrap();
+        assert_eq!(
+            after.steps[gate].status,
+            PubStatus::Pending,
+            "watch without auto_confirm must not mutate Human scopes"
+        );
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn final_mile_cut_order_and_graduate_run() {
         let dir = std::env::temp_dir().join(format!(
             "shipctl-publish-cut-{}",
@@ -3508,5 +3722,41 @@ mod tests {
         let (ok, msg, _) = verify_current(&dir).unwrap();
         assert!(ok, "desktop_cut should pass after release Done: {msg}");
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn verify_status_layers_infer_disk_local_operator_human() {
+        assert_eq!(
+            infer_verify_status("scopes", &PubKind::Human),
+            VerifyStatus::Disk
+        );
+        assert_eq!(
+            infer_verify_status("doctor", &PubKind::Auto),
+            VerifyStatus::LocalCli
+        );
+        assert_eq!(
+            infer_verify_status("sign.self.release", &PubKind::Sign),
+            VerifyStatus::LocalCli
+        );
+        assert_eq!(
+            infer_verify_status("release.github", &PubKind::Human),
+            VerifyStatus::OperatorCli
+        );
+        assert_eq!(
+            infer_verify_status("ci.release", &PubKind::Check),
+            VerifyStatus::OperatorCli
+        );
+        assert_eq!(
+            infer_verify_status("oauth.cloudflare", &PubKind::Oauth),
+            VerifyStatus::OperatorCli
+        );
+        assert_eq!(
+            infer_verify_status("env.sprint", &PubKind::Human),
+            VerifyStatus::HumanAttest
+        );
+        assert_eq!(
+            infer_verify_status("listing.steam", &PubKind::List),
+            VerifyStatus::HumanAttest
+        );
     }
 }

@@ -1,0 +1,6 @@
+{
+  "name": "harbor-site",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Harbor docs surface — demo fixture for Ship Studio"
+}

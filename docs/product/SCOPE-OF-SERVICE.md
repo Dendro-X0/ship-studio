@@ -1,12 +1,16 @@
 # Ship Studio — Scope of Service
 
 **Status:** Active (product definition)  
-**Updated:** 2026-09-19  
-**Canonical with:** [PRODUCT.md](./PRODUCT.md) · [shipping-hub-north-star.md](../../specs/backend/shipping-hub-north-star.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md)
+**Updated:** 2026-09-25  
+**Canonical with:** [PRODUCT.md](./PRODUCT.md) · [PLATFORMS-AND-PORTAL.md](./PLATFORMS-AND-PORTAL.md) · [shipping-hub-north-star.md](../../specs/backend/shipping-hub-north-star.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [verify-status-layers-design](../../specs/backend/verify-status-layers-design.md)
 
 ## One sentence
 
-Ship Studio is a **local, offline-first shipping hub** that sequences the **final mile** of a software product — **sign → release → deploy** — so operators rarely miss a gate, while **vendor platforms and the human** still perform OAuth, review, DNS, and secret creation.
+Ship Studio is a **local portal and guide** for release work: it sequences the **final mile** (**sign → release → deploy** and adjacent lanes) across many project kinds, runs **scripts for highly automatable steps**, and uses **semi-automated wizards** when official channels require the human — without replacing vendor platforms.
+
+## Value thesis (why pay vs SaaS starter kits)
+
+Indie and multi-repo operators (dozens of OSS repos, a few commercialized) lose time on **order and surfaces**, not on “another template.” Ship Studio earns its price when the same tool makes **OSS cuts, marketplace listings, host deploys, and commerce gates** faster to complete and harder to miss — practical utility over generic starter kits.
 
 ---
 
@@ -14,9 +18,10 @@ Ship Studio is a **local, offline-first shipping hub** that sequences the **fina
 
 | Primary | Secondary (not yet) |
 |---------|---------------------|
-| Solo / small teams shipping **multi-surface** products (Web/API + desktop Signet + optional stores/commerce) | Large orgs needing multi-tenant cloud control planes |
-| Operators who already use (or will install) **Signet**, **Orbit**, **gh**, provider CLIs | Teams that want Ship Studio to *replace* those tools |
-| People who lose time on **order and surfaces** (“what next / which dashboard”) | People who only need a single `wrangler deploy` |
+| Solo / small teams with **many repos** (OSS + a few paid products) who need one local hub for diverse release workflows | Large orgs needing multi-tenant cloud control planes |
+| Operators who ship **multi-surface** products (Web/API + desktop Signet + optional stores/commerce) | Teams that want Ship Studio to *replace* Cloudflare / Polar / store consoles |
+| Operators who already use (or will install) **Signet**, **Orbit**, **gh**, provider CLIs | People who only need a single `wrangler deploy` |
+| People who lose time on **“what next / which dashboard / which script”** | People seeking full auto-publish without human attestation |
 
 ---
 
@@ -32,16 +37,16 @@ Build an **Adaptive Publish plan** (General = short path; Advanced = full OAuth 
 
 - Ordered steps with honest detail  
 - Related `desktop_view` to the right detail panel  
-- Safe local **Run** commands where a CLI exists (Signet, Orbit, `docker build`, `gh` list, npm/cargo `--dry-run`, …)  
-- **Open** URLs for vendor UIs when the human must act  
+- Safe local **Run** / **Continue** scripts where a CLI exists (Signet, Orbit, `docker build`, `gh` list, npm/cargo `--dry-run`, …)  
+- **Open** URLs + Confirm wizards when the human must act on an official channel  
 
 ### 3. Sequence
 
 Drive the minute spine on **CLI · TUI · Desktop · MCP**:
 
-**Open / Run → (human + vendor) → Verify / Confirm → Next**
+**Continue** (Auto / scriptable) · **Open / Run → (human + vendor) → Confirm → Next** (official-channel gates)
 
-Progress lives in project `.ship/publish.json` (no secret values). Optional **Watch** (`shipctl publish watch` / Desktop toggle) polls local Verify and prompts when a step is ready — still never finishes OAuth/store/DNS for you.
+Progress lives in project `.ship/publish.json` (no secret values). Desktop shows **done · required · later**. Optional **Watch** polls local Verify — still never finishes OAuth/store/DNS for you.
 
 ### 4. Orient
 
@@ -52,11 +57,12 @@ Progress lives in project `.ship/publish.json` (no secret values). Optional **Wa
 
 ### 5. Honesty
 
-- Offline bridge: Studio does **not** call vendor HTTPS by itself  
+- Offline bridge: Studio does **not** call vendor HTTPS with secrets  
 - Never store secret values in `.ship/` plaintext  
 - Never claim verified publisher / SmartScreen silence unless true  
 - Never auto-`docker push`, live `npm|cargo publish`, or `gh release create`  
 - Desktop-only ships: Signet release is the deploy (no fake Orbit desktop host)  
+- **Status layers** ([verify-status-layers-design](../../specs/backend/verify-status-layers-design.md)): **disk** · **local CLI** · **official CLI probe** (operator-gated Verify/Watch) · **human attest** — provider remains authority for irreversible done  
 
 ---
 
@@ -81,11 +87,12 @@ Human remaining work is listed in [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) — tha
 ```text
 ┌─ Ship Studio ─────────────────────────────────────────┐
 │ Detect · Plan · Sequence · Orient · Honest Verify     │
+│ Status: disk · local CLI · official CLI probe         │
 │ Local CLI Runs (safe / dry-run / read-only preferred) │
 └───────────────────────────┬───────────────────────────┘
                             │ Open / Run handoff
 ┌───────────────────────────▼───────────────────────────┐
-│ Human + vendor platforms                              │
+│ Human + vendor platforms (authority for irreversible) │
 │ Tokens · OAuth · store review · DNS · live publish    │
 │ docker push · npm/cargo publish · release create      │
 └───────────────────────────────────────────────────────┘

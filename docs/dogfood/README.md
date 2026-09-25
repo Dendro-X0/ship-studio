@@ -8,7 +8,9 @@ Offline and Advanced Publish walks. Scripts live under `scripts/`; these docs ex
 | [DOGFOOD-signet.md](./DOGFOOD-signet.md) | Signet-focused walk |
 | [DOGFOOD-orbit-assess-api.md](./DOGFOOD-orbit-assess-api.md) | Orbit / assess-api style host |
 
-Scripts: `scripts/dogfood-advanced-publish.sh|.ps1` · `scripts/dogfood-advanced-walk.sh` · `scripts/dogfood-offline.sh` · **`scripts/publish-fast.sh|.ps1`** (Continue chain)
+Scripts: `scripts/dogfood-advanced-publish.sh|.ps1` · `scripts/dogfood-advanced-walk.sh` · `scripts/dogfood-offline.sh` · **`scripts/publish-fast.sh|.ps1`** (Continue chain) · **`scripts/harbor-reset.sh|.ps1`** (demo fixture wipe)
+
+**Public demos:** bind [`fixtures/harbor`](../fixtures/harbor/) (Desktop + Docs). Advanced multipath dogfood stays on `fixtures/advanced-dogfood`.
 
 ### Fast path (minimal clicks)
 

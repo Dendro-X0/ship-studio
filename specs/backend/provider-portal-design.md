@@ -1,14 +1,17 @@
 # Provider portal — design
 
-**Status:** Active  
-**Updated:** 2026-09-13  
-**Owner:** `crates/shipctl` (`portal` module)
+**Status:** Active — extend via [hosting-portal-parity-design](./hosting-portal-parity-design.md)  
+**Updated:** 2026-09-25  
+**Owner:** `crates/shipctl` (`portal` module)  
+**Desktop overview:** [PLATFORMS-AND-PORTAL.md](../../docs/product/PLATFORMS-AND-PORTAL.md)
 
 ## Goal
 
-Semi-automatic **shipping portal**: detect which deploy/auth providers apply, emit ordered human steps with **canonical entry URLs + CLI login commands**, optionally open the browser / run login CLIs. Does **not** replace Cloudflare / Vercel / Netlify / GitHub; does **not** invent secrets.
+Semi-automatic **shipping portal**: detect which deploy/auth providers apply, emit ordered human steps with **canonical entry URLs + docs URLs + CLI login commands**, optionally open the browser / run login CLIs. Does **not** replace Cloudflare / Vercel / Netlify / GitHub / Fly / Railway; does **not** invent secrets.
 
-## In scope (v1)
+Desktop: **Open** = settings UI (`entry_url`); **Docs** = official tutorial (`docs_url`); **Login CLI** = interactive terminal for OAuth rows only.
+
+## In scope (v1 — current code)
 
 | Provider   | Detect                         | Entry kinds                                      |
 |------------|--------------------------------|--------------------------------------------------|
@@ -16,6 +19,10 @@ Semi-automatic **shipping portal**: detect which deploy/auth providers apply, em
 | Vercel     | vercel.json / `.vercel`        | OAuth (`vercel`/`orbit login`), token URL, env hint |
 | Netlify    | netlify.toml / `.netlify`      | OAuth (`netlify`/`orbit login`), PAT URL, env hint |
 | GitHub     | `.git` or `GITHUB_*` hints     | `gh auth login`, tokens settings URL             |
+
+## Planned hosting extension
+
+See [hosting-portal-parity-design](./hosting-portal-parity-design.md): Fly/Railway Login CLI + distinct env Docs; GitHub Pages ≠ PAT; URL hygiene; Tier D hosts stay Advanced until catalog expand.
 
 ## Commands
 

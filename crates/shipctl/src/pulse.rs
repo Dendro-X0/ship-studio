@@ -153,6 +153,35 @@ fn git_pulse(project: &Path) -> GitPulse {
             notes: vec!["Not a git repository.".into()],
         };
     }
+
+    // Nested folders (e.g. fixtures/harbor inside a monorepo) inherit the parent
+    // work tree — don't scare operators with the parent's dirty count.
+    let toplevel = git_ok(project, &["rev-parse", "--show-toplevel"]);
+    let nested = toplevel
+        .as_ref()
+        .map(|top| {
+            let top_c = fs::canonicalize(Path::new(top)).unwrap_or_else(|_| PathBuf::from(top));
+            let proj_c = fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
+            top_c != proj_c
+        })
+        .unwrap_or(false);
+    if nested {
+        return GitPulse {
+            is_repo: false,
+            branch: None,
+            dirty: false,
+            dirty_count: 0,
+            committed: false,
+            ahead: None,
+            behind: None,
+            last_commit: None,
+            notes: vec![format!(
+                "Nested under {} — parent git status ignored for this bind.",
+                toplevel.unwrap_or_else(|| "parent repo".into())
+            )],
+        };
+    }
+
     let branch = git_ok(project, &["rev-parse", "--abbrev-ref", "HEAD"]);
     let porcelain = git_ok(project, &["status", "--porcelain"]).unwrap_or_default();
     let dirty_count = porcelain.lines().filter(|l| !l.trim().is_empty()).count();
@@ -676,13 +705,10 @@ fn provider_linked(deploy: &DeployPulse) -> bool {
 }
 
 /// Hard-block only when Signet is required (Tauri / signet.toml) and missing.
-/// Cloudflare Workers can already be live via Wrangler without Orbit on PATH.
-fn tools_hard_block(wants_signet: bool, tools: &ToolsPulse, deploy: &DeployPulse) -> Option<String> {
+/// Orbit missing is a soft cue for hosted Public deploys — never blocks the Dashboard.
+fn tools_hard_block(wants_signet: bool, tools: &ToolsPulse, _deploy: &DeployPulse) -> Option<String> {
     if wants_signet && !tools.signet_found {
         return Some("Signet".into());
-    }
-    if wants_signet && !tools.orbit_found && !provider_linked(deploy) {
-        return Some("Orbit".into());
     }
     None
 }
@@ -1398,5 +1424,57 @@ mod tests {
         assert_eq!(deploy.signal, "orbit_deployed");
         assert!(deploy_is_live(&deploy));
         assert!(deploy.urls.iter().any(|u| u.contains("workers.dev")));
+    }
+
+    #[test]
+    fn signet_ok_without_orbit_is_not_hard_blocked() {
+        let git = GitPulse {
+            is_repo: false,
+            branch: None,
+            dirty: false,
+            dirty_count: 0,
+            committed: false,
+            ahead: None,
+            behind: None,
+            last_commit: None,
+            notes: vec![],
+        };
+        let publish = WizardPulse {
+            present: false,
+            finished: false,
+            current_index: 0,
+            total: 0,
+            done_count: 0,
+            current_id: None,
+            current_title: None,
+            minutes_remaining: None,
+            intent: None,
+        };
+        let launch = WizardPulse {
+            present: false,
+            finished: false,
+            current_index: 0,
+            total: 0,
+            done_count: 0,
+            current_id: None,
+            current_title: None,
+            minutes_remaining: None,
+            intent: None,
+        };
+        let deploy = DeployPulse {
+            signal: "unknown".into(),
+            detail: "no last-run".into(),
+            urls: vec![],
+            last_run_ok: None,
+        };
+        let tools = ToolsPulse {
+            signet_found: true,
+            orbit_found: false,
+            signet_version: Some("signet.exe".into()),
+            orbit_version: None,
+        };
+        let now = decide_now("harbor", &git, &publish, &launch, &deploy, &tools, true);
+        assert_ne!(now.primary.id, "doctor");
+        assert!(!now.title.to_lowercase().contains("orbit"));
     }
 }

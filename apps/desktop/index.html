@@ -56,67 +56,98 @@
         </div>
 
         <nav class="nav" aria-label="Sections">
-          <p class="nav-label">Ship</p>
-          <button type="button" class="nav-item active" data-nav="dashboard">
-            <span class="nav-ico" aria-hidden="true">◈</span>
-            Dashboard
-          </button>
-          <button type="button" class="nav-item" data-nav="publish">
-            <span class="nav-ico" aria-hidden="true">◆</span>
-            Publish
-          </button>
-          <button type="button" class="nav-item" data-nav="sign">
-            <span class="nav-ico" aria-hidden="true">✦</span>
-            Sign
-          </button>
-          <button type="button" class="nav-item" data-nav="env">
-            <span class="nav-ico" aria-hidden="true">⌘</span>
-            Env / tokens
-          </button>
+          <details class="nav-section" data-nav-section="ship" open>
+            <summary class="nav-section-sum">Ship</summary>
+            <div class="nav-section-body">
+              <button type="button" class="nav-item active" data-nav="dashboard">
+                <span class="nav-ico" aria-hidden="true">◈</span>
+                Dashboard
+              </button>
+              <button type="button" class="nav-item" data-nav="publish">
+                <span class="nav-ico" aria-hidden="true">◆</span>
+                Publish
+              </button>
+              <button type="button" class="nav-item" data-nav="sign">
+                <span class="nav-ico" aria-hidden="true">✦</span>
+                Sign
+              </button>
+              <button type="button" class="nav-item" data-nav="env">
+                <span class="nav-ico" aria-hidden="true">⌘</span>
+                Env / tokens
+              </button>
+            </div>
+          </details>
 
-          <p class="nav-label">Targets</p>
-          <div class="nav-tree" id="sidebar-targets">
-            <p class="nav-tree-empty">Bind a repo to list apps and APIs.</p>
-          </div>
-          <button type="button" class="nav-item nav-sub" data-nav="scopes">
-            <span class="nav-ico" aria-hidden="true">▤</span>
-            Manage scopes
-          </button>
+          <details class="nav-section" data-nav-section="targets" open>
+            <summary class="nav-section-sum">Targets</summary>
+            <div class="nav-section-body">
+              <div class="nav-tree" id="sidebar-targets">
+                <p class="nav-tree-empty">Bind a repo to list apps and APIs.</p>
+              </div>
+              <button type="button" class="nav-item nav-sub" data-nav="scopes">
+                <span class="nav-ico" aria-hidden="true">▤</span>
+                Manage scopes
+              </button>
+            </div>
+          </details>
 
-          <p class="nav-label">Integrations</p>
-          <div class="nav-tree" id="sidebar-integrations"></div>
-          <button type="button" class="nav-item nav-sub" data-nav="integrations">
-            <span class="nav-ico" aria-hidden="true">⧉</span>
-            All wizards
-          </button>
+          <details class="nav-section" data-nav-section="platforms" open>
+            <summary class="nav-section-sum">Platforms</summary>
+            <div class="nav-section-body">
+              <div class="nav-tree" id="sidebar-platforms"></div>
+              <button type="button" class="nav-item nav-sub" data-nav="platforms">
+                <span class="nav-ico" aria-hidden="true">⬡</span>
+                All platforms
+              </button>
+            </div>
+          </details>
 
-          <p class="nav-label nav-advanced">More</p>
-          <button type="button" class="nav-item nav-advanced" data-nav="assist">
-            <span class="nav-ico" aria-hidden="true">◎</span>
-            Assist
-          </button>
-          <button type="button" class="nav-item nav-advanced" data-nav="launch">
-            <span class="nav-ico" aria-hidden="true">↗</span>
-            Launch
-          </button>
-          <button type="button" class="nav-item nav-advanced" data-nav="portal">
-            <span class="nav-ico" aria-hidden="true">◇</span>
-            Portal
-          </button>
-          <button type="button" class="nav-item nav-advanced" data-nav="ritual">
-            <span class="nav-ico" aria-hidden="true">⚙</span>
-            Ritual
-          </button>
-          <button type="button" class="nav-item nav-advanced" data-nav="tools">
-            <span class="nav-ico" aria-hidden="true">▣</span>
-            Tools
-          </button>
+          <details class="nav-section" data-nav-section="integrations" open>
+            <summary class="nav-section-sum">Integrations</summary>
+            <div class="nav-section-body">
+              <div class="nav-tree" id="sidebar-integrations"></div>
+              <button type="button" class="nav-item nav-sub" data-nav="integrations">
+                <span class="nav-ico" aria-hidden="true">⧉</span>
+                All wizards
+              </button>
+            </div>
+          </details>
 
-          <p class="nav-label">Run</p>
-          <button type="button" class="nav-item" data-nav="output">
-            <span class="nav-ico" aria-hidden="true">≡</span>
-            Output
-          </button>
+          <details class="nav-section nav-advanced" data-nav-section="more" open>
+            <summary class="nav-section-sum">More</summary>
+            <div class="nav-section-body">
+              <button type="button" class="nav-item nav-advanced" data-nav="assist">
+                <span class="nav-ico" aria-hidden="true">◎</span>
+                Assist
+              </button>
+              <button type="button" class="nav-item nav-advanced" data-nav="launch">
+                <span class="nav-ico" aria-hidden="true">↗</span>
+                Launch
+              </button>
+              <button type="button" class="nav-item nav-advanced" data-nav="portal">
+                <span class="nav-ico" aria-hidden="true">◇</span>
+                Portal
+              </button>
+              <button type="button" class="nav-item nav-advanced" data-nav="ritual">
+                <span class="nav-ico" aria-hidden="true">⚙</span>
+                Ritual
+              </button>
+              <button type="button" class="nav-item nav-advanced" data-nav="tools">
+                <span class="nav-ico" aria-hidden="true">▣</span>
+                Tools
+              </button>
+            </div>
+          </details>
+
+          <details class="nav-section" data-nav-section="run" open>
+            <summary class="nav-section-sum">Run</summary>
+            <div class="nav-section-body">
+              <button type="button" class="nav-item" data-nav="output">
+                <span class="nav-ico" aria-hidden="true">≡</span>
+                Output
+              </button>
+            </div>
+          </details>
         </nav>
 
         <div class="sidebar-project">
@@ -166,7 +197,10 @@
               <span>Search actions…</span>
               <kbd>Ctrl K</kbd>
             </button>
-            <label class="toggle" title="Refuse deploy; prefer offline-safe sign">
+            <label
+              class="toggle"
+              title="Bridge stays offline-safe: refuse deploy; prefer offline sign. Env/tokens stay Open→Confirm. Status checks use Verify (disk · local CLI · official CLI probe) — never Studio-held secrets."
+            >
               <input type="checkbox" id="opt-offline" checked />
               <span>Offline</span>
             </label>
@@ -226,6 +260,28 @@
               </div>
               <div class="now-actions">
                 <button type="button" id="now-switch" class="now-switch">Switch project</button>
+              </div>
+              <div class="workflow-pick" id="workflow-pick" hidden>
+                <p class="workflow-pick-kicker">Start a workflow</p>
+                <p class="workflow-pick-lead">Choose a path — then follow one checkpoint at a time.</p>
+                <div class="workflow-cards" role="list">
+                  <button type="button" class="workflow-card" data-workflow="sign_only" role="listitem">
+                    <span class="workflow-card-title">Sign only</span>
+                    <span class="workflow-card-detail">Local desktop / OSS cut — no hosted deploy</span>
+                  </button>
+                  <button type="button" class="workflow-card" data-workflow="sign_deploy" role="listitem">
+                    <span class="workflow-card-title">Sign and deploy</span>
+                    <span class="workflow-card-detail">Short hosted final-mile when you have a web target</span>
+                  </button>
+                  <button type="button" class="workflow-card" data-workflow="publish_platform" role="listitem">
+                    <span class="workflow-card-title">Publish to platforms</span>
+                    <span class="workflow-card-detail">Listings, Polar, stores — Advanced path</span>
+                  </button>
+                  <button type="button" class="workflow-card" data-workflow="deploy_only" role="listitem">
+                    <span class="workflow-card-title">Deploy focus</span>
+                    <span class="workflow-card-detail">Hosted deploy gates — Confirm still required</span>
+                  </button>
+                </div>
               </div>
               <div class="now-quick" id="now-quick" hidden>
                 <button type="button" id="now-human" class="now-quick-btn" title="Open Polar/GitHub paste sources">
@@ -288,32 +344,84 @@
                 <div>
                   <label>Publish portal</label>
                   <p class="hint" id="publish-hint">
-                    Minute path — Continue advances Auto gates; Open + Confirm for human gates.
+                    One checkpoint at a time — Continue for automatic checks; Confirm after you finish human steps.
                   </p>
                 </div>
-                <div class="portal-actions">
+                <div class="portal-actions" id="publish-toolbar">
                   <button type="button" id="btn-publish" disabled title="Refresh publish plan">
                     Refresh
                   </button>
-                  <button type="button" id="btn-publish-related" disabled hidden>Related</button>
-                  <button type="button" id="btn-publish-open" disabled>Open / Run</button>
-                  <button type="button" id="btn-publish-verify" disabled>Verify</button>
-                  <label class="toggle watch-toggle" title="Poll local Verify and toast when the step is ready">
+                  <button type="button" id="btn-publish-related" class="stages-hide" disabled hidden>Related</button>
+                  <button type="button" id="btn-publish-open" class="stages-hide" disabled>Open / Run</button>
+                  <button type="button" id="btn-publish-verify" class="stages-hide" disabled>Verify</button>
+                  <label
+                    class="toggle watch-toggle"
+                    title="Poll Verify every 15s (disk / local CLI / official CLI probe). Never vendor HTTPS with secrets; Confirm still required for honesty gates."
+                  >
                     <input type="checkbox" id="opt-publish-watch" />
                     Watch
                   </label>
-                  <button type="button" id="btn-publish-continue" class="primary" disabled title="Advance Auto gates (stops at Human/Open)">
+                  <button type="button" id="btn-publish-continue" class="primary stages-hide" disabled title="Advance Auto gates (stops at Human/Open)">
                     Continue
                   </button>
-                  <button type="button" id="btn-publish-confirm" disabled>Confirm</button>
-                  <button type="button" id="btn-publish-next" disabled>Next</button>
+                  <button type="button" id="btn-publish-confirm" class="gate-secondary stages-hide" disabled>Confirm</button>
+                  <button type="button" id="btn-publish-next" class="gate-secondary stages-hide" disabled>Next</button>
                 </div>
               </div>
               <div class="minutes-strip" id="publish-minutes" hidden></div>
-              <div class="launch-current" id="publish-current">
-                <p class="detail empty-hint">Refresh Publish to build the adaptive plan for this repo.</p>
+              <div class="publish-progress" id="publish-progress" hidden></div>
+              <div
+                class="status-probe status-probe-compact"
+                id="status-probe-publish"
+                aria-label="Sign and deploy inspection"
+                aria-live="polite"
+                hidden
+              ></div>
+              <div class="publish-ui-toggle" id="publish-ui-toggle" hidden>
+                <button type="button" id="btn-publish-stages" class="ghost publish-ui-btn" aria-pressed="true">
+                  Stages
+                </button>
+                <button type="button" id="btn-publish-list" class="ghost publish-ui-btn" aria-pressed="false">
+                  List
+                </button>
               </div>
-              <ul class="portal-steps" id="publish-steps"></ul>
+              <div class="publish-stage" id="publish-stage" hidden>
+                <div class="stage-scrub" id="stage-scrub" hidden aria-label="Checkpoint progress">
+                  <div class="stage-scrub-track" id="stage-scrub-track"></div>
+                  <p class="stage-scrub-label" id="stage-scrub-label"></p>
+                </div>
+                <div class="stage-rail" id="stage-rail" aria-label="Checkpoints"></div>
+                <div class="stage-panel" id="stage-panel">
+                  <p class="stage-kicker" id="stage-kicker">Checkpoint</p>
+                  <div class="stage-title-row">
+                    <h3 class="stage-title" id="stage-title">—</h3>
+                    <span class="stage-index" id="stage-index"></span>
+                  </div>
+                  <p class="stage-guide" id="stage-guide"></p>
+                  <p class="stage-detail" id="stage-detail"></p>
+                  <div class="stage-inline" id="stage-inline-scopes" hidden>
+                    <div class="stage-inline-head">
+                      <p class="stage-inline-label">What are you shipping?</p>
+                      <div class="stage-inline-actions">
+                        <button type="button" id="btn-stage-scopes-detect" class="ghost">Detect</button>
+                        <button type="button" id="btn-stage-scopes-save" class="ghost">Save selection</button>
+                      </div>
+                    </div>
+                    <div class="scope-grid stage-scope-grid" id="stage-scope-grid">
+                      <p class="detail empty-hint">Detect scopes for this repo.</p>
+                    </div>
+                  </div>
+                  <div class="stage-pager">
+                    <button type="button" id="btn-stage-prev" class="ghost" disabled>Back</button>
+                    <button type="button" id="btn-stage-primary" class="primary">Continue</button>
+                    <button type="button" id="btn-stage-next" class="ghost" disabled>Next</button>
+                  </div>
+                </div>
+              </div>
+              <div class="launch-current" id="publish-current">
+                <p class="detail empty-hint">Open a folder, then pick a workflow on the Dashboard — or Continue here.</p>
+              </div>
+              <div class="portal-steps" id="publish-steps"></div>
             </section>
           </section>
 
@@ -344,7 +452,7 @@
                 <div>
                   <label>Deploy scopes</label>
                   <p class="hint">
-                    Detail panel for Web / API / Desktop directories. Save, then return to Publish → Confirm.
+                    Optional detail panel — on Publish Stages, scopes edit inline on the checkpoint. Save there, or here, then Confirm.
                   </p>
                 </div>
                 <div class="portal-actions">
@@ -385,9 +493,16 @@
                   </p>
                 </div>
                 <div class="portal-actions">
-                  <button type="button" id="btn-sign-paths" class="primary" disabled>Load paths</button>
+                  <button type="button" id="btn-sign-paths" class="primary" disabled>Check status</button>
                 </div>
               </div>
+              <div
+                class="status-probe"
+                id="status-probe-sign"
+                aria-label="Sign and deploy inspection"
+                aria-live="polite"
+                hidden
+              ></div>
               <ul class="portal-steps" id="sign-paths"></ul>
             </section>
           </section>
@@ -500,6 +615,32 @@
             </section>
           </section>
 
+          <section class="view" data-view="platforms" aria-label="Platforms" hidden>
+            <p class="hint">
+              Pick a host or official signing platform, follow the checklist, then open their UI.
+              Studio does not deploy or notarize for you.
+            </p>
+            <div class="int-layout">
+              <div id="platforms-catalog"></div>
+              <aside class="int-wizard" id="platforms-wizard" hidden>
+                <h2 id="plat-wizard-title">Platform</h2>
+                <p class="hint" id="plat-wizard-blurb"></p>
+                <ol class="int-steps" id="plat-wizard-steps"></ol>
+                <div class="hero-cta int-actions">
+                  <button type="button" class="primary" id="plat-open">Open dashboard</button>
+                  <button type="button" id="plat-docs" hidden>Docs</button>
+                  <button type="button" id="plat-portal-steps" hidden>Portal steps</button>
+                  <button type="button" id="plat-continue-publish" title="Return to the Publish spine">
+                    Continue publishing
+                  </button>
+                  <button type="button" id="plat-use-local" hidden title="Skip hosted deploy for desktop-only cuts">
+                    Use Local intent
+                  </button>
+                </div>
+              </aside>
+            </div>
+          </section>
+
           <section class="view" data-view="integrations" aria-label="Integrations" hidden>
             <p class="hint">
               Pick a wizard, follow the checklist, then open the vendor dashboard. Studio does not
@@ -514,6 +655,9 @@
                 <div class="hero-cta int-actions">
                   <button type="button" class="primary" id="int-open">Open dashboard</button>
                   <button type="button" id="int-portal-steps" hidden>Portal steps</button>
+                  <button type="button" id="int-continue-publish" title="Return to the Publish spine">
+                    Continue publishing
+                  </button>
                 </div>
               </aside>
             </div>
@@ -590,7 +734,7 @@
           </section>
         </main>
 
-        <section class="output-dock" aria-label="Output">
+        <section class="output-dock" id="output-dock" hidden aria-label="Output">
           <div class="output-head">
             <span>Output</span>
             <div class="output-head-actions">
@@ -602,6 +746,14 @@
               >
                 Preview
               </button>
+              <button
+                type="button"
+                id="btn-output-dock-hide"
+                class="ghost output-preview-btn"
+                title="Hide output dock"
+              >
+                Hide
+              </button>
               <span id="run-state" class="ready">Ready</span>
             </div>
           </div>
@@ -610,7 +762,38 @@
 
         <footer class="statusbar">
           <span id="shipctl-path" title="Resolved shipctl">shipctl: …</span>
-          <span class="keys">Esc · Ctrl+K search · Ctrl+D doctor · Ctrl+S sign · Ctrl+Enter flow · Preview</span>
+          <div class="statusbar-end">
+            <button
+              type="button"
+              id="btn-statusbar-preview"
+              class="ghost output-preview-btn"
+              title="Open output preview"
+            >
+              <svg class="statusbar-btn-ico" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M8 3.2C4.6 3.2 1.9 5.3 1 8c.9 2.7 3.6 4.8 7 4.8s6.1-2.1 7-4.8c-.9-2.7-3.6-4.8-7-4.8zm0 7.6A2.8 2.8 0 1 1 8 5.2a2.8 2.8 0 0 1 0 5.6z"
+                />
+              </svg>
+              Preview
+            </button>
+            <button
+              type="button"
+              id="btn-statusbar-dock"
+              class="ghost output-preview-btn"
+              title="Show or hide the output dock"
+            >
+              <svg class="statusbar-btn-ico" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M2.2 2.2h11.6v11.6H2.2zm1.5 1.5v8.6h8.6V3.7zm0 6.2h8.6v2.4H3.7z"
+                />
+              </svg>
+              Dock
+            </button>
+            <span id="run-state-bar" class="ready statusbar-run" hidden>Ready</span>
+            <span class="keys">Esc · Ctrl+K · Ctrl+D · Ctrl+S · Ctrl+Enter · Preview</span>
+          </div>
         </footer>
       </div>
     </div>

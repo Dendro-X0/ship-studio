@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Hosting portal parity (slices 0–4)** — URL hygiene · Fly/Railway Login CLI · Pages≠PAT · Tier A–E docs · detect→Platforms highlight ([hosting-portal-parity-design](./specs/backend/hosting-portal-parity-design.md))
+- **Portal Docs button** — Open goes to vendor settings; Docs opens official tutorials (`docs_url` on portal steps); Cloudflare env Open → Workers & Pages
+- **Portal Open targets** — Cloudflare no longer triples the same API-tokens URL (drop duplicate recover; env → Workers secrets docs); Login CLI only on OAuth rows
+- **Desktop silent-failure reliability** — Portal Login CLI opens an interactive terminal (not headless); Orbit no longer calls unknown portal provider; fail toasts include stderr; soft errors no longer sticky-FAILED ([desktop-silent-failures-investigation](./specs/backend/desktop-silent-failures-investigation.md))
+- **Provider wizard setup** — Hosting / Payments / Email checklists name Open → put env → Confirm; **Continue publishing** handoff; Cloudflare uses `cloudflare.svg` ([provider-wizard-setup-design](./specs/frontend/provider-wizard-setup-design.md))
+- **Collapsible sidebar sections** — Ship · Targets · Platforms · Integrations · More · Run fold like dropdowns (persisted); platform icons use Apple / Microsoft / Play / Fly / Railway assets
+- **Platforms catalog** — Hosting + Official signing list (Integrations-style); probe **Choose host** / **Choose platform**; shared `provider-catalog` util ([platforms-catalog-design](./specs/frontend/platforms-catalog-design.md))
+- **Paced Publish Continue** — Auto gates advance one-at-a-time (~2s dwell + scrubber); Confirm no longer flashes 2→7 ([publish-journey-clarity-design](./specs/frontend/publish-journey-clarity-design.md) slice 3)
+- **Live check honesty** — Confirm blocked without deploy evidence; Public desktop-only offers **Switch to Local**; finished copy no longer says Continue when the pass is done
+- **Publish Continue bounce** — Live check no longer flashes Publish↔Dashboard; paused honesty gates stay on Publish with Confirm
+- **Publish journey clarity (slice 1)** — one green verb; hide dual Next on current gate; Continue (not Next) after Done; hide workflow cards mid-flight; Confirm auto-chains Auto gates ([publish-journey-clarity-design](./specs/frontend/publish-journey-clarity-design.md))
+- **Nested fixture pulse** — bind under a monorepo (e.g. `fixtures/harbor`) no longer inherits parent dirty git; Orbit missing soft-cues only (Signet absence still hard-blocks desktop)
+- **GIF-ready Dashboard polish** — mid-flight headline wins over “Already deployed”; ≤3 status tiles; Local treats Signet-only as ready; stage rail diet (`+N later` → List); Launch hero surface ([gif-ready-polish-design](./specs/frontend/gif-ready-polish-design.md))
+- **Harbor demo fixture** — `fixtures/harbor` (Desktop + Docs + Signet) + `scripts/harbor-reset`; public GIFs bind this, not ship-studio or advanced-dogfood ([demo-subject-design](./specs/frontend/demo-subject-design.md))
+- **Status probe inspection bay** — Sign / Publish: three lane cards (icons · Ready/Guide badges · suggestions · CTAs), checking shimmer + `shipctl pulse · sign-paths` cue; stage checkpoint amber rail ([status-probe-ux-design](./specs/frontend/status-probe-ux-design.md))
+- **Public Publish UX (A+C)** — Stages mode: one primary on the checkpoint card (toolbar keeps Refresh · Watch); Scopes gate embeds detect/save inline with **Confirm & continue** ([public-publish-ux-design](./specs/frontend/public-publish-ux-design.md))
+- **Actionable gate toasts** — pending Next / Verify classify the gate; stderr-only Next failures emit JSON; sticky **FAILED** no longer shown for expected pauses; empty-output toasts include Preview / Retry / Cancel
+- **Verify status layers** — each Publish step carries `verify_status` (`disk` · `local_cli` · `operator_cli` · `human_attest`); Desktop Offline / Watch / Publish hint explain graduated status checks without Studio-held secrets ([verify-status-layers-design](./specs/backend/verify-status-layers-design.md))
+- **Workflow stage flow** — Dashboard cards (Sign only · Sign and deploy · Publish to platforms · Deploy focus) set mode/intent and open Publish as a linear stage pager (checkpoint rail · guideline · Back/Next); Stages/List toggle restores progress bands ([workflow-stages-design](./specs/frontend/workflow-stages-design.md))
+- **Publish progress clarity** — Desktop summary `N done · M required · K later · ~min` + grouped step bands (Done collapsed · Required · Advanced lanes); Dashboard Now mirrors counts ([publish-progress-clarity-design](./specs/frontend/publish-progress-clarity-design.md))
+
+### Fixed
+
+- **Verify / Watch honesty** — successful local Verify no longer auto-marks Human/OAuth/deploy gates Done (Confirm still required). Fixes MCP `ship_publish_watch` silently advancing Scopes when active scopes exist
+- **Continue toast honesty** — no more `publish · done` when Continue only pauses at a human gate; copy says paused / Confirm next
+
+### Changed
+
+- **Docs — Hosting portal parity specs** — static audit + vendor tutorial review; tiered improvement plan ([investigation](./specs/backend/hosting-portal-parity-investigation.md) · [design](./specs/backend/hosting-portal-parity-design.md))
+- **Docs — Platforms · Portal · Integrations** — product overview of current Desktop guide surfaces, objectives, and known shortcomings ([PLATFORMS-AND-PORTAL](./docs/product/PLATFORMS-AND-PORTAL.md)); reliability deferred to a design-first slice
+- **Busy toast debounce** — “Busy — Cancel unlocks…” at most once per 8s (demo/status bar no longer stacks)
+- **Status chip colors** — PENDING (amber) · DONE (emerald) · SKIPPED (slate) distinct on Publish/Launch lists
+- **Output dock hidden by default** — statusbar **Preview** opens the large console; **Dock** restores the bottom strip when wanted
+- **Publish navigates detail panels** — Needs Open / Open / step click / Continue-at-human-gate open Scopes · Env · Sign · … and stay there (no yank back to Publish)
+
 ## 0.2.3 — 2026-09-23
 
 ### Added

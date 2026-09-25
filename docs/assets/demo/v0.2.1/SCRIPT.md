@@ -1,19 +1,26 @@
 # Feature demo — v0.2.1 (Part 1)
 
 **Status:** Recording plan for S1.1 live GIFs  
-**Build:** [v0.2.3 installer](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3) (Publish **Continue** — prefer over v0.2.2)  
+**Build:** App already installed ([v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)+) — **do not record setup/install**  
 **Watermark:** `local app · recorded`  
 **Replace:** stylized `docs/assets/demo/v0.1.0/` → live clips under `docs/assets/demo/v0.2.1/` (same file names when possible)
+
+## Demo stance
+
+Prove **useful mid-flight shipping**, not “how to install software.” Everyone can install an app; the GIF shelf must show bind → detect → Continue/Open/Confirm in under a minute of watching.
 
 ## Project choice
 
 | Option | Use when | Verdict for Part 1 |
 |--------|----------|--------------------|
-| **`fixtures/advanced-dogfood`** | Controlled multi-surface layout (web · worker · signet · CI · steam stub) without personal secrets | **Primary — use this** |
-| **Ship Studio itself** | Real monorepo (Desktop + website + shipctl); meta “ship the shipper” | Optional B-roll only — confusing for strangers |
-| **aperio** | Extreme Targets list / Advanced Public mid-flight | **Avoid for public GIFs** (personal · PAUSED L4 · noise) |
+| **`fixtures/harbor`** | Lightweight Desktop + Docs (+ Signet) — clean Targets for GIFs | **Primary — always** |
+| `fixtures/advanced-dogfood` | Advanced multipath dogfood (mobile · CI · container · steam) | Engineering only — not Part 1 shelf |
+| **Ship Studio itself** | Engineering dogfood on the real monorepo | **Never for public GIFs** — already signed/deployed |
+| **aperio** | Extreme Targets / Advanced Public mid-flight | **Avoid for public GIFs** |
 
-**Rule:** Bind `fixtures/advanced-dogfood` from the installed Desktop. Prefer **Advanced + Local** for the spine (no fake live deploy). Use **Public** only for a short Polar Open beat if you want commerce honesty without charging.
+**Rule:** Bind Harbor (`fixtures/harbor`) from the installed Desktop. Run `scripts/harbor-reset` (or wipe `.ship/`) before recording so Scopes / Configure / Sign·Deploy start mid-flight. Prefer **Advanced + Local** for the spine. Use **Public** only for a short Polar Open beat if needed.
+
+Design: [demo-subject-design](../../../specs/frontend/demo-subject-design.md).
 
 ## What Part 1 proves (one sentence)
 
@@ -60,22 +67,36 @@ Crop rule if the window must stay larger: keep **sidebar + Publish header + step
 
 ## Recording tasks (ordered)
 
-### Prep
+### Prep (off-camera)
 
-1. Install **v0.2.3** from GitHub Releases (clean install; quit any older Desktop).  
-2. Reset fixture state if needed: delete `fixtures/advanced-dogfood/.ship/` (or bind fresh).  
-3. Set capture size per **Capture resolution** above; dark theme as shipped; hide personal paths if possible (`…\fixtures\advanced-dogfood`).  
-4. Capture tool: silent GIF or short MP4→GIF; no voiceover required for `/demo` shelf.
+1. App already running (installer or portable) — **no install / first-run wizard in any GIF**.  
+2. Reset Harbor: `powershell -ExecutionPolicy Bypass -File scripts/harbor-reset.ps1` (or delete `fixtures/harbor/.ship/`).  
+3. Window ~**960×560**; Output dock **hidden** (statusbar Preview only).  
+4. Hide personal paths if possible (`…\fixtures\harbor`).  
+5. Capture: silent GIF or short MP4→GIF; no voiceover required for `/demo`.
 
 ### Beats → files (keep names stable for `/demo`)
 
-| Task | Clip file | Action on screen (~8–15s) | On-page caption |
+| Task | Clip file | Action on screen (~8–12s) | On-page caption |
 |------|-----------|---------------------------|-----------------|
-| T1 | `01-bind.gif` | Open Desktop → Open folder → select `advanced-dogfood` → Dashboard shows project | Pick a local folder. Studio stays on your machine. |
-| T2 | `02-open.gif` | Publish → show step list → **Open / Run** (browser or terminal) → return to Studio | Open the vendor door. Studio does not OAuth for you. |
-| T3 | `03-confirm-next.gif` | **Verify** (optional) → **Confirm** → **Next** (1–2 gates) | You confirm each gate. Studio advances the spine. |
-| T4 | `04-output-preview.gif` | Open Output / Preview on plan or doctor JSON | Inspect local artifacts before the next Confirm. |
-| T5 *(new)* | `05-midflight.gif` | From Publish mid-flight → Env or Sign → **Back to Publish** still on step N/M | Mid-flight state survives. A pasted checklist cannot. |
+| **T1** | `01-bind.gif` | App already open on empty Dashboard → **Open** → pick `harbor` → Dashboard **Now** + Targets (Desktop · Docs) visible | Pick a folder. Studio detects the ship layout — no cloud account. |
+| T2 | `02-open.gif` | Publish → progress bands → **Needs Open** / Open into a detail panel → return | Open the right surface. Studio does not OAuth for you. |
+| T3 | `03-confirm-next.gif` | **Confirm** → **Continue** (or Next) through 1–2 gates | You attest human gates; Continue burns the rest. |
+| T4 | `04-output-preview.gif` | Statusbar **Preview** on plan / doctor JSON | Inspect local output when you need it. |
+| T5 | `05-midflight.gif` | Mid-flight → Env or Sign → **Back to Publish** still on step N/M | Mid-flight state survives. A pasted checklist cannot. |
+
+### T1 shot list (record this first)
+
+```text
+0–1s   Empty / “Choose a project” Dashboard (no install chrome)
+1–3s   Click Open (sidebar or titlebar)
+3–6s   Folder picker → harbor (path truncated if personal)
+6–10s  Land on Dashboard: project name · Now CTA · Targets populated
+Hold   1s on useful state — then cut
+```
+
+**Do not show:** installer, Start Menu, license EULA, “working in …” empty forever, Output dock.  
+**Must show:** one folder → instant orientation (name + Targets + Next action).
 
 ### Drop to site
 
@@ -89,7 +110,9 @@ Crop rule if the window must stay larger: keep **sidebar + Publish header + step
 
 ## Success criteria
 
-- [ ] All four core GIFs (plus optional mid-flight) recorded on **installer** build, not `pnpm dev`  
+- [ ] **No install / setup** footage in any clip  
+- [ ] T1 alone proves usefulness: folder → detected layout + clear next action  
+- [ ] Core GIFs recorded on a real Desktop build (not a broken half-UI)  
 - [ ] Final GIF size **720×420** (capture may be 960×560 then scaled)  
 - [ ] No console flash during Verify / page switches  
 - [ ] No claim of one-click deploy / auto OAuth / live publish  

@@ -11,17 +11,29 @@ import {
   MAX_RECENT,
   MODE_KEY,
   OFFLINE_KEY,
+  OUTPUT_DOCK_KEY,
+  PUBLISH_UI_KEY,
   RECENT_KEY,
+  WORKFLOW_KEY,
+  NAV_SECTIONS_KEY,
   RELATED_VIEW_LABELS,
   VIEW_META,
 } from "./constants";
 import {
   integrationIconHtml,
+  providerIconHtml,
   SCOPE_KIND_ORDER,
   scopeIconFile,
   iconImg,
 } from "./icons";
 import { INTEGRATION_WIZARDS } from "./integrations-data";
+import { PLATFORM_GROUPS, PLATFORM_WIZARDS } from "./platforms-data";
+import {
+  highlightProviderSidebar,
+  paintProviderWizard,
+  renderProviderCatalogGrid,
+  renderProviderSidebarTree,
+} from "./provider-catalog";
 import type {
   AssistPlan,
   CmdItem,
@@ -91,6 +103,12 @@ function applyShipIntent(intent: ShipIntent, opts?: { rebuild?: boolean }) {
     btn.classList.toggle("active", btn.dataset.intent === intent);
   });
   syncNowQuick();
+  if (activeViewId === "platforms") {
+    renderPlatforms();
+  }
+  if (activeViewId === "integrations") {
+    renderIntegrations();
+  }
   if (opts?.rebuild && projectPath()) {
     void (async () => {
       const result = await run(publishArgs(["reset"]), { quietHeader: true });
@@ -150,6 +168,7 @@ const deployArgsEl = () => document.querySelector<HTMLInputElement>("#deploy-arg
 
 
 let running = false;
+let lastBusyToastAt = 0;
 let busyWatchdog: number | null = null;
 let streamBuf = "";
 
@@ -174,10 +193,18 @@ function clearBusyWatchdog() {
 
 function setBusy(busy: boolean, label = "Ready", failed = false) {
   running = busy;
-  const el = stateEl();
-  if (el) {
+  const className = busy ? "busy" : failed ? "failed" : "ready";
+  for (const el of [
+    stateEl(),
+    document.querySelector<HTMLElement>("#run-state-bar"),
+  ]) {
+    if (!el) continue;
     el.textContent = label;
-    el.className = busy ? "busy" : failed ? "failed" : "ready";
+    el.className =
+      el.id === "run-state-bar" ? `${className} statusbar-run` : className;
+    if (el.id === "run-state-bar") {
+      el.hidden = !busy && !failed && label === "Ready";
+    }
   }
   // Always re-sync disabled state — Cancel / Clear / errors must unlock Refresh.
   setProjectUi(Boolean(projectPath()));
@@ -196,10 +223,14 @@ function setBusy(busy: boolean, label = "Ready", failed = false) {
 function forceUnlockUi(reason = "Unlocked") {
   clearBusyWatchdog();
   running = false;
-  const el = stateEl();
-  if (el) {
+  for (const el of [
+    stateEl(),
+    document.querySelector<HTMLElement>("#run-state-bar"),
+  ]) {
+    if (!el) continue;
     el.textContent = reason;
-    el.className = "ready";
+    el.className = el.id === "run-state-bar" ? "ready statusbar-run" : "ready";
+    if (el.id === "run-state-bar") el.hidden = true;
   }
   setProjectUi(Boolean(projectPath()));
   syncNowQuick();
@@ -283,6 +314,701 @@ function syncPublishGateButtons() {
   confirmBtn.classList.toggle("primary", false);
   nextBtn.classList.toggle("primary", false);
   if (!pending) confirmBtn.classList.remove("watch-ready");
+}
+
+type PublishStepRow = NonNullable<PublishView["steps"]>[number];
+
+/** Honesty / irreversible gates — must Open/Confirm; not auto-Continue. */
+function isHonestyGateStep(step: { kind?: string; id?: string }): boolean {
+  const kind = (step.kind ?? "").toLowerCase();
+  const id = step.id ?? "";
+  if (kind === "human" || kind === "oauth" || kind === "deploy" || kind === "list" || kind === "check") {
+    return true;
+  }
+  return kind === "sign" && id.includes("release") && !id.includes("dry");
+}
+
+function partitionPublishProgress(view: PublishView): {
+  done: Array<{ step: PublishStepRow; index: number }>;
+  required: Array<{ step: PublishStepRow; index: number }>;
+  later: Array<{ step: PublishStepRow; index: number }>;
+} {
+  const steps = view.steps ?? [];
+  const curIdx = view.current_index ?? 0;
+  const done: Array<{ step: PublishStepRow; index: number }> = [];
+  const required: Array<{ step: PublishStepRow; index: number }> = [];
+  const later: Array<{ step: PublishStepRow; index: number }> = [];
+  steps.forEach((step, index) => {
+    const status = (step.status ?? "").toLowerCase();
+    if (status === "done" || status === "skipped") {
+      if (index === curIdx && !view.finished) {
+        required.push({ step, index });
+      } else {
+        done.push({ step, index });
+      }
+      return;
+    }
+    if (status !== "pending") return;
+    if (index === curIdx || isHonestyGateStep(step)) {
+      required.push({ step, index });
+    } else {
+      later.push({ step, index });
+    }
+  });
+  return { done, required, later };
+}
+
+function publishProgressSummary(view: PublishView | null | undefined): string {
+  if (!view?.steps?.length) return "";
+  if (view.finished) return "All required gates done";
+  const { done, required, later } = partitionPublishProgress(view);
+  const mins = view.minutes_remaining ?? 0;
+  return `${done.length} done · ${required.length} required · ${later.length} later · ~${mins} min`;
+}
+
+/** Status chip with distinct colors (pending / done / skipped / …). */
+function statusKindHtml(raw: string | undefined | null): string {
+  const label = (raw ?? "").trim() || "—";
+  const key = label.toLowerCase().replace(/\s+/g, "_");
+  return `<span class="kind" data-status="${escapeHtml(key)}">${escapeHtml(label)}</span>`;
+}
+
+function outputDockVisible(): boolean {
+  const dock = document.querySelector<HTMLElement>("#output-dock");
+  return Boolean(dock && !dock.hidden);
+}
+
+function applyOutputDock(visible: boolean) {
+  const dock = document.querySelector<HTMLElement>("#output-dock");
+  const toggle = document.querySelector<HTMLButtonElement>("#btn-statusbar-dock");
+  if (dock) dock.hidden = !visible;
+  localStorage.setItem(OUTPUT_DOCK_KEY, visible ? "1" : "0");
+  if (toggle) {
+    toggle.textContent = visible ? "Hide dock" : "Dock";
+    toggle.title = visible ? "Hide the output dock" : "Show the output dock";
+    toggle.setAttribute("aria-pressed", visible ? "true" : "false");
+  }
+  document.body.dataset.outputDock = visible ? "on" : "off";
+}
+
+function renderPublishStepItem(
+  step: PublishStepRow,
+  index: number,
+  currentIndex: number | undefined,
+): string {
+  const active = index === currentIndex ? " active-step" : "";
+  const related = (step.desktop_view ?? "").trim();
+  const nav = related && RELATED_VIEW_LABELS[related];
+  const clickable = nav ? " portal-step-nav" : "";
+  const attrs = nav
+    ? ` role="button" tabindex="0" data-step-index="${index}" data-desktop-view="${escapeHtml(related)}" title="Open ${escapeHtml(RELATED_VIEW_LABELS[related] ?? related)}"`
+    : ` data-step-index="${index}"`;
+  return `<li class="portal-step${active}${clickable}"${attrs}>
+        <div class="meta">
+          <div class="title">${statusKindHtml(step.status)}${escapeHtml(step.title ?? step.id ?? "")}${
+            nav
+              ? `<span class="step-nav-hint">${escapeHtml(RELATED_VIEW_LABELS[related] ?? related)}</span>`
+              : ""
+          }</div>
+        </div>
+      </li>`;
+}
+
+function renderPublishStepBands(view: PublishView): string {
+  const { done, required, later } = partitionPublishProgress(view);
+  const cur = view.current_index;
+  const laterLabel =
+    (view.mode ?? "").toLowerCase() === "advanced" ? "Advanced lanes" : "Later";
+  const band = (
+    id: string,
+    label: string,
+    rows: Array<{ step: PublishStepRow; index: number }>,
+    open: boolean,
+  ) => {
+    if (!rows.length) return "";
+    return `<details class="step-band" data-band="${id}"${open ? " open" : ""}>
+      <summary>${escapeHtml(label)} (${rows.length})</summary>
+      <ul>${rows.map((r) => renderPublishStepItem(r.step, r.index, cur)).join("")}</ul>
+    </details>`;
+  };
+  return [
+    band("required", "Required", required, true),
+    band("later", laterLabel, later, later.length > 0 && later.length <= 6),
+    band("done", "Done", done, false),
+  ]
+    .filter(Boolean)
+    .join("");
+}
+
+type WorkflowId = "sign_only" | "sign_deploy" | "publish_platform" | "deploy_only";
+
+const WORKFLOW_PRESETS: Record<
+  WorkflowId,
+  { mode: StudioMode; intent: ShipIntent; label: string; toast: string }
+> = {
+  sign_only: {
+    mode: "general",
+    intent: "local",
+    label: "Sign only",
+    toast: "Sign only — Local · General. One checkpoint at a time on Publish.",
+  },
+  sign_deploy: {
+    mode: "general",
+    intent: "public",
+    label: "Sign and deploy",
+    toast: "Sign and deploy — Public · General. Hosted final-mile when detected.",
+  },
+  publish_platform: {
+    mode: "advanced",
+    intent: "public",
+    label: "Publish to platforms",
+    toast: "Publish to platforms — Advanced · Public. Listings and store gates included.",
+  },
+  deploy_only: {
+    mode: "general",
+    intent: "public",
+    label: "Deploy focus",
+    toast: "Deploy focus — Public · General. Confirm still required at deploy gates.",
+  },
+};
+
+let stageFocusIndex = 0;
+/** True while Continue walks Auto gates one-at-a-time with dwell. */
+let publishPacing = false;
+
+function paceDwellMs(): number {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 200 : 1800;
+}
+
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function setStagePacingUi(on: boolean) {
+  const panel = document.querySelector<HTMLElement>("#stage-panel");
+  if (!panel) return;
+  if (on) panel.dataset.pacing = "1";
+  else delete panel.dataset.pacing;
+}
+
+function isWorkflowId(raw: string | null | undefined): raw is WorkflowId {
+  return Boolean(raw && raw in WORKFLOW_PRESETS);
+}
+
+function savedWorkflow(): WorkflowId | null {
+  const raw = localStorage.getItem(WORKFLOW_KEY);
+  return isWorkflowId(raw) ? raw : null;
+}
+
+function publishUiMode(): "stages" | "list" {
+  return localStorage.getItem(PUBLISH_UI_KEY) === "list" ? "list" : "stages";
+}
+
+function applyPublishUi(mode: "stages" | "list") {
+  localStorage.setItem(PUBLISH_UI_KEY, mode);
+  document.body.dataset.publishUi = mode;
+  const stagesBtn = document.querySelector<HTMLButtonElement>("#btn-publish-stages");
+  const listBtn = document.querySelector<HTMLButtonElement>("#btn-publish-list");
+  stagesBtn?.setAttribute("aria-pressed", mode === "stages" ? "true" : "false");
+  listBtn?.setAttribute("aria-pressed", mode === "list" ? "true" : "false");
+  const stageEl = document.querySelector<HTMLElement>("#publish-stage");
+  if (stageEl) {
+    stageEl.hidden = mode !== "stages" || !lastPublish?.steps?.length;
+  }
+}
+
+function syncWorkflowCards() {
+  const active = savedWorkflow();
+  document.querySelectorAll<HTMLButtonElement>(".workflow-card").forEach((btn) => {
+    const id = btn.dataset.workflow;
+    btn.setAttribute("aria-current", id && id === active ? "true" : "false");
+  });
+  const pick = document.querySelector<HTMLElement>("#workflow-pick");
+  if (pick) {
+    // Mid-flight: only Continue — starting another workflow mid-pass is noise.
+    const mid =
+      Boolean(lastPublish?.steps?.length && !lastPublish.finished) ||
+      Boolean(lastLaunch?.steps?.length && !lastLaunch.finished);
+    pick.hidden = !projectPath() || mid;
+  }
+}
+
+function verifyStatusLabel(raw?: string | null): string {
+  switch ((raw ?? "").toLowerCase()) {
+    case "disk":
+      return "Disk";
+    case "local_cli":
+      return "Local CLI";
+    case "operator_cli":
+      return "Official CLI probe";
+    case "human_attest":
+      return "Human attest";
+    default:
+      return "";
+  }
+}
+
+function stageGuideline(step: {
+  kind?: string;
+  id?: string;
+  title?: string;
+  status?: string | null;
+  verify_status?: string | null;
+}): string {
+  const status = (step.status ?? "").toLowerCase();
+  const layer = verifyStatusLabel(step.verify_status);
+  const layerPrefix = layer ? `Status · ${layer}. ` : "";
+  if (status === "done" || status === "skipped") {
+    return `${layerPrefix}This checkpoint is done. Press Continue to advance.`;
+  }
+  const kind = (step.kind ?? "").toLowerCase();
+  const id = step.id ?? "";
+  if ((step.verify_status ?? "").toLowerCase() === "human_attest") {
+    return `${layerPrefix}Open the official UI, finish there, return → Confirm. Studio does not hold tokens.`;
+  }
+  if (isScopesStep(step)) {
+    return `${layerPrefix}Choose what you’re shipping below, then Confirm & continue.`;
+  }
+  if (kind === "human" || id.includes("scope")) {
+    return `${layerPrefix}Save the selection below, then Confirm & continue.`;
+  }
+  if (kind === "oauth" || kind === "list" || kind === "deploy" || kind === "check") {
+    if ((step.id ?? "") === "live_check") {
+      return `${layerPrefix}Needs a live URL or deploy evidence. If this is a desktop-only cut, switch intent to Local (Live check is omitted).`;
+    }
+    return `${layerPrefix}Open the official UI if needed. Confirm when you finished there.`;
+  }
+  if (kind === "sign" && id.includes("release") && !id.includes("dry")) {
+    return `${layerPrefix}Run local Signet for this cut, then Confirm when the artifact is ready.`;
+  }
+  if (kind === "auto" || kind === "doctor" || id === "configure" || id === "dry_run" || !kind) {
+    return `${layerPrefix}Press Continue — Studio checks this locally and advances.`;
+  }
+  if (isHonestyGateStep(step)) {
+    return `${layerPrefix}Open / Run if needed, then Confirm.`;
+  }
+  return `${layerPrefix}Follow the detail below, then use the green button.`;
+}
+
+function stagePrimaryLabel(view: PublishView): {
+  label: string;
+  action: "continue" | "open" | "confirm" | "review";
+} {
+  if (view.finished) return { label: "Back to Dashboard", action: "review" };
+  const cur = view.current;
+  const status = (cur?.status ?? "").toLowerCase();
+  const kind = (cur?.kind ?? "").toLowerCase();
+  // Done checkpoint — one advance verb (never “Next” beside another Next).
+  if (status === "done" || status === "skipped") return { label: "Continue", action: "continue" };
+  // Inline Scopes: Confirm stays on the card (no bounce to detail panel).
+  if (isScopesStep(cur)) {
+    return { label: "Confirm & continue", action: "confirm" };
+  }
+  // Local Auto (configure / doctor / dry-run) — never “Open Ritual”.
+  if (kind === "auto" || gateToastKind(cur) === "continue") {
+    return { label: "Continue", action: "continue" };
+  }
+  if (gateToastKind(cur) === "open") {
+    const related = (cur?.desktop_view ?? "").trim();
+    // Dashboard is not a work panel — Confirm stays on Publish (no Open bounce).
+    if (related === "dashboard" || !shouldLeavePublishForRelated(related)) {
+      return { label: "Confirm", action: "confirm" };
+    }
+    if ((cur?.kind ?? "").toLowerCase() === "oauth") return { label: "Sign in", action: "open" };
+    if (related && RELATED_VIEW_LABELS[related]) return { label: "Open", action: "open" };
+    if (cur?.entry_url || cur?.run?.length) return { label: "Open", action: "open" };
+    return { label: "Confirm", action: "confirm" };
+  }
+  return { label: "Confirm", action: "confirm" };
+}
+
+function isScopesStep(step: { id?: string; desktop_view?: string | null } | null | undefined): boolean {
+  if (!step) return false;
+  const id = (step.id ?? "").toLowerCase();
+  const view = (step.desktop_view ?? "").trim().toLowerCase();
+  return id === "scopes" || view === "scopes";
+}
+
+function scopesGridHtml(plan: ScopePlan | null): string {
+  const scopes = plan?.scopes ?? [];
+  const active = new Set(plan?.active ?? []);
+  if (!scopes.length) {
+    return `<p class="detail empty-hint">No scopes detected — press Detect.</p>`;
+  }
+  return scopes
+    .map((s) => {
+      const id = s.id ?? "";
+      const on = active.has(id) ? "checked" : "";
+      return `<label class="scope-card">
+            <input type="checkbox" data-scope-id="${escapeHtml(id)}" ${on} />
+            <div>
+              <strong>${escapeHtml(s.label ?? id)}</strong>
+              <span>${escapeHtml(s.kind ?? "")} · ${escapeHtml(s.relative ?? ".")}${
+                s.provider ? ` · ${escapeHtml(s.provider)}` : ""
+              }</span>
+            </div>
+          </label>`;
+    })
+    .join("");
+}
+
+function fillScopeGrids(plan: ScopePlan | null) {
+  const html = scopesGridHtml(plan);
+  const main = document.querySelector("#scope-grid");
+  const stage = document.querySelector("#stage-scope-grid");
+  if (main) main.innerHTML = html;
+  if (stage) stage.innerHTML = html;
+}
+
+function stageScopesRoot(): HTMLElement | null {
+  return document.querySelector<HTMLElement>("#stage-inline-scopes");
+}
+
+let stageScopesDetectInFlight = false;
+
+function syncStageInlineScopes(view: PublishView, focusIndex: number) {
+  const root = stageScopesRoot();
+  if (!root) return;
+  const steps = view.steps ?? [];
+  const curIdx = view.current_index ?? 0;
+  const focus = steps[focusIndex];
+  const show =
+    publishUiMode() === "stages" &&
+    focusIndex === curIdx &&
+    isScopesStep(focus) &&
+    (focus?.status ?? "").toLowerCase() === "pending";
+  root.hidden = !show;
+  if (!show) return;
+  fillScopeGrids(lastScopes);
+  if (
+    !lastScopes?.scopes?.length &&
+    projectPath() &&
+    !running &&
+    !stageScopesDetectInFlight
+  ) {
+    stageScopesDetectInFlight = true;
+    void detectScopes({ quiet: true }).finally(() => {
+      stageScopesDetectInFlight = false;
+    });
+  }
+}
+
+function deployEvidenceFromPulse(pulse: ProjectPulse | null | undefined): boolean {
+  const dep = pulse?.deploy;
+  return (
+    dep?.last_run_ok === true ||
+    dep?.signal === "last_run_ok" ||
+    dep?.signal === "orbit_deployed" ||
+    (dep?.urls?.length ?? 0) > 0
+  );
+}
+
+function shortStageLabel(raw: string): string {
+  const t = raw.trim();
+  // "Scopes — pick Web / …" → "Scopes"
+  const em = t.split(/\s*[—–-]\s*/)[0]?.trim();
+  if (em && em.length <= 28) return em;
+  return t.length > 28 ? `${t.slice(0, 26)}…` : t;
+}
+
+function renderPublishStage(view: PublishView | null) {
+  const stageRoot = document.querySelector<HTMLElement>("#publish-stage");
+  const toggle = document.querySelector<HTMLElement>("#publish-ui-toggle");
+  const scrub = document.querySelector<HTMLElement>("#stage-scrub");
+  const scrubTrack = document.querySelector<HTMLElement>("#stage-scrub-track");
+  const scrubLabel = document.querySelector<HTMLElement>("#stage-scrub-label");
+  const rail = document.querySelector<HTMLElement>("#stage-rail");
+  const kicker = document.querySelector<HTMLElement>("#stage-kicker");
+  const title = document.querySelector<HTMLElement>("#stage-title");
+  const indexEl = document.querySelector<HTMLElement>("#stage-index");
+  const guide = document.querySelector<HTMLElement>("#stage-guide");
+  const detail = document.querySelector<HTMLElement>("#stage-detail");
+  const prevBtn = document.querySelector<HTMLButtonElement>("#btn-stage-prev");
+  const nextBtn = document.querySelector<HTMLButtonElement>("#btn-stage-next");
+  const primaryBtn = document.querySelector<HTMLButtonElement>("#btn-stage-primary");
+  if (!stageRoot || !rail) return;
+
+  const steps = view?.steps ?? [];
+  const hasPlan = steps.length > 0;
+  if (toggle) toggle.hidden = !hasPlan;
+  applyPublishUi(publishUiMode());
+  if (!hasPlan || !view) {
+    stageRoot.hidden = true;
+    rail.innerHTML = "";
+    if (scrub) scrub.hidden = true;
+    if (scrubTrack) scrubTrack.innerHTML = "";
+    return;
+  }
+
+  const curIdx = view.current_index ?? 0;
+  if (stageFocusIndex < 0 || stageFocusIndex >= steps.length) {
+    stageFocusIndex = curIdx;
+  }
+  // Keep focus on the live gate when plan advances past a stale focus.
+  if (stageFocusIndex !== curIdx && (steps[stageFocusIndex]?.status ?? "").toLowerCase() === "pending") {
+    stageFocusIndex = curIdx;
+  }
+
+  const { required, later } = partitionPublishProgress(view);
+  // Slice B — required-now only; later collapsed behind "+N later" → List.
+  const railRows: Array<{
+    step: (typeof steps)[number];
+    index: number;
+    band: "required" | "later";
+  }> = required.map((r) => ({ ...r, band: "required" as const }));
+  const ensure = (index: number) => {
+    if (!railRows.some((r) => r.index === index) && steps[index]) {
+      railRows.push({
+        step: steps[index],
+        index,
+        band: index === curIdx ? "required" : "later",
+      });
+    }
+  };
+  ensure(curIdx);
+  ensure(stageFocusIndex);
+  // Cap chips so the rail stays a pager, not the whole Adaptive plan.
+  railRows.sort((a, b) => a.index - b.index);
+  const capped = railRows.slice(0, 6);
+  const laterCount = later.filter((r) => !capped.some((c) => c.index === r.index)).length;
+
+  rail.innerHTML =
+    capped
+      .map(({ step, index, band }) => {
+        const status = (step.status ?? "").toLowerCase();
+        const state =
+          publishPacing && index === curIdx
+            ? "checking"
+            : index === stageFocusIndex
+              ? "current"
+              : status === "done" || status === "skipped"
+                ? "done"
+                : band === "later"
+                  ? "later"
+                  : "current";
+        const label = shortStageLabel(step.title ?? step.id ?? `Step ${index + 1}`);
+        return `<button type="button" class="stage-dot" data-stage-index="${index}" data-state="${state}" title="${escapeHtml(step.title ?? step.id ?? "")}">${escapeHtml(label)}</button>`;
+      })
+      .join("") +
+    (laterCount > 0
+      ? `<button type="button" class="stage-dot stage-dot-more" data-stage-more="1" data-state="later" title="Show full plan in List">+${laterCount} later</button>`
+      : "");
+
+  if (scrub && scrubTrack) {
+    scrub.hidden = false;
+    scrubTrack.innerHTML = steps
+      .map((step, index) => {
+        const status = (step.status ?? "").toLowerCase();
+        const state =
+          publishPacing && index === curIdx
+            ? "checking"
+            : index === stageFocusIndex || index === curIdx
+              ? "current"
+              : status === "done" || status === "skipped"
+                ? "done"
+                : "later";
+        const label = step.title ?? step.id ?? `Step ${index + 1}`;
+        return `<button type="button" class="stage-scrub-seg" data-stage-index="${index}" data-state="${state}" title="${escapeHtml(`${index + 1}. ${label}`)}" aria-label="${escapeHtml(`Review step ${index + 1}: ${label}`)}"></button>`;
+      })
+      .join("");
+    if (scrubLabel) {
+      const focusTitle = steps[stageFocusIndex]?.title ?? steps[curIdx]?.title ?? "Checkpoint";
+      scrubLabel.textContent = publishPacing
+        ? `Checking ${stageFocusIndex + 1} / ${steps.length} — ${shortStageLabel(focusTitle)}`
+        : `Step ${stageFocusIndex + 1} / ${steps.length} — click a segment to review`;
+    }
+  }
+
+  const focus = steps[stageFocusIndex] ?? steps[curIdx];
+  const focusStatus = (focus?.status ?? "").toLowerCase();
+  const wf = savedWorkflow();
+  if (kicker) {
+    kicker.textContent = wf
+      ? `${WORKFLOW_PRESETS[wf].label} · checkpoint`
+      : stageFocusIndex === curIdx
+        ? "Current checkpoint"
+        : "Checkpoint";
+  }
+  if (title) title.textContent = focus?.title ?? focus?.id ?? "—";
+  if (indexEl) {
+    indexEl.textContent = `${stageFocusIndex + 1} / ${steps.length}${
+      focus?.minutes ? ` · ~${focus.minutes}m` : ""
+    }`;
+  }
+  if (guide) {
+    if (view.finished) {
+      const live =
+        lastPulse?.deploy?.last_run_ok === true ||
+        lastPulse?.deploy?.signal === "last_run_ok" ||
+        lastPulse?.deploy?.signal === "orbit_deployed" ||
+        (lastPulse?.deploy?.urls?.length ?? 0) > 0;
+      guide.textContent = live
+        ? "This pass’s required gates are done. Open the live URL when you want to smoke it again."
+        : "Required gates for this pass are done. Deploy may still show no signal — that means no hosted URL yet (use Local for desktop-only cuts).";
+    } else {
+      guide.textContent = focus ? stageGuideline(focus) : "";
+    }
+  }
+  if (detail) {
+    const related = (focus?.desktop_view ?? "").trim();
+    const showNav =
+      related &&
+      RELATED_VIEW_LABELS[related] &&
+      !isScopesStep(focus) &&
+      gateToastKind(focus) === "open";
+    const layer = verifyStatusLabel(focus?.verify_status);
+    detail.textContent = [
+      focusStatus ? focusStatus.toUpperCase() : "",
+      focus?.kind ? String(focus.kind) : "",
+      layer ? `Status · ${layer}` : "",
+      isScopesStep(focus) ? "Edit below" : "",
+      showNav ? `Opens ${RELATED_VIEW_LABELS[related] ?? related}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }
+
+  syncStageInlineScopes(view, stageFocusIndex);
+
+  const busy = running || publishPacing;
+  const primary = stagePrimaryLabel(view);
+  if (primaryBtn) {
+    if (view.finished) {
+      primaryBtn.textContent = "Back to Dashboard";
+      primaryBtn.dataset.stageAction = "review";
+      primaryBtn.disabled = busy;
+    } else if (stageFocusIndex !== curIdx) {
+      primaryBtn.textContent = "Go to current";
+      primaryBtn.dataset.stageAction = "focus_current";
+      primaryBtn.disabled = busy;
+    } else if (
+      (focus?.id ?? "") === "live_check" &&
+      focusStatus === "pending" &&
+      shipIntent() === "public" &&
+      !deployEvidenceFromPulse(lastPulse)
+    ) {
+      primaryBtn.textContent = "Switch to Local";
+      primaryBtn.dataset.stageAction = "intent_local";
+      primaryBtn.disabled = busy;
+      primaryBtn.title =
+        "Public Live check needs a hosted URL. Local omits deploy/live check for desktop-only cuts.";
+    } else if (isScopesStep(focus) && primary.action === "confirm") {
+      const checked = document.querySelectorAll("#stage-scope-grid [data-scope-id]:checked").length;
+      const hasActive = checked > 0 || (lastScopes?.active?.length ?? 0) > 0;
+      primaryBtn.textContent = "Confirm & continue";
+      primaryBtn.dataset.stageAction = "confirm";
+      primaryBtn.disabled = busy || !hasActive;
+      primaryBtn.title = hasActive
+        ? "Save selection and mark this checkpoint done"
+        : "Select at least one scope first";
+    } else {
+      primaryBtn.textContent = publishPacing ? "Checking…" : primary.label;
+      primaryBtn.dataset.stageAction = primary.action;
+      primaryBtn.disabled = busy;
+      primaryBtn.removeAttribute("title");
+    }
+  }
+  if (prevBtn) prevBtn.disabled = busy || stageFocusIndex <= 0;
+  if (nextBtn) {
+    // On the live gate the green primary owns advance — hide the second Next.
+    const browsing = stageFocusIndex !== curIdx && !view.finished;
+    nextBtn.hidden = !browsing;
+    if (browsing) {
+      const focusDone = focusStatus === "done" || focusStatus === "skipped";
+      const canAdvanceFocus =
+        stageFocusIndex < steps.length - 1 && (focusDone || stageFocusIndex < curIdx);
+      nextBtn.disabled = busy || !canAdvanceFocus;
+      nextBtn.textContent = "Peek next";
+      nextBtn.title = "Browse the next checkpoint without advancing the plan";
+    } else {
+      nextBtn.disabled = true;
+      nextBtn.textContent = "Next";
+      nextBtn.removeAttribute("title");
+    }
+  }
+
+  const panel = document.querySelector<HTMLElement>("#stage-panel");
+  if (panel) {
+    if (publishPacing) panel.dataset.pacing = "1";
+    else delete panel.dataset.pacing;
+    if (!publishPacing) {
+      panel.style.animation = "none";
+      void panel.offsetWidth;
+      panel.style.animation = "";
+    }
+  }
+}
+
+async function startWorkflow(id: WorkflowId) {
+  if (!projectPath()) {
+    toast("Open a folder first", "err");
+    return;
+  }
+  const preset = WORKFLOW_PRESETS[id];
+  localStorage.setItem(WORKFLOW_KEY, id);
+  applyStudioMode(preset.mode);
+  applyShipIntent(preset.intent);
+  applyPublishUi("stages");
+  syncWorkflowCards();
+  stageFocusIndex = 0;
+  const result = await run(publishArgs(["reset"]), { quietHeader: true });
+  if (result?.stdout) {
+    try {
+      const view = JSON.parse(result.stdout) as PublishView;
+      stageFocusIndex = view.current_index ?? 0;
+      applyPublishView(view, { reveal: true });
+    } catch {
+      setView("publish");
+      await refreshPublish();
+    }
+  } else {
+    setView("publish");
+    await refreshPublish();
+  }
+  toast(preset.toast, "ok", 4500);
+  await refreshSessionNow();
+}
+
+function onStagePrimary() {
+  const btn = document.querySelector<HTMLButtonElement>("#btn-stage-primary");
+  const action = btn?.dataset.stageAction ?? "continue";
+  if (action === "review") {
+    setView("dashboard");
+    return;
+  }
+  if (action === "focus_current") {
+    stageFocusIndex = lastPublish?.current_index ?? 0;
+    if (lastPublish) renderPublishStage(lastPublish);
+    return;
+  }
+  if (action === "open") {
+    document.querySelector<HTMLButtonElement>("#btn-publish-open")?.click();
+    return;
+  }
+  if (action === "confirm") {
+    void (async () => {
+      if (isScopesStep(lastPublish?.current)) {
+        const inline = stageScopesRoot();
+        if (inline && !inline.hidden) {
+          const ok = await saveScopes({ silentToast: true });
+          if (!ok) return;
+        }
+      }
+      document.querySelector<HTMLButtonElement>("#btn-publish-confirm")?.click();
+    })();
+    return;
+  }
+  if (action === "intent_local") {
+    applyShipIntent("local", { rebuild: true });
+    toast("Local intent — hosted deploy / live check omitted. Continue the short path.", "ok", 5000);
+    return;
+  }
+  const status = (lastPublish?.current?.status ?? "").toLowerCase();
+  if (status === "done" || status === "skipped") {
+    document.querySelector<HTMLButtonElement>("#btn-publish-next")?.click();
+    return;
+  }
+  document.querySelector<HTMLButtonElement>("#btn-publish-continue")?.click();
 }
 
 function syncDeployToggle() {
@@ -462,22 +1188,294 @@ function show(text: string) {
 }
 
 
-function toast(message: string, kind: ToastKind = "info", ms = 3200) {
+type ToastAction = {
+  id: string;
+  label: string;
+  /** Visual cue — confirm · verify · open (auth / vendor) */
+  icon?: "confirm" | "verify" | "open" | "continue";
+  run: () => void;
+};
+
+function toastActionIcon(kind: ToastAction["icon"]): string {
+  if (kind === "confirm") {
+    return `<svg class="toast-action-ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M6.5 11.2 3.2 7.9l1.1-1.1 2.2 2.2 4.4-4.4 1.1 1.1z"/></svg>`;
+  }
+  if (kind === "continue") {
+    return `<svg class="toast-action-ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M5.2 3.2v9.6L12.8 8z"/></svg>`;
+  }
+  if (kind === "verify") {
+    return `<svg class="toast-action-ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 1.8a4.7 4.7 0 1 1 0 9.4 4.7 4.7 0 0 1 0-9.4zm-.7 2.2h1.4v3.2H7.3zm0 4.2h1.4V11H7.3z"/></svg>`;
+  }
+  if (kind === "open") {
+    return `<svg class="toast-action-ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M9.2 2.5h4.3v4.3h-1.5V5.1L8.5 8.6 7.4 7.5l3.5-3.5H9.2zm-5.5 1.2h4v1.5h-3.2v6.6h6.6V9.6H12.6v4.2H3.7z"/></svg>`;
+  }
+  return "";
+}
+
+function toast(
+  message: string,
+  kind: ToastKind = "info",
+  ms = 3200,
+  actions?: ToastAction[],
+) {
   const host = document.querySelector<HTMLElement>("#toast-host");
   if (!host || !message.trim()) return;
-  const el = document.createElement("button");
-  el.type = "button";
-  el.className = `toast ${kind}`;
+  const el = document.createElement("div");
+  el.className = `toast ${kind}${actions?.length ? " toast-actions" : ""}`;
   el.setAttribute("role", "status");
-  el.innerHTML = `<span class="toast-mark" aria-hidden="true"></span><p class="toast-msg">${escapeHtml(message)}</p>`;
+  const actionsHtml = actions?.length
+    ? `<div class="toast-actions-row">${actions
+        .map(
+          (a) =>
+            `<button type="button" class="toast-action" data-toast-action="${escapeHtml(a.id)}">${toastActionIcon(a.icon)}<span>${escapeHtml(a.label)}</span></button>`,
+        )
+        .join("")}</div>`
+    : "";
+  el.innerHTML = `<span class="toast-mark" aria-hidden="true"></span><div class="toast-body"><p class="toast-msg">${escapeHtml(message)}</p>${actionsHtml}</div>`;
   const dismiss = () => {
     if (el.dataset.leaving === "1") return;
     el.dataset.leaving = "1";
     window.setTimeout(() => el.remove(), 170);
   };
-  el.addEventListener("click", dismiss);
+  el.querySelectorAll<HTMLButtonElement>("[data-toast-action]").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const id = btn.dataset.toastAction;
+      const action = actions?.find((a) => a.id === id);
+      dismiss();
+      action?.run();
+    });
+  });
+  el.addEventListener("click", (ev) => {
+    if ((ev.target as HTMLElement).closest("[data-toast-action]")) return;
+    dismiss();
+  });
   host.appendChild(el);
-  window.setTimeout(dismiss, ms);
+  window.setTimeout(dismiss, actions?.length ? Math.max(ms, 7200) : ms);
+}
+
+/** Classify current gate for actionable toasts (avoid “official path” for local Auto). */
+function gateToastKind(cur: PublishView["current"]): "continue" | "open" | "confirm" {
+  if (!cur) return "confirm";
+  const kind = (cur.kind ?? "").toLowerCase();
+  const id = (cur.id ?? "").toLowerCase();
+  if (kind === "auto" || id === "configure" || id === "doctor" || id === "dry_run") {
+    return "continue";
+  }
+  if (isScopesStep(cur)) return "confirm";
+  if (
+    kind === "oauth" ||
+    kind === "list" ||
+    kind === "deploy" ||
+    kind === "check" ||
+    Boolean(cur.entry_url)
+  ) {
+    return "open";
+  }
+  if (kind === "sign" && id.includes("release") && !id.includes("dry")) return "open";
+  if (kind === "human") {
+    // Local file / pack gates — Confirm after Verify, not vendor Open.
+    if (id.includes("legal") || id.includes("trust") || id.includes("scope")) return "confirm";
+    return "open";
+  }
+  if (cur.run?.length && kind !== "human") return "continue";
+  return "confirm";
+}
+
+function polishShipctlUserMessage(raw: string): string | null {
+  const t = raw.trim();
+  if (!t) return null;
+  if (/after Open\/Run succeeds.*publish confirm/i.test(t)) {
+    return "This step still needs Confirm after you finish Open / Run.";
+  }
+  if (/use confirm for this step/i.test(t)) {
+    return "Use Confirm on Publish when this step is ready.";
+  }
+  if (/Confirm or Verify|still pending/i.test(t)) {
+    return null; // handled by toastPublishGatePending
+  }
+  if (/unknown provider/i.test(t)) {
+    return "That provider has no Portal steps — use Open dashboard on Platforms instead.";
+  }
+  // Drop raw CLI invocations from operator-facing toasts.
+  if (/^shipctl\b/i.test(t) || /\bshipctl publish\b/i.test(t)) {
+    return "Finish the current checkpoint on Publish, then Confirm.";
+  }
+  return t;
+}
+
+/** Providers accepted by `shipctl portal --provider`. */
+const PORTAL_PROVIDER_IDS = new Set([
+  "cloudflare",
+  "vercel",
+  "netlify",
+  "github",
+  "polar",
+  "neon",
+  "supabase",
+  "d1",
+  "turso",
+  "container",
+  "firebase",
+  "appwrite",
+  "convex",
+  "fly",
+  "railway",
+  "render",
+  "digitalocean",
+  "gumroad",
+  "lemon",
+  "stripe",
+  "paddle",
+  "heroku",
+  "amplify",
+  "cloudrun",
+  "azurestatic",
+]);
+
+function isPortalProvider(id: string | null | undefined): boolean {
+  return Boolean(id && PORTAL_PROVIDER_IDS.has(id.toLowerCase()));
+}
+
+function cmdFailDetail(result: CmdResult): string {
+  const raw = `${result.stderr}\n${result.stdout}`.trim();
+  const polished = polishShipctlUserMessage(raw);
+  if (polished) return polished.slice(0, 160);
+  const line =
+    raw
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .find((l) => !l.startsWith("{") && !l.startsWith("[")) || raw;
+  return (line || `exit ${result.code}`).slice(0, 160);
+}
+
+function isSoftCmdFailure(result: CmdResult): boolean {
+  const err = `${result.stderr}\n${result.stdout}`.trim();
+  return /Confirm or Verify|still pending|unknown provider|not a directory/i.test(err);
+}
+
+async function openPortalLoginTerminal(provider: string) {
+  const project = projectPath();
+  if (!project) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  if (!isPortalProvider(provider)) {
+    toast("No CLI login for this provider — use Open on the step URL", "info");
+    return;
+  }
+  try {
+    await invoke("open_portal_login_terminal", { project, provider });
+    appendStream({
+      stream: "meta",
+      text: `Launched terminal: shipctl portal --provider ${provider} --login — complete OAuth there.`,
+    });
+    toast(`Login CLI opened for ${provider} — finish in the terminal`, "ok", 5500);
+  } catch (e) {
+    toast(String(e), "err", 7000);
+  }
+}
+
+/** Pending Next / pause — offer the right next action, not a Verify red herring on Auto steps. */
+function toastPublishGatePending() {
+  const cur = lastPublish?.current;
+  const gate = gateToastKind(cur);
+  const related = (cur?.desktop_view ?? "").trim();
+  const title = cur?.title
+    ? cur.title.replace(/\s*—\s*.*$/, "").trim() || cur.title
+    : "this step";
+  const actions: ToastAction[] = [];
+
+  if (gate === "continue") {
+    actions.push({
+      id: "continue",
+      label: "Continue",
+      icon: "continue",
+      run: () => {
+        setView("publish");
+        if (publishUiMode() === "stages") {
+          const primary = document.querySelector<HTMLButtonElement>("#btn-stage-primary");
+          if (primary && !primary.disabled) {
+            primary.click();
+            return;
+          }
+        }
+        document.querySelector<HTMLButtonElement>("#btn-publish-continue")?.click();
+      },
+    });
+    toast(
+      `«${title}» is automatic — press Continue. Studio checks locally and advances; you don’t need Verify.`,
+      "info",
+      7500,
+      actions,
+    );
+    return;
+  }
+
+  if (gate === "open") {
+    const openLabel =
+      (cur?.kind ?? "").toLowerCase() === "oauth"
+        ? "Sign in"
+        : related && RELATED_VIEW_LABELS[related]
+          ? RELATED_VIEW_LABELS[related]
+          : "Open step";
+    actions.push({
+      id: "open",
+      label: openLabel,
+      icon: "open",
+      run: () => {
+        setView("publish");
+        if (publishUiMode() === "stages") {
+          const primary = document.querySelector<HTMLButtonElement>("#btn-stage-primary");
+          if (primary?.dataset.stageAction === "open") {
+            primary.click();
+            return;
+          }
+        }
+        document.querySelector<HTMLButtonElement>("#btn-publish-open")?.click();
+      },
+    });
+  }
+
+  if (gate === "confirm" || gate === "open") {
+    actions.push({
+      id: "confirm",
+      label: "Confirm",
+      icon: "confirm",
+      run: () => {
+        setView("publish");
+        if (publishUiMode() === "stages") {
+          const primary = document.querySelector<HTMLButtonElement>("#btn-stage-primary");
+          if (primary?.dataset.stageAction === "confirm" && !primary.disabled) {
+            primary.click();
+            return;
+          }
+        }
+        document.querySelector<HTMLButtonElement>("#btn-publish-confirm")?.click();
+      },
+    });
+  }
+
+  // Verify only when Confirm/Open is the honesty path — not for Auto Continue.
+  if (gate === "confirm") {
+    actions.unshift({
+      id: "verify",
+      label: "Verify",
+      icon: "verify",
+      run: () => {
+        setView("publish");
+        void publishAction(["verify"]);
+      },
+    });
+  }
+
+  const message =
+    gate === "open"
+      ? `Finish «${title}» on the official site, then come back and Confirm.`
+      : `Confirm «${title}» when ready (Verify checks local evidence first).`;
+
+  toast(message, "err", 8000, actions);
 }
 
 function appendStream(line: StreamLine) {
@@ -490,6 +1488,293 @@ function appendStream(line: StreamLine) {
     out.scrollTop = out.scrollHeight;
   }
   syncOutputMirror();
+}
+
+type StatusProbeState = "checking" | "ok" | "missing" | "guide";
+
+type StatusProbeRow = {
+  id: "self-sign" | "official-sign" | "deploy";
+  label: string;
+  state: StatusProbeState;
+  detail: string;
+  suggestion: string;
+  badge: string;
+  action?: { id: string; label: string };
+  actions?: Array<{ id: string; label: string }>;
+};
+
+function statusProbeIcon(id: StatusProbeRow["id"]): string {
+  if (id === "self-sign") {
+    return `<svg class="status-probe-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.2 2.4a3.2 3.2 0 0 0-2.3 5.4l-6.7 6.7v4.2h4.2l1.1-1.1v-1.6h1.6v-1.6h1.6l2.4-2.4a3.2 3.2 0 1 0-1.9-9.6zm0 1.8a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8z"/></svg>`;
+  }
+  if (id === "official-sign") {
+    return `<svg class="status-probe-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4.5 4.2h15v2.2H4.5zm1.8 3.8h11.4v11.2c0 .7-.5 1.2-1.2 1.2H7.5c-.7 0-1.2-.5-1.2-1.2zm3.2 2.4v1.8h4.8V10.4zm0 3.4v1.8h3.2v-1.8z"/></svg>`;
+  }
+  return `<svg class="status-probe-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.4 12.1 19.8 4.6l-3.4 15.2-4.1-4.7-3.2 3.1v-4.4l-5.7-1.7zm8.3 1.1 2.2 2.5 1.8-8.1-9.1 4.2z"/></svg>`;
+}
+
+function bindStatusProbeActions(host: HTMLElement) {
+  host.querySelectorAll<HTMLButtonElement>("[data-probe-action]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const action = btn.dataset.probeAction;
+      if (action === "open-sign") {
+        setView("sign");
+        return;
+      }
+      if (action === "view-paths" || action === "choose-platform") {
+        openPlatformsCatalog({ preferGroup: "Official signing", selectId: "apple-sign" });
+        return;
+      }
+      if (action === "choose-host") {
+        openPlatformsCatalog({
+          preferGroup: "Hosting",
+          selectId: preferredHostingPlatformId(lastDetected) ?? "orbit",
+        });
+        return;
+      }
+      if (action === "intent-local") {
+        applyShipIntent("local", { rebuild: true });
+        toast("Local intent — hosted deploy / live check omitted", "ok", 4500);
+        return;
+      }
+      if (action === "recheck") {
+        void refreshStatusProbes({
+          animate: true,
+          views: host.id === "status-probe-publish" ? ["publish"] : ["sign"],
+        });
+      }
+    });
+  });
+}
+
+function renderStatusProbe(
+  host: HTMLElement | null,
+  opts: { title: string; phase: "checking" | "ready"; rows: StatusProbeRow[]; compact?: boolean },
+) {
+  if (!host) return;
+  host.hidden = false;
+  host.classList.toggle("status-probe-compact", Boolean(opts.compact));
+  host.dataset.phase = opts.phase;
+  const rowsHtml = opts.rows
+    .map((r) => {
+      const acts = r.actions ?? (r.action ? [r.action] : []);
+      const actionHtml = acts
+        .map(
+          (a) =>
+            `<button type="button" class="status-probe-cta" data-probe-action="${escapeHtml(a.id)}">${escapeHtml(a.label)}</button>`,
+        )
+        .join("");
+      return `<article class="status-probe-card" data-state="${escapeHtml(r.state)}" data-probe-id="${escapeHtml(r.id)}">
+        <div class="status-probe-card-top">
+          <span class="status-probe-glyph" aria-hidden="true">${statusProbeIcon(r.id)}</span>
+          <span class="status-probe-badge">${escapeHtml(r.badge)}</span>
+        </div>
+        <h4 class="status-probe-label">${escapeHtml(r.label)}</h4>
+        <p class="status-probe-detail">${escapeHtml(r.detail)}</p>
+        <p class="status-probe-suggest">${escapeHtml(r.suggestion)}</p>
+        ${actionHtml ? `<div class="status-probe-ctas">${actionHtml}</div>` : ""}
+      </article>`;
+    })
+    .join("");
+  const headLabel =
+    opts.phase === "checking" ? "Running local probe…" : escapeHtml(opts.title);
+  const scriptHint =
+    opts.phase === "checking"
+      ? `<span class="status-probe-script" aria-hidden="true">shipctl pulse · sign-paths</span>`
+      : `<button type="button" class="status-probe-recheck" data-probe-action="recheck">Check again</button>`;
+  host.innerHTML = `<div class="status-probe-head" data-phase="${opts.phase}">
+      <div class="status-probe-head-main">
+        <span class="status-probe-spinner" aria-hidden="true"></span>
+        <div>
+          <span class="status-probe-kicker">Inspection</span>
+          <span class="status-probe-title">${headLabel}</span>
+        </div>
+      </div>
+      ${scriptHint}
+    </div>
+    <div class="status-probe-lanes">${rowsHtml}</div>`;
+  bindStatusProbeActions(host);
+}
+
+function buildSignDeployProbeRows(
+  plan: SignPortal | null,
+  pulse: ProjectPulse | null,
+): StatusProbeRow[] {
+  const signetOk = Boolean(pulse?.tools?.signet_found);
+  const signetLoc = pulse?.tools?.signet_version;
+  const selfPaths = (plan?.paths ?? []).filter((p) => (p.kind ?? "") === "self");
+  const official = (plan?.paths ?? []).filter((p) => (p.kind ?? "") === "official");
+  const rows: StatusProbeRow[] = [
+    {
+      id: "self-sign",
+      label: "Self-sign",
+      state: signetOk ? "ok" : "missing",
+      badge: signetOk ? "Ready" : "Needs setup",
+      detail: signetOk
+        ? `Signet ready${signetLoc ? ` · ${signetLoc}` : ""}${
+            selfPaths.length ? ` · ${selfPaths.length} path(s)` : ""
+          }`
+        : "Signet not on PATH — needed for local desktop cuts",
+      suggestion: signetOk
+        ? "Ready for local desktop cuts"
+        : "Install Signet, then Check again",
+      action: signetOk
+        ? { id: "open-sign", label: "Open Sign" }
+        : { id: "recheck", label: "Check again" },
+    },
+  ];
+  if (official.length) {
+    const names = official
+      .map((p) => p.title ?? p.id ?? "")
+      .filter(Boolean)
+      .slice(0, 4)
+      .join(" · ");
+    rows.push({
+      id: "official-sign",
+      label: "Official signing",
+      state: "guide",
+      badge: "Guide",
+      detail: `${names}${official.length > 4 ? "…" : ""} — finish on vendor UIs`,
+      suggestion: "Apple / Microsoft / store — Studio guides; never auto-Done",
+      action: { id: "choose-platform", label: "Choose platform" },
+    });
+  } else {
+    rows.push({
+      id: "official-sign",
+      label: "Official signing",
+      state: "guide",
+      badge: "Optional",
+      detail: "No store lanes for this layout",
+      suggestion: "Self-sign is enough unless you ship App Store / MSIX",
+      action: { id: "choose-platform", label: "Choose platform" },
+    });
+  }
+
+  const dep = pulse?.deploy;
+  const deployOk =
+    dep?.last_run_ok === true ||
+    dep?.signal === "last_run_ok" ||
+    dep?.signal === "orbit_deployed" ||
+    (dep?.urls?.length ?? 0) > 0;
+  const linked =
+    dep?.signal === "vercel_linked" || dep?.signal === "orbit_configured";
+  const deployActions: Array<{ id: string; label: string }> = [
+    { id: "choose-host", label: "Choose host" },
+  ];
+  if (!deployOk && !linked) {
+    deployActions.push({ id: "intent-local", label: "Use Local" });
+  }
+  rows.push({
+    id: "deploy",
+    label: "Deploy",
+    state: deployOk ? "ok" : linked ? "guide" : "missing",
+    badge: deployOk ? "Ready" : linked ? "Linked" : "No signal",
+    detail: deployOk
+      ? dep?.urls?.[0] || dep?.detail || "Prior deploy evidence found"
+      : linked
+        ? dep?.detail || "Host linked — deploy when releasing"
+        : dep?.detail || "No Orbit / last-run / host link yet",
+    suggestion: deployOk
+      ? "Prior evidence found — redeploy when you cut again"
+      : linked
+        ? "Configured locally — run deploy on release"
+        : "No hosted URL yet — pick a host, or Use Local for desktop-only",
+    actions: deployActions,
+  });
+  return rows;
+}
+
+function checkingProbeRows(): StatusProbeRow[] {
+  return [
+    {
+      id: "self-sign",
+      label: "Self-sign",
+      state: "checking",
+      badge: "Probing",
+      detail: "Looking for Signet…",
+      suggestion: "Reading local tools",
+    },
+    {
+      id: "official-sign",
+      label: "Official signing",
+      state: "checking",
+      badge: "Probing",
+      detail: "Scanning Apple / Windows / store lanes…",
+      suggestion: "Layout only — no vendor login",
+    },
+    {
+      id: "deploy",
+      label: "Deploy",
+      state: "checking",
+      badge: "Probing",
+      detail: "Checking last-run / host signals…",
+      suggestion: "Pulse deploy evidence",
+    },
+  ];
+}
+
+async function refreshStatusProbes(opts?: { animate?: boolean; views?: Array<"sign" | "publish"> }) {
+  const views = opts?.views ?? ["sign", "publish"];
+  const animate = opts?.animate !== false;
+  const signHost = document.querySelector<HTMLElement>("#status-probe-sign");
+  const pubHost = document.querySelector<HTMLElement>("#status-probe-publish");
+
+  if (animate) {
+    if (views.includes("sign") && signHost) {
+      renderStatusProbe(signHost, {
+        title: "Sign & deploy",
+        phase: "checking",
+        rows: checkingProbeRows(),
+      });
+    }
+    if (views.includes("publish") && pubHost && projectPath()) {
+      renderStatusProbe(pubHost, {
+        title: "Sign & deploy",
+        phase: "checking",
+        rows: checkingProbeRows(),
+        compact: true,
+      });
+    }
+    await new Promise((r) => window.setTimeout(r, 420));
+  }
+
+  if (!projectPath()) {
+    if (signHost) signHost.hidden = true;
+    if (pubHost) pubHost.hidden = true;
+    return;
+  }
+
+  let plan = (await loadJsonCmd(["sign-paths", "--project", projectPath()])) as SignPortal | null;
+  if (!plan && views.includes("sign")) {
+    plan = null;
+  }
+  if (views.includes("sign") && plan) applySignPaths(plan);
+
+  // Pulse may already be warm from Dashboard; refresh lightly if missing tools.
+  if (!lastPulse?.tools && projectPath()) {
+    const pulse = (await loadJsonCmd(["pulse", "--project", projectPath()])) as ProjectPulse | null;
+    if (pulse) {
+      lastPulse = pulse;
+      applyPulse(pulse);
+    }
+  }
+
+  const rows = buildSignDeployProbeRows(plan, lastPulse);
+  if (views.includes("sign") && signHost) {
+    renderStatusProbe(signHost, {
+      title: "Sign & deploy",
+      phase: "ready",
+      rows,
+    });
+  }
+  if (views.includes("publish") && pubHost) {
+    renderStatusProbe(pubHost, {
+      title: "Sign & deploy",
+      phase: "ready",
+      rows,
+      compact: true,
+    });
+  }
 }
 
 
@@ -514,10 +1799,78 @@ function afterPaint(fn: () => void) {
   });
 }
 
+const NAV_SECTION_DEFAULTS: Record<string, boolean> = {
+  ship: true,
+  targets: true,
+  platforms: true,
+  integrations: true,
+  more: true,
+  run: true,
+};
+
+const VIEW_TO_NAV_SECTION: Record<string, string> = {
+  dashboard: "ship",
+  publish: "ship",
+  sign: "ship",
+  env: "ship",
+  scopes: "targets",
+  platforms: "platforms",
+  integrations: "integrations",
+  assist: "more",
+  launch: "more",
+  portal: "more",
+  ritual: "more",
+  tools: "more",
+  output: "run",
+};
+
+function loadNavSectionState(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(NAV_SECTIONS_KEY);
+    if (!raw) return { ...NAV_SECTION_DEFAULTS };
+    const parsed = JSON.parse(raw) as Record<string, boolean>;
+    return { ...NAV_SECTION_DEFAULTS, ...parsed };
+  } catch {
+    return { ...NAV_SECTION_DEFAULTS };
+  }
+}
+
+function saveNavSectionState(state: Record<string, boolean>) {
+  localStorage.setItem(NAV_SECTIONS_KEY, JSON.stringify(state));
+}
+
+function wireNavSections() {
+  const state = loadNavSectionState();
+  document.querySelectorAll<HTMLDetailsElement>("details.nav-section[data-nav-section]").forEach((el) => {
+    const id = el.dataset.navSection;
+    if (!id) return;
+    el.open = state[id] !== false;
+    el.addEventListener("toggle", () => {
+      const next = loadNavSectionState();
+      next[id] = el.open;
+      saveNavSectionState(next);
+    });
+  });
+}
+
+function ensureNavSectionOpen(viewId: string) {
+  const sectionId = VIEW_TO_NAV_SECTION[viewId];
+  if (!sectionId) return;
+  const el = document.querySelector<HTMLDetailsElement>(
+    `details.nav-section[data-nav-section="${sectionId}"]`,
+  );
+  if (!el || el.open) return;
+  el.open = true;
+  const next = loadNavSectionState();
+  next[sectionId] = true;
+  saveNavSectionState(next);
+}
+
 function setView(id: string) {
   if (!VIEW_META[id]) return;
   const prev = activeViewId;
   activeViewId = id;
+  ensureNavSectionOpen(id);
   document.querySelectorAll<HTMLElement>(".view").forEach((el) => {
     const on = el.dataset.view === id;
     el.classList.toggle("active", on);
@@ -538,15 +1891,28 @@ function setView(id: string) {
   syncBackToPublish();
   if (id === "output") syncOutputMirror();
   if (id === "integrations") renderIntegrations();
+  if (id === "platforms") renderPlatforms();
   if (id === "integrations" || prev === "integrations") highlightSidebarIntegration();
+  if (id === "platforms" || prev === "platforms") highlightSidebarPlatforms();
+  if (id === "sign" && projectPath()) {
+    afterPaint(() => {
+      void refreshStatusProbes({ views: ["sign"], animate: true });
+    });
+  }
+  if (id === "publish" && projectPath()) {
+    afterPaint(() => {
+      void refreshStatusProbes({ views: ["publish"], animate: !lastPulse?.tools });
+    });
+  }
 }
 
 function highlightSidebarIntegration() {
-  document.querySelectorAll<HTMLButtonElement>("#sidebar-integrations [data-side-int]").forEach((btn) => {
-    const on =
-      btn.getAttribute("data-side-int") === selectedIntegration && activeViewId === "integrations";
-    btn.classList.toggle("is-on", on);
-  });
+  highlightProviderSidebar(
+    "#sidebar-integrations",
+    "data-side-int",
+    selectedIntegration,
+    activeViewId === "integrations",
+  );
 }
 
 
@@ -614,6 +1980,13 @@ function commandItems(): CmdItem[] {
       keywords: "payment email polar stripe resend wizard",
       group: "Navigate",
       run: () => setView("integrations"),
+    },
+    {
+      id: "nav-platforms",
+      title: "Go to Platforms",
+      keywords: "deploy host vercel cloudflare netlify orbit apple microsoft signing",
+      group: "Navigate",
+      run: () => openPlatformsCatalog(),
     },
     {
       id: "nav-ritual",
@@ -940,6 +2313,7 @@ function syncProjectIdentity() {
   const boundEl = document.querySelector<HTMLElement>("#session-bound");
   if (empty) empty.hidden = bound;
   if (boundEl) boundEl.hidden = !bound;
+  syncWorkflowCards();
   const sessionName = document.querySelector("#session-name");
   const sessionPath = document.querySelector("#session-path");
   const sessionKind = document.querySelector("#session-kind");
@@ -1011,19 +2385,37 @@ async function openPortalProvider(provider: string) {
     toast("Bind a project first", "info");
     return;
   }
+  if (!isPortalProvider(provider)) {
+    toast(
+      `No Portal plan for «${provider}» — use Open dashboard on Platforms`,
+      "info",
+      5500,
+    );
+    return;
+  }
   portalFilter = provider;
-  const result = await run(
-    ["portal", "--project", project, "--provider", provider],
-    { step: "portal" },
-  );
-  if (!result?.ok || !result.stdout) return;
+  setView("portal");
+  const result = await run(["portal", "--project", project, "--provider", provider], {
+    step: "portal",
+    quietToast: true,
+  });
+  if (!result) {
+    toast("Portal busy — Cancel to unlock, then retry", "err");
+    return;
+  }
+  if (!result.ok || !result.stdout.trim()) {
+    toast(`Portal · ${provider}: ${cmdFailDetail(result)}`, "err", 8000);
+    return;
+  }
   try {
     const plan = JSON.parse(result.stdout) as PortalPlan;
     applyPortalPlan(plan);
     setStep("portal", "done");
     toast(`Portal · ${provider}`, "ok");
   } catch {
-    /* plan already in output */
+    toast(`Portal · ${provider}: could not parse plan — open Preview`, "err", 7000, [
+      { id: "preview", label: "Preview log", icon: "open", run: () => openOutputPreview() },
+    ]);
   }
 }
 
@@ -1038,6 +2430,8 @@ function setupPolarPortal() {
 
 
 let selectedIntegration = "polar";
+let selectedPlatform = "orbit";
+let platformsPreferGroup: string | null = null;
 
 function integrationAllowed(wiz: IntegrationWizard): boolean {
   if (!projectPath()) return false;
@@ -1045,35 +2439,27 @@ function integrationAllowed(wiz: IntegrationWizard): boolean {
   return true;
 }
 
+function platformLocked(wiz: (typeof PLATFORM_WIZARDS)[number]): boolean {
+  return Boolean(wiz.needsPublic && shipIntent() !== "public");
+}
+
 function renderIntegrations() {
   const host = document.querySelector<HTMLElement>("#integrations-catalog");
   if (!host) return;
-  const groups = ["Payments", "Email"] as const;
-  host.innerHTML = groups
-    .map((group) => {
-      const cards = INTEGRATION_WIZARDS.filter((w) => w.group === group)
-        .map((w) => {
-          const locked = w.needsPublic && shipIntent() !== "public";
-          return `<button type="button" class="int-card${selectedIntegration === w.id ? " is-active" : ""}" data-int="${escapeHtml(w.id)}" ${locked ? 'data-locked="true"' : ""}>
-            ${integrationIconHtml(w.id)}
-            <span class="int-card-title">${escapeHtml(w.title)}</span>
-            <span class="int-card-blurb">${escapeHtml(w.blurb)}</span>
-          </button>`;
-        })
-        .join("");
-      return `<section class="int-group"><h2>${group}</h2><div class="int-grid">${cards}</div></section>`;
-    })
-    .join("");
-  host.querySelectorAll<HTMLButtonElement>("[data-int]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-int");
-      if (!id) return;
-      if (btn.dataset.locked === "true") {
+  renderProviderCatalogGrid({
+    host,
+    entries: INTEGRATION_WIZARDS,
+    groups: ["Payments", "Email"],
+    selectedId: selectedIntegration,
+    iconHtml: integrationIconHtml,
+    isLocked: (w) => w.needsPublic && shipIntent() !== "public",
+    onSelect: (id, locked) => {
+      if (locked) {
         toast("Payment wizards need Public intent", "info");
         return;
       }
       selectIntegration(id);
-    });
+    },
   });
   paintIntegrationWizard();
 }
@@ -1098,20 +2484,133 @@ function selectIntegration(id: string) {
 }
 
 function paintIntegrationWizard() {
-  const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration);
-  const panel = document.querySelector<HTMLElement>("#integrations-wizard");
-  if (!panel || !wiz) return;
-  panel.hidden = false;
-  const title = document.querySelector("#int-wizard-title");
-  const blurb = document.querySelector("#int-wizard-blurb");
-  const steps = document.querySelector("#int-wizard-steps");
-  const portalBtn = document.querySelector<HTMLButtonElement>("#int-portal-steps");
-  if (title) title.textContent = wiz.title;
-  if (blurb) blurb.textContent = wiz.blurb;
-  if (steps) {
-    steps.innerHTML = wiz.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("");
+  const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration) ?? null;
+  paintProviderWizard({
+    entry: wiz,
+    panel: document.querySelector<HTMLElement>("#integrations-wizard"),
+    titleEl: document.querySelector("#int-wizard-title"),
+    blurbEl: document.querySelector("#int-wizard-blurb"),
+    stepsEl: document.querySelector("#int-wizard-steps"),
+    secondaryBtn: document.querySelector<HTMLButtonElement>("#int-portal-steps"),
+    secondaryVisible: Boolean(wiz?.provider && isPortalProvider(wiz.provider)),
+  });
+}
+
+function preferredHostingPlatformId(detected?: Detected | null): string | null {
+  if (!detected) return null;
+  // Orbit-deploy hosts first (Tier A), then CLI hosts, Pages, Orbit.
+  if (detected.wrangler) return "cloudflare";
+  if (detected.vercel) return "vercel";
+  if (detected.netlify) return "netlify";
+  if (detected.fly) return "fly";
+  if (detected.railway) return "railway";
+  if (detected.marketing_site && (detected.marketing_host === "pages" || !detected.marketing_host)) {
+    return "github-pages";
   }
-  if (portalBtn) portalBtn.hidden = !wiz.provider;
+  if (detected.marketing_host === "pages") return "github-pages";
+  if (detected.orbit_configured) return "orbit";
+  return null;
+}
+
+function openPlatformsCatalog(opts?: { preferGroup?: string; selectId?: string }) {
+  if (opts?.preferGroup) platformsPreferGroup = opts.preferGroup;
+  const preferredHost = preferredHostingPlatformId(lastDetected);
+  if (opts?.selectId) selectedPlatform = opts.selectId;
+  else if (opts?.preferGroup === "Official signing") selectedPlatform = "apple-sign";
+  else if (opts?.preferGroup === "Hosting") selectedPlatform = preferredHost ?? "orbit";
+  else if (preferredHost) {
+    selectedPlatform = preferredHost;
+    platformsPreferGroup = "Hosting";
+  }
+  if (!projectPath()) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  setView("platforms");
+  selectPlatform(selectedPlatform);
+}
+
+function renderPlatforms() {
+  const host = document.querySelector<HTMLElement>("#platforms-catalog");
+  if (!host) return;
+  renderProviderCatalogGrid({
+    host,
+    entries: PLATFORM_WIZARDS,
+    groups: PLATFORM_GROUPS,
+    selectedId: selectedPlatform,
+    preferGroup: platformsPreferGroup,
+    iconHtml: providerIconHtml,
+    onSelect: (id) => {
+      selectPlatform(id);
+    },
+  });
+  paintPlatformWizard();
+}
+
+function selectPlatform(id: string) {
+  const wiz = PLATFORM_WIZARDS.find((w) => w.id === id);
+  if (!wiz) return;
+  if (!projectPath()) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  selectedPlatform = id;
+  if (wiz.group === "Hosting") platformsPreferGroup = "Hosting";
+  if (wiz.group === "Official signing") platformsPreferGroup = "Official signing";
+  if (activeViewId !== "platforms") setView("platforms");
+  else {
+    renderPlatforms();
+    highlightSidebarPlatforms();
+  }
+}
+
+function paintPlatformWizard() {
+  const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform) ?? null;
+  const showLocal = wiz?.group === "Hosting" && shipIntent() === "public";
+  paintProviderWizard({
+    entry: wiz,
+    panel: document.querySelector<HTMLElement>("#platforms-wizard"),
+    titleEl: document.querySelector("#plat-wizard-title"),
+    blurbEl: document.querySelector("#plat-wizard-blurb"),
+    stepsEl: document.querySelector("#plat-wizard-steps"),
+    openBtn: document.querySelector<HTMLButtonElement>("#plat-open"),
+    secondaryBtn: document.querySelector<HTMLButtonElement>("#plat-portal-steps"),
+    secondaryVisible: Boolean(wiz?.provider && isPortalProvider(wiz.provider)),
+    docsBtn: document.querySelector<HTMLButtonElement>("#plat-docs"),
+  });
+  const localBtn = document.querySelector<HTMLButtonElement>("#plat-use-local");
+  if (localBtn) localBtn.hidden = !showLocal;
+}
+
+function renderSidebarPlatforms() {
+  const host = document.querySelector<HTMLElement>("#sidebar-platforms");
+  if (!host) return;
+  renderProviderSidebarTree({
+    host,
+    entries: PLATFORM_WIZARDS,
+    groups: PLATFORM_GROUPS,
+    selectedId: selectedPlatform,
+    activeView: activeViewId === "platforms",
+    iconHtml: providerIconHtml,
+    dataAttr: "data-side-plat",
+    onSelect: (id) => {
+      if (!projectPath()) {
+        toast("Bind a project first", "info");
+        return;
+      }
+      setView("platforms");
+      selectPlatform(id);
+    },
+  });
+}
+
+function highlightSidebarPlatforms() {
+  highlightProviderSidebar(
+    "#sidebar-platforms",
+    "data-side-plat",
+    selectedPlatform,
+    activeViewId === "platforms",
+  );
 }
 
 function routeDetectChip(label: string) {
@@ -1121,10 +2620,27 @@ function routeDetectChip(label: string) {
       setupPolarPortal();
       return;
     case "wrangler":
+      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "cloudflare" });
+      return;
     case "vercel":
+      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "vercel" });
+      return;
     case "netlify":
+      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "netlify" });
+      return;
+    case "fly":
+      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "fly" });
+      return;
+    case "railway":
+      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "railway" });
+      return;
+    case "pages":
+    case "github pages":
+      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "github-pages" });
+      return;
     case "github":
-      void openPortalProvider(key === "wrangler" ? "cloudflare" : key);
+      // Auth/CI — Portal GitHub, not Pages card.
+      void openPortalProvider("github");
       return;
     case "package.json":
     case "signet.toml":
@@ -1135,7 +2651,7 @@ function routeDetectChip(label: string) {
       setView("sign");
       return;
     case "orbit":
-      setView("dashboard");
+      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "orbit" });
       return;
     default:
       setView("portal");
@@ -1176,7 +2692,12 @@ function setNowCtaState(state: string) {
         "One click — we open the right portals; you confirm each step.";
       break;
     case "continue":
-      hint.textContent = `Pick up the current step${minsNote}. Confirm when the vendor UI is done.`;
+      hint.textContent = (() => {
+        const summary = publishProgressSummary(lastPublish);
+        return summary
+          ? `${summary}. Continue Auto gates; Open/Confirm for required human work.`
+          : `Pick up the current step${minsNote}. Confirm when the vendor UI is done.`;
+      })();
       break;
     case "review":
       hint.textContent = "Open Publish to scan the completed pass or start another.";
@@ -1204,18 +2725,16 @@ function applyNow(view: PublishView | null) {
     return;
   }
   if (view?.finished) {
-    title.textContent = "Live check is done for this pass";
-    detail.textContent = `${projectName(path)} finished the publish portal. Switch project or start another pass from Publish.`;
+    title.textContent = "Required gates done for this pass";
+    detail.textContent = `${projectName(path)} — ${publishProgressSummary(view) || "All required gates done"}. Switch project or start another pass from Publish.`;
     setNowCtaState("review");
     return;
   }
   const cur = view?.current;
   if (cur?.title) {
-    const n = (view?.current_index ?? 0) + 1;
-    const total = view?.total ?? 0;
-    const mins = view?.minutes_remaining != null ? ` · ~${view.minutes_remaining} min left` : "";
+    const summary = publishProgressSummary(view);
     title.textContent = cur.title;
-    detail.textContent = `${cur.detail ?? "Open/Run on the official platform, then Confirm."} (${n}/${total}${mins})`;
+    detail.textContent = `${cur.detail ?? "Open/Run on the official platform, then Confirm."}${summary ? ` (${summary})` : ""}`;
     setNowCtaState("continue");
     return;
   }
@@ -1231,7 +2750,16 @@ function applyPulseNow(pulse: ProjectPulse) {
   const primary = document.querySelector<HTMLButtonElement>("#now-primary");
   const extra = document.querySelector<HTMLElement>("#now-extra");
   if (title) title.textContent = pulse.now?.title ?? "Ready";
-  if (detail) detail.textContent = pulse.now?.detail ?? "";
+  if (detail) {
+    const base = pulse.now?.detail ?? "";
+    const summary =
+      lastPublish?.steps?.length && !lastPublish.finished
+        ? publishProgressSummary(lastPublish)
+        : lastPublish?.finished
+          ? publishProgressSummary(lastPublish)
+          : "";
+    detail.textContent = summary && base ? `${base} · ${summary}` : base || summary;
+  }
   if (primary) {
     const raw = pulse.now?.primary?.label ?? "Start publishing";
     setCtaLabel(primary, polishCtaLabel(raw));
@@ -1280,7 +2808,6 @@ function classifyOverall(pulse: ProjectPulse): {
   const wantsSignet = (pulse.kind ?? "").toLowerCase().includes("desktop")
     || (pulse.kind ?? "").toLowerCase().includes("tauri");
   const signet = !!pulse.tools?.signet_found;
-  const orbit = !!pulse.tools?.orbit_found;
   const deployOk =
     pulse.deploy?.last_run_ok === true ||
     pulse.deploy?.signal === "last_run_ok" ||
@@ -1296,48 +2823,19 @@ function classifyOverall(pulse: ProjectPulse): {
   const midWizard =
     (pub?.present && !pub.finished) || (launch?.present && !launch.finished);
 
-  // Mid-wizard / prior Cloudflare·Vercel deploy never hard-block on Orbit.
-  const toolsBlocked =
-    wantsSignet && (!signet || (!orbit && !linked && !deployOk && !midWizard));
+  // Hard-block only when Signet is required and missing. Orbit is a soft cue.
+  const toolsBlocked = wantsSignet && !signet;
 
   if (toolsBlocked) {
     return {
       state: "blocked",
       badge: "Blocked",
-      title: "Tools missing",
-      detail: "Signet and/or Orbit not on PATH — run Doctor before shipping desktop.",
+      title: "Signet missing",
+      detail: "Signet not on PATH — run Doctor before a desktop cut.",
     };
   }
-  if (deployOk) {
-    return {
-      state: "deployed",
-      badge: "Deployed",
-      title:
-        pulse.deploy?.signal === "orbit_deployed"
-          ? "Already live (Orbit)"
-          : "Already deployed",
-      detail:
-        pulse.deploy?.urls?.[0] ||
-        pulse.deploy?.detail ||
-        "Prior successful deploy — redeploy only if you intend to.",
-    };
-  }
-  if (linked && !midWizard) {
-    return {
-      state: "ready",
-      badge: "Linked",
-      title: "Provider linked",
-      detail: pulse.deploy?.detail || "Configured locally — deploy when you need a new release.",
-    };
-  }
-  if (localOnly && !midWizard) {
-    return {
-      state: "ready",
-      badge: "Local only",
-      title: "Wrangler local state",
-      detail: "Dev/miniflare cache — not proof of a remote Workers deploy.",
-    };
-  }
+
+  // Mid-flight wins over prior deploy evidence (GIF / Dashboard honesty).
   if (
     midWizard &&
     (stepId.includes("list") ||
@@ -1354,13 +2852,47 @@ function classifyOverall(pulse: ProjectPulse): {
     };
   }
   if (midWizard) {
+    const idx = pub?.present
+      ? `${(pub.current_index ?? 0) + 1}/${pub.total ?? 0}`
+      : `${(launch?.current_index ?? 0) + 1}/${launch?.total ?? 0}`;
     return {
       state: "progress",
       badge: "In progress",
       title: pub?.current_title || launch?.current_title || "Wizard in flight",
       detail: pub?.present
-        ? `Publish ${(pub.current_index ?? 0) + 1}/${pub.total ?? 0}`
-        : `Launch ${(launch?.current_index ?? 0) + 1}/${launch?.total ?? 0}`,
+        ? `Publish ${idx} — Continue advances Auto gates`
+        : `Launch ${idx}`,
+    };
+  }
+
+  if (deployOk) {
+    return {
+      state: "deployed",
+      badge: "Deployed",
+      title:
+        pulse.deploy?.signal === "orbit_deployed"
+          ? "Already live (Orbit)"
+          : "Already deployed",
+      detail:
+        pulse.deploy?.urls?.[0] ||
+        pulse.deploy?.detail ||
+        "Prior successful deploy — redeploy only if you intend to.",
+    };
+  }
+  if (linked) {
+    return {
+      state: "ready",
+      badge: "Linked",
+      title: "Provider linked",
+      detail: pulse.deploy?.detail || "Configured locally — deploy when you need a new release.",
+    };
+  }
+  if (localOnly) {
+    return {
+      state: "ready",
+      badge: "Local only",
+      title: "Wrangler local state",
+      detail: "Dev/miniflare cache — not proof of a remote Workers deploy.",
     };
   }
   if (pulse.git?.dirty) {
@@ -1391,6 +2923,12 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
     (pulse.deploy?.urls?.length ?? 0) > 0;
   const wantsSignet = (pulse.kind ?? "").toLowerCase().includes("desktop")
     || (pulse.kind ?? "").toLowerCase().includes("tauri");
+  const localIntent = shipIntent() === "local";
+  const pub = pulse.publish;
+  const launch = pulse.launch;
+  const midWizard =
+    (pub?.present && !pub.finished) || (launch?.present && !launch.finished);
+
   if (signet && orbit) {
     items.push({
       id: "tools",
@@ -1398,6 +2936,16 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
       icon: "✓",
       title: "Tools ready",
       detail: "Signet + Orbit on PATH",
+    });
+  } else if (wantsSignet && signet) {
+    items.push({
+      id: "tools",
+      state: "done",
+      icon: "✓",
+      title: "Signet ready",
+      detail: localIntent
+        ? "Orbit optional for Local cuts"
+        : "Orbit optional until you host a Public deploy",
     });
   } else if (!wantsSignet && linked) {
     items.push({
@@ -1407,34 +2955,18 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
       title: "Worker tooling OK",
       detail: "Prior live deploy evidence — Orbit optional for this stack",
     });
-  } else if (!wantsSignet) {
-    items.push({
-      id: "tools",
-      state: "idle",
-      icon: "○",
-      title: "Orbit optional",
-      detail: `${signet ? "Signet ok" : "Signet n/a"} · ${orbit ? "Orbit ok" : "Orbit not required for Workers"}`,
-    });
-  } else {
+  } else if (wantsSignet && !signet) {
     items.push({
       id: "tools",
       state: "blocked",
       icon: "!",
-      title: "Tools incomplete",
-      detail: `${signet ? "Signet ok" : "Signet missing"} · ${orbit ? "Orbit ok" : "Orbit missing"}`,
+      title: "Signet missing",
+      detail: "Install Signet for local desktop cuts",
     });
   }
 
   const git = pulse.git;
-  if (!git?.is_repo) {
-    items.push({
-      id: "git",
-      state: "idle",
-      icon: "○",
-      title: "No git repo",
-      detail: "Optional — status is local-folder only",
-    });
-  } else if (git.dirty) {
+  if (git?.is_repo && git.dirty) {
     items.push({
       id: "git",
       state: "warn",
@@ -1442,20 +2974,8 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
       title: "Uncommitted changes",
       detail: `${git.dirty_count ?? "?"} dirty on ${git.branch ?? "branch"}`,
     });
-  } else {
-    items.push({
-      id: "git",
-      state: "done",
-      icon: "✓",
-      title: "Git clean",
-      detail: git.last_commit
-        ? `${git.last_commit.hash} — ${git.last_commit.subject}`
-        : (git.branch ?? "clean tree"),
-    });
   }
 
-  const pub = pulse.publish;
-  const launch = pulse.launch;
   if (pub?.present && !pub.finished) {
     items.push({
       id: "ship",
@@ -1463,14 +2983,6 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
       icon: "→",
       title: "Publish in progress",
       detail: `${pub.current_title ?? "Step"} · ${(pub.current_index ?? 0) + 1}/${pub.total ?? 0}`,
-    });
-  } else if (pub?.finished) {
-    items.push({
-      id: "ship",
-      state: "done",
-      icon: "✓",
-      title: "Publish pass finished",
-      detail: "Live check confirmed for this pass",
     });
   } else if (launch?.present && !launch.finished) {
     items.push({
@@ -1480,98 +2992,33 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
       title: "Launch in progress",
       detail: `${launch.current_title ?? "Step"} · ${(launch.current_index ?? 0) + 1}/${launch.total ?? 0}`,
     });
-  } else {
+  } else if (pub?.finished) {
     items.push({
       id: "ship",
-      state: "idle",
-      icon: "○",
-      title: "Ship not started",
-      detail: "Open Publish when you are ready",
-    });
-  }
-
-  const stepHint = (
-    pub?.current_id ||
-    pub?.current_title ||
-    launch?.current_title ||
-    ""
-  ).toLowerCase();
-  const pendingSubmission =
-    ((pub?.present && !pub.finished) || (launch?.present && !launch.finished)) &&
-    (stepHint.includes("list") ||
-      stepHint.includes("polar") ||
-      stepHint.includes("paste") ||
-      stepHint.includes("env") ||
-      stepHint.includes("secret") ||
-      stepHint.includes("oauth"));
-
-  if (pendingSubmission) {
-    items.push({
-      id: "submit",
-      state: "warn",
-      icon: "…",
-      title: "Pending submission",
-      detail: "Human gate — finish on the official platform, then Confirm",
-    });
-  } else if (pub?.finished || pulse.deploy?.last_run_ok) {
-    items.push({
-      id: "submit",
       state: "done",
       icon: "✓",
-      title: "Submission clear",
-      detail: "No open paste/listing gate in the current plan",
+      title: "Publish pass finished",
+      detail: "Live check confirmed for this pass",
     });
-  } else {
-    items.push({
-      id: "submit",
-      state: "idle",
-      icon: "○",
-      title: "No submission gate yet",
-      detail: "Appears when env, listing, or OAuth is the current step",
-    });
+  } else if (!midWizard) {
+    const dep = pulse.deploy;
+    const live =
+      dep?.last_run_ok === true ||
+      dep?.signal === "last_run_ok" ||
+      dep?.signal === "orbit_deployed" ||
+      (dep?.urls?.length ?? 0) > 0;
+    if (live) {
+      items.push({
+        id: "deploy",
+        state: "done",
+        icon: "✓",
+        title: "Prior deploy evidence",
+        detail: dep?.urls?.[0] || dep?.detail || "Last shipctl run succeeded",
+      });
+    }
   }
 
-  const dep = pulse.deploy;
-  const live =
-    dep?.last_run_ok === true ||
-    dep?.signal === "last_run_ok" ||
-    dep?.signal === "orbit_deployed" ||
-    (dep?.urls?.length ?? 0) > 0;
-  if (live) {
-    items.push({
-      id: "deploy",
-      state: "done",
-      icon: "✓",
-      title: "Already live",
-      detail: dep?.urls?.[0] || dep?.detail || "Prior successful deploy — skip redundant ship",
-    });
-  } else if (dep?.signal === "vercel_linked" || dep?.signal === "orbit_configured") {
-    items.push({
-      id: "deploy",
-      state: "active",
-      icon: "◇",
-      title: "Provider linked",
-      detail: dep.detail || "Configured — deploy when you need a new release",
-    });
-  } else if (dep?.signal === "wrangler_local") {
-    items.push({
-      id: "deploy",
-      state: "idle",
-      icon: "○",
-      title: "Local Wrangler only",
-      detail: "Dev/miniflare state — not a remote Workers deploy",
-    });
-  } else {
-    items.push({
-      id: "deploy",
-      state: "idle",
-      icon: "○",
-      title: "Not deployed yet",
-      detail: "No Orbit summary or last-run deploy signal",
-    });
-  }
-
-  return items;
+  return items.slice(0, 3);
 }
 
 function applyStatusBar(pulse: ProjectPulse | null) {
@@ -1726,9 +3173,27 @@ async function runPulseAction(id: string, view: string) {
     return;
   }
   if (id === "publish_continue") {
+    const cur = lastPublish?.current;
+    const pending = (cur?.status ?? "").toLowerCase() === "pending";
+    const kind = (cur?.kind ?? "").toLowerCase();
+    const pausedHuman =
+      pending &&
+      (kind === "human" ||
+        kind === "oauth" ||
+        kind === "deploy" ||
+        kind === "list" ||
+        kind === "check");
     setView("publish");
     if (!lastPublish?.steps?.length) await refreshPublish();
-    void publishContinue(12);
+    // Already paused at a honesty gate — open the checkpoint; do not re-Continue
+    // (that flashed Publish → related panel → yank).
+    if (pausedHuman) {
+      stageFocusIndex = lastPublish?.current_index ?? 0;
+      if (lastPublish) renderPublishStage(lastPublish);
+      toast("Finish this checkpoint on Publish, then Confirm", "info", 4500);
+      return;
+    }
+    void publishContinuePaced();
     return;
   }
   const target = view || "publish";
@@ -2019,29 +3484,69 @@ let lastScopes: ScopePlan | null = null;
 
 function applyScopes(plan: ScopePlan | null) {
   lastScopes = plan;
-  const grid = document.querySelector("#scope-grid");
-  if (grid) {
-    const scopes = plan?.scopes ?? [];
-    const active = new Set(plan?.active ?? []);
-    grid.innerHTML = scopes.length
-      ? scopes
-          .map((s) => {
-            const id = s.id ?? "";
-            const on = active.has(id) ? "checked" : "";
-            return `<label class="scope-card">
-            <input type="checkbox" data-scope-id="${escapeHtml(id)}" ${on} />
-            <div>
-              <strong>${escapeHtml(s.label ?? id)}</strong>
-              <span>${escapeHtml(s.kind ?? "")} · ${escapeHtml(s.relative ?? ".")}${
-                s.provider ? ` · ${escapeHtml(s.provider)}` : ""
-              }</span>
-            </div>
-          </label>`;
-          })
-          .join("")
-      : `<p class="detail empty-hint">No scopes detected.</p>`;
-  }
+  fillScopeGrids(plan);
   renderSidebarTargets();
+  syncStageScopesPrimary();
+}
+
+/** Enable Confirm & continue when inline Scopes has an active selection. */
+function syncStageScopesPrimary() {
+  if (publishUiMode() !== "stages" || !lastPublish) return;
+  const primaryBtn = document.querySelector<HTMLButtonElement>("#btn-stage-primary");
+  if (!primaryBtn || primaryBtn.dataset.stageAction !== "confirm") return;
+  if (!isScopesStep(lastPublish.current)) return;
+  const hasActive = (lastScopes?.active?.length ?? 0) > 0;
+  primaryBtn.disabled = running || !hasActive;
+  primaryBtn.title = hasActive
+    ? "Mark scopes done and advance"
+    : "Save at least one scope first";
+}
+
+async function detectScopes(opts?: { quiet?: boolean }) {
+  if (!projectPath()) return;
+  const plan = (await loadJsonCmd(["scopes", "--project", projectPath()])) as ScopePlan | null;
+  applyScopes(plan);
+  if (!opts?.quiet) toast(plan?.scopes?.length ? "Scopes detected" : "No scopes found", "ok");
+}
+
+async function saveScopes(opts?: { silentToast?: boolean }): Promise<boolean> {
+  const inline = stageScopesRoot();
+  const root =
+    inline && !inline.hidden
+      ? document.querySelector("#stage-scope-grid")
+      : document.querySelector("#scope-grid");
+  const ids = Array.from(
+    (root ?? document).querySelectorAll<HTMLInputElement>("[data-scope-id]:checked"),
+  ).map((el) => el.dataset.scopeId ?? "");
+  if (!ids.length) {
+    show("Select at least one scope.");
+    toast("Select at least one scope", "err");
+    return false;
+  }
+  const result = await run(
+    ["scopes", "--project", projectPath(), "set", "--ids", ids.join(",")],
+    { quietHeader: true },
+  );
+  if (result?.stdout) {
+    try {
+      applyScopes(JSON.parse(result.stdout) as ScopePlan);
+    } catch {
+      /* ignore */
+    }
+  }
+  if (!result?.ok) return false;
+  const onStage = Boolean(inline && !inline.hidden);
+  if (!opts?.silentToast) {
+    if (onStage) {
+      toast("Saved — Confirm & continue", "ok");
+    } else if (publishMidFlight()) {
+      setView("publish");
+      toast("Scopes saved — Confirm on Publish", "ok");
+    } else {
+      toast("Scopes saved", "ok");
+    }
+  }
+  return true;
 }
 
 function renderSidebarTargets() {
@@ -2115,63 +3620,23 @@ async function toggleSidebarTarget(id: string) {
 function renderSidebarIntegrations() {
   const host = document.querySelector<HTMLElement>("#sidebar-integrations");
   if (!host) return;
-  const groups = ["Payments", "Email"] as const;
-  host.innerHTML = groups
-    .map((group) => {
-      const rows = INTEGRATION_WIZARDS.filter((w) => w.group === group)
-        .map(
-          (w) =>
-            `<button type="button" class="nav-target${selectedIntegration === w.id && activeViewId === "integrations" ? " is-on" : ""}" data-side-int="${escapeHtml(w.id)}">
-              ${integrationIconHtml(w.id)}
-              <span class="nav-target-name">${escapeHtml(w.title)}</span>
-            </button>`,
-        )
-        .join("");
-      return `<p class="nav-kind">${group}</p>${rows}`;
-    })
-    .join("");
-  host.querySelectorAll<HTMLButtonElement>("[data-side-int]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-side-int");
-      if (!id) return;
+  renderProviderSidebarTree({
+    host,
+    entries: INTEGRATION_WIZARDS,
+    groups: ["Payments", "Email"],
+    selectedId: selectedIntegration,
+    activeView: activeViewId === "integrations",
+    iconHtml: integrationIconHtml,
+    dataAttr: "data-side-int",
+    onSelect: (id) => {
       if (!projectPath()) {
         toast("Bind a project first", "info");
         return;
       }
       setView("integrations");
       selectIntegration(id);
-    });
+    },
   });
-}
-
-async function saveScopes() {
-  const ids = Array.from(
-    document.querySelectorAll<HTMLInputElement>("[data-scope-id]:checked"),
-  ).map((el) => el.dataset.scopeId ?? "");
-  if (!ids.length) {
-    show("Select at least one scope.");
-    toast("Select at least one scope", "err");
-    return;
-  }
-  const result = await run(
-    ["scopes", "--project", projectPath(), "set", "--ids", ids.join(",")],
-    { quietHeader: true },
-  );
-  if (result?.stdout) {
-    try {
-      applyScopes(JSON.parse(result.stdout) as ScopePlan);
-    } catch {
-      /* ignore */
-    }
-  }
-  if (result?.ok) {
-    if (publishMidFlight()) {
-      setView("publish");
-      toast("Scopes saved — Confirm on Publish", "ok");
-    } else {
-      toast("Scopes saved", "ok");
-    }
-  }
 }
 
 function applyEnv(plan: EnvPortal | null) {
@@ -2227,6 +3692,7 @@ function applySignPaths(plan: SignPortal | null) {
       : `Recommended: ${plan.recommended.split("_").join(" ")}. Self-sign is local; official stays on vendor UIs.`;
   }
   const paths = plan?.paths ?? [];
+  const signetOk = Boolean(lastPulse?.tools?.signet_found);
   // Show submit paths after official certs for clearer dogfood order.
   const ordered = [...paths].sort((a, b) => {
     const rank = (k: string | undefined) =>
@@ -2239,9 +3705,17 @@ function applySignPaths(plan: SignPortal | null) {
           const url = p.entry_url ?? "";
           const runCmd = (p.run ?? []).join(" ");
           const kind = p.kind ?? "";
+          const status =
+            kind === "self"
+              ? signetOk
+                ? `<span class="kind kind-ok">ready</span>`
+                : `<span class="kind kind-missing">check</span>`
+              : kind === "official" || kind === "submit"
+                ? `<span class="kind kind-guide">guide</span>`
+                : "";
           return `<li class="portal-step">
             <div class="meta">
-              <div class="title"><span class="kind kind-${escapeHtml(kind)}">${escapeHtml(kind)}</span>${escapeHtml(p.title ?? "")}</div>
+              <div class="title"><span class="kind kind-${escapeHtml(kind)}">${escapeHtml(kind)}</span>${status}${escapeHtml(p.title ?? "")}</div>
               <p class="detail">${escapeHtml(p.detail ?? "")}${runCmd ? ` · ${escapeHtml(runCmd)}` : ""}</p>
             </div>
             <div class="btns">
@@ -2250,7 +3724,7 @@ function applySignPaths(plan: SignPortal | null) {
           </li>`;
         })
         .join("")
-    : `<li class="portal-step"><div class="meta"><p class="detail empty-hint">Load signing paths.</p></div></li>`;
+    : `<li class="portal-step"><div class="meta"><p class="detail empty-hint">Check status to load signing paths.</p></div></li>`;
   list.querySelectorAll<HTMLButtonElement>(".sign-open").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const url = btn.getAttribute("data-url");
@@ -2296,26 +3770,37 @@ function applyPortalPlan(plan: PortalPlan | null) {
   list.innerHTML = steps
     .map((s, idx) => {
       const url = s.entry_url ?? "";
+      const docs = s.docs_url ?? "";
       const cli = (s.cli ?? []).join(" ");
       const openDisabled = url ? "" : "disabled";
       const canLogin = s.kind === "oauth" || (s.cli && s.cli.length > 0);
-      const loginDisabled = canLogin ? "" : "disabled";
       return `<li class="portal-step" data-idx="${idx}">
         <div class="meta">
           <div class="title"><span class="kind">${escapeHtml(
             s.kind ?? "",
           )}</span>${escapeHtml(s.title ?? s.id ?? "step")}</div>
           <p class="detail">${escapeHtml(s.detail ?? "")}${
-            url ? ` · ${escapeHtml(url)}` : cli ? ` · ${escapeHtml(cli)}` : ""
+            cli && !url ? ` · ${escapeHtml(cli)}` : ""
           }</p>
         </div>
         <div class="btns">
           <button type="button" class="portal-open" data-url="${escapeHtml(
             url,
-          )}" ${openDisabled}>Open</button>
-          <button type="button" class="portal-login" data-provider="${escapeHtml(
-            s.provider ?? "",
-          )}" ${loginDisabled}>Login CLI</button>
+          )}" ${openDisabled} title="${escapeHtml(url || "No settings URL for this step")}">Open</button>
+          ${
+            docs
+              ? `<button type="button" class="portal-docs" data-url="${escapeHtml(
+                  docs,
+                )}" title="${escapeHtml(docs)}">Docs</button>`
+              : ""
+          }
+          ${
+            canLogin
+              ? `<button type="button" class="portal-login" data-provider="${escapeHtml(
+                  s.provider ?? "",
+                )}">Login CLI</button>`
+              : ""
+          }
         </div>
       </li>`;
     })
@@ -2327,18 +3812,17 @@ function applyPortalPlan(plan: PortalPlan | null) {
       if (url) await openUrl(url);
     });
   });
+  list.querySelectorAll<HTMLButtonElement>(".portal-docs").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-url");
+      if (url) await openUrl(url);
+    });
+  });
   list.querySelectorAll<HTMLButtonElement>(".portal-login").forEach((btn) => {
     btn.addEventListener("click", () => {
       const provider = btn.getAttribute("data-provider");
       if (!provider) return;
-      void run([
-        "portal",
-        "--project",
-        projectPath(),
-        "--provider",
-        provider,
-        "--login",
-      ]);
+      void openPortalLoginTerminal(provider);
     });
   });
 }
@@ -2479,25 +3963,76 @@ async function runHumanPortal(opts?: { openSources?: boolean }) {
   }
 }
 
-function applyPublishView(view: PublishView | null) {
+/** Studio panels opened from a publish step — prefer these over staying on Publish. */
+const PANEL_FIRST_VIEWS = new Set([
+  "scopes",
+  "env",
+  "sign",
+  "portal",
+  "ritual",
+  "tools",
+  "launch",
+  "dashboard",
+  "integrations",
+]);
+
+/** Related views worth leaving Publish for. Dashboard is not — it caused a bounce. */
+function shouldLeavePublishForRelated(related: string): boolean {
+  const id = related.trim();
+  if (!id || !RELATED_VIEW_LABELS[id] || id === "dashboard") return false;
+  return PANEL_FIRST_VIEWS.has(id);
+}
+
+async function navigatePublishStep(step: {
+  desktop_view?: string | null;
+  title?: string;
+  id?: string;
+}): Promise<boolean> {
+  const related = (step.desktop_view ?? "").trim();
+  if (!shouldLeavePublishForRelated(related)) return false;
+  const ok = await openRelatedStudioView(related);
+  if (ok) {
+    toast(
+      `${RELATED_VIEW_LABELS[related] ?? related} — finish, then Back to Publish → Confirm`,
+      "info",
+      4500,
+    );
+  }
+  return ok;
+}
+
+function applyPublishView(view: PublishView | null, opts?: { reveal?: boolean }) {
   lastPublish = view;
   const currentEl = document.querySelector<HTMLElement>("#publish-current");
   const list = document.querySelector<HTMLElement>("#publish-steps");
   const hint = document.querySelector<HTMLElement>("#publish-hint");
   const mins = document.querySelector<HTMLElement>("#publish-minutes");
+  const progress = document.querySelector<HTMLElement>("#publish-progress");
   if (!currentEl || !list) return;
   if (!view?.steps?.length) {
     currentEl.innerHTML =
-      '<p class="detail empty-hint">Refresh Publish to build the adaptive plan for this repo.</p>';
+      '<p class="detail empty-hint">Open a folder, then pick a workflow on the Dashboard — or Continue here.</p>';
     list.innerHTML = "";
     if (mins) mins.hidden = true;
+    if (progress) {
+      progress.hidden = true;
+      progress.textContent = "";
+      progress.removeAttribute("data-finished");
+    }
+    renderPublishStage(null);
+    syncWorkflowCards();
     syncPublishRelated();
     syncBackToPublish();
     syncPublishGateButtons();
     applyNow(view);
     return;
   }
-  setView("publish");
+  // Do not yank the operator off Scopes/Sign/Env after Open — only jump when asked or already on Publish.
+  const active =
+    document.querySelector<HTMLElement>(".view:not([hidden])")?.dataset.view ?? "";
+  if (opts?.reveal || active === "publish" || active === "") {
+    setView("publish");
+  }
   const cur = view.current;
   if (hint) {
     const modeLabel =
@@ -2517,35 +4052,52 @@ function applyPublishView(view: PublishView | null) {
             ? "Local"
             : "Public";
     hint.textContent = view.finished
-      ? "Publish workflow finished — live check confirmed."
-      : `${modeLabel} · ${intentLabel} · Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ~${view.minutes_remaining ?? 0} min left · ${view.done_count ?? 0} done — Continue Auto gates; Open/Confirm for human.`;
+      ? "Publish workflow finished — required gates for this pass are done."
+      : `${modeLabel} · ${intentLabel} — Continue Auto gates; Open/Confirm for human work. Verify = ${
+          verifyStatusLabel(cur?.verify_status) || "status probe"
+        } (no secrets).`;
   }
   if (mins) {
     mins.hidden = false;
     mins.textContent = `~${view.minutes_remaining ?? 0} min remaining · ${view.minutes_total ?? 0} min total`;
   }
+  if (progress) {
+    const summary = publishProgressSummary(view);
+    progress.hidden = !summary;
+    progress.textContent = summary;
+    progress.dataset.finished = view.finished ? "1" : "0";
+  }
+  const curRelated = (cur?.desktop_view ?? "").trim();
+  const curNav = curRelated && RELATED_VIEW_LABELS[curRelated];
+  if (curNav) {
+    currentEl.classList.add("launch-current-nav");
+    currentEl.dataset.desktopView = curRelated;
+    currentEl.setAttribute("role", "button");
+    currentEl.tabIndex = 0;
+    currentEl.title = `Open ${RELATED_VIEW_LABELS[curRelated] ?? curRelated}`;
+  } else {
+    currentEl.classList.remove("launch-current-nav");
+    delete currentEl.dataset.desktopView;
+    currentEl.removeAttribute("role");
+    currentEl.removeAttribute("tabindex");
+    currentEl.removeAttribute("title");
+  }
   currentEl.innerHTML = cur
-    ? `<div class="title"><span class="kind">${escapeHtml(cur.status ?? cur.kind ?? "")}</span>${escapeHtml(cur.title ?? "")}${
+    ? `<div class="title">${statusKindHtml(cur.status ?? cur.kind)}${escapeHtml(cur.title ?? "")}${
         cur.minutes ? ` · ~${cur.minutes}m` : ""
       }</div>
        <p class="detail">${escapeHtml(cur.detail ?? "")}${
          cur.run?.length ? ` · run: ${escapeHtml(cur.run.join(" "))}` : ""
        }${
-         cur.desktop_view && RELATED_VIEW_LABELS[cur.desktop_view]
-           ? ` · studio: ${escapeHtml(RELATED_VIEW_LABELS[cur.desktop_view])}`
+         curNav
+           ? ` · <span class="step-nav-hint">${escapeHtml(RELATED_VIEW_LABELS[curRelated] ?? curRelated)} — click to open</span>`
            : ""
        }</p>`
     : "<p class=\"detail\">No current step</p>";
-  list.innerHTML = (view.steps ?? [])
-    .map((s, i) => {
-      const active = i === view.current_index ? " active-step" : "";
-      return `<li class="portal-step${active}">
-        <div class="meta">
-          <div class="title"><span class="kind">${escapeHtml(s.status ?? "")}</span>${escapeHtml(s.title ?? s.id ?? "")}</div>
-        </div>
-      </li>`;
-    })
-    .join("");
+  list.innerHTML = renderPublishStepBands(view);
+  stageFocusIndex = view.current_index ?? 0;
+  renderPublishStage(view);
+  syncWorkflowCards();
   syncPublishRelated();
   syncBackToPublish();
   syncPublishGateButtons();
@@ -2562,7 +4114,7 @@ async function refreshPublish() {
     return;
   }
   try {
-    applyPublishView(JSON.parse(result.stdout) as PublishView);
+    applyPublishView(JSON.parse(result.stdout) as PublishView, { reveal: true });
     toast("Publish plan ready", "ok");
   } catch {
     /* shown in output */
@@ -2617,7 +4169,7 @@ async function tickPublishWatch() {
       .querySelector("#btn-publish-confirm")
       ?.classList.toggle("watch-ready", ok);
     if (ok && (!publishWatchLastOk || step !== publishWatchLastStep)) {
-      toast(parsed.prompt ?? "Step ready — Confirm then Next", "ok", 6000);
+      toast(parsed.prompt ?? "Step ready — Confirm on the green button", "ok", 6000);
       const status = await invoke<CmdResult>("run_shipctl", {
         project,
         args: publishArgs(),
@@ -2648,38 +4200,226 @@ function startPublishWatch() {
   }, 15_000);
 }
 
-async function publishContinue(chain = 12) {
+type ContinueResult = {
+  ok?: boolean;
+  message?: string;
+  stopped?: string;
+  advanced?: number;
+  publish?: PublishView;
+};
+
+async function runPublishContinueOnce(chain = 1): Promise<ContinueResult | null> {
   const result = await run([...publishArgs(["continue"]), "--chain", String(chain)], {
     step: "paste",
+    quietToast: true,
   });
-  if (!result?.stdout) return;
+  if (!result?.stdout) return null;
   try {
-    const parsed = JSON.parse(result.stdout) as {
-      ok?: boolean;
-      message?: string;
-      stopped?: string;
-      advanced?: number;
-      publish?: PublishView;
-    };
-    if (parsed.publish) applyPublishView(parsed.publish);
-    const msg = parsed.message ?? (parsed.ok === false ? "Continue failed" : "Continued");
-    if (parsed.stopped === "human_gate") {
-      toast(msg, "info", 5000);
-    } else if (parsed.ok === false) {
-      toast(msg, "err");
-    } else {
-      toast(msg, "ok");
-    }
-    await refreshSessionNow();
+    return JSON.parse(result.stdout) as ContinueResult;
   } catch {
-    /* raw output shown */
+    return null;
+  }
+}
+
+/** Walk Auto gates one-at-a-time with ~2s dwell so 2→7 never flashes. */
+async function publishContinuePaced() {
+  if (publishPacing) {
+    toast("Already checking checkpoints…", "info", 2500);
+    return;
+  }
+  if (running) {
+    toast("Busy — Cancel unlocks Publish if stuck", "err", 4000);
+    return;
+  }
+  publishPacing = true;
+  setStagePacingUi(true);
+  applyPublishUi("stages");
+  setView("publish");
+  let totalAdvanced = 0;
+  const wf = savedWorkflow();
+  const wfLabel = wf ? WORKFLOW_PRESETS[wf].label : null;
+  try {
+    while (true) {
+      const beforeIdx = lastPublish?.current_index ?? 0;
+      const beforeTitle =
+        lastPublish?.current?.title ?? lastPublish?.steps?.[beforeIdx]?.title ?? "checkpoint";
+      stageFocusIndex = beforeIdx;
+      if (lastPublish) renderPublishStage(lastPublish);
+      toast(`Checking «${shortStageLabel(beforeTitle)}»…`, "info", Math.min(paceDwellMs(), 1600));
+
+      const parsed = await runPublishContinueOnce(1);
+      if (!parsed) break;
+
+      const advanced = parsed.advanced ?? 0;
+      totalAdvanced += advanced;
+      const gate = parsed.stopped === "human_gate" ? parsed.publish?.current : null;
+      const related = (gate?.desktop_view ?? "").trim();
+      const leaveForPanel = Boolean(gate && shouldLeavePublishForRelated(related));
+      if (parsed.publish) {
+        applyPublishView(parsed.publish, { reveal: !leaveForPanel });
+        stageFocusIndex = parsed.publish.current_index ?? stageFocusIndex;
+        renderPublishStage(parsed.publish);
+      }
+
+      const msg = parsed.message ?? (parsed.ok === false ? "Continue failed" : "Continued");
+
+      if (parsed.stopped === "human_gate") {
+        const title = parsed.publish?.current?.title ?? lastPublish?.current?.title ?? "this step";
+        if (leaveForPanel && gate) {
+          toast(
+            totalAdvanced > 0
+              ? `Checked ${totalAdvanced} automatic step(s), then open «${title}» — Confirm when finished.`
+              : `Open «${title}» — finish there, then Confirm. Not finished shipping.`,
+            "info",
+            6500,
+          );
+          await navigatePublishStep(gate);
+        } else {
+          toast(
+            totalAdvanced > 0
+              ? `Checked ${totalAdvanced} automatic step(s). Pause at «${title}» — Confirm on Publish when done.`
+              : `Paused at «${title}» — Confirm on Publish when this check is done.`,
+            "info",
+            6500,
+          );
+        }
+        break;
+      }
+
+      if (parsed.stopped === "finished") {
+        toast(
+          wfLabel
+            ? `${wfLabel} — required gates for this pass are done (${totalAdvanced} checked).`
+            : totalAdvanced > 0
+              ? `Required gates done — checked ${totalAdvanced} automatic step(s).`
+              : "Required gates for this pass are done",
+          "ok",
+          5500,
+        );
+        break;
+      }
+
+      if (parsed.stopped === "verify_failed" || parsed.ok === false) {
+        const title =
+          parsed.publish?.current?.title?.replace(/\s*—\s*.*$/, "").trim() ||
+          lastPublish?.current?.title ||
+          "this step";
+        const polished = polishShipctlUserMessage(msg) || msg;
+        toast(
+          `Continue stopped at «${title}»: ${polished.slice(0, 120)}. Fix that, then Continue again.`,
+          "err",
+          8000,
+          [
+            {
+              id: "continue",
+              label: "Continue",
+              icon: "continue",
+              run: () => {
+                void publishContinuePaced();
+              },
+            },
+            {
+              id: "preview",
+              label: "Preview log",
+              icon: "open",
+              run: () => openOutputPreview(),
+            },
+          ],
+        );
+        break;
+      }
+
+      if (advanced === 0) {
+        toast(msg || "Nothing to advance — next checkpoint is still ahead.", "info", 4500);
+        break;
+      }
+
+      // Dwell so the operator sees Done → next marker before the jump.
+      await sleepMs(paceDwellMs());
+    }
+  } finally {
+    publishPacing = false;
+    setStagePacingUi(false);
+    if (lastPublish) renderPublishStage(lastPublish);
+    await refreshSessionNow();
   }
 }
 
 async function publishAction(sub: string[]) {
   const ordered = sub.length === 0 ? publishArgs() : publishArgs(sub);
-  const result = await run(ordered, { step: "paste" });
-  if (!result?.stdout) return;
+  // Own toasts — never stack "publish failed" + raw shipctl copy.
+  const result = await run(ordered, { step: "paste", quietToast: true });
+  if (!result) {
+    toast("Publish is busy — Cancel to unlock, then retry.", "err", 7000, [
+      {
+        id: "cancel",
+        label: "Cancel",
+        icon: "open",
+        run: () => document.querySelector<HTMLButtonElement>("#btn-cancel")?.click(),
+      },
+      {
+        id: "retry",
+        label: "Retry",
+        icon: "continue",
+        run: () => {
+          void publishAction(sub);
+        },
+      },
+    ]);
+    return;
+  }
+  if (result.cancelled) {
+    toast("Cancelled", "err");
+    return;
+  }
+
+  const combined = `${result.stderr}\n${result.stdout}`.trim();
+  if (/Confirm or Verify|still pending/i.test(combined)) {
+    if (result.stdout.trim()) {
+      try {
+        const parsed = JSON.parse(result.stdout) as PublishView & { publish?: PublishView };
+        applyPublishView(parsed.publish ?? parsed);
+      } catch {
+        /* ignore */
+      }
+    }
+    toastPublishGatePending();
+    return;
+  }
+
+  if (!result.stdout.trim()) {
+    const detail =
+      polishShipctlUserMessage(result.stderr) ||
+      result.stderr.trim().split(/\r?\n/).filter(Boolean).pop() ||
+      "Publish action failed with no details.";
+    toast(detail.slice(0, 200), "err", 8000, [
+      {
+        id: "preview",
+        label: "Preview log",
+        icon: "open",
+        run: () => openOutputPreview(),
+      },
+      {
+        id: "retry",
+        label: "Retry",
+        icon: "continue",
+        run: () => {
+          void publishAction(sub);
+        },
+      },
+      {
+        id: "continue",
+        label: "Continue",
+        icon: "continue",
+        run: () => {
+          setView("publish");
+          document.querySelector<HTMLButtonElement>("#btn-publish-continue")?.click();
+        },
+      },
+    ]);
+    return;
+  }
+
   try {
     const parsed = JSON.parse(result.stdout) as PublishView & {
       publish?: PublishView;
@@ -2689,11 +4429,71 @@ async function publishAction(sub: string[]) {
     applyPublishView(parsed.publish ?? parsed);
     if (parsed.message) {
       appendStream({ stream: "meta", text: parsed.message });
-      toast(parsed.message, parsed.ok === false ? "err" : "ok");
+      const polished = polishShipctlUserMessage(parsed.message);
+      if (parsed.ok === false) {
+        if (/Confirm or Verify|still pending|after Open\/Run succeeds/i.test(parsed.message)) {
+          toastPublishGatePending();
+        } else if (polished) {
+          toast(polished, "err", 6500, [
+            {
+              id: "confirm",
+              label: "Confirm",
+              icon: "confirm",
+              run: () => {
+                setView("publish");
+                document.querySelector<HTMLButtonElement>("#btn-publish-confirm")?.click();
+              },
+            },
+            {
+              id: "continue",
+              label: "Continue",
+              icon: "continue",
+              run: () => {
+                setView("publish");
+                document.querySelector<HTMLButtonElement>("#btn-publish-continue")?.click();
+              },
+            },
+          ]);
+        }
+      } else if (polished) {
+        toast(polished, "ok");
+      }
+    } else if (result.ok) {
+      const subCmd = sub[0];
+      if (subCmd === "confirm") {
+        // After Confirm, burn Auto gates so strangers are not stuck on dual Next.
+        const cur = lastPublish?.current;
+        const st = (cur?.status ?? "").toLowerCase();
+        const kind = (cur?.kind ?? "").toLowerCase();
+        const canChain =
+          !lastPublish?.finished &&
+          (st === "done" ||
+            st === "skipped" ||
+            (st === "pending" && (kind === "auto" || gateToastKind(cur) === "continue")));
+        if (canChain) {
+          toast("Confirmed — checking next gates…", "ok", 2200);
+          void publishContinuePaced();
+        } else {
+          toast("Confirmed — press the green button", "ok");
+        }
+      } else if (subCmd === "next") toast("Advanced to next checkpoint", "ok");
+      else if (subCmd === "verify") toast("Verify ok — Confirm if this step is done", "ok");
+    } else if (/verify failed/i.test(combined)) {
+      toastPublishGatePending();
+    } else {
+      toastPublishGatePending();
     }
     await refreshSessionNow();
   } catch {
-    /* raw output shown */
+    appendStream({ stream: "stderr", text: result.stdout.slice(0, 400) });
+    toast("Could not read Publish result — open Preview for the log.", "err", 7000, [
+      {
+        id: "preview",
+        label: "Preview log",
+        icon: "open",
+        run: () => openOutputPreview(),
+      },
+    ]);
   }
 }
 
@@ -2718,7 +4518,7 @@ function applyLaunchView(view: LaunchView | null) {
       : `Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ${view.done_count ?? 0} done — Open/Run on official platforms or local Signet/Orbit, then Verify/Confirm.`;
   }
   currentEl.innerHTML = cur
-    ? `<div class="title"><span class="kind">${escapeHtml(cur.kind ?? "")}</span>${escapeHtml(cur.title ?? "")}</div>
+    ? `<div class="title">${statusKindHtml(cur.status ?? cur.kind)}${escapeHtml(cur.title ?? "")}</div>
        <p class="detail">${escapeHtml(cur.detail ?? "")}${
          cur.run?.length ? ` · run: ${escapeHtml(cur.run.join(" "))}` : ""
        }${
@@ -2730,7 +4530,7 @@ function applyLaunchView(view: LaunchView | null) {
       const active = i === view.current_index ? " active-step" : "";
       return `<li class="portal-step${active}">
         <div class="meta">
-          <div class="title"><span class="kind">${escapeHtml(s.status ?? "")}</span>${escapeHtml(s.title ?? s.id ?? "")}</div>
+          <div class="title">${statusKindHtml(s.status)}${escapeHtml(s.title ?? s.id ?? "")}</div>
         </div>
       </li>`;
     })
@@ -2880,8 +4680,17 @@ async function exportVault() {
 
 async function loadPortal(openAll = false) {
   const args = ["portal", "--project", projectPath()];
-  const result = await run(args, { step: "portal" });
-  if (!result?.ok || !result.stdout) return;
+  const result = await run(args, { step: "portal", quietToast: true });
+  if (!result) {
+    toast("Portal busy — Cancel to unlock, then retry", "err");
+    return;
+  }
+  if (!result.ok || !result.stdout.trim()) {
+    toast(`Portal: ${cmdFailDetail(result)}`, "err", 8000, [
+      { id: "preview", label: "Preview log", icon: "open", run: () => openOutputPreview() },
+    ]);
+    return;
+  }
   try {
     const plan = JSON.parse(result.stdout) as PortalPlan;
     applyPortalPlan(plan);
@@ -2895,9 +4704,13 @@ async function loadPortal(openAll = false) {
         ),
       ];
       for (const url of urls) await openUrl(url);
+    } else {
+      toast("Portal plan loaded", "ok", 2500);
     }
   } catch {
-    /* plan already in output */
+    toast("Portal: could not parse plan — open Preview", "err", 7000, [
+      { id: "preview", label: "Preview log", icon: "open", run: () => openOutputPreview() },
+    ]);
   }
 }
 
@@ -2918,7 +4731,16 @@ function applyDetected(detected?: Detected) {
     ["wrangler", detected.wrangler],
     ["vercel", detected.vercel],
     ["netlify", detected.netlify],
-    ["github", detected.github],
+    ["fly", detected.fly],
+    ["railway", detected.railway],
+    [
+      "pages",
+      Boolean(
+        detected.marketing_site &&
+          (detected.marketing_host === "pages" || !detected.marketing_host),
+      ) || detected.marketing_host === "pages",
+    ],
+    ["github", detected.github && !detected.marketing_site],
     ["polar", detected.polar],
     ["orbit", detected.orbit_configured],
   ];
@@ -2940,6 +4762,16 @@ function applyDetected(detected?: Detected) {
         if (chip) routeDetectChip(chip);
       });
     });
+  }
+  // Soft-select Platforms card when already on the view (no navigation).
+  const preferred = preferredHostingPlatformId(detected);
+  if (preferred && activeViewId === "platforms" && platformsPreferGroup !== "Official signing") {
+    if (selectedPlatform !== preferred) {
+      selectedPlatform = preferred;
+      platformsPreferGroup = "Hosting";
+      renderPlatforms();
+      highlightSidebarPlatforms();
+    }
   }
   syncProjectIdentity();
 }
@@ -3041,7 +4873,10 @@ function parseDoctor(stdout: string): DoctorReport | null {
   }
 }
 
-async function run(args: string[], opts?: { step?: string; quietHeader?: boolean; silent?: boolean }): Promise<CmdResult | undefined> {
+async function run(
+  args: string[],
+  opts?: { step?: string; quietHeader?: boolean; silent?: boolean; quietToast?: boolean },
+): Promise<CmdResult | undefined> {
   const project = projectPath();
   if (!project) {
     show("Open a project folder first.");
@@ -3049,7 +4884,11 @@ async function run(args: string[], opts?: { step?: string; quietHeader?: boolean
   }
   if (running) {
     show("Already running — wait for the current command, or Cancel to unlock.");
-    toast("Busy — Cancel unlocks Publish if stuck", "info", 4000);
+    const now = Date.now();
+    if (now - lastBusyToastAt > 8000) {
+      lastBusyToastAt = now;
+      toast("Busy — Cancel unlocks Publish if stuck", "info", 4000);
+    }
     return;
   }
   if (opts?.step) setStep(opts.step, "active");
@@ -3108,17 +4947,66 @@ async function run(args: string[], opts?: { step?: string; quietHeader?: boolean
     }
     endLabel = result.cancelled ? "Cancelled" : result.ok ? "Ready" : "Failed";
     endFailed = !result.ok && !result.cancelled;
-    if (!opts?.quietHeader && !opts?.silent) {
+    // Expected gate pauses / soft portal errors are not sticky FAILED.
+    {
+      const err = `${result.stderr}\n${result.stdout}`.trim();
+      if (/Confirm or Verify|still pending/i.test(err)) {
+        endLabel = "Ready";
+        endFailed = false;
+      }
+      if (isSoftCmdFailure(result)) {
+        endLabel = "Ready";
+        endFailed = false;
+      }
+      // Verify prints JSON then exits 1 when not ready — still a pause, not a crash.
+      if (
+        args.includes("verify") &&
+        /"ok"\s*:\s*false/.test(result.stdout) &&
+        !/spawn |not a directory|lock poisoned/i.test(err)
+      ) {
+        endLabel = "Ready";
+        endFailed = false;
+      }
+    }
+    if (!opts?.quietHeader && !opts?.silent && !opts?.quietToast) {
       const cmd = args[0] ?? "shipctl";
       if (result.cancelled) toast(`${cmd} cancelled`, "err");
-      else if (result.ok) toast(`${cmd} · done`, "ok");
-      else {
+      else if (result.ok) {
+        // Never say "publish · done" — that reads as the whole ship finished.
+        if (cmd === "publish" && args.includes("continue")) {
+          /* publishContinue owns the toast */
+        } else if (cmd === "publish") {
+          const sub = args.find(
+            (a) =>
+              a === "confirm" ||
+              a === "next" ||
+              a === "verify" ||
+              a === "open" ||
+              a === "reset" ||
+              a === "watch",
+          );
+          if (sub === "confirm") toast("Confirmed — press the green button", "ok");
+          else if (sub === "next") toast("Advanced to next gate", "ok");
+          else if (sub === "verify") toast("Verify finished — Confirm if ready", "ok");
+          else toast(`Publish ${sub ?? "command"} finished`, "ok");
+        } else if (cmd !== "portal") {
+          // Portal success toast is owned by loadPortal / openPortalProvider.
+          toast(`${cmd} finished`, "ok");
+        }
+      } else {
         const err = `${result.stderr}\n${result.stdout}`.trim();
         if (/Confirm or Verify|still pending/i.test(err)) {
-          toast("Confirm this step first (or Verify), then Next", "err");
-          endLabel = "READY";
-          endFailed = false;
-        } else toast(`${cmd} failed`, "err");
+          toastPublishGatePending();
+        } else {
+          toast(`${cmd} failed — ${cmdFailDetail(result)}`, "err", 8000, [
+            {
+              id: "preview",
+              label: "Preview log",
+              icon: "open",
+              run: () => openOutputPreview(),
+            },
+          ]);
+        }
       }
     }
     return result;
@@ -3175,8 +5063,12 @@ window.addEventListener("DOMContentLoaded", () => {
   offlineEl()?.addEventListener("change", syncDeployToggle);
   deployEl()?.addEventListener("change", syncDeployToggle);
   syncDeployToggle();
+  // Output dock off by default — Preview in statusbar; Dock restores the strip.
+  applyOutputDock(localStorage.getItem(OUTPUT_DOCK_KEY) === "1");
   applyStudioMode(studioMode());
   applyShipIntent(shipIntent());
+  applyPublishUi(publishUiMode());
+  syncWorkflowCards();
   document.querySelectorAll<HTMLButtonElement>(".mode-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const next = btn.dataset.mode === "advanced" ? "advanced" : "general";
@@ -3193,9 +5085,11 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   renderRecent(loadRecent());
   void refreshShipctlPath();
+  wireNavSections();
   setView("dashboard");
   renderSidebarTargets();
   renderSidebarIntegrations();
+  renderSidebarPlatforms();
   setTitle(null);
   wireWindowChrome();
 
@@ -3301,7 +5195,73 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   document.querySelector("#int-portal-steps")?.addEventListener("click", () => {
     const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration);
-    if (wiz?.provider) void openPortalProvider(wiz.provider);
+    if (!wiz?.provider || !isPortalProvider(wiz.provider)) {
+      toast("No Portal steps for this wizard — use Open dashboard", "info");
+      return;
+    }
+    void openPortalProvider(wiz.provider);
+  });
+  document.querySelector("#int-continue-publish")?.addEventListener("click", () => {
+    if (!projectPath()) {
+      toast("Bind a project first", "info");
+      return;
+    }
+    setView("publish");
+    toast("Back on Publish — Confirm the listing / gate when ready", "ok", 4500);
+    void refreshPublish();
+  });
+  document.querySelector("#plat-open")?.addEventListener("click", async () => {
+    const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
+    if (!wiz) return;
+    if (platformLocked(wiz)) {
+      toast("Hosting providers need Public intent — or Use Local for desktop-only", "info");
+      return;
+    }
+    if (!projectPath()) {
+      toast("Bind a project first", "info");
+      return;
+    }
+    await openUrl(wiz.openUrl);
+    if (wiz.deployArgs) {
+      const dep = deployArgsEl();
+      if (dep && !dep.disabled) {
+        dep.value = wiz.deployArgs;
+        toast(`Opened ${wiz.title} — Ritual deploy_args set to «${wiz.deployArgs}»`, "ok", 5000);
+        return;
+      }
+    }
+    toast(`Opened ${wiz.title}`, "ok");
+  });
+  document.querySelector("#plat-docs")?.addEventListener("click", async () => {
+    const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
+    if (!wiz?.docsUrl) {
+      toast("No Docs link for this platform", "info");
+      return;
+    }
+    await openUrl(wiz.docsUrl);
+    toast(`Opened ${wiz.title} docs`, "ok");
+  });
+  document.querySelector("#plat-portal-steps")?.addEventListener("click", () => {
+    const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
+    if (!wiz?.provider || !isPortalProvider(wiz.provider)) {
+      toast("No Portal steps for this platform — use Open / Docs", "info");
+      return;
+    }
+    void openPortalProvider(wiz.provider);
+  });
+  document.querySelector("#plat-continue-publish")?.addEventListener("click", () => {
+    if (!projectPath()) {
+      toast("Bind a project first", "info");
+      return;
+    }
+    setView("publish");
+    toast("Back on Publish — Confirm Live check or the host gate when ready", "ok", 4500);
+    void refreshPublish();
+  });
+  document.querySelector("#plat-use-local")?.addEventListener("click", () => {
+    applyShipIntent("local", { rebuild: true });
+    toast("Local intent — hosted deploy / live check omitted", "ok", 4500);
+    paintPlatformWizard();
   });
 
   void listen<StreamLine>("shipctl-line", (event) => {
@@ -3395,20 +5355,33 @@ window.addEventListener("DOMContentLoaded", () => {
       document.querySelector<HTMLButtonElement>("#btn-publish")?.click();
     }
   });
-  document.querySelector("#btn-scopes")?.addEventListener("click", async () => {
-    const plan = (await loadJsonCmd(["scopes", "--project", projectPath()])) as ScopePlan | null;
-    applyScopes(plan);
+  document.querySelector("#btn-scopes")?.addEventListener("click", () => {
+    void detectScopes();
   });
   document.querySelector("#btn-scopes-save")?.addEventListener("click", () => {
     void saveScopes();
+  });
+  document.querySelector("#btn-stage-scopes-detect")?.addEventListener("click", () => {
+    void detectScopes();
+  });
+  document.querySelector("#btn-stage-scopes-save")?.addEventListener("click", () => {
+    void saveScopes();
+  });
+  document.querySelector("#stage-scope-grid")?.addEventListener("change", (ev) => {
+    if (!(ev.target as HTMLElement).matches("[data-scope-id]")) return;
+    // Live enable Confirm when at least one box checked (before Save).
+    const primaryBtn = document.querySelector<HTMLButtonElement>("#btn-stage-primary");
+    if (!primaryBtn || primaryBtn.dataset.stageAction !== "confirm") return;
+    const n = document.querySelectorAll("#stage-scope-grid [data-scope-id]:checked").length;
+    primaryBtn.disabled = running || n === 0;
+    primaryBtn.title = n > 0 ? "Save selection is applied on Confirm" : "Select at least one scope";
   });
   document.querySelector("#btn-env")?.addEventListener("click", async () => {
     const plan = (await loadJsonCmd(["env", "--project", projectPath()])) as EnvPortal | null;
     applyEnv(plan);
   });
-  document.querySelector("#btn-sign-paths")?.addEventListener("click", async () => {
-    const plan = (await loadJsonCmd(["sign-paths", "--project", projectPath()])) as SignPortal | null;
-    applySignPaths(plan);
+  document.querySelector("#btn-sign-paths")?.addEventListener("click", () => {
+    void refreshStatusProbes({ views: ["sign"], animate: true });
   });
 
   const saved = localStorage.getItem(LAST_PROJECT_KEY);
@@ -3487,6 +5460,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#btn-output-preview")?.addEventListener("click", () => {
     openOutputPreview();
+  });
+  document.querySelector("#btn-statusbar-preview")?.addEventListener("click", () => {
+    openOutputPreview();
+  });
+  document.querySelector("#btn-statusbar-dock")?.addEventListener("click", () => {
+    applyOutputDock(!outputDockVisible());
+  });
+  document.querySelector("#btn-output-dock-hide")?.addEventListener("click", () => {
+    applyOutputDock(false);
   });
   document
     .querySelector("[data-output-preview-close]")
@@ -3622,6 +5604,40 @@ async function runWizard() {
       if (ok) toast(`${RELATED_VIEW_LABELS[view] ?? view} — then Back to Publish`, "info");
     })();
   });
+  const goPublishStepNav = (el: HTMLElement | null) => {
+    if (!el) return;
+    const view = (el.dataset.desktopView ?? "").trim();
+    if (!view) return;
+    void navigatePublishStep({ desktop_view: view });
+  };
+  document.querySelector("#publish-steps")?.addEventListener("click", (ev) => {
+    const t = (ev.target as HTMLElement).closest<HTMLElement>(".portal-step-nav");
+    if (!t) return;
+    ev.preventDefault();
+    goPublishStepNav(t);
+  });
+  document.querySelector("#publish-steps")?.addEventListener("keydown", (ev) => {
+    const kev = ev as KeyboardEvent;
+    if (kev.key !== "Enter" && kev.key !== " ") return;
+    const t = (ev.target as HTMLElement).closest<HTMLElement>(".portal-step-nav");
+    if (!t) return;
+    kev.preventDefault();
+    goPublishStepNav(t);
+  });
+  document.querySelector("#publish-current")?.addEventListener("click", (ev) => {
+    const cur = document.querySelector<HTMLElement>("#publish-current");
+    if (!cur?.classList.contains("launch-current-nav")) return;
+    if ((ev.target as HTMLElement).closest("button,a")) return;
+    goPublishStepNav(cur);
+  });
+  document.querySelector("#publish-current")?.addEventListener("keydown", (ev) => {
+    const kev = ev as KeyboardEvent;
+    if (kev.key !== "Enter" && kev.key !== " ") return;
+    const cur = document.querySelector<HTMLElement>("#publish-current");
+    if (!cur?.classList.contains("launch-current-nav")) return;
+    kev.preventDefault();
+    goPublishStepNav(cur);
+  });
   document.querySelector("#btn-publish-open")?.addEventListener("click", () => {
     void (async () => {
       const project = projectPath();
@@ -3631,8 +5647,21 @@ async function runWizard() {
       // Band #16: Open matches Related for every RELATED_VIEW_LABELS target (incl. dashboard).
       const studioDetail = Boolean(related && RELATED_VIEW_LABELS[related]);
       if (studioDetail) {
+        // Live check / legal → dashboard was a bounce (flash Publish ↔ Dashboard).
+        if (!shouldLeavePublishForRelated(related)) {
+          toast(
+            related === "dashboard"
+              ? "Stay on Publish — Confirm when this check is done (Local may have no live URL)."
+              : "Stay on Publish — use Confirm when ready",
+            "info",
+            5000,
+          );
+          return;
+        }
         await openRelatedStudioView(related);
         toast(`${RELATED_VIEW_LABELS[related] ?? related} — finish, then Confirm`, "info");
+        // Panel-first steps (Scopes / Env / …): stay there — do not force Publish or a terminal.
+        if (PANEL_FIRST_VIEWS.has(related)) return;
       }
       const needsTerminal =
         Boolean(cur?.run?.length) ||
@@ -3648,7 +5677,20 @@ async function runWizard() {
           });
           toast("Terminal opened for this step", "ok");
           window.setTimeout(() => {
-            void refreshPublish();
+            void (async () => {
+              const status = await invoke<CmdResult>("run_shipctl", {
+                project,
+                args: publishArgs(),
+              });
+              if (status?.ok && status.stdout) {
+                try {
+                  // Refresh plan data without yanking off Sign/Portal.
+                  applyPublishView(JSON.parse(status.stdout) as PublishView);
+                } catch {
+                  /* ignore */
+                }
+              }
+            })();
           }, 1500);
         } catch (e) {
           appendStream({
@@ -3674,7 +5716,11 @@ async function runWizard() {
         return;
       }
       startPublishWatch();
-      toast("Watching — local Verify every 15s", "info", 4000);
+      toast(
+        "Watching — Verify every 15s (disk · local CLI · official CLI probe). No Studio-held secrets.",
+        "info",
+        4500,
+      );
     } else {
       stopPublishWatch();
     }
@@ -3694,13 +5740,72 @@ async function runWizard() {
       document.querySelector<HTMLButtonElement>("#btn-publish-open")?.click();
       return;
     }
-    void publishContinue(12);
+    void publishContinuePaced();
   });
   document.querySelector("#btn-publish-confirm")?.addEventListener("click", () => {
     void publishAction(["confirm"]);
   });
   document.querySelector("#btn-publish-next")?.addEventListener("click", () => {
     void publishAction(["next"]);
+  });
+  document.querySelectorAll<HTMLButtonElement>(".workflow-card").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.workflow;
+      if (!isWorkflowId(id)) return;
+      void startWorkflow(id);
+    });
+  });
+  document.querySelector("#btn-publish-stages")?.addEventListener("click", () => {
+    applyPublishUi("stages");
+    if (lastPublish) renderPublishStage(lastPublish);
+  });
+  document.querySelector("#btn-publish-list")?.addEventListener("click", () => {
+    applyPublishUi("list");
+  });
+  document.querySelector("#btn-stage-prev")?.addEventListener("click", () => {
+    if (stageFocusIndex <= 0) return;
+    stageFocusIndex -= 1;
+    if (lastPublish) renderPublishStage(lastPublish);
+  });
+  document.querySelector("#btn-stage-next")?.addEventListener("click", () => {
+    const steps = lastPublish?.steps ?? [];
+    if (!steps.length || stageFocusIndex >= steps.length - 1) return;
+    const focus = steps[stageFocusIndex];
+    const status = (focus?.status ?? "").toLowerCase();
+    const curIdx = lastPublish?.current_index ?? 0;
+    const focusDone = status === "done" || status === "skipped";
+    // Honesty: never advance past a pending Confirm via stage Next.
+    if (!focusDone && stageFocusIndex >= curIdx) return;
+    if (stageFocusIndex === curIdx && focusDone) {
+      document.querySelector<HTMLButtonElement>("#btn-publish-next")?.click();
+      return;
+    }
+    stageFocusIndex += 1;
+    if (lastPublish) renderPublishStage(lastPublish);
+  });
+  document.querySelector("#btn-stage-primary")?.addEventListener("click", () => {
+    onStagePrimary();
+  });
+  document.querySelector("#stage-rail")?.addEventListener("click", (ev) => {
+    const dot = (ev.target as HTMLElement).closest<HTMLButtonElement>(".stage-dot");
+    if (!dot) return;
+    if (dot.dataset.stageMore === "1") {
+      applyPublishUi("list");
+      return;
+    }
+    const idx = Number(dot.dataset.stageIndex);
+    if (!Number.isFinite(idx) || !lastPublish?.steps?.[idx]) return;
+    stageFocusIndex = idx;
+    renderPublishStage(lastPublish);
+  });
+  document.querySelector("#stage-scrub-track")?.addEventListener("click", (ev) => {
+    const seg = (ev.target as HTMLElement).closest<HTMLButtonElement>(".stage-scrub-seg");
+    if (!seg) return;
+    const idx = Number(seg.dataset.stageIndex);
+    if (!Number.isFinite(idx) || !lastPublish?.steps?.[idx]) return;
+    stageFocusIndex = idx;
+    applyPublishUi("stages");
+    renderPublishStage(lastPublish);
   });
   document.querySelector("#btn-launch-open")?.addEventListener("click", () => {
     void (async () => {

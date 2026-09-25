@@ -30,6 +30,11 @@ export type Detected = {
   github?: boolean;
   polar?: boolean;
   orbit_configured?: boolean;
+  fly?: boolean;
+  railway?: boolean;
+  marketing_site?: boolean;
+  /** pages | vercel | netlify | unknown */
+  marketing_host?: string;
   hints?: string[];
 };
 
@@ -48,6 +53,7 @@ export type PortalStep = {
   title?: string;
   detail?: string;
   entry_url?: string | null;
+  docs_url?: string | null;
   cli?: string[] | null;
   human?: boolean;
 };
@@ -125,6 +131,7 @@ export type PublishView = {
     minutes?: number;
     run?: string[] | null;
     desktop_view?: string | null;
+    verify_status?: string | null;
   } | null;
   steps?: Array<{
     id?: string;
@@ -132,6 +139,8 @@ export type PublishView = {
     status?: string;
     kind?: string;
     minutes?: number;
+    desktop_view?: string | null;
+    verify_status?: string | null;
   }>;
   notes?: string[];
 };
@@ -267,15 +276,27 @@ export type SignPortal = {
   }>;
 };
 
-export type IntegrationWizard = {
+/** Shared shape for Integrations + Platforms provider pickers. */
+export type ProviderWizard = {
   id: string;
-  group: "Payments" | "Email";
+  group: string;
   title: string;
   blurb: string;
+  /** shipctl portal provider id — omit when Open/Docs only (e.g. GitHub Pages). */
   provider?: string;
   openUrl: string;
+  /** Override primary button label (default: Open dashboard). */
+  openLabel?: string;
+  /** Official tutorial — Platforms Docs button when set. */
+  docsUrl?: string;
   needsPublic: boolean;
   steps: string[];
+  /** Optional Ritual deploy_args when this host is selected. */
+  deployArgs?: string;
+};
+
+export type IntegrationWizard = ProviderWizard & {
+  group: "Payments" | "Email";
 };
 
 export type CmdItem = {

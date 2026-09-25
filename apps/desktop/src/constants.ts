@@ -6,6 +6,14 @@ export const OFFLINE_KEY = "ship-studio.offline";
 export const DEPLOY_KEY = "ship-studio.include-deploy";
 export const MODE_KEY = "ship-studio.mode";
 export const INTENT_KEY = "ship-studio.intent";
+/** "1" = show bottom output dock; unset/0 = hidden (default). */
+export const OUTPUT_DOCK_KEY = "ship-studio.output-dock";
+/** stages | list — Publish UI presentation */
+export const PUBLISH_UI_KEY = "ship-studio.publish-ui";
+/** Last dashboard workflow card id */
+export const WORKFLOW_KEY = "ship-studio.workflow";
+/** Collapsed/open state for sidebar nav sections */
+export const NAV_SECTIONS_KEY = "ship-studio.nav-sections";
 export const MAX_RECENT = 6;
 
 export const ACTION_IDS = [
@@ -91,6 +99,10 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
     title: "Integrations",
     desc: "Payment and email wizards — open the vendor, then confirm here.",
   },
+  platforms: {
+    title: "Platforms",
+    desc: "Hosting and official signing — pick a provider, open their UI, then Confirm on Publish.",
+  },
   ritual: {
     title: "Ritual",
     desc: "Detail panel — sign_args / deploy_args in .ship/studio.json.",
@@ -114,4 +126,6 @@ export const RELATED_VIEW_LABELS: Record<string, string> = {
   tools: "Open Tools",
   launch: "Open Launch",
   dashboard: "Open Dashboard",
+  platforms: "Open Platforms",
+  integrations: "Open Integrations",
 };

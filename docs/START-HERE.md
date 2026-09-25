@@ -2,7 +2,7 @@
 
 **One front door.** Do not search all of `/docs`.
 
-_Last updated: 2026-09-19_
+_Last updated: 2026-09-25_
 
 ---
 
@@ -12,6 +12,7 @@ _Last updated: 2026-09-19_
 2. **[handoffs/current-session.md](./handoffs/current-session.md)** — Next Atomic Step only
 3. **[product/SCOPE-OF-SERVICE.md](./product/SCOPE-OF-SERVICE.md)** — service boundary
 4. **[product/OPERATOR-NEXT.md](./product/OPERATOR-NEXT.md)** — human gates still on you
+5. **[product/PLATFORMS-AND-PORTAL.md](./product/PLATFORMS-AND-PORTAL.md)** — when working Platforms / Portal / Integrations (what works · objectives · known gaps)
 
 That is enough for most sessions.
 

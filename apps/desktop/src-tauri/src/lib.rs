@@ -292,6 +292,62 @@ fn open_publish_open_terminal(project: String) -> Result<(), String> {
     }
 }
 
+/// Open an interactive terminal for `shipctl portal --provider <id> --login`.
+#[tauri::command]
+fn open_portal_login_terminal(project: String, provider: String) -> Result<(), String> {
+    let shipctl = resolve_shipctl()?;
+    let project_path = PathBuf::from(&project);
+    if !project_path.is_dir() {
+        return Err(format!("not a directory: {project}"));
+    }
+    let provider = provider.trim();
+    if provider.is_empty() {
+        return Err("provider is required".into());
+    }
+
+    #[cfg(windows)]
+    {
+        let wt = Command::new("wt")
+            .args([
+                "-d",
+                &project,
+                shipctl.to_str().unwrap_or("shipctl"),
+                "portal",
+                "--project",
+                &project,
+                "--provider",
+                provider,
+                "--login",
+            ])
+            .spawn();
+        if wt.is_ok() {
+            return Ok(());
+        }
+        Command::new("cmd")
+            .args([
+                "/C",
+                "start",
+                "Ship Studio portal login",
+                shipctl.to_str().unwrap_or("shipctl"),
+                "portal",
+                "--project",
+                &project,
+                "--provider",
+                provider,
+                "--login",
+            ])
+            .spawn()
+            .map_err(|e| format!("spawn terminal: {e}"))?;
+        return Ok(());
+    }
+
+    #[cfg(not(windows))]
+    {
+        let _ = (&shipctl, &project_path, provider);
+        Err("open_portal_login_terminal is implemented for Windows in this build".into())
+    }
+}
+
 /// Open an interactive terminal for `shipctl human --no-open --put` (paste loop).
 #[tauri::command]
 fn open_human_put_terminal(project: String) -> Result<(), String> {
@@ -826,6 +882,7 @@ pub fn run() {
             open_human_put_terminal,
             open_launch_open_terminal,
             open_publish_open_terminal,
+            open_portal_login_terminal,
             run_git,
             run_shipctl,
             run_shipctl_env,

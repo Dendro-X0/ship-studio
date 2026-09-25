@@ -165,6 +165,9 @@ pub struct PortalStep {
     pub title: String,
     pub human: bool,
     pub entry_url: Option<String>,
+    /// Official tutorial / docs — Desktop shows a Docs button (Open stays on settings UI).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub docs_url: Option<String>,
     pub cli: Option<Vec<String>>,
     pub detail: String,
 }
@@ -221,6 +224,8 @@ pub struct ProviderCatalog {
     /// Platform shows secret only once at create/roll time.
     pub secret_shown_once: bool,
     pub once_hint: &'static str,
+    /// When false, skip token_page (no distinct credentials UI — e.g. Fly tokens via CLI).
+    pub emit_token_page: bool,
 }
 
 static CLOUDFLARE: ProviderCatalog = ProviderCatalog {
@@ -234,6 +239,7 @@ static CLOUDFLARE: ProviderCatalog = ProviderCatalog {
     env_hint: "Worker secrets: wrangler secret put <NAME> (or Orbit secrets wizard).",
     secret_shown_once: true,
     once_hint: "Cloudflare API Tokens show the secret ONLY once at Create/Roll. If you already created a token and lost the value: open ⋯ on that row → Roll (new value shown once), or Create Token again and copy immediately. Existing tokens cannot be Viewed. Prefer wrangler login instead of API tokens when possible.",
+    emit_token_page: true,
 };
 
 static VERCEL: ProviderCatalog = ProviderCatalog {
@@ -242,11 +248,12 @@ static VERCEL: ProviderCatalog = ProviderCatalog {
     orbit_login: Some(&["login", "vercel"]),
     token_url: "https://vercel.com/account/settings/tokens",
     create_url: "https://vercel.com/account/settings/tokens",
-    docs_url: "https://vercel.com/docs/rest-api#creating-an-access-token",
+    docs_url: "https://vercel.com/docs/cli",
     oauth_hint: "Prefer Vercel CLI login. Browser opens Vercel; complete sign-in, then return here.",
     env_hint: "Project env: vercel env add <NAME> (or dashboard → Settings → Environment Variables).",
     secret_shown_once: true,
     once_hint: "Vercel access tokens are shown once at creation. If lost, create a new token and revoke the old one.",
+    emit_token_page: true,
 };
 
 static NETLIFY: ProviderCatalog = ProviderCatalog {
@@ -255,11 +262,12 @@ static NETLIFY: ProviderCatalog = ProviderCatalog {
     orbit_login: Some(&["login", "netlify"]),
     token_url: "https://app.netlify.com/user/applications#personal-access-tokens",
     create_url: "https://app.netlify.com/user/applications#personal-access-tokens",
-    docs_url: "https://docs.netlify.com/cli/get-started/#authentication",
+    docs_url: "https://docs.netlify.com/api-and-cli-guides/cli-guides/get-started-with-cli/",
     oauth_hint: "Prefer Netlify CLI login. Browser opens Netlify; authorize CLI, then return here.",
     env_hint: "Site env: netlify env:set <NAME> <value> (or Site configuration → Environment variables).",
     secret_shown_once: true,
     once_hint: "Netlify personal access tokens are shown once. If lost, generate a new token.",
+    emit_token_page: true,
 };
 
 static GITHUB: ProviderCatalog = ProviderCatalog {
@@ -273,6 +281,7 @@ static GITHUB: ProviderCatalog = ProviderCatalog {
     env_hint: "For CI/API: create a PAT at the tokens page, then set GITHUB_TOKEN in the deploy target (never commit it).",
     secret_shown_once: true,
     once_hint: "GitHub PATs are shown once at creation. If you lost the value: generate a new token (classic or fine-grained) and update GITHUB_TOKEN everywhere it was used. There is no View for an old PAT.",
+    emit_token_page: true,
 };
 
 static POLAR: ProviderCatalog = ProviderCatalog {
@@ -287,6 +296,7 @@ static POLAR: ProviderCatalog = ProviderCatalog {
     env_hint: "Put POLAR_CHECKOUT_URL and POLAR_WEBHOOK_SECRET on the deploy target (e.g. wrangler secret put).",
     secret_shown_once: false,
     once_hint: "Organization Access Tokens: Settings → Developers (docs: integrate/oat). Webhook secrets: Settings → Webhooks — regenerate if lost.",
+    emit_token_page: true,
 };
 
 /// Webhook setup docs when no org slug is available for a dashboard deep link.
@@ -303,6 +313,7 @@ static NEON: ProviderCatalog = ProviderCatalog {
     env_hint: "Put DATABASE_URL (or NEON_DATABASE_URL) on the deploy target via wrangler/vercel/netlify env.",
     secret_shown_once: false,
     once_hint: "Neon connection strings stay visible in the console. Rotate the password if leaked.",
+    emit_token_page: true,
 };
 
 static SUPABASE: ProviderCatalog = ProviderCatalog {
@@ -316,6 +327,7 @@ static SUPABASE: ProviderCatalog = ProviderCatalog {
     env_hint: "Put SUPABASE_URL / SUPABASE_ANON_KEY / DATABASE_URL on the deploy target.",
     secret_shown_once: true,
     once_hint: "Service role keys are sensitive — copy once from Project Settings → API. Rotate if lost.",
+    emit_token_page: true,
 };
 
 static D1: ProviderCatalog = ProviderCatalog {
@@ -329,6 +341,7 @@ static D1: ProviderCatalog = ProviderCatalog {
     env_hint: "D1 uses Wrangler bindings; optional connection secrets go via wrangler secret put on the Worker.",
     secret_shown_once: false,
     once_hint: "D1 is usually binding-based. Account API tokens (if used) show once at create — prefer wrangler login.",
+    emit_token_page: true,
 };
 
 static TURSO: ProviderCatalog = ProviderCatalog {
@@ -342,6 +355,7 @@ static TURSO: ProviderCatalog = ProviderCatalog {
     env_hint: "Put TURSO_DATABASE_URL and TURSO_AUTH_TOKEN on the deploy target.",
     secret_shown_once: true,
     once_hint: "Turso auth tokens may be shown once — create a new token if lost.",
+    emit_token_page: true,
 };
 
 static CONTAINER: ProviderCatalog = ProviderCatalog {
@@ -355,6 +369,7 @@ static CONTAINER: ProviderCatalog = ProviderCatalog {
     env_hint: "Registry credentials stay in docker login / gh auth — never in .ship/.",
     secret_shown_once: false,
     once_hint: "Use `docker login` or `gh auth token` for GHCR. Rotate registry tokens if leaked.",
+    emit_token_page: true,
 };
 
 static FIREBASE: ProviderCatalog = ProviderCatalog {
@@ -368,6 +383,7 @@ static FIREBASE: ProviderCatalog = ProviderCatalog {
     env_hint: "Put FIREBASE_* / google-services values on the app host — never in .ship/.",
     secret_shown_once: false,
     once_hint: "Rotate Firebase API keys / service accounts if leaked.",
+    emit_token_page: true,
 };
 
 static APPWRITE: ProviderCatalog = ProviderCatalog {
@@ -381,6 +397,7 @@ static APPWRITE: ProviderCatalog = ProviderCatalog {
     env_hint: "Put APPWRITE_* endpoint/project/key on the deploy target — never in .ship/.",
     secret_shown_once: true,
     once_hint: "Appwrite API keys may be shown once — create a new key if lost.",
+    emit_token_page: true,
 };
 
 static CONVEX: ProviderCatalog = ProviderCatalog {
@@ -394,32 +411,35 @@ static CONVEX: ProviderCatalog = ProviderCatalog {
     env_hint: "Put CONVEX_URL / CONVEX_DEPLOY_KEY on the deploy target — never in .ship/.",
     secret_shown_once: true,
     once_hint: "Convex deploy keys may be shown once — rotate if leaked.",
+    emit_token_page: true,
 };
 
 static FLY: ProviderCatalog = ProviderCatalog {
     label: "Fly.io",
-    oauth_cli: &[],
+    oauth_cli: &["fly", "auth", "login"],
     orbit_login: None,
     token_url: "https://fly.io/dashboard",
     create_url: "https://fly.io/dashboard",
     docs_url: "https://fly.io/docs/hands-on/launch-app/",
-    oauth_hint: "Open Fly dashboard — create/launch the app with flyctl on your machine. Studio only opens the dashboard.",
-    env_hint: "Put FLY_* secrets via `fly secrets set` or the dashboard — never in .ship/.",
+    oauth_hint: "Prefer `fly auth login` — browser OAuth. Deploy tokens: `fly tokens create deploy` (not the short-lived auth token).",
+    env_hint: "App secrets: `fly secrets set NAME=value` (values never readable again). Or set secrets in the Fly dashboard.",
     secret_shown_once: true,
-    once_hint: "Fly API tokens may be shown once — create a new token if lost.",
+    once_hint: "Prefer scoped tokens via `fly tokens create` — see Fly access-tokens docs. Do not reuse short-lived `fly auth token` for CI.",
+    emit_token_page: false,
 };
 
 static RAILWAY: ProviderCatalog = ProviderCatalog {
     label: "Railway",
-    oauth_cli: &[],
+    oauth_cli: &["railway", "login"],
     orbit_login: None,
-    token_url: "https://railway.app/dashboard",
-    create_url: "https://railway.app/dashboard",
-    docs_url: "https://docs.railway.com/",
-    oauth_hint: "Open Railway dashboard — create/deploy the service there or with railway CLI. Studio only opens the dashboard.",
-    env_hint: "Put RAILWAY_* / project env on Railway — never in .ship/.",
+    token_url: "https://railway.com/account/tokens",
+    create_url: "https://railway.com/account/tokens",
+    docs_url: "https://docs.railway.com/cli/login",
+    oauth_hint: "Prefer `railway login` (browser or --browserless). For CI: RAILWAY_API_TOKEN (account) or RAILWAY_TOKEN (project) — set only one.",
+    env_hint: "Service Variables tab on Railway (or `railway variables`). Never put values in .ship/.",
     secret_shown_once: true,
-    once_hint: "Railway tokens may be shown once — rotate if leaked.",
+    once_hint: "Account/workspace tokens: Account Settings → Tokens (RAILWAY_API_TOKEN). Project tokens: project settings (RAILWAY_TOKEN). Do not set both env vars.",
+    emit_token_page: true,
 };
 
 static RENDER: ProviderCatalog = ProviderCatalog {
@@ -433,6 +453,7 @@ static RENDER: ProviderCatalog = ProviderCatalog {
     env_hint: "Put RENDER_* / service env on Render — never in .ship/.",
     secret_shown_once: true,
     once_hint: "Render API keys may be shown once — rotate if leaked.",
+    emit_token_page: true,
 };
 
 static DIGITALOCEAN: ProviderCatalog = ProviderCatalog {
@@ -446,6 +467,7 @@ static DIGITALOCEAN: ProviderCatalog = ProviderCatalog {
     env_hint: "Put DIGITALOCEAN_* / DO_* tokens via doctl or the control panel — never in .ship/.",
     secret_shown_once: true,
     once_hint: "DigitalOcean API tokens may be shown once — rotate if leaked.",
+    emit_token_page: true,
 };
 
 static GUMROAD: ProviderCatalog = ProviderCatalog {
@@ -459,6 +481,7 @@ static GUMROAD: ProviderCatalog = ProviderCatalog {
     env_hint: "Paste GUMROAD_CHECKOUT_URL into the marketing CTA; API tokens stay on the deploy target — never in .ship/.",
     secret_shown_once: true,
     once_hint: "Gumroad access tokens may need regeneration if lost — check Settings.",
+    emit_token_page: true,
 };
 
 static LEMON: ProviderCatalog = ProviderCatalog {
@@ -472,6 +495,7 @@ static LEMON: ProviderCatalog = ProviderCatalog {
     env_hint: "Put LEMON_* / LEMONSQUEEZY_* on the deploy target — never in .ship/.",
     secret_shown_once: true,
     once_hint: "Lemon API keys / webhook secrets may be shown once — rotate if leaked.",
+    emit_token_page: true,
 };
 
 static STRIPE: ProviderCatalog = ProviderCatalog {
@@ -485,6 +509,7 @@ static STRIPE: ProviderCatalog = ProviderCatalog {
     env_hint: "Put STRIPE_* keys on the deploy target — never in .ship/.",
     secret_shown_once: true,
     once_hint: "Stripe secret keys are shown once at create — roll a new key if lost.",
+    emit_token_page: true,
 };
 
 static PADDLE: ProviderCatalog = ProviderCatalog {
@@ -498,6 +523,7 @@ static PADDLE: ProviderCatalog = ProviderCatalog {
     env_hint: "Put PADDLE_* keys on the deploy target — never in .ship/.",
     secret_shown_once: true,
     once_hint: "Paddle API keys may be shown once — rotate if leaked.",
+    emit_token_page: true,
 };
 
 static HEROKU: ProviderCatalog = ProviderCatalog {
@@ -511,6 +537,7 @@ static HEROKU: ProviderCatalog = ProviderCatalog {
     env_hint: "Put HEROKU_* / config vars via heroku config:set — never in .ship/.",
     secret_shown_once: true,
     once_hint: "Heroku API keys may be shown once — rotate if leaked.",
+    emit_token_page: true,
 };
 
 static AMPLIFY: ProviderCatalog = ProviderCatalog {
@@ -524,6 +551,7 @@ static AMPLIFY: ProviderCatalog = ProviderCatalog {
     env_hint: "Put AMPLIFY_* / AWS credentials via Amplify console or CLI — never in .ship/.",
     secret_shown_once: true,
     once_hint: "AWS access keys may be shown once — rotate if leaked.",
+    emit_token_page: true,
 };
 
 static CLOUDRUN: ProviderCatalog = ProviderCatalog {
@@ -537,6 +565,7 @@ static CLOUDRUN: ProviderCatalog = ProviderCatalog {
     env_hint: "Put CLOUD_RUN_* / GCP credentials via gcloud or Secret Manager — never in .ship/.",
     secret_shown_once: true,
     once_hint: "GCP service account keys may be shown once — rotate if leaked.",
+    emit_token_page: true,
 };
 
 static AZURESTATIC: ProviderCatalog = ProviderCatalog {
@@ -550,6 +579,7 @@ static AZURESTATIC: ProviderCatalog = ProviderCatalog {
     env_hint: "Put AZURE_STATIC_* / deployment tokens via Azure portal or SWA CLI — never in .ship/.",
     secret_shown_once: true,
     once_hint: "Azure deployment tokens may be shown once — rotate if leaked.",
+    emit_token_page: true,
 };
 
 /// Where to copy the *value* for a named secret (not where to put it).
@@ -728,8 +758,77 @@ pub fn once_hint_for_secret_name(name: &str) -> &'static str {
 
 fn env_entry_url(id: ProviderId, cat: &ProviderCatalog) -> &'static str {
     match id {
+        // Settings / console — Docs button carries the tutorial URL.
         ProviderId::Polar => POLAR_WEBHOOK_DOCS,
+        ProviderId::Cloudflare => "https://dash.cloudflare.com/?to=/:account/workers-and-pages",
+        ProviderId::Vercel => "https://vercel.com/dashboard",
+        ProviderId::Netlify => "https://app.netlify.com",
+        ProviderId::Github => "https://github.com/settings/secrets/actions",
+        ProviderId::D1 => "https://dash.cloudflare.com/?to=/:account/workers/d1",
+        ProviderId::Fly => "https://fly.io/dashboard",
+        ProviderId::Railway => "https://railway.app/dashboard",
         _ => cat.token_url,
+    }
+}
+
+/// Tutorial URL for the Docs button (kind-aware).
+fn step_docs_url(id: ProviderId, kind: &str, cat: &ProviderCatalog) -> Option<&'static str> {
+    match kind {
+        "env" => Some(match id {
+            ProviderId::Cloudflare => {
+                "https://developers.cloudflare.com/workers/configuration/secrets/"
+            }
+            ProviderId::Vercel => "https://vercel.com/docs/projects/environment-variables",
+            ProviderId::Netlify => {
+                "https://docs.netlify.com/build/environment-variables/get-started"
+            }
+            ProviderId::Github => {
+                "https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions"
+            }
+            ProviderId::Polar => POLAR_WEBHOOK_DOCS,
+            ProviderId::D1 => "https://developers.cloudflare.com/d1/get-started/",
+            ProviderId::Fly => "https://fly.io/docs/apps/secrets/",
+            ProviderId::Railway => "https://docs.railway.com/guides/variables",
+            _ => cat.docs_url,
+        }),
+        "oauth" => Some(match id {
+            ProviderId::Vercel => "https://vercel.com/docs/cli/login",
+            ProviderId::Netlify => {
+                "https://docs.netlify.com/api-and-cli-guides/cli-guides/get-started-with-cli/"
+            }
+            ProviderId::Fly => "https://fly.io/docs/flyctl/auth-login/",
+            ProviderId::Railway => "https://docs.railway.com/cli/login",
+            _ => cat.docs_url,
+        }),
+        "token_page" | "token_recover" => Some(match id {
+            ProviderId::Fly => "https://fly.io/docs/security/tokens/",
+            ProviderId::Railway => "https://docs.railway.com/cli/login",
+            _ => cat.docs_url,
+        }),
+        _ => Some(cat.docs_url),
+    }
+}
+
+fn portal_step(
+    id: String,
+    provider: String,
+    kind: &str,
+    title: String,
+    entry_url: Option<String>,
+    cli: Option<Vec<String>>,
+    detail: String,
+    docs: Option<&'static str>,
+) -> PortalStep {
+    PortalStep {
+        id,
+        provider,
+        kind: kind.into(),
+        title,
+        human: true,
+        entry_url,
+        docs_url: docs.map(|u| u.to_string()),
+        cli,
+        detail,
     }
 }
 
@@ -769,17 +868,16 @@ fn apply_polar_deep_links(project: &Path, steps: &mut [PortalStep]) {
             "dashboard" => {
                 step.detail =
                     "Products — create/update listing and checkout URL on polar.sh.".into();
+                step.docs_url = Some(POLAR.docs_url.into());
             }
             "token_page" => {
-                step.detail = format!(
-                    "Org settings — scroll to Developers for Organization Access Tokens. Docs: {}",
-                    POLAR.create_url
-                );
+                step.detail =
+                    "Org settings — scroll to Developers for Organization Access Tokens.".into();
+                step.docs_url = Some(POLAR.create_url.into());
             }
             "env" => {
-                step.detail = format!(
-                    "Webhooks — add endpoint and copy signing secret. Docs: {POLAR_WEBHOOK_DOCS}"
-                );
+                step.detail = "Webhooks — add endpoint and copy signing secret.".into();
+                step.docs_url = Some(POLAR_WEBHOOK_DOCS.into());
             }
             _ => {}
         }
@@ -897,70 +995,66 @@ pub fn plan_for_providers(project: &Path, providers: &[ProviderId]) -> Result<Po
         let pid = id.as_str().to_string();
 
         if cat.oauth_cli.is_empty() {
-            steps.push(PortalStep {
-                id: format!("{pid}.dashboard"),
-                provider: pid.clone(),
-                kind: "dashboard".into(),
-                title: format!("{} dashboard / marketplace", cat.label),
-                human: true,
-                entry_url: Some(cat.token_url.into()),
-                cli: None,
-                detail: cat.oauth_hint.into(),
-            });
+            steps.push(portal_step(
+                format!("{pid}.dashboard"),
+                pid.clone(),
+                "dashboard",
+                format!("{} dashboard / marketplace", cat.label),
+                Some(cat.token_url.into()),
+                None,
+                cat.oauth_hint.into(),
+                step_docs_url(*id, "dashboard", cat),
+            ));
         } else {
-            steps.push(PortalStep {
-                id: format!("{pid}.oauth"),
-                provider: pid.clone(),
-                kind: "oauth".into(),
-                title: format!("{} CLI OAuth", cat.label),
-                human: true,
-                entry_url: None,
-                cli: Some(cat.oauth_cli.iter().map(|s| (*s).to_string()).collect()),
-                detail: cat.oauth_hint.into(),
-            });
+            steps.push(portal_step(
+                format!("{pid}.oauth"),
+                pid.clone(),
+                "oauth",
+                format!("{} CLI OAuth", cat.label),
+                None,
+                Some(cat.oauth_cli.iter().map(|s| (*s).to_string()).collect()),
+                cat.oauth_hint.into(),
+                step_docs_url(*id, "oauth", cat),
+            ));
         }
 
-        steps.push(PortalStep {
-            id: format!("{pid}.token"),
-            provider: pid.clone(),
-            kind: "token_page".into(),
-            title: format!("{} create/copy credentials", cat.label),
-            human: true,
-            entry_url: Some(cat.create_url.into()),
-            cli: None,
-            detail: if cat.secret_shown_once {
-                format!(
-                    "{} Docs: {}",
-                    cat.once_hint, cat.docs_url
-                )
-            } else {
-                format!("{} Docs: {}", cat.once_hint, cat.docs_url)
-            },
-        });
+        if cat.emit_token_page {
+            steps.push(portal_step(
+                format!("{pid}.token"),
+                pid.clone(),
+                "token_page",
+                format!("{} create/copy credentials", cat.label),
+                Some(cat.create_url.into()),
+                None,
+                cat.once_hint.into(),
+                step_docs_url(*id, "token_page", cat),
+            ));
 
-        if cat.secret_shown_once {
-            steps.push(PortalStep {
-                id: format!("{pid}.token_recover"),
-                provider: pid.clone(),
-                kind: "token_recover".into(),
-                title: format!("{} — lost value? Roll or create new", cat.label),
-                human: true,
-                entry_url: Some(cat.token_url.into()),
-                cli: None,
-                detail: cat.once_hint.into(),
-            });
+            // Skip recover when it would open the same URL as create/copy (Cloudflare, Vercel, …).
+            if cat.secret_shown_once && cat.create_url != cat.token_url {
+                steps.push(portal_step(
+                    format!("{pid}.token_recover"),
+                    pid.clone(),
+                    "token_recover",
+                    format!("{} — lost value? Roll or create new", cat.label),
+                    Some(cat.token_url.into()),
+                    None,
+                    cat.once_hint.into(),
+                    step_docs_url(*id, "token_recover", cat),
+                ));
+            }
         }
 
-        steps.push(PortalStep {
-            id: format!("{pid}.env"),
-            provider: pid.clone(),
-            kind: "env".into(),
-            title: format!("{} environment / secrets", cat.label),
-            human: true,
-            entry_url: Some(env_entry_url(*id, cat).into()),
-            cli: None,
-            detail: cat.env_hint.into(),
-        });
+        steps.push(portal_step(
+            format!("{pid}.env"),
+            pid.clone(),
+            "env",
+            format!("{} environment / secrets", cat.label),
+            Some(env_entry_url(*id, cat).into()),
+            None,
+            cat.env_hint.into(),
+            step_docs_url(*id, "env", cat),
+        ));
     }
 
     apply_polar_deep_links(&project, &mut steps);
@@ -1164,6 +1258,103 @@ mod tests {
         assert_eq!(plan.providers, vec!["cloudflare".to_string(), "github".to_string()]);
         assert!(plan.steps.iter().any(|s| s.id == "cloudflare.oauth"));
         assert!(plan.steps.iter().any(|s| s.id == "github.token"));
+    }
+
+    #[test]
+    fn cloudflare_steps_have_distinct_open_targets() {
+        let dir = tempfile_dir();
+        let plan = plan_for(&dir, Some(ProviderId::Cloudflare)).unwrap();
+        let token = plan
+            .steps
+            .iter()
+            .find(|s| s.kind == "token_page")
+            .expect("token_page");
+        let env = plan.steps.iter().find(|s| s.kind == "env").expect("env");
+        // Same create/token URL → no duplicate recover row.
+        assert!(
+            !plan.steps.iter().any(|s| s.kind == "token_recover"),
+            "recover must not duplicate create URL"
+        );
+        assert_eq!(
+            token.entry_url.as_deref(),
+            Some(CLOUDFLARE.create_url)
+        );
+        assert_eq!(
+            env.entry_url.as_deref(),
+            Some("https://dash.cloudflare.com/?to=/:account/workers-and-pages")
+        );
+        assert_ne!(token.entry_url, env.entry_url);
+        assert_eq!(
+            env.docs_url.as_deref(),
+            Some("https://developers.cloudflare.com/workers/configuration/secrets/")
+        );
+        assert_eq!(token.docs_url.as_deref(), Some(CLOUDFLARE.docs_url));
+    }
+
+    #[test]
+    fn netlify_and_vercel_docs_urls_are_stable() {
+        assert!(NETLIFY.docs_url.contains("api-and-cli-guides"));
+        assert_eq!(VERCEL.docs_url, "https://vercel.com/docs/cli");
+        let dir = tempfile_dir();
+        let netlify = plan_for(&dir, Some(ProviderId::Netlify)).unwrap();
+        let env = netlify.steps.iter().find(|s| s.kind == "env").expect("env");
+        assert_eq!(
+            env.docs_url.as_deref(),
+            Some("https://docs.netlify.com/build/environment-variables/get-started")
+        );
+        let vercel = plan_for(&dir, Some(ProviderId::Vercel)).unwrap();
+        let oauth = vercel
+            .steps
+            .iter()
+            .find(|s| s.kind == "oauth")
+            .expect("oauth");
+        assert_eq!(
+            oauth.docs_url.as_deref(),
+            Some("https://vercel.com/docs/cli/login")
+        );
+    }
+
+    #[test]
+    fn fly_and_railway_have_oauth_and_distinct_env_docs() {
+        let dir = tempfile_dir();
+        let fly = plan_for(&dir, Some(ProviderId::Fly)).unwrap();
+        assert!(fly.steps.iter().any(|s| s.kind == "oauth"));
+        assert!(
+            !fly.steps.iter().any(|s| s.kind == "token_page"),
+            "Fly has no distinct token UI — omit token_page"
+        );
+        let fly_env = fly.steps.iter().find(|s| s.kind == "env").expect("env");
+        assert_eq!(
+            fly_env.docs_url.as_deref(),
+            Some("https://fly.io/docs/apps/secrets/")
+        );
+        let fly_oauth = fly.steps.iter().find(|s| s.kind == "oauth").unwrap();
+        assert_eq!(
+            fly_oauth.cli.as_ref().map(|c| c.join(" ")).as_deref(),
+            Some("fly auth login")
+        );
+
+        let railway = plan_for(&dir, Some(ProviderId::Railway)).unwrap();
+        assert!(railway.steps.iter().any(|s| s.kind == "oauth"));
+        let token = railway
+            .steps
+            .iter()
+            .find(|s| s.kind == "token_page")
+            .expect("token_page");
+        let env = railway.steps.iter().find(|s| s.kind == "env").expect("env");
+        assert_eq!(
+            token.entry_url.as_deref(),
+            Some("https://railway.com/account/tokens")
+        );
+        assert_eq!(
+            env.entry_url.as_deref(),
+            Some("https://railway.app/dashboard")
+        );
+        assert_ne!(token.entry_url, env.entry_url);
+        assert_eq!(
+            env.docs_url.as_deref(),
+            Some("https://docs.railway.com/guides/variables")
+        );
     }
 
     #[test]

@@ -2,7 +2,7 @@
 
 **Start:** [CURRENT.md](./CURRENT.md) → [handoffs/current-session.md](./handoffs/current-session.md)
 
-_Last updated: 2026-09-22 · **0.2.2** · docs shelf layout (Obscur-style)_
+_Last updated: 2026-09-25 · **0.2.3** (+ working-tree Platforms / Portal docs)_
 
 ---
 
@@ -13,7 +13,8 @@ _Last updated: 2026-09-22 · **0.2.2** · docs shelf layout (Obscur-style)_
 | 1 | [CURRENT.md](./CURRENT.md) | Version, idle/active status, where truth lives |
 | 2 | [product/SCOPE-OF-SERVICE.md](./product/SCOPE-OF-SERVICE.md) | What Studio does / does not do |
 | 3 | [product/OPERATOR-NEXT.md](./product/OPERATOR-NEXT.md) | Human gates still on the operator |
-| 3b | [../specs/backend/shipping-hub-north-star.md](../specs/backend/shipping-hub-north-star.md) | Adaptive bands + mission |
+| 3b | [product/PLATFORMS-AND-PORTAL.md](./product/PLATFORMS-AND-PORTAL.md) | Platforms · Portal · Integrations — functionality · objectives · gaps |
+| 3c | [../specs/backend/shipping-hub-north-star.md](../specs/backend/shipping-hub-north-star.md) | Adaptive bands + mission |
 
 Agents: boot [START-HERE.md](./START-HERE.md) → handoff **Next Atomic Step** only. Prefer Publish over Launch.
 
@@ -23,7 +24,7 @@ Agents: boot [START-HERE.md](./START-HERE.md) → handoff **Next Atomic Step** o
 
 | Shelf | Files | Use |
 |-------|-------|-----|
-| [product/](./product/README.md) | 4 | Scope, product contract, operator checklist, [improvement backlog](./product/improvement-backlog.md) |
+| [product/](./product/README.md) | 5+ | Scope, contract, [Platforms·Portal](./product/PLATFORMS-AND-PORTAL.md), operator checklist, [improvement backlog](./product/improvement-backlog.md) |
 | [dogfood/](./dogfood/README.md) | 3 | Offline / Signet / Orbit walk scripts |
 | [frontend/](./frontend/README.md) | 1 | Desktop shell contract |
 | [handoffs/](./handoffs/README.md) | live + evidence | Continuity · L3 proof |

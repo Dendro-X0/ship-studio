@@ -526,8 +526,27 @@ fn main() -> Result<()> {
                 PublishCmd::Next { force } => {
                     let _ =
                         publish::load_or_build_with_options(&project, mode, intent)?;
-                    let view = publish::next(&project, force)?;
-                    println!("{}", serde_json::to_string_pretty(&view)?);
+                    match publish::next(&project, force) {
+                        Ok(view) => {
+                            println!("{}", serde_json::to_string_pretty(&view)?);
+                        }
+                        Err(err) => {
+                            let state = publish::load_or_build_with_options(
+                                &project, mode, intent,
+                            )?;
+                            let msg = format!("{err:#}");
+                            eprintln!("{msg}");
+                            println!(
+                                "{}",
+                                serde_json::to_string_pretty(&serde_json::json!({
+                                    "ok": false,
+                                    "message": msg,
+                                    "publish": publish::view(&state),
+                                }))?
+                            );
+                            bail!("{msg}");
+                        }
+                    }
                 }
                 PublishCmd::Reset => {
                     let view = publish::reset_with_options(&project, mode, intent)?;

@@ -1,8 +1,10 @@
 # Operator next — manual gates only
 
-**Updated:** 2026-09-19  
+**Updated:** 2026-09-25  
 **Repo:** https://github.com/Dendro-X0/ship-studio  
 **Local path:** `E:/Web Projects/ship-studio`
+
+Desktop Platforms · Portal · Integrations (what works, objectives, known gaps): [PLATFORMS-AND-PORTAL.md](./PLATFORMS-AND-PORTAL.md).
 
 ## Publish portal (preferred)
 
@@ -34,10 +36,21 @@ cd "E:/Web Projects/ship-studio"
 # after paste / listing / live release / deploy on vendor UIs…
 ./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" confirm
 ./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" next
-# optional: poll local Verify until ready (never vendor HTTPS)
+# optional: poll Verify until ready (disk · local CLI · official CLI probe — never Studio HTTPS with secrets)
 ./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" watch --once
 ./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" watch --interval-secs 15
 ```
+
+**Status layers** (how Verify detects progress without replacing the provider):
+
+| Layer | Means | Example |
+|-------|--------|---------|
+| Disk | Project / `.ship` files | scopes saved, TRUST.md present |
+| Local CLI | Signet / doctor / deploy pulse | Signet release artifact, last-run ok |
+| Official CLI probe | Operator’s `gh` / `wrangler whoami` … | GitHub Release listed |
+| Human attest | No auto green — Confirm after Open | Polar paste, store listing |
+
+Env/token work stays **Open → official UI → Confirm**. The provider remains authority for irreversible “done.”
 
 Desktop: topbar **General** (default) · **Local** (first-run default) · **Publish** · primary **Continue** · Watch toggle · Related opens Env / Sign / Portal / Scopes / Dashboard · **Back to Publish**.  
 TUI: Publish (`P`) → o / v / c / n · **`w` Watch** (local Verify poll, READY when Confirm is safe).  

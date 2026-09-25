@@ -1,14 +1,15 @@
 # CURRENT — Ship Studio
 
-**Version:** 0.2.3  
-**Updated:** 2026-09-23  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** — Publish Continue fast path · next: S1.1 demo GIFs
+**Version:** 0.2.3 (+ working-tree Desktop UX)  
+**Updated:** 2026-09-25  
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** — working tree: hosting parity **slices 0–4 complete**. Next: **park or commit**.
 
 ## Truth pointers
 
 | Need | Open |
 |------|------|
 | Next atomic step | [handoffs/current-session.md](./handoffs/current-session.md) |
+| Platforms · Portal · Integrations | [product/PLATFORMS-AND-PORTAL.md](./product/PLATFORMS-AND-PORTAL.md) |
 | Product boundary | [product/SCOPE-OF-SERVICE.md](./product/SCOPE-OF-SERVICE.md) |
 | Product contract | [product/PRODUCT.md](./product/PRODUCT.md) |
 | Human gates | [product/OPERATOR-NEXT.md](./product/OPERATOR-NEXT.md) |
@@ -24,6 +25,7 @@
 | aperio Advanced L4 (public cut) | Parked — personal use |
 | Mobile store API upload | Deferred |
 | k8s controllers | Out of scope |
+| Polar paid checkout E2E | Deferred — org `payment_ready` |
 
 ## Docs index
 

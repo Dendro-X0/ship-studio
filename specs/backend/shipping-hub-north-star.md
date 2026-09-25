@@ -1,18 +1,18 @@
 # Shipping hub — north star
 
 **Status:** Active  
-**Updated:** 2026-09-18  
+**Updated:** 2026-09-23  
 **Owner:** product + `shipctl` publish / pulse / doctor  
 
 ## Mission
 
-Ship Studio is a **local shipping hub for the final mile** of the product lifecycle:
+Ship Studio is a **local portal / guide** for the final mile of many project kinds (OSS cuts, commerce listings, host deploys, desktop Signet, marketplace submits):
 
 1. **Sign** — self-sign (Signet) and graduate (OV / Azure Trusted Signing / notarization)  
 2. **Release** — checksums, TRUST honesty, GitHub Release / Signet release  
 3. **Deploy** — Orbit for Web/API; desktop cut is Signet release (+ optional marketing host)
 
-Operators should rarely miss a gate. The hub sequences Open/Run → human vendor work when required → Confirm → Next.
+**How it helps without replacing providers:** scripts + **Continue** for highly automatable gates; Open → Confirm wizards for official channels. **Verify** detects status via graduated layers (disk · local CLI · official CLI probe · human attest) — the provider remains authority for irreversible done ([verify-status-layers-design](./verify-status-layers-design.md)). Operators should rarely miss a gate or reassemble the release from memory across 30+ repos.
 
 ## Explicitly not the hub’s job
 
