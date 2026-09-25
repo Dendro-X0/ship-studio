@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3 (+ working-tree Desktop UX)  
 **Updated:** 2026-09-25  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** — working tree: hosting parity **slices 0–4 complete**. Next: **park or commit**.
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** + **[46384c4](https://github.com/Dendro-X0/ship-studio/commit/46384c4)** (Platforms / Portal / hosting parity). Next: idle — new band when ready.
 
 ## Truth pointers
 

@@ -1,12 +1,12 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-25  
-**Branch:** `main`  
-**Status:** Working tree — hosting-portal-parity **slices 0–4 complete** (L1 tsc ok)
+**Branch:** `main` (@ `46384c4`)  
+**Status:** **Committed + pushed** — Platforms / Portal / hosting parity slices 0–4
 
 ## Next Atomic Step
 
-**Park or commit the working tree** (Platforms / Portal / hosting parity). Do not start reliability drive-bys or Tier D Platforms cards unless a new design slice is activated.
+**Idle** — pick a new band when ready (Desktop reliability design, outcome panel, Tier D catalog, or dogfood L2). Do not invent drive-by reliability patches.
 
 ## PAUSED / CANCELLED
 
@@ -16,18 +16,18 @@
 | aperio Advanced L4 | Parked |
 | Mobile store API upload | Deferred |
 | k8s controllers | Out of scope |
-| Drive-by Desktop reliability | Deferred |
+| Drive-by Desktop reliability | Deferred — design before code |
 
 ## Last closed
 
 | Band | Link |
 |------|------|
-| **Hosting parity slice 4** | Detect → Platforms highlight (`preferredHostingPlatformId`) — Choose host + detect chips |
-| **Hosting parity slices 0–3** | URL · Fly/Railway · Pages · Tier docs |
-| Hosting parity specs | [design](../../specs/backend/hosting-portal-parity-design.md) |
+| **Platforms · Portal · hosting parity** | [46384c4](https://github.com/Dendro-X0/ship-studio/commit/46384c4) — catalog · Open/Docs/Login · Harbor · slices 0–4 |
+| Hosting parity design | [hosting-portal-parity-design](../../specs/backend/hosting-portal-parity-design.md) |
+| Product overview | [PLATFORMS-AND-PORTAL.md](../product/PLATFORMS-AND-PORTAL.md) |
 
 ## Boot allowlist
 
 1. This file  
-2. [PLATFORMS-AND-PORTAL.md](../product/PLATFORMS-AND-PORTAL.md)  
+2. [CURRENT.md](../CURRENT.md) · [PLATFORMS-AND-PORTAL.md](../product/PLATFORMS-AND-PORTAL.md)  
 3. `cargo test -p shipctl portal::tests` · desktop `tsc`  
