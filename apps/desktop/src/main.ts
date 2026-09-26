@@ -3476,12 +3476,37 @@ function renderSwitcher(list: string[]) {
 
 
 
-async function loadJsonCmd(args: string[], opts?: { silent?: boolean }): Promise<unknown | null> {
-  const result = await run(args, { quietHeader: true, silent: opts?.silent !== false });
-  if (!result?.ok || !result.stdout) return null;
+async function loadJsonCmd(
+  args: string[],
+  opts?: { silent?: boolean; user?: boolean; label?: string },
+): Promise<unknown | null> {
+  const user = Boolean(opts?.user);
+  const result = await run(args, {
+    quietHeader: true,
+    // User path: show dock output so Preview is useful; quietToast so we own fail toast.
+    silent: user ? false : opts?.silent !== false,
+    quietToast: user,
+  });
+  const label = opts?.label ?? args[0] ?? "shipctl";
+  const preview: ToastAction[] = [
+    { id: "preview", label: "Preview log", icon: "open", run: () => openOutputPreview() },
+  ];
+  if (!result) {
+    if (user) toast(`${label} busy — Cancel to unlock, then retry`, "err", 5000);
+    return null;
+  }
+  if (!result.ok || !result.stdout?.trim()) {
+    if (user) {
+      toast(`${label}: ${cmdFailDetail(result)}`, "err", 8000, preview);
+    }
+    return null;
+  }
   try {
     return JSON.parse(result.stdout);
   } catch {
+    if (user) {
+      toast(`${label}: output was not JSON — open Preview`, "err", 7000, preview);
+    }
     return null;
   }
 }
@@ -3550,9 +3575,15 @@ function syncStageScopesPrimary() {
 
 async function detectScopes(opts?: { quiet?: boolean }) {
   if (!projectPath()) return;
-  const plan = (await loadJsonCmd(["scopes", "--project", projectPath()])) as ScopePlan | null;
+  const plan = (await loadJsonCmd(["scopes", "--project", projectPath()], {
+    user: !opts?.quiet,
+    label: "Scopes",
+  })) as ScopePlan | null;
   applyScopes(plan);
-  if (!opts?.quiet) toast(plan?.scopes?.length ? "Scopes detected" : "No scopes found", "ok");
+  // Fail path: loadJsonCmd already toasted when user-initiated.
+  if (!opts?.quiet && plan) {
+    toast(plan.scopes?.length ? "Scopes detected" : "No scopes found", "ok");
+  }
 }
 
 async function saveScopes(opts?: { silentToast?: boolean }): Promise<boolean> {
@@ -5234,7 +5265,10 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   document.querySelector("#now-env")?.addEventListener("click", async () => {
     setView("env");
-    const plan = (await loadJsonCmd(["env", "--project", projectPath()])) as EnvPortal | null;
+    const plan = (await loadJsonCmd(["env", "--project", projectPath()], {
+      user: true,
+      label: "Env",
+    })) as EnvPortal | null;
     applyEnv(plan);
   });
   document.querySelector("#now-polar")?.addEventListener("click", () => {
@@ -5406,20 +5440,27 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#btn-assist")?.addEventListener("click", async () => {
     setView("assist");
-    const plan = (await loadJsonCmd(["assist", "--project", projectPath()])) as AssistPlan | null;
+    const plan = (await loadJsonCmd(["assist", "--project", projectPath()], {
+      user: true,
+      label: "Assist",
+    })) as AssistPlan | null;
     applyAssist(plan);
   });
   document.querySelector("#btn-assist-start")?.addEventListener("click", async () => {
     setView("publish");
-    const raw = await loadJsonCmd(["assist", "--project", projectPath(), "--start"]);
+    const raw = await loadJsonCmd(["assist", "--project", projectPath(), "--start"], {
+      user: true,
+      label: "Assist",
+    });
     if (raw && typeof raw === "object" && "assist" in raw) {
       applyAssist((raw as { assist: AssistPlan }).assist);
     }
     if (raw && typeof raw === "object" && "publish" in raw) {
       applyPublishView((raw as { publish: PublishView }).publish);
-    } else {
+    } else if (raw) {
       document.querySelector<HTMLButtonElement>("#btn-publish")?.click();
     }
+    // Fail: loadJsonCmd toasted — do not chain into Publish refresh.
   });
   document.querySelector("#btn-scopes")?.addEventListener("click", () => {
     void detectScopes();
@@ -5443,7 +5484,10 @@ window.addEventListener("DOMContentLoaded", () => {
     primaryBtn.title = n > 0 ? "Save selection is applied on Confirm" : "Select at least one scope";
   });
   document.querySelector("#btn-env")?.addEventListener("click", async () => {
-    const plan = (await loadJsonCmd(["env", "--project", projectPath()])) as EnvPortal | null;
+    const plan = (await loadJsonCmd(["env", "--project", projectPath()], {
+      user: true,
+      label: "Env",
+    })) as EnvPortal | null;
     applyEnv(plan);
   });
   document.querySelector("#btn-sign-paths")?.addEventListener("click", () => {

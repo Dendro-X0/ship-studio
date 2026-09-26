@@ -58,7 +58,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S1.2c | **Public Publish UX ($29 bar)** | Single primary · rail diet · inline Scopes · copy pass — [public-publish-ux-design](../../specs/frontend/public-publish-ux-design.md) · **A+B+C Desktop** (D/E/F pending) |
 | S1.2j | **Hosting portal parity** | Tier A–E · Fly/Railway · Pages≠PAT · detect→highlight — [design](../../specs/backend/hosting-portal-parity-design.md) · **slices 0–4 done** |
 | S1.2i | **Platforms · Portal product doc** | Functionality · objectives · known gaps — [PLATFORMS-AND-PORTAL](./PLATFORMS-AND-PORTAL.md) · **docs shipped** |
-| S1.2k | **Desktop reliability (TTY · toasts)** | Env Put · unified opener · soft taxonomy — [design](../../specs/backend/desktop-reliability-design.md) · **slices 1–2**; slice 3 next |
+| S1.2k | **Desktop reliability (TTY · toasts)** | Env Put · unified opener · soft taxonomy · user load honesty — [design](../../specs/backend/desktop-reliability-design.md) · **slices 1–3**; slice 4 next |
 | S1.2h | **Desktop silent failures** | Login CLI terminal · portal provider guard · actionable fail toasts — [desktop-silent-failures-investigation](../../specs/backend/desktop-silent-failures-investigation.md) · **Desktop slice 1**; continued as S1.2k |
 | S1.2g | **Provider wizard setup** | Hosting/Payments/Email minute loop + Continue publishing — [provider-wizard-setup-design](../../specs/frontend/provider-wizard-setup-design.md) · **Desktop slice 1** |
 | S1.2f | **Platforms catalog** | Hosting + Official signing picker (shared with Integrations chrome) — [platforms-catalog-design](../../specs/frontend/platforms-catalog-design.md) · **Desktop slice 1** |

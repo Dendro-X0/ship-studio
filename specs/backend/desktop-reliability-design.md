@@ -1,6 +1,6 @@
 # Desktop reliability — design
 
-**Status:** Slices 0–2 shipped (working tree) — slice 3 next (user-initiated load honesty)  
+**Status:** Slices 0–3 shipped (working tree) — slice 4 next (Ritual N-class)  
 **Updated:** 2026-09-25  
 **Investigation:** [desktop-reliability-investigation.md](./desktop-reliability-investigation.md)  
 **Parents:** [desktop-silent-failures-investigation](./desktop-silent-failures-investigation.md) (slice 1 shipped) · [PLATFORMS-AND-PORTAL](../../docs/product/PLATFORMS-AND-PORTAL.md)
@@ -83,7 +83,7 @@ Deploy / Flow: open terminal for `shipctl deploy` / `shipctl flow` when Advanced
 | **0 — Spec freeze** | This design + investigation; handoff activation; action→class checklist in design | **Done** — specs + handoff |
 | **1 — Env Put terminal** | Put → interactive terminal; toast parity with Human Put | **Done** — `open_env_put_terminal` · L1 tsc + cargo check |
 | **2 — Unified opener + soft taxonomy** | `open_shipctl_terminal`; expand `isSoftCmdFailure`; migrate existing openers | **Done** — L1 tsc · cargo check |
-| **3 — User-initiated load honesty** | Load env / Refresh assist toast on fail | L2 unplug shipctl → clear toast |
+| **3 — User-initiated load honesty** | Load env / Refresh assist toast on fail | **Done** — `loadJsonCmd({ user })` · L1 tsc |
 | **4 — Ritual N-class** | Deploy/Flow terminal or honest auth-fail copy | L2 Harbor Public deploy path |
 | **Later** | Non-Windows terminals · CDP attach recipe · vault UX | Separate bands |
 

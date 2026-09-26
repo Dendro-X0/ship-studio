@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3 (+ working-tree Desktop UX)  
 **Updated:** 2026-09-25  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** + Platforms/Portal [46384c4](https://github.com/Dendro-X0/ship-studio/commit/46384c4) · reliability [406eed9](https://github.com/Dendro-X0/ship-studio/commit/406eed9)+. Working tree: reliability **slice 2**. Next: slice 3 or commit.
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** + Platforms/Portal [46384c4](https://github.com/Dendro-X0/ship-studio/commit/46384c4). **Active:** [desktop-reliability-design](../specs/backend/desktop-reliability-design.md) — slices 0–3 done; next slice 4 (Ritual N-class).
 
 ## Truth pointers
 
