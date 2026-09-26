@@ -2,11 +2,11 @@
 
 **Updated:** 2026-09-25  
 **Branch:** `main`  
-**Status:** Surface law **locked** (Client · MCP · CLI) — idle pending next implementation band
+**Status:** Overhaul **O2 done** (L1) — next **O3 MCP assist contract**
 
 ## Next Atomic Step
 
-**Park** until maintainer picks the first **Client honesty** implementation band (exact human-gate deep links / Put-primary copy — not coach theater).
+**Implement [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) O3** — document MCP agent path (`ship_*` may open/continue; never custody keys); gap list for S2.4. Docs + MCP tool audit.
 
 ## PAUSED / CANCELLED
 
@@ -24,12 +24,14 @@
 
 | Band | Link |
 |------|------|
-| **Surface law (Client · MCP · CLI)** | [SCOPE Delivery surfaces](../product/SCOPE-OF-SERVICE.md) · [surfaces-cli-tui-desktop](../../specs/backend/surfaces-cli-tui-desktop.md) |
-| **Reliability slices 0–4** | [cf692fb](https://github.com/Dendro-X0/ship-studio/commit/cf692fb) |
+| **Overhaul O2** | Tier A plain `env_hint` · Open≠Docs test (this commit) |
+| **Overhaul O1** | Portal env Put primary · Learn more (this commit) |
+| **Overhaul O0** | [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) · [human-gate-catalog](../../specs/backend/human-gate-catalog-design.md) (this commit) |
+| **Surface law** | [7e2404d](https://github.com/Dendro-X0/ship-studio/commit/7e2404d) |
 
 ## Boot allowlist
 
 1. This file  
-2. [SCOPE-OF-SERVICE.md](../product/SCOPE-OF-SERVICE.md) — Delivery surfaces  
-3. [PRODUCT.md](../product/PRODUCT.md)  
-4. [surfaces-cli-tui-desktop.md](../../specs/backend/surfaces-cli-tui-desktop.md)  
+2. [ship-studio-overhaul-design.md](../../specs/backend/ship-studio-overhaul-design.md)  
+3. MCP tool surface (`shipctl mcp` / ship_* docs)  
+4. [improvement-backlog.md](../product/improvement-backlog.md) S2.4  

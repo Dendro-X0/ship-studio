@@ -2,13 +2,14 @@
 
 **Version:** 0.2.3 (+ working-tree Desktop UX)  
 **Updated:** 2026-09-25  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** + Platforms/Portal [46384c4](https://github.com/Dendro-X0/ship-studio/commit/46384c4). Reliability [cf692fb](https://github.com/Dendro-X0/ship-studio/commit/cf692fb). **Product law:** Client · MCP · CLI — [SCOPE Delivery surfaces](./product/SCOPE-OF-SERVICE.md). Vendor coach **CANCELLED**. Idle.
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Reliability [cf692fb](https://github.com/Dendro-X0/ship-studio/commit/cf692fb) · Surface law [7e2404d](https://github.com/Dendro-X0/ship-studio/commit/7e2404d). **Active:** overhaul **O3** — [ship-studio-overhaul-design](../specs/backend/ship-studio-overhaul-design.md) (O0–O2 done).
 
 ## Truth pointers
 
 | Need | Open |
 |------|------|
 | Next atomic step | [handoffs/current-session.md](./handoffs/current-session.md) |
+| Overhaul (Client honesty) | [../specs/backend/ship-studio-overhaul-design.md](../specs/backend/ship-studio-overhaul-design.md) · [human-gate-catalog](../specs/backend/human-gate-catalog-design.md) |
 | Platforms · Portal · Integrations | [product/PLATFORMS-AND-PORTAL.md](./product/PLATFORMS-AND-PORTAL.md) |
 | Product boundary | [product/SCOPE-OF-SERVICE.md](./product/SCOPE-OF-SERVICE.md) |
 | Product contract | [product/PRODUCT.md](./product/PRODUCT.md) |
@@ -22,6 +23,7 @@
 
 | Band | Rule |
 |------|------|
+| Vendor handoff coach | **CANCELLED** — [design](../specs/backend/vendor-handoff-coach-design.md) |
 | aperio Advanced L4 (public cut) | Parked — personal use |
 | Mobile store API upload | Deferred |
 | k8s controllers | Out of scope |

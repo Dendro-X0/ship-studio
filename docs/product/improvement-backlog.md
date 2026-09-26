@@ -1,22 +1,22 @@
 # Ship Studio — improvement backlog
 
-**Status:** Living idea list — **not** an activate queue  
-**Updated:** 2026-09-23  
-**Cadence:** Pick from here when energy allows; hub Adaptive stays idle unless a real ship needs a lane  
-**Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md)  
+**Status:** Living idea list — overhaul O1–O5 is the **activate queue**  
+**Updated:** 2026-09-25  
+**Cadence:** Overhaul O1–O5 via handoff ([ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)); other ideas stay shelf  
+**Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
 ```text
-Value bar:  Multi-repo / multi-surface final-mile order + honest Verify + Continue scripts
-            (portal/guide — not vendor replacement; utility > SaaS starter kits)
-Not:        Hype · chatbot-substitutable checklists · fake auto-publish · replace Polar/CF/stores
-Price:      $29 one-time (Polar) — paid delta = fewer missed gates across many projects
+Value bar:  Client honesty on human gates + multi-repo final-mile order + honest Verify
+            (portal/guide — not vendor replacement; Put/Login not Docs; utility > starter kits)
+Not:        Hype · encyclopedia dumps · chatbot-substitutable checklists · fake auto-publish · coach theater
+Price:      $29 one-time (Polar) — paid delta = finishable gates for account-holders without DevOps fluency
 Role:       DUAL TRUNK (2026-09-25) — long-term offering + client portfolio face
             Depth shelf: Obscur · Vectis · Hobby gifts stay separate
             Intent: strategy-research-lab/strategies/ship-studio-dual-trunk.md
 ```
 
-Every candidate should still answer: Does it reduce missed gates for multi-surface ships? Does it stay inside scope (no vendor replacement, no dangerous live publish)? Would a stranger with many OSS repos feel this was worth $29 — or only a pasted README?
+Every candidate should still answer: Does it reduce missed gates for multi-surface ships? Does it stay inside scope (no vendor replacement, no dangerous live publish)? Would a stranger with many OSS repos — or a founder who owns vendor accounts but not DevOps fluency — feel this was worth $29 — or only a pasted README?
 
 ---
 
@@ -35,6 +35,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 | ID | Idea | Notes |
 |----|------|-------|
+| **S1.2m** | **Client honesty overhaul** | Put-primary env · plain copy · MCP contract · catalog diet · Harbor proof — [overhaul](../../specs/backend/ship-studio-overhaul-design.md) · [gates](../../specs/backend/human-gate-catalog-design.md) · **O0–O2 done; O3 next** |
 | S0.1 | **W4 — license delivery** | Built; live email dogfood when Polar charge/free checkout works |
 | S0.2 | **Refund path dogfood** | Built; E2E deferred on Polar `payment_ready` |
 | S0.3 | **Public download path** | Done — [v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1) installer + zip (v0.2.0 / v0.1.0 retained) |
@@ -113,6 +114,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | Replace Polar / Cloudflare / Apple / store UIs | Out of scope; hollow “platform” |
 | Cloud multi-tenant portfolio SaaS | Scope non-goal v0 |
 | AI “ship agent” that claims to finish OAuth | Chatbot theater; scam-prior |
+| Vendor handoff coach / in-app encyclopedia dumps | **CANCELLED** — [vendor-handoff-coach-design](../../specs/backend/vendor-handoff-coach-design.md); use overhaul Put/Login CTAs instead |
 | Bought reviews / hype launch | Operator rules |
 | Paywall core sequencing with no OSS path | Ethics + conversion trust |
 | Merge Unstick / Anti-SE / Assess into Studio | Wrong product; keep adapters thin |

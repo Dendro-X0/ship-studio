@@ -3736,6 +3736,48 @@ async function openEnvPutTerminal(provider: string, name: string) {
   );
 }
 
+/** Tier A hosts with a real put CLI — O1 Portal env primary CTA. */
+const ENV_PUT_PROVIDERS = new Set(["cloudflare", "vercel", "netlify"]);
+
+function providerHasEnvPut(provider?: string | null): boolean {
+  return Boolean(provider && ENV_PUT_PROVIDERS.has(provider.toLowerCase()));
+}
+
+/** Portal env Put — named Env Put when one hint; else Env list or Human --put. */
+async function openPortalEnvPut(provider: string) {
+  const project = projectPath();
+  if (!project) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  const pid = provider.trim().toLowerCase();
+  if (!providerHasEnvPut(pid)) {
+    toast("No Put CLI for this provider — Open dashboard, then put on the host", "info", 5500);
+    return;
+  }
+  const hints =
+    lastSecrets?.hints?.filter((h) => (h.provider ?? "").toLowerCase() === pid && h.name) ?? [];
+  if (hints.length === 1 && hints[0]?.name) {
+    await openEnvPutTerminal(pid, hints[0].name);
+    return;
+  }
+  if (hints.length > 1) {
+    setView("env");
+    const plan = (await loadJsonCmd(["env", "--project", project], {
+      user: true,
+      label: "Env",
+    })) as EnvPortal | null;
+    applyEnv(plan);
+    toast("Pick Put on a named secret — never paste the value into Studio", "info", 5500);
+    return;
+  }
+  await openShipctlTerminal(["human", "--project", project, "--no-open", "--put"], {
+    title: "Ship Studio paste",
+    meta: "Launched terminal: shipctl human --no-open --put — paste each value when prompted.",
+    okToast: "Put terminal opened — finish secrets there, then Confirm in Publish",
+  });
+}
+
 function applyEnv(plan: EnvPortal | null) {
   const list = document.querySelector("#env-actions");
   if (!list) return;
@@ -3870,7 +3912,34 @@ function applyPortalPlan(plan: PortalPlan | null) {
       const docs = s.docs_url ?? "";
       const cli = (s.cli ?? []).join(" ");
       const openDisabled = url ? "" : "disabled";
-      const canLogin = s.kind === "oauth" || (s.cli && s.cli.length > 0);
+      const kind = (s.kind ?? "").toLowerCase();
+      const isEnv = kind === "env";
+      const canPut = isEnv && providerHasEnvPut(s.provider);
+      const canLogin = kind === "oauth" || (s.cli && s.cli.length > 0);
+      const openLabel = isEnv ? "Open dashboard" : "Open";
+      const docsLabel = isEnv ? "Learn more" : "Docs";
+      const putBtn = canPut
+        ? `<button type="button" class="portal-put primary" data-provider="${escapeHtml(
+            s.provider ?? "",
+          )}">Put</button>`
+        : "";
+      const openBtn = `<button type="button" class="portal-open${canPut ? "" : " primary"}" data-url="${escapeHtml(
+        url,
+      )}" ${openDisabled} title="${escapeHtml(url || "No settings URL for this step")}">${openLabel}</button>`;
+      const docsBtn = docs
+        ? `<button type="button" class="portal-docs" data-url="${escapeHtml(
+            docs,
+          )}" title="${escapeHtml(docs)}">${docsLabel}</button>`
+        : "";
+      const loginBtn = canLogin
+        ? `<button type="button" class="portal-login${kind === "oauth" ? " primary" : ""}" data-provider="${escapeHtml(
+            s.provider ?? "",
+          )}">Login CLI</button>`
+        : "";
+      // O1: env Put primary → Open dashboard → Learn more (no coach).
+      const btns = isEnv
+        ? `${putBtn}${openBtn}${docsBtn}${loginBtn}`
+        : `${openBtn}${docsBtn}${loginBtn}`;
       return `<li class="portal-step" data-idx="${idx}">
         <div class="meta">
           <div class="title"><span class="kind">${escapeHtml(
@@ -3880,29 +3949,18 @@ function applyPortalPlan(plan: PortalPlan | null) {
             cli && !url ? ` · ${escapeHtml(cli)}` : ""
           }</p>
         </div>
-        <div class="btns">
-          <button type="button" class="portal-open" data-url="${escapeHtml(
-            url,
-          )}" ${openDisabled} title="${escapeHtml(url || "No settings URL for this step")}">Open</button>
-          ${
-            docs
-              ? `<button type="button" class="portal-docs" data-url="${escapeHtml(
-                  docs,
-                )}" title="${escapeHtml(docs)}">Docs</button>`
-              : ""
-          }
-          ${
-            canLogin
-              ? `<button type="button" class="portal-login" data-provider="${escapeHtml(
-                  s.provider ?? "",
-                )}">Login CLI</button>`
-              : ""
-          }
-        </div>
+        <div class="btns">${btns}</div>
       </li>`;
     })
     .join("");
 
+  list.querySelectorAll<HTMLButtonElement>(".portal-put").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const provider = btn.getAttribute("data-provider");
+      if (!provider) return;
+      void openPortalEnvPut(provider);
+    });
+  });
   list.querySelectorAll<HTMLButtonElement>(".portal-open").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const url = btn.getAttribute("data-url");

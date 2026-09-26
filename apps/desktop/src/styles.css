@@ -2528,6 +2528,13 @@ body[data-publish-ui="list"] #publish-stage {
   white-space: nowrap;
 }
 
+.portal-step .btns button.primary {
+  border-color: rgba(63, 157, 110, 0.5);
+  background: rgba(63, 157, 110, 0.16);
+  color: var(--accent-text);
+  font-weight: 650;
+}
+
 .launch-current {
   margin-bottom: 0.75rem;
   padding: 0.85rem 0.95rem;

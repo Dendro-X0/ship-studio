@@ -4,6 +4,8 @@
 **Repo:** https://github.com/Dendro-X0/ship-studio  
 **Local path:** `E:/Web Projects/ship-studio`
 
+Human gates **are the product** — Client must choreograph them (Put / Login CLI / exact deep link / Confirm), not dump operators into vendor encyclopedias. Catalog: [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md) · Overhaul: [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md).
+
 Desktop Platforms · Portal · Integrations (what works, objectives, known gaps): [PLATFORMS-AND-PORTAL.md](./PLATFORMS-AND-PORTAL.md).
 
 ## Publish portal (preferred)

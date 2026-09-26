@@ -7,11 +7,13 @@
 **Hosting improvement plan:** [hosting-portal-parity-design](../../specs/backend/hosting-portal-parity-design.md)
 
 ```text
-OBJECTIVE:  One place to pick a host / store / payment / email lane, open the vendor,
-            finish human work, return to Publish → Confirm — without Studio holding secrets
-            or pretending to deploy / notarize / charge cards.
-NOT YET:    Bulletproof Desktop reliability · CDP dogfood · full provider parity ·
+OBJECTIVE:  One place to pick a host / store / payment / email lane, finish the
+            human gate (Put / Login / exact Open), return to Publish → Confirm —
+            without Studio holding secrets or pretending to deploy / notarize / charge.
+NOT YET:    Overhaul O1–O5 Client honesty CTAs · CDP dogfood · full provider parity ·
             one-click deploy · Studio-owned OAuth success detection
+OVERHAUL:   [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) ·
+            [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md)
 ```
 
 ## Why this surface exists
@@ -94,7 +96,7 @@ These need a **reliability / product slice**, not drive-by UI edits:
 
 | Gap | Why it hurts |
 |-----|----------------|
-| Desktop command reliability | **Slices 1–2 done** — Env Put terminal · unified `open_shipctl_terminal` · soft-fail taxonomy; next: user-load honesty — [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md) |
+| Desktop command reliability | **Slices 0–4 done** — Env Put terminal · unified opener · soft-fail · user-load honesty · Ritual N-class — [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md) |
 | Provider catalog depth | Hosting list is a guide; Orbit/Fly/Railway/etc. lack full portal parity with Cloudflare/Vercel — see [hosting-portal-parity-investigation](../../specs/backend/hosting-portal-parity-investigation.md) · [design](../../specs/backend/hosting-portal-parity-design.md) |
 | Stale / colliding Open·Docs | Netlify docs path moved; Fly/Railway dashboard Open repeated across steps — same design |
 | GitHub Pages vs GitHub auth | **Slice 2 done** — Pages card is Open GitHub + Docs only; PAT stays on Portal → GitHub |
@@ -102,7 +104,7 @@ These need a **reliability / product slice**, not drive-by UI edits:
 | Quiet Continue / outcome panel | Journey polish still thin after finish |
 | CDP / CodaCtrl dogfood | Tauri needs remote debugging for live MCP client proof |
 | Commerce E2E | Polar paid checkout deferred (`payment_ready`) |
-| Env Put UX | Coach band **CANCELLED** — keep Env Put terminal; host account setup = vendor CLI / agents, not Studio onboarding theater — [vendor-handoff-coach-design](../../specs/backend/vendor-handoff-coach-design.md) |
+| Env Put UX | **Overhaul O1–O2** — Put primary for env gates; Docs = Learn more; plain-language hints — [human-gate-catalog](../../specs/backend/human-gate-catalog-design.md) · coach band **CANCELLED** |
 
 Investigation seed: [desktop-silent-failures-investigation](../../specs/backend/desktop-silent-failures-investigation.md) · full band: [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md)
 

@@ -236,7 +236,7 @@ static CLOUDFLARE: ProviderCatalog = ProviderCatalog {
     create_url: "https://dash.cloudflare.com/profile/api-tokens",
     docs_url: "https://developers.cloudflare.com/fundamentals/api/get-started/create-token/",
     oauth_hint: "Prefer Wrangler OAuth — no long-lived token value to store. Browser opens Cloudflare; authorize Wrangler.",
-    env_hint: "Worker secrets: wrangler secret put <NAME> (or Orbit secrets wizard).",
+    env_hint: "Create or copy each secret on Cloudflare, then Put here in the terminal — never paste into Studio.",
     secret_shown_once: true,
     once_hint: "Cloudflare API Tokens show the secret ONLY once at Create/Roll. If you already created a token and lost the value: open ⋯ on that row → Roll (new value shown once), or Create Token again and copy immediately. Existing tokens cannot be Viewed. Prefer wrangler login instead of API tokens when possible.",
     emit_token_page: true,
@@ -250,7 +250,7 @@ static VERCEL: ProviderCatalog = ProviderCatalog {
     create_url: "https://vercel.com/account/settings/tokens",
     docs_url: "https://vercel.com/docs/cli",
     oauth_hint: "Prefer Vercel CLI login. Browser opens Vercel; complete sign-in, then return here.",
-    env_hint: "Project env: vercel env add <NAME> (or dashboard → Settings → Environment Variables).",
+    env_hint: "Create or copy each env var on Vercel, then Put here in the terminal — never paste into Studio.",
     secret_shown_once: true,
     once_hint: "Vercel access tokens are shown once at creation. If lost, create a new token and revoke the old one.",
     emit_token_page: true,
@@ -264,7 +264,7 @@ static NETLIFY: ProviderCatalog = ProviderCatalog {
     create_url: "https://app.netlify.com/user/applications#personal-access-tokens",
     docs_url: "https://docs.netlify.com/api-and-cli-guides/cli-guides/get-started-with-cli/",
     oauth_hint: "Prefer Netlify CLI login. Browser opens Netlify; authorize CLI, then return here.",
-    env_hint: "Site env: netlify env:set <NAME> <value> (or Site configuration → Environment variables).",
+    env_hint: "Create or copy each env var on Netlify, then Put here in the terminal — never paste into Studio.",
     secret_shown_once: true,
     once_hint: "Netlify personal access tokens are shown once. If lost, generate a new token.",
     emit_token_page: true,
@@ -1289,6 +1289,41 @@ mod tests {
             Some("https://developers.cloudflare.com/workers/configuration/secrets/")
         );
         assert_eq!(token.docs_url.as_deref(), Some(CLOUDFLARE.docs_url));
+    }
+
+    #[test]
+    fn tier_a_env_open_ne_docs_and_plain_hints() {
+        let dir = tempfile_dir();
+        for id in [
+            ProviderId::Cloudflare,
+            ProviderId::Vercel,
+            ProviderId::Netlify,
+        ] {
+            let plan = plan_for(&dir, Some(id)).unwrap();
+            let env = plan.steps.iter().find(|s| s.kind == "env").expect("env");
+            let open = env.entry_url.as_deref().expect("env open");
+            let docs = env.docs_url.as_deref().expect("env docs");
+            assert_ne!(open, docs, "{id:?} env Open must not equal Docs");
+            assert!(
+                !open.contains("developers.cloudflare.com")
+                    && !open.contains("/docs/")
+                    && !open.contains("docs.netlify.com")
+                    && !open.contains("docs.railway"),
+                "{id:?} env Open must be dashboard, not docs: {open}"
+            );
+            assert!(
+                env.detail.contains("Put here in the terminal"),
+                "{id:?} env hint must be Put-primary plain language: {}",
+                env.detail
+            );
+            assert!(
+                !env.detail.starts_with("Worker secrets:")
+                    && !env.detail.starts_with("Project env:")
+                    && !env.detail.starts_with("Site env:"),
+                "{id:?} env hint must not lead with CLI jargon: {}",
+                env.detail
+            );
+        }
     }
 
     #[test]

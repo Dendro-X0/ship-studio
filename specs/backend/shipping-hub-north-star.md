@@ -1,8 +1,8 @@
 # Shipping hub — north star
 
 **Status:** Active  
-**Updated:** 2026-09-23  
-**Owner:** product + `shipctl` publish / pulse / doctor  
+**Updated:** 2026-09-25  
+**Owner:** product + `shipctl` publish / pulse / doctor · **band #51** Client honesty overhaul  
 
 ## Mission
 
@@ -76,6 +76,15 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **48** | **Launch DB + marketing + suite parity** — companion `db.provision` / `marketing.deploy` / `suite.url_sync` | Done (first slice) |
 | **49** | **Launch CI + container parity** — companion `ci.release` / `container.build` / `container.deploy` | Done (first slice) |
 | **50** | **Launch legal / trust / graduate / release parity** — companion `legal.baseline` / `trust.pack` / `sign.graduate` / `release.github` / `ship.desktop_cut` | Done (first slice) |
+| **51** | **Client honesty overhaul** — human-gate CTA law · Put-primary env · plain copy · MCP assist contract · catalog diet · Harbor proof | **Active** — O0–O2 done · O3 next — [ship-studio-overhaul-design](./ship-studio-overhaul-design.md) · [human-gate-catalog-design](./human-gate-catalog-design.md) |
+
+## Band #51 acceptance (overhaul)
+
+- Portal `kind: env` (Tier A): primary **Put** when put path exists; Open = dashboard deep link; Docs labeled Learn more — no coach  
+- Cloudflare/Vercel/Netlify env copy is plain-language “Do X”; CLI jargon is detail only  
+- MCP assist contract documented; keys remain human-held  
+- Harbor Public env gate dogfood proves SCOPE Client honesty criterion 6  
+- Adaptive lanes 1–50 unchanged; vendor-coach stays CANCELLED  
 
 ## Band #11 acceptance
 

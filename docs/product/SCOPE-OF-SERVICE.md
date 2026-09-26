@@ -2,7 +2,7 @@
 
 **Status:** Active (product definition)  
 **Updated:** 2026-09-25  
-**Canonical with:** [PRODUCT.md](./PRODUCT.md) · [PLATFORMS-AND-PORTAL.md](./PLATFORMS-AND-PORTAL.md) · [shipping-hub-north-star.md](../../specs/backend/shipping-hub-north-star.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [verify-status-layers-design](../../specs/backend/verify-status-layers-design.md)
+**Canonical with:** [PRODUCT.md](./PRODUCT.md) · [PLATFORMS-AND-PORTAL.md](./PLATFORMS-AND-PORTAL.md) · [shipping-hub-north-star.md](../../specs/backend/shipping-hub-north-star.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [verify-status-layers-design](../../specs/backend/verify-status-layers-design.md) · **Overhaul:** [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) · [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md)
 
 ## One sentence
 
@@ -40,7 +40,7 @@ Build an **Adaptive Publish plan** (General = short path; Advanced = full OAuth 
 - Ordered steps with honest detail  
 - Related `desktop_view` to the right detail panel  
 - Safe local **Run** / **Continue** scripts where a CLI exists (Signet, Orbit, `docker build`, `gh` list, npm/cargo `--dry-run`, …)  
-- **Open** URLs + Confirm wizards when the human must act on an official channel  
+- **Human-gate CTAs** per [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md): Put / Login CLI / exact deep link / Confirm — not Docs as the path ([ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)) 
 
 ### 3. Sequence
 
@@ -128,10 +128,10 @@ Same engine (`shipctl`). Three pathways — like CodaCtrl Studio + CodaCtrl MCP,
 
 ### Surface laws
 
-1. **Client primary for paid UX** — Open/Docs/Login/Put on Desktop must answer “what do I do in the next 60 seconds,” not “go read Workers Secrets.”  
+1. **Client primary for paid UX** — human gates use [catalog CTA law](../../specs/backend/human-gate-catalog-design.md): Put / Login / exact deep link / Confirm — never “go read Workers Secrets” as the path ([overhaul](../../specs/backend/ship-studio-overhaul-design.md)).  
 2. **MCP assists; humans hold keys** — paste/put and OAuth stay operator-initiated (TTY or vendor UI).  
 3. **CLI is kernel, not the product pitch** — if Client is excellent, most buyers never open a shell; `shipctl` still powers Client + MCP.  
-4. **No vendor-onboarding theater** — in-app coaches that still dump people into encyclopedias are **CANCELLED** ([vendor-handoff-coach-design](../../specs/backend/vendor-handoff-coach-design.md)). Prefer exact deep links, Put terminal, or agent-assisted setup outside Studio.  
+4. **No vendor-onboarding theater** — in-app coaches that still dump people into encyclopedias are **CANCELLED** ([vendor-handoff-coach-design](../../specs/backend/vendor-handoff-coach-design.md)).  
 5. **One spine** — Publish remains the integrated workflow; detail panels open from the current step.
 
 Detail: [surfaces-cli-tui-desktop.md](../../specs/backend/surfaces-cli-tui-desktop.md) · Human gates: [OPERATOR-NEXT.md](./OPERATOR-NEXT.md)

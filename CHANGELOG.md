@@ -37,6 +37,9 @@
 
 ### Changed
 
+- **Ship Studio overhaul O2** — Tier A (Cloudflare/Vercel/Netlify) env hints are Put-primary plain language; Open≠Docs unit test ([overhaul](./specs/backend/ship-studio-overhaul-design.md))
+- **Ship Studio overhaul O1** — Portal env gates: primary **Put** (CF/Vercel/Netlify) · Open dashboard · Learn more; no coach ([overhaul](./specs/backend/ship-studio-overhaul-design.md) · [gates](./specs/backend/human-gate-catalog-design.md))
+- **Ship Studio overhaul O0** — Client honesty charter + human-gate catalog; roadmap O1–O5; north-star band #51 — [overhaul](./specs/backend/ship-studio-overhaul-design.md) · [gates](./specs/backend/human-gate-catalog-design.md)
 - **Product law — Client · MCP · CLI** — Desktop/TUI = Client; MCP = agent assist (keys human-held); `shipctl` = kernel — [SCOPE Delivery surfaces](./docs/product/SCOPE-OF-SERVICE.md) · [surfaces-cli-tui-desktop](./specs/backend/surfaces-cli-tui-desktop.md)
 - **Docs — Desktop reliability design** — command classes J/T/N/L · Env Put terminal · unified opener · soft-fail taxonomy ([investigation](./specs/backend/desktop-reliability-investigation.md) · [design](./specs/backend/desktop-reliability-design.md))
 - **Docs — Hosting portal parity specs** — static audit + vendor tutorial review; tiered improvement plan ([investigation](./specs/backend/hosting-portal-parity-investigation.md) · [design](./specs/backend/hosting-portal-parity-design.md))
