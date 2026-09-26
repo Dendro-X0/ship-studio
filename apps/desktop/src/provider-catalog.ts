@@ -87,6 +87,9 @@ export function paintProviderWizard(opts: {
   secondaryBtn?: HTMLButtonElement | null;
   secondaryVisible?: boolean;
   docsBtn?: HTMLButtonElement | null;
+  /** When set, shown for Tier A put hosts (Cloudflare / Vercel / Netlify). */
+  putBtn?: HTMLButtonElement | null;
+  putVisible?: boolean;
 }): void {
   const {
     entry,
@@ -98,6 +101,8 @@ export function paintProviderWizard(opts: {
     secondaryBtn,
     secondaryVisible,
     docsBtn,
+    putBtn,
+    putVisible,
   } = opts;
   if (!panel) return;
   if (!entry) {
@@ -112,7 +117,18 @@ export function paintProviderWizard(opts: {
   }
   if (openBtn) openBtn.textContent = entry.openLabel ?? "Open dashboard";
   if (secondaryBtn) secondaryBtn.hidden = !secondaryVisible;
-  if (docsBtn) docsBtn.hidden = !entry.docsUrl;
+  if (docsBtn) {
+    docsBtn.hidden = !entry.docsUrl;
+    docsBtn.textContent = "Learn more";
+  }
+  const showPut = Boolean(putVisible);
+  if (putBtn) {
+    putBtn.hidden = !showPut;
+    putBtn.classList.toggle("primary", showPut);
+  }
+  if (openBtn) {
+    openBtn.classList.toggle("primary", !showPut);
+  }
 }
 
 export function highlightProviderSidebar(

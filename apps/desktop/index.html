@@ -617,8 +617,8 @@
 
           <section class="view" data-view="platforms" aria-label="Platforms" hidden>
             <p class="hint">
-              Pick a host or official signing platform, follow the checklist, then open their UI.
-              Studio does not deploy or notarize for you.
+              Pick a host or official signing platform. Put secrets in Studio’s terminal when the host
+              supports it — Learn more is optional. Studio does not deploy or notarize for you.
             </p>
             <div class="int-layout">
               <div id="platforms-catalog"></div>
@@ -627,8 +627,9 @@
                 <p class="hint" id="plat-wizard-blurb"></p>
                 <ol class="int-steps" id="plat-wizard-steps"></ol>
                 <div class="hero-cta int-actions">
-                  <button type="button" class="primary" id="plat-open">Open dashboard</button>
-                  <button type="button" id="plat-docs" hidden>Docs</button>
+                  <button type="button" class="primary" id="plat-put" hidden>Put secrets</button>
+                  <button type="button" id="plat-open">Open dashboard</button>
+                  <button type="button" id="plat-docs" hidden>Learn more</button>
                   <button type="button" id="plat-portal-steps" hidden>Portal steps</button>
                   <button type="button" id="plat-continue-publish" title="Return to the Publish spine">
                     Continue publishing

@@ -37,6 +37,7 @@
 
 ### Changed
 
+- **Ship Studio overhaul O4** — Platforms catalog: **Put secrets** primary for CF/Vercel/Netlify; Docs → Learn more; Put-first wizard copy ([overhaul](./specs/backend/ship-studio-overhaul-design.md))
 - **Ship Studio overhaul O3** — MCP assist contract: `ship_*` inventory, key-custody rules, S2.4 gap list ([mcp-assist-contract-design](./specs/backend/mcp-assist-contract-design.md))
 - **Ship Studio overhaul O2** — Tier A (Cloudflare/Vercel/Netlify) env hints are Put-primary plain language; Open≠Docs unit test ([overhaul](./specs/backend/ship-studio-overhaul-design.md))
 - **Ship Studio overhaul O1** — Portal env gates: primary **Put** (CF/Vercel/Netlify) · Open dashboard · Learn more; no coach ([overhaul](./specs/backend/ship-studio-overhaul-design.md) · [gates](./specs/backend/human-gate-catalog-design.md))

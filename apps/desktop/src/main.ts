@@ -1298,14 +1298,14 @@ function polishShipctlUserMessage(raw: string): string | null {
     return "That provider has no Portal steps — use Open dashboard on Platforms instead.";
   }
   if (/has no secret put CLI/i.test(t)) {
-    return "This provider has no put CLI — open the vendor dashboard (or Platforms Docs).";
+    return "This provider has no put CLI — open the vendor dashboard (or Learn more).";
   }
   if (
     /program not found|cannot find|No such file|is not recognized as an internal or external command|The system cannot find the file/i.test(
       t,
     )
   ) {
-    return "CLI missing on PATH — install wrangler/vercel/netlify/orbit/signet or use Platforms Docs.";
+    return "CLI missing on PATH — install wrangler/vercel/netlify/orbit/signet or use Learn more / Open dashboard.";
   }
   // Drop raw CLI invocations from operator-facing toasts.
   if (/^shipctl\b/i.test(t) || /\bshipctl publish\b/i.test(t)) {
@@ -2613,6 +2613,7 @@ function selectPlatform(id: string) {
 function paintPlatformWizard() {
   const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform) ?? null;
   const showLocal = wiz?.group === "Hosting" && shipIntent() === "public";
+  const showPut = Boolean(wiz?.provider && providerHasEnvPut(wiz.provider));
   paintProviderWizard({
     entry: wiz,
     panel: document.querySelector<HTMLElement>("#platforms-wizard"),
@@ -2623,6 +2624,8 @@ function paintPlatformWizard() {
     secondaryBtn: document.querySelector<HTMLButtonElement>("#plat-portal-steps"),
     secondaryVisible: Boolean(wiz?.provider && isPortalProvider(wiz.provider)),
     docsBtn: document.querySelector<HTMLButtonElement>("#plat-docs"),
+    putBtn: document.querySelector<HTMLButtonElement>("#plat-put"),
+    putVisible: showPut,
   });
   const localBtn = document.querySelector<HTMLButtonElement>("#plat-use-local");
   if (localBtn) localBtn.hidden = !showLocal;
@@ -5416,19 +5419,31 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     toast(`Opened ${wiz.title}`, "ok");
   });
+  document.querySelector("#plat-put")?.addEventListener("click", () => {
+    const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
+    if (!wiz?.provider || !providerHasEnvPut(wiz.provider)) {
+      toast("Put is for Cloudflare / Vercel / Netlify — use Portal steps otherwise", "info");
+      return;
+    }
+    if (!projectPath()) {
+      toast("Bind a project first", "info");
+      return;
+    }
+    void openPortalEnvPut(wiz.provider);
+  });
   document.querySelector("#plat-docs")?.addEventListener("click", async () => {
     const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
     if (!wiz?.docsUrl) {
-      toast("No Docs link for this platform", "info");
+      toast("No Learn more link for this platform", "info");
       return;
     }
     await openUrl(wiz.docsUrl);
-    toast(`Opened ${wiz.title} docs`, "ok");
+    toast(`Opened ${wiz.title} tutorial — Put stays in Studio when the host supports it`, "info", 4500);
   });
   document.querySelector("#plat-portal-steps")?.addEventListener("click", () => {
     const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
     if (!wiz?.provider || !isPortalProvider(wiz.provider)) {
-      toast("No Portal steps for this platform — use Open / Docs", "info");
+      toast("No Portal steps for this platform — use Open dashboard", "info");
       return;
     }
     void openPortalProvider(wiz.provider);

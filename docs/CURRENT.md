@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3 (+ working-tree Desktop UX)  
 **Updated:** 2026-09-25  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Overhaul [b383a99](https://github.com/Dendro-X0/ship-studio/commit/b383a99)+. **Active:** overhaul **O4** — [ship-studio-overhaul-design](../specs/backend/ship-studio-overhaul-design.md) (O0–O3 done; [MCP contract](../specs/backend/mcp-assist-contract-design.md)).
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Overhaul [7470dfd](https://github.com/Dendro-X0/ship-studio/commit/7470dfd)+. **Active:** overhaul **O5** — [ship-studio-overhaul-design](../specs/backend/ship-studio-overhaul-design.md) (O0–O4 done).
 
 ## Truth pointers
 

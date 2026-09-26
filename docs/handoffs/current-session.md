@@ -2,11 +2,11 @@
 
 **Updated:** 2026-09-25  
 **Branch:** `main`  
-**Status:** Overhaul **O3 done** — next **O4 Catalog diet**
+**Status:** Overhaul **O4 done** (L1) — next **O5 Honesty proof**
 
 ## Next Atomic Step
 
-**Implement [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) O4** — Platforms/Integrations wizards: Put/Login primary where applicable; Docs secondary; subtract “setup = docs” copy. L1: desktop `tsc`.
+**Implement [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) O5** — Harbor Client-honesty checklist / demo SCRIPT note; close S1.2m. L2 Harbor Public env gate.
 
 ## PAUSED / CANCELLED
 
@@ -24,12 +24,13 @@
 
 | Band | Link |
 |------|------|
-| **Overhaul O3** | [mcp-assist-contract-design](../../specs/backend/mcp-assist-contract-design.md) — ship_* audit · S2.4 gaps (this commit) |
-| **Overhaul O0–O2** | [b383a99](https://github.com/Dendro-X0/ship-studio/commit/b383a99) — charter · Put-primary · plain hints |
+| **Overhaul O4** | working tree — Platforms Put secrets · Learn more · Put-first wizard copy |
+| **Overhaul O3** | [7470dfd](https://github.com/Dendro-X0/ship-studio/commit/7470dfd) — MCP assist contract |
+| **Overhaul O0–O2** | [b383a99](https://github.com/Dendro-X0/ship-studio/commit/b383a99) |
 
 ## Boot allowlist
 
 1. This file  
 2. [ship-studio-overhaul-design.md](../../specs/backend/ship-studio-overhaul-design.md)  
-3. Platforms/Integrations wizard copy (`apps/desktop` provider catalog)  
-4. `pnpm exec tsc --noEmit`  
+3. `fixtures/harbor` · demo SCRIPT  
+4. Harbor Public → Platforms Cloudflare → Put / Portal env  

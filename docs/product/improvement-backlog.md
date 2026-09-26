@@ -35,7 +35,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 | ID | Idea | Notes |
 |----|------|-------|
-| **S1.2m** | **Client honesty overhaul** | Put-primary env · plain copy · MCP contract · catalog diet · Harbor proof — [overhaul](../../specs/backend/ship-studio-overhaul-design.md) · [gates](../../specs/backend/human-gate-catalog-design.md) · [MCP](../../specs/backend/mcp-assist-contract-design.md) · **O0–O3 done; O4 next** |
+| **S1.2m** | **Client honesty overhaul** | Put-primary env · plain copy · MCP contract · catalog diet · Harbor proof — [overhaul](../../specs/backend/ship-studio-overhaul-design.md) · **O0–O4 done; O5 next** |
 | S0.1 | **W4 — license delivery** | Built; live email dogfood when Polar charge/free checkout works |
 | S0.2 | **Refund path dogfood** | Built; E2E deferred on Polar `payment_ready` |
 | S0.3 | **Public download path** | Done — [v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1) installer + zip (v0.2.0 / v0.1.0 retained) |

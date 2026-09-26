@@ -1,6 +1,6 @@
 # Ship Studio overhaul — design
 
-**Status:** O3 done — O4 next (catalog diet)  
+**Status:** O4 done (working tree) — O5 next (honesty proof)  
 **Updated:** 2026-09-25  
 **Parents:** [SCOPE-OF-SERVICE](../../docs/product/SCOPE-OF-SERVICE.md) · [surfaces-cli-tui-desktop](./surfaces-cli-tui-desktop.md) · [human-gate-catalog-design](./human-gate-catalog-design.md) · [mcp-assist-contract-design](./mcp-assist-contract-design.md) · [vendor-handoff-coach-design](./vendor-handoff-coach-design.md) (CANCELLED)  
 **North-star band:** #51  
@@ -39,7 +39,7 @@ Detail: [surfaces-cli-tui-desktop.md](./surfaces-cli-tui-desktop.md).
 | **O1 — Portal CTA law** | `kind: env` (Tier A first): primary **Put** when put path exists; **Open** = dashboard deep link only; **Docs** → “Learn more”; no coach | **Done** — `applyPortalPlan` Put · L1 tsc |
 | **O2 — Copy + deep-link pass** | Plain-language `env_hint` / step detail in `portal.rs` (CF/Vercel/Netlify); Open ≠ Docs | **Done** — plain hints · `tier_a_env_open_ne_docs_and_plain_hints` |
 | **O3 — MCP assist contract** | Agent path documented; `ship_*` gap list for S2.4; keys human-held | **Done** — [mcp-assist-contract-design](./mcp-assist-contract-design.md) |
-| **O4 — Catalog diet** | Platforms/Integrations: Put/Login primary where applicable; Docs secondary | L1 tsc · L2 one wizard |
+| **O4 — Catalog diet** | Platforms/Integrations: Put/Login primary where applicable; Docs secondary | **Done** — Platforms Put secrets · Learn more · L1 tsc |
 | **O5 — Honesty proof** | Harbor Client-honesty checklist; demo/SCRIPT note; S1.2m closed | L2 Harbor Public env gate |
 
 Implementation is **slice-by-slice via handoff** — one phase quoted as Next Atomic Step.
@@ -58,7 +58,7 @@ Charge for Client only if a non-technical account-holder can finish secret/OAuth
 
 ## Activation
 
-Handoff **Next Atomic Step** names **O4 — Catalog diet**.
+Handoff **Next Atomic Step** names **O5 — Honesty proof**.
 
 ## Related
 

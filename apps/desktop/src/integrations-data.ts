@@ -15,7 +15,7 @@ export const INTEGRATION_WIZARDS: IntegrationWizard[] = [
       "Public + Advanced intent — then Open dashboard (products).",
       "Create a one-time product; set success → /checkout/success and cancel → /checkout/cancel.",
       "Copy checkout + customer portal URLs into apps/website as PUBLIC_POLAR_CHECKOUT_URL and PUBLIC_POLAR_PORTAL_URL — Studio does not write them.",
-      "Optional: put POLAR_WEBHOOK_SECRET on the deploy host via Env / secrets put (never paste the value into Studio).",
+      "Optional: Put POLAR_WEBHOOK_SECRET on the deploy host via Env Put (never paste the value into Studio).",
       "Continue publishing → Confirm listing.polar when that checkpoint is current. Refunds stay on Polar.",
     ],
   },
@@ -84,7 +84,7 @@ export const INTEGRATION_WIZARDS: IntegrationWizard[] = [
     needsPublic: false,
     steps: [
       "Open Resend → API keys and create a key.",
-      "Env / tokens → Put RESEND_API_KEY on the deploy host (or wrangler secret) — do not paste the value into Studio.",
+      "Env → Put RESEND_API_KEY on the deploy host (terminal) — do not paste the value into Studio.",
       "Send a test from the Resend UI. Studio never sends mail.",
       "Continue publishing when Publish has an email / notify gate — Confirm after the key is live on the host.",
     ],

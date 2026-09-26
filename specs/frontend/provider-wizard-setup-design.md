@@ -1,8 +1,8 @@
 # Provider wizard setup — Hosting · Payments · Email
 
-**Status:** Slice 1 shipped (working tree) — remaining gaps listed in product overview  
+**Status:** Slice 1 + overhaul O4 catalog diet  
 **Updated:** 2026-09-25  
-**Parents:** platforms-catalog · provider-portal · S1.10 / S1.13 backlog  
+**Parents:** platforms-catalog · provider-portal · [ship-studio-overhaul-design](../backend/ship-studio-overhaul-design.md) O4  
 **Product overview:** [PLATFORMS-AND-PORTAL.md](../../docs/product/PLATFORMS-AND-PORTAL.md)
 
 ## Goal
@@ -12,8 +12,8 @@ Each Platforms / Integrations wizard must answer **what to open**, **what to fin
 ## Minute loop (every wizard)
 
 ```text
-Open dashboard → finish on vendor → put env on host (Env / secrets put)
-  → Back to Publish / Continue publishing → Confirm (or Live check URL)
+Put secrets (Tier A) / Login CLI → Open dashboard when needed → Continue publishing → Confirm
+  (Learn more is optional — never the setup path)
 ```
 
 | Lane | Done when |

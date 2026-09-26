@@ -104,7 +104,7 @@ These need a **reliability / product slice**, not drive-by UI edits:
 | Quiet Continue / outcome panel | Journey polish still thin after finish |
 | CDP / CodaCtrl dogfood | Tauri needs remote debugging for live MCP client proof |
 | Commerce E2E | Polar paid checkout deferred (`payment_ready`) |
-| Env Put UX | **Overhaul O1–O2** — Put primary for env gates; Docs = Learn more; plain-language hints — [human-gate-catalog](../../specs/backend/human-gate-catalog-design.md) · coach band **CANCELLED** |
+| Env Put UX | **Overhaul O1–O4** — Portal + Platforms Put primary; Learn more secondary — [overhaul](../../specs/backend/ship-studio-overhaul-design.md); coach **CANCELLED** |
 
 Investigation seed: [desktop-silent-failures-investigation](../../specs/backend/desktop-silent-failures-investigation.md) · full band: [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md)
 

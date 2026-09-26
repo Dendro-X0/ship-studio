@@ -282,12 +282,12 @@ export type ProviderWizard = {
   group: string;
   title: string;
   blurb: string;
-  /** shipctl portal provider id — omit when Open/Docs only (e.g. GitHub Pages). */
+  /** shipctl portal provider id — omit when Open/Learn more only (e.g. GitHub Pages). */
   provider?: string;
   openUrl: string;
   /** Override primary button label (default: Open dashboard). */
   openLabel?: string;
-  /** Official tutorial — Platforms Docs button when set. */
+  /** Official tutorial — Platforms Learn more button when set. */
   docsUrl?: string;
   needsPublic: boolean;
   steps: string[];
