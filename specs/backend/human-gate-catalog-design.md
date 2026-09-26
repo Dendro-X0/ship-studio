@@ -68,4 +68,4 @@ Env list (`applyEnv`): retrieve + named secret → **Put** primary (already); Op
 ## Proof
 
 - L1: desktop `tsc` · `cargo test -p shipctl` portal URL tests  
-- L2: Harbor Public → Portal → Cloudflare env → **Put** opens terminal; **Learn more** is not the first click story  
+- L2: Harbor Public → Portal → Cloudflare env → **Put** opens terminal; **Learn more** is not the first click story — [evidence-harbor-client-honesty](../../docs/handoffs/evidence-harbor-client-honesty.md)  

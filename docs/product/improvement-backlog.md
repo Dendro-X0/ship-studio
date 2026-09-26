@@ -1,8 +1,8 @@
 # Ship Studio — improvement backlog
 
-**Status:** Living idea list — overhaul O1–O5 is the **activate queue**  
+**Status:** Living idea list — overhaul O0–O5 **closed**; next activate from suggested order  
 **Updated:** 2026-09-25  
-**Cadence:** Overhaul O1–O5 via handoff ([ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)); other ideas stay shelf  
+**Cadence:** Post-overhaul — S1.1 demo GIFs · S0.8 update check · S2.4 MCP when needed  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
@@ -35,7 +35,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 | ID | Idea | Notes |
 |----|------|-------|
-| **S1.2m** | **Client honesty overhaul** | Put-primary env · plain copy · MCP contract · catalog diet · Harbor proof — [overhaul](../../specs/backend/ship-studio-overhaul-design.md) · **O0–O4 done; O5 next** |
+| **S1.2m** | **Client honesty overhaul** | **Done** O0–O5 — [overhaul](../../specs/backend/ship-studio-overhaul-design.md) · [Harbor evidence](../handoffs/evidence-harbor-client-honesty.md) |
 | S0.1 | **W4 — license delivery** | Built; live email dogfood when Polar charge/free checkout works |
 | S0.2 | **Refund path dogfood** | Built; E2E deferred on Polar `payment_ready` |
 | S0.3 | **Public download path** | Done — [v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1) installer + zip (v0.2.0 / v0.1.0 retained) |

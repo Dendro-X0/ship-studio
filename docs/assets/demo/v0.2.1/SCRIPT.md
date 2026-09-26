@@ -20,6 +20,8 @@ Prove **useful mid-flight shipping**, not “how to install software.” Everyon
 
 **Rule:** Bind Harbor (`fixtures/harbor`) from the installed Desktop. Run `scripts/harbor-reset` (or wipe `.ship/`) before recording so Scopes / Configure / Sign·Deploy start mid-flight. Prefer **Advanced + Local** for the spine. Use **Public** only for a short Polar Open beat if needed.
 
+**Client honesty (overhaul O5):** Part 1 GIFs stay Local. If you cut a Public side clip: Platforms Cloudflare → primary **Put secrets** (terminal) → **Learn more** only if stuck — never Docs-as-path. Proof checklist: [evidence-harbor-client-honesty](../../handoffs/evidence-harbor-client-honesty.md).
+
 Design: [demo-subject-design](../../../specs/frontend/demo-subject-design.md).
 
 ## What Part 1 proves (one sentence)

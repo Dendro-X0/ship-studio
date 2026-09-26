@@ -10,10 +10,10 @@
 OBJECTIVE:  One place to pick a host / store / payment / email lane, finish the
             human gate (Put / Login / exact Open), return to Publish → Confirm —
             without Studio holding secrets or pretending to deploy / notarize / charge.
-NOT YET:    Overhaul O1–O5 Client honesty CTAs · CDP dogfood · full provider parity ·
-            one-click deploy · Studio-owned OAuth success detection
-OVERHAUL:   [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) ·
-            [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md)
+NOT YET:    CDP dogfood · full provider parity · one-click deploy · Studio-owned OAuth success detection
+OVERHAUL:   **Done O0–O5** — [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) ·
+            [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md) ·
+            [Harbor evidence](../handoffs/evidence-harbor-client-honesty.md)
 ```
 
 ## Why this surface exists
@@ -104,7 +104,7 @@ These need a **reliability / product slice**, not drive-by UI edits:
 | Quiet Continue / outcome panel | Journey polish still thin after finish |
 | CDP / CodaCtrl dogfood | Tauri needs remote debugging for live MCP client proof |
 | Commerce E2E | Polar paid checkout deferred (`payment_ready`) |
-| Env Put UX | **Overhaul O1–O4** — Portal + Platforms Put primary; Learn more secondary — [overhaul](../../specs/backend/ship-studio-overhaul-design.md); coach **CANCELLED** |
+| Env Put UX | **Overhaul O0–O5 done** — Portal + Platforms Put primary; Harbor proof — [overhaul](../../specs/backend/ship-studio-overhaul-design.md) · [evidence](../handoffs/evidence-harbor-client-honesty.md); coach **CANCELLED** |
 
 Investigation seed: [desktop-silent-failures-investigation](../../specs/backend/desktop-silent-failures-investigation.md) · full band: [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md)
 
@@ -124,7 +124,7 @@ Dashboard workflow card → Publish checkpoint
 |-------|--------|
 | L1 | `cargo test -p shipctl portal::tests` · desktop `tsc` |
 | L2 | Harbor Local: paced Continue · Platforms Orbit Open (no Portal steps) |
-| L2 | Harbor Public: Cloudflare Portal — Open ≠ Docs; Login CLI opens terminal |
+| L2 | Harbor Public: Cloudflare Portal — Open ≠ Docs; Put primary; Login CLI opens terminal — [evidence](../handoffs/evidence-harbor-client-honesty.md) |
 
 ## Related specs (do not fork truth)
 

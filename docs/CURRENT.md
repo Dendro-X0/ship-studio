@@ -2,14 +2,14 @@
 
 **Version:** 0.2.3 (+ working-tree Desktop UX)  
 **Updated:** 2026-09-25  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Overhaul [7470dfd](https://github.com/Dendro-X0/ship-studio/commit/7470dfd)+. **Active:** overhaul **O5** — [ship-studio-overhaul-design](../specs/backend/ship-studio-overhaul-design.md) (O0–O4 done).
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Overhaul **O0–O5 done** ([evidence](./handoffs/evidence-harbor-client-honesty.md)). **Active:** S1.1 demo GIFs (or next backlog activate).
 
 ## Truth pointers
 
 | Need | Open |
 |------|------|
 | Next atomic step | [handoffs/current-session.md](./handoffs/current-session.md) |
-| Overhaul (Client honesty) | [../specs/backend/ship-studio-overhaul-design.md](../specs/backend/ship-studio-overhaul-design.md) · [human-gate-catalog](../specs/backend/human-gate-catalog-design.md) · [MCP contract](../specs/backend/mcp-assist-contract-design.md) |
+| Overhaul (Client honesty) | **Done O0–O5** — [overhaul](../specs/backend/ship-studio-overhaul-design.md) · [gates](../specs/backend/human-gate-catalog-design.md) · [MCP](../specs/backend/mcp-assist-contract-design.md) · [Harbor proof](./handoffs/evidence-harbor-client-honesty.md) |
 | Platforms · Portal · Integrations | [product/PLATFORMS-AND-PORTAL.md](./product/PLATFORMS-AND-PORTAL.md) |
 | Product boundary | [product/SCOPE-OF-SERVICE.md](./product/SCOPE-OF-SERVICE.md) |
 | Product contract | [product/PRODUCT.md](./product/PRODUCT.md) |

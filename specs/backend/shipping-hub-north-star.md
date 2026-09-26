@@ -2,7 +2,7 @@
 
 **Status:** Active  
 **Updated:** 2026-09-25  
-**Owner:** product + `shipctl` publish / pulse / doctor · **band #51** Client honesty overhaul  
+**Owner:** product + `shipctl` publish / pulse / doctor · band #51 Client honesty **done** (O0–O5) 
 
 ## Mission
 
@@ -76,7 +76,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **48** | **Launch DB + marketing + suite parity** — companion `db.provision` / `marketing.deploy` / `suite.url_sync` | Done (first slice) |
 | **49** | **Launch CI + container parity** — companion `ci.release` / `container.build` / `container.deploy` | Done (first slice) |
 | **50** | **Launch legal / trust / graduate / release parity** — companion `legal.baseline` / `trust.pack` / `sign.graduate` / `release.github` / `ship.desktop_cut` | Done (first slice) |
-| **51** | **Client honesty overhaul** — human-gate CTA law · Put-primary env · plain copy · MCP assist contract · catalog diet · Harbor proof | **Active** — O0–O4 done · O5 next — [overhaul](./ship-studio-overhaul-design.md) |
+| **51** | **Client honesty overhaul** — human-gate CTA law · Put-primary env · plain copy · MCP assist contract · catalog diet · Harbor proof | **Done** — O0–O5 — [overhaul](./ship-studio-overhaul-design.md) · [Harbor evidence](../../docs/handoffs/evidence-harbor-client-honesty.md) |
 
 ## Band #51 acceptance (overhaul)
 

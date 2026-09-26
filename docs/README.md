@@ -15,7 +15,7 @@ _Last updated: 2026-09-25 · **0.2.3** (+ working-tree Platforms / Portal docs)_
 | 3 | [product/OPERATOR-NEXT.md](./product/OPERATOR-NEXT.md) | Human gates still on the operator |
 | 3b | [product/PLATFORMS-AND-PORTAL.md](./product/PLATFORMS-AND-PORTAL.md) | Platforms · Portal · Integrations — functionality · objectives · gaps |
 | 3c | [../specs/backend/shipping-hub-north-star.md](../specs/backend/shipping-hub-north-star.md) | Adaptive bands + mission |
-| 3d | [../specs/backend/ship-studio-overhaul-design.md](../specs/backend/ship-studio-overhaul-design.md) | Client honesty overhaul O0–O5 · [gates](../specs/backend/human-gate-catalog-design.md) · [MCP](../specs/backend/mcp-assist-contract-design.md) |
+| 3d | [../specs/backend/ship-studio-overhaul-design.md](../specs/backend/ship-studio-overhaul-design.md) | Client honesty overhaul **done** O0–O5 · [Harbor evidence](./handoffs/evidence-harbor-client-honesty.md) · [gates](../specs/backend/human-gate-catalog-design.md) · [MCP](../specs/backend/mcp-assist-contract-design.md) |
 
 Agents: boot [START-HERE.md](./START-HERE.md) → handoff **Next Atomic Step** only. Prefer Publish over Launch.
 
