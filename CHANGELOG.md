@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Desktop reliability slice 4** — Advanced Online Deploy / Flow (with deploy) open `open_shipctl_terminal`; dry-run/doctor stay headless; soft-fail covers auth/login prompts ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
 - **Desktop reliability slice 3** — user-initiated Env / Assist / Scopes loads toast `cmdFailDetail` + Preview on fail; bind/pulse stay silent ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
 - **Desktop reliability slice 2** — single `open_shipctl_terminal` for all TTY flows; soft-fail taxonomy covers missing CLI / no put CLI ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
 - **Desktop Env Put terminal** — Env Put opens interactive `shipctl env --put` (same TTY class as Human Put / Portal Login); no headless stdin ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md) slice 1)

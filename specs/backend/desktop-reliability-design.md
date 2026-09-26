@@ -1,6 +1,6 @@
 # Desktop reliability — design
 
-**Status:** Slices 0–3 shipped (working tree) — slice 4 next (Ritual N-class)  
+**Status:** Slices 0–4 shipped (working tree) — Later bands parked  
 **Updated:** 2026-09-25  
 **Investigation:** [desktop-reliability-investigation.md](./desktop-reliability-investigation.md)  
 **Parents:** [desktop-silent-failures-investigation](./desktop-silent-failures-investigation.md) (slice 1 shipped) · [PLATFORMS-AND-PORTAL](../../docs/product/PLATFORMS-AND-PORTAL.md)
@@ -42,6 +42,7 @@ Treat as Ready + err toast (not sticky FAILED):
 | not a directory / bind missing | Bind a project |
 | program not found / cannot find / No such file.*(wrangler\|vercel\|netlify\|orbit\|signet\|fly\|railway) | Install CLI or use PATH — Docs on Platforms |
 | has no secret put CLI | Open vendor dashboard (honest bail) |
+| auth expired / not logged in / please log in / token expired / vendor `* login` | Ready + toast; Advanced Deploy/Flow prefer terminal (class N) |
 | cancelled | Cancelled label |
 
 Hard FAILED: spawn failure, lock poisoned, unexpected panic text, empty fail with no classifiable stderr.
@@ -84,7 +85,7 @@ Deploy / Flow: open terminal for `shipctl deploy` / `shipctl flow` when Advanced
 | **1 — Env Put terminal** | Put → interactive terminal; toast parity with Human Put | **Done** — `open_env_put_terminal` · L1 tsc + cargo check |
 | **2 — Unified opener + soft taxonomy** | `open_shipctl_terminal`; expand `isSoftCmdFailure`; migrate existing openers | **Done** — L1 tsc · cargo check |
 | **3 — User-initiated load honesty** | Load env / Refresh assist toast on fail | **Done** — `loadJsonCmd({ user })` · L1 tsc |
-| **4 — Ritual N-class** | Deploy/Flow terminal or honest auth-fail copy | L2 Harbor Public deploy path |
+| **4 — Ritual N-class** | Deploy/Flow terminal or honest auth-fail copy | **Done** — Advanced+Online → `openShipctlTerminal`; dry-run J · L1 tsc · cargo check |
 | **Later** | Non-Windows terminals · CDP attach recipe · vault UX | Separate bands |
 
 ## Out of scope

@@ -668,7 +668,10 @@
               <div class="ritual-head">
                 <div>
                   <label>Ritual args</label>
-                  <p class="hint">Saved into <code>.ship/studio.json</code> — used by Sign / Flow / Deploy</p>
+                  <p class="hint">
+                    Saved into <code>.ship/studio.json</code>. Advanced Deploy / Flow (with deploy)
+                    open a terminal so Orbit can prompt — dry-run stays headless.
+                  </p>
                 </div>
                 <button type="button" id="btn-save-args" disabled>Save args</button>
               </div>
@@ -724,7 +727,8 @@
             </section>
             <p class="hint tools-hint">
               Prefer <strong>Launch</strong> for the guided ship path. Tools are pass-throughs to
-              <code>shipctl</code>.
+              <code>shipctl</code>. Advanced <strong>Deploy</strong> / <strong>Run flow</strong>
+              (with deploy, Online) open a terminal; dry-run / doctor / status stay headless.
             </p>
           </section>
 

@@ -1362,7 +1362,7 @@ function cmdFailDetail(result: CmdResult): string {
 
 function isSoftCmdFailure(result: CmdResult): boolean {
   const err = `${result.stderr}\n${result.stdout}`.trim();
-  return /Confirm or Verify|still pending|unknown provider|not a directory|has no secret put CLI|program not found|cannot find|No such file|is not recognized as an internal or external command|The system cannot find the file/i.test(
+  return /Confirm or Verify|still pending|unknown provider|not a directory|has no secret put CLI|program not found|cannot find|No such file|is not recognized as an internal or external command|The system cannot find the file|auth expired|not logged in|please log in|login required|authentication required|re-?auth|unauthorized|token.*(expired|invalid)|orbit.*login|wrangler.*login|vercel.*login|netlify.*login/i.test(
     err,
   );
 }
@@ -5127,6 +5127,32 @@ function flowArgs(dryRun: boolean): string[] {
   return args;
 }
 
+/** Class N — Advanced online Deploy / Flow-with-deploy may prompt (Orbit auth). Prefer terminal. */
+function ritualNetworkMayPrompt(): boolean {
+  return studioMode() === "advanced" && !offline();
+}
+
+async function openRitualDeployTerminal(): Promise<boolean> {
+  const project = projectPath();
+  if (!project) {
+    toast("Bind a project first", "info");
+    return false;
+  }
+  return openShipctlTerminal(["deploy", "--project", project], {
+    title: "Ship Studio deploy",
+    meta: "Launched terminal: shipctl deploy — finish auth/prompts there, then refresh pulse.",
+    okToast: "Deploy opened in terminal — finish there if Orbit prompts",
+  });
+}
+
+async function openRitualFlowTerminal(args: string[]): Promise<boolean> {
+  return openShipctlTerminal(args, {
+    title: "Ship Studio flow",
+    meta: "Launched terminal: shipctl flow — finish deploy/auth prompts there.",
+    okToast: "Flow opened in terminal — finish deploy there if prompted",
+  });
+}
+
 async function bindProject(path: string, autoDoctor = true) {
   const input = pathEl();
   if (input) input.value = path;
@@ -6022,16 +6048,22 @@ async function runWizard() {
     if (offline()) args.push("--offline");
     return run(args, { step: "sign" });
   });
-  document.querySelector("#btn-deploy")?.addEventListener("click", () => {
+  document.querySelector("#btn-deploy")?.addEventListener("click", async () => {
     if (offline()) {
       show("Deploy is blocked while Offline is on.");
+      toast("Deploy blocked — turn Offline off", "info");
       return;
     }
     if (
       !confirm(
-        "Run Orbit deploy (network)? Uses deploy_args from .ship/studio.json (or the field above after Save).",
+        "Run Orbit deploy (network)? Uses deploy_args from .ship/studio.json (or the Ritual field after Save).",
       )
     ) {
+      return;
+    }
+    // Class N: Advanced → terminal so Orbit/vendor CLIs can prompt; General stays headless J.
+    if (ritualNetworkMayPrompt()) {
+      await openRitualDeployTerminal();
       return;
     }
     return run(["deploy", "--project", projectPath()], { step: "deploy" });
@@ -6039,11 +6071,18 @@ async function runWizard() {
   document.querySelector("#btn-flow-dry")?.addEventListener("click", () =>
     run(flowArgs(true)),
   );
-  document.querySelector("#btn-flow")?.addEventListener("click", () => {
-    if (includeDeploy() && !offline()) {
+  document.querySelector("#btn-flow")?.addEventListener("click", async () => {
+    const withDeploy = includeDeploy() && !offline();
+    if (withDeploy) {
       if (!confirm("Run full flow including Orbit deploy (network)?")) return;
     }
-    return run(flowArgs(false));
+    const args = flowArgs(false);
+    // Class N only when deploy is in the flow; dry-run / skip-deploy stay J.
+    if (withDeploy && ritualNetworkMayPrompt()) {
+      await openRitualFlowTerminal(args);
+      return;
+    }
+    return run(args);
   });
   document.querySelector("#btn-status")?.addEventListener("click", () =>
     run(["status", "--project", projectPath()]),
