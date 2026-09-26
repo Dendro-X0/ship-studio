@@ -76,7 +76,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **48** | **Launch DB + marketing + suite parity** — companion `db.provision` / `marketing.deploy` / `suite.url_sync` | Done (first slice) |
 | **49** | **Launch CI + container parity** — companion `ci.release` / `container.build` / `container.deploy` | Done (first slice) |
 | **50** | **Launch legal / trust / graduate / release parity** — companion `legal.baseline` / `trust.pack` / `sign.graduate` / `release.github` / `ship.desktop_cut` | Done (first slice) |
-| **51** | **Client honesty overhaul** — human-gate CTA law · Put-primary env · plain copy · MCP assist contract · catalog diet · Harbor proof | **Active** — O0–O2 done · O3 next — [ship-studio-overhaul-design](./ship-studio-overhaul-design.md) · [human-gate-catalog-design](./human-gate-catalog-design.md) |
+| **51** | **Client honesty overhaul** — human-gate CTA law · Put-primary env · plain copy · MCP assist contract · catalog diet · Harbor proof | **Active** — O0–O3 done · O4 next — [overhaul](./ship-studio-overhaul-design.md) · [gates](./human-gate-catalog-design.md) · [MCP](./mcp-assist-contract-design.md) |
 
 ## Band #51 acceptance (overhaul)
 

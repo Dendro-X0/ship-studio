@@ -1,8 +1,8 @@
 # Ship Studio overhaul — design
 
-**Status:** O2 done (working tree) — O3 next (MCP assist contract)  
+**Status:** O3 done — O4 next (catalog diet)  
 **Updated:** 2026-09-25  
-**Parents:** [SCOPE-OF-SERVICE](../../docs/product/SCOPE-OF-SERVICE.md) · [surfaces-cli-tui-desktop](./surfaces-cli-tui-desktop.md) · [human-gate-catalog-design](./human-gate-catalog-design.md) · [vendor-handoff-coach-design](./vendor-handoff-coach-design.md) (CANCELLED)  
+**Parents:** [SCOPE-OF-SERVICE](../../docs/product/SCOPE-OF-SERVICE.md) · [surfaces-cli-tui-desktop](./surfaces-cli-tui-desktop.md) · [human-gate-catalog-design](./human-gate-catalog-design.md) · [mcp-assist-contract-design](./mcp-assist-contract-design.md) · [vendor-handoff-coach-design](./vendor-handoff-coach-design.md) (CANCELLED)  
 **North-star band:** #51  
 
 ```text
@@ -38,7 +38,7 @@ Detail: [surfaces-cli-tui-desktop.md](./surfaces-cli-tui-desktop.md).
 | **O0 — Spec freeze** | This design + human-gate catalog; product docs aligned; handoff → O1 | **Done** — docs |
 | **O1 — Portal CTA law** | `kind: env` (Tier A first): primary **Put** when put path exists; **Open** = dashboard deep link only; **Docs** → “Learn more”; no coach | **Done** — `applyPortalPlan` Put · L1 tsc |
 | **O2 — Copy + deep-link pass** | Plain-language `env_hint` / step detail in `portal.rs` (CF/Vercel/Netlify); Open ≠ Docs | **Done** — plain hints · `tier_a_env_open_ne_docs_and_plain_hints` |
-| **O3 — MCP assist contract** | Agent path documented; `ship_*` gap list for S2.4; keys human-held | Docs + MCP tool audit |
+| **O3 — MCP assist contract** | Agent path documented; `ship_*` gap list for S2.4; keys human-held | **Done** — [mcp-assist-contract-design](./mcp-assist-contract-design.md) |
 | **O4 — Catalog diet** | Platforms/Integrations: Put/Login primary where applicable; Docs secondary | L1 tsc · L2 one wizard |
 | **O5 — Honesty proof** | Harbor Client-honesty checklist; demo/SCRIPT note; S1.2m closed | L2 Harbor Public env gate |
 
@@ -58,13 +58,14 @@ Charge for Client only if a non-technical account-holder can finish secret/OAuth
 
 ## Activation
 
-Handoff **Next Atomic Step** names **O3 — MCP assist contract**.
+Handoff **Next Atomic Step** names **O4 — Catalog diet**.
 
 ## Related
 
 | Doc | Role |
 |-----|------|
 | [human-gate-catalog-design.md](./human-gate-catalog-design.md) | Gate kinds + CTA law |
+| [mcp-assist-contract-design.md](./mcp-assist-contract-design.md) | Agent `ship_*` inventory + gaps |
 | [desktop-reliability-design.md](./desktop-reliability-design.md) | TTY Put / Login / N-class (done 0–4) |
 | [PLATFORMS-AND-PORTAL.md](../../docs/product/PLATFORMS-AND-PORTAL.md) | Guide surfaces; honesty gaps |
-| [improvement-backlog.md](../../docs/product/improvement-backlog.md) | S1.2m |
+| [improvement-backlog.md](../../docs/product/improvement-backlog.md) | S1.2m · S2.4 |

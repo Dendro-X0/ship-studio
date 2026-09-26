@@ -14,11 +14,11 @@ NOT:      Product docs/demo authoring · replace vendor UIs · store secrets ·
 RUNTIME:  Local + offline-first (bridge never requires network; open/login/put are operator-initiated; Verify/Watch = graduated status layers, not Studio-held secrets)
 SHELLS:   Client = Desktop (+ TUI) · MCP = shipctl mcp · CLI = shipctl kernel
 PROOF:    cargo test -p shipctl · scripts/dogfood-advanced-*.sh|.ps1 · Desktop Publish Advanced
-DONE:     Publish portal + adaptive doctor + Verify honesty + Continue fast path + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut + scopes/env/listings/commerce (Polar/Gumroad/Lemon/Stripe/Paddle portal + listing) + assist + desktop shell + Local/Public ship intent + publish progress watch (CLI/Desktop/TUI/MCP) + mobile BaaS portal + Steam/itch/Epic submit + Fly/Railway/Render/DO/Heroku/Amplify/Cloud Run/Azure Static host portals + Launch companion parity + Pulse/Assist/Doctor/Guide notes for those lanes + Desktop Platforms catalog + provider wizards + Portal Open/Docs/Login-CLI terminal + reliability slices 0–4 + surface law (Client·MCP·CLI) + overhaul O0–O2 (charter + Portal env Put + Tier A plain hints)
-NOT YET:  Overhaul O3–O5 · Operator completes paste / graduate certs / live release / marketplace / registry push / deploy on vendor platforms (see OPERATOR-NEXT) · Reliability Later · CDP dogfood
+DONE:     Publish portal + adaptive doctor + Verify honesty + Continue fast path + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut + scopes/env/listings/commerce (Polar/Gumroad/Lemon/Stripe/Paddle portal + listing) + assist + desktop shell + Local/Public ship intent + publish progress watch (CLI/Desktop/TUI/MCP) + mobile BaaS portal + Steam/itch/Epic submit + Fly/Railway/Render/DO/Heroku/Amplify/Cloud Run/Azure Static host portals + Launch companion parity + Pulse/Assist/Doctor/Guide notes for those lanes + Desktop Platforms catalog + provider wizards + Portal Open/Docs/Login-CLI terminal + reliability slices 0–4 + surface law (Client·MCP·CLI) + overhaul O0–O3 (charter + Portal env Put + Tier A plain hints + MCP assist contract)
+NOT YET:  Overhaul O4–O5 · Operator completes paste / graduate certs / live release / marketplace / registry push / deploy on vendor platforms (see OPERATOR-NEXT) · Reliability Later · CDP dogfood · MCP G1–G6 ([mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md))
 ```
 
-**Overhaul roadmap:** [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) · [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md)
+**Overhaul roadmap:** [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) · [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md) · [mcp-assist-contract-design](../../specs/backend/mcp-assist-contract-design.md)
 
 ## Scope of service (summary)
 

@@ -25,7 +25,8 @@ Same pattern as **CodaCtrl Studio + CodaCtrl MCP** or **Ghidra + Ghidra MCP**: U
 4. Portal semantics: navigate exact next human act (deep link / Put / Login CLI); human does OAuth/env. **Docs is secondary**, never the default setup path.  
 5. Bridge does not call vendor HTTPS with secrets; shells may open URLs / spawn login or put CLIs on operator action.  
 6. Vendor-onboarding theater (in-app coaches that still dump into encyclopedias) is **CANCELLED** — [vendor-handoff-coach-design](./vendor-handoff-coach-design.md).  
-7. **Client honesty overhaul** (band #51) — Put/Login/deep-link CTA law — [ship-studio-overhaul-design](./ship-studio-overhaul-design.md) · [human-gate-catalog-design](./human-gate-catalog-design.md).
+7. **Client honesty overhaul** (band #51) — Put/Login/deep-link CTA law — [ship-studio-overhaul-design](./ship-studio-overhaul-design.md) · [human-gate-catalog-design](./human-gate-catalog-design.md).  
+8. **MCP assist** — agents use `ship_*` without key custody — [mcp-assist-contract-design](./mcp-assist-contract-design.md).
 
 ## Fee bar
 
@@ -50,6 +51,7 @@ Same pattern as **CodaCtrl Studio + CodaCtrl MCP** or **Ghidra + Ghidra MCP**: U
 
 - Stdio tools for agents; operator retains control of keys and vendor accounts  
 - Parallel to CodaCtrl MCP (enhance/optimize/debug) and Ghidra MCP (delegate RE) — **assist**, don’t replace human authority on irreversible acts  
+- Contract + inventory + S2.4 gaps: [mcp-assist-contract-design.md](./mcp-assist-contract-design.md)  
 
 ## Proof
 

@@ -35,7 +35,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 | ID | Idea | Notes |
 |----|------|-------|
-| **S1.2m** | **Client honesty overhaul** | Put-primary env · plain copy · MCP contract · catalog diet · Harbor proof — [overhaul](../../specs/backend/ship-studio-overhaul-design.md) · [gates](../../specs/backend/human-gate-catalog-design.md) · **O0–O2 done; O3 next** |
+| **S1.2m** | **Client honesty overhaul** | Put-primary env · plain copy · MCP contract · catalog diet · Harbor proof — [overhaul](../../specs/backend/ship-studio-overhaul-design.md) · [gates](../../specs/backend/human-gate-catalog-design.md) · [MCP](../../specs/backend/mcp-assist-contract-design.md) · **O0–O3 done; O4 next** |
 | S0.1 | **W4 — license delivery** | Built; live email dogfood when Polar charge/free checkout works |
 | S0.2 | **Refund path dogfood** | Built; E2E deferred on Polar `payment_ready` |
 | S0.3 | **Public download path** | Done — [v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1) installer + zip (v0.2.0 / v0.1.0 retained) |
@@ -96,7 +96,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S2.1 | Release-surface **Db** doctor/scopes gaps | Per [release-surface-map.md](../../specs/backend/release-surface-map.md) — when a ship needs it |
 | S2.2 | Mobile env / listing catalog depth | Still no store API upload |
 | S2.3 | Container live-check | Push stays Confirm |
-| S2.4 | MCP `ship_*` depth | Agent pathway (surface law); keys stay human — [SCOPE Delivery surfaces](./SCOPE-OF-SERVICE.md) · secondary ICP |
+| S2.4 | MCP `ship_*` depth | Contract + gaps G1–G6 — [mcp-assist-contract-design](../../specs/backend/mcp-assist-contract-design.md); implement wrappers when a real agent ship needs them |
 | S2.5 | Graduate / Authenticode notes Run depth | Still human finishes certs |
 | S2.6 | Suite URL sync dogfood | Sibling projects after marketing.deploy |
 | S2.7 | Watch mode cues | Publish watch prompts when Verify ready — tune noise |
