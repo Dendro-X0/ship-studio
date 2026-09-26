@@ -55,7 +55,7 @@ if (!result?.ok || !result.stdout) return; // loadPortal, openPortalProvider, lo
 
 ## Remaining after slice 1
 
-Product overview of Platforms · Portal · Integrations (objectives + gap list): [PLATFORMS-AND-PORTAL.md](../../docs/product/PLATFORMS-AND-PORTAL.md). Do not expand this investigation with drive-by fixes.
+Superseded by the full reliability band: [desktop-reliability-investigation.md](./desktop-reliability-investigation.md) · [desktop-reliability-design.md](./desktop-reliability-design.md). Do not expand this file with drive-by fixes.
 
 ## Proof
 

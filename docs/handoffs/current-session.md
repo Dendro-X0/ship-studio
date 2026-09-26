@@ -1,12 +1,12 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-25  
-**Branch:** `main` (@ `46384c4`)  
-**Status:** **Committed + pushed** — Platforms / Portal / hosting parity slices 0–4
+**Branch:** `main`  
+**Status:** Reliability slice 1 (Env Put terminal) — committing with this handoff
 
 ## Next Atomic Step
 
-**Idle** — pick a new band when ready (Desktop reliability design, outcome panel, Tier D catalog, or dogfood L2). Do not invent drive-by reliability patches.
+**Implement [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md) slice 2** — unify `open_shipctl_terminal` + expand `isSoftCmdFailure`; migrate existing openers. Or park until next session.
 
 ## PAUSED / CANCELLED
 
@@ -16,18 +16,18 @@
 | aperio Advanced L4 | Parked |
 | Mobile store API upload | Deferred |
 | k8s controllers | Out of scope |
-| Drive-by Desktop reliability | Deferred — design before code |
+| Drive-by Desktop reliability | Work only via design slices |
 
 ## Last closed
 
 | Band | Link |
 |------|------|
-| **Platforms · Portal · hosting parity** | [46384c4](https://github.com/Dendro-X0/ship-studio/commit/46384c4) — catalog · Open/Docs/Login · Harbor · slices 0–4 |
-| Hosting parity design | [hosting-portal-parity-design](../../specs/backend/hosting-portal-parity-design.md) |
-| Product overview | [PLATFORMS-AND-PORTAL.md](../product/PLATFORMS-AND-PORTAL.md) |
+| **Reliability slice 1** | Env Put → `open_env_put_terminal` — design + investigation |
+| Platforms · Portal · hosting parity | [46384c4](https://github.com/Dendro-X0/ship-studio/commit/46384c4) |
 
 ## Boot allowlist
 
 1. This file  
-2. [CURRENT.md](../CURRENT.md) · [PLATFORMS-AND-PORTAL.md](../product/PLATFORMS-AND-PORTAL.md)  
-3. `cargo test -p shipctl portal::tests` · desktop `tsc`  
+2. [desktop-reliability-design.md](../../specs/backend/desktop-reliability-design.md)  
+3. `apps/desktop/src-tauri/src/lib.rs` · `main.ts`  
+4. `pnpm exec tsc --noEmit` · `cargo check -p ship-studio-desktop`  

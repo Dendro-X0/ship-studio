@@ -94,7 +94,7 @@ These need a **reliability / product slice**, not drive-by UI edits:
 
 | Gap | Why it hurts |
 |-----|----------------|
-| Desktop command reliability | Many paths still fail with weak feedback; headless vs terminal still uneven across Tools / Env Put / Ritual |
+| Desktop command reliability | **Slice 1 done** — Env Put opens terminal; next: unified opener + soft taxonomy — [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md) |
 | Provider catalog depth | Hosting list is a guide; Orbit/Fly/Railway/etc. lack full portal parity with Cloudflare/Vercel — see [hosting-portal-parity-investigation](../../specs/backend/hosting-portal-parity-investigation.md) · [design](../../specs/backend/hosting-portal-parity-design.md) |
 | Stale / colliding Open·Docs | Netlify docs path moved; Fly/Railway dashboard Open repeated across steps — same design |
 | GitHub Pages vs GitHub auth | **Slice 2 done** — Pages card is Open GitHub + Docs only; PAT stays on Portal → GitHub |
@@ -104,7 +104,7 @@ These need a **reliability / product slice**, not drive-by UI edits:
 | Commerce E2E | Polar paid checkout deferred (`payment_ready`) |
 | Env Put UX | Still CLI-oriented; easy to confuse with “paste into Studio” |
 
-Investigation seed: [desktop-silent-failures-investigation](../../specs/backend/desktop-silent-failures-investigation.md)
+Investigation seed: [desktop-silent-failures-investigation](../../specs/backend/desktop-silent-failures-investigation.md) · full band: [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md)
 
 ## Operator minute loop (canonical)
 

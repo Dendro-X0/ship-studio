@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Desktop Env Put terminal** — Env Put opens interactive `shipctl env --put` (same TTY class as Human Put / Portal Login); no headless stdin ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md) slice 1)
 - **Hosting portal parity (slices 0–4)** — URL hygiene · Fly/Railway Login CLI · Pages≠PAT · Tier A–E docs · detect→Platforms highlight ([hosting-portal-parity-design](./specs/backend/hosting-portal-parity-design.md))
 - **Portal Docs button** — Open goes to vendor settings; Docs opens official tutorials (`docs_url` on portal steps); Cloudflare env Open → Workers & Pages
 - **Portal Open targets** — Cloudflare no longer triples the same API-tokens URL (drop duplicate recover; env → Workers secrets docs); Login CLI only on OAuth rows
@@ -32,6 +33,7 @@
 
 ### Changed
 
+- **Docs — Desktop reliability design** — command classes J/T/N/L · Env Put terminal · unified opener · soft-fail taxonomy ([investigation](./specs/backend/desktop-reliability-investigation.md) · [design](./specs/backend/desktop-reliability-design.md))
 - **Docs — Hosting portal parity specs** — static audit + vendor tutorial review; tiered improvement plan ([investigation](./specs/backend/hosting-portal-parity-investigation.md) · [design](./specs/backend/hosting-portal-parity-design.md))
 - **Docs — Platforms · Portal · Integrations** — product overview of current Desktop guide surfaces, objectives, and known shortcomings ([PLATFORMS-AND-PORTAL](./docs/product/PLATFORMS-AND-PORTAL.md)); reliability deferred to a design-first slice
 - **Busy toast debounce** — “Busy — Cancel unlocks…” at most once per 8s (demo/status bar no longer stacks)

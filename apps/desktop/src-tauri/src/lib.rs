@@ -399,6 +399,69 @@ fn open_human_put_terminal(project: String) -> Result<(), String> {
     }
 }
 
+/// Open an interactive terminal for `shipctl env --provider <id> --put <name>`.
+/// Child CLIs (wrangler secret put, vercel env add, …) need a real TTY — never headless.
+#[tauri::command]
+fn open_env_put_terminal(project: String, provider: String, name: String) -> Result<(), String> {
+    let shipctl = resolve_shipctl()?;
+    let project_path = PathBuf::from(&project);
+    if !project_path.is_dir() {
+        return Err(format!("not a directory: {project}"));
+    }
+    let provider = provider.trim();
+    let name = name.trim();
+    if provider.is_empty() {
+        return Err("provider is required".into());
+    }
+    if name.is_empty() || name == "<NAME>" {
+        return Err("secret name is required".into());
+    }
+
+    #[cfg(windows)]
+    {
+        let wt = Command::new("wt")
+            .args([
+                "-d",
+                &project,
+                shipctl.to_str().unwrap_or("shipctl"),
+                "env",
+                "--project",
+                &project,
+                "--provider",
+                provider,
+                "--put",
+                name,
+            ])
+            .spawn();
+        if wt.is_ok() {
+            return Ok(());
+        }
+        Command::new("cmd")
+            .args([
+                "/C",
+                "start",
+                "Ship Studio env put",
+                shipctl.to_str().unwrap_or("shipctl"),
+                "env",
+                "--project",
+                &project,
+                "--provider",
+                provider,
+                "--put",
+                name,
+            ])
+            .spawn()
+            .map_err(|e| format!("spawn terminal: {e}"))?;
+        return Ok(());
+    }
+
+    #[cfg(not(windows))]
+    {
+        let _ = (&shipctl, &project_path, provider, name);
+        Err("open_env_put_terminal is implemented for Windows in this build".into())
+    }
+}
+
 /// Run shipctl with extra env (used for SHIP_VAULT_PASSPHRASE; values not logged).
 #[tauri::command]
 fn run_shipctl_env(
@@ -880,6 +943,7 @@ pub fn run() {
             pick_project,
             pick_vault_save,
             open_human_put_terminal,
+            open_env_put_terminal,
             open_launch_open_terminal,
             open_publish_open_terminal,
             open_portal_login_terminal,

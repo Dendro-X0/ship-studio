@@ -3639,6 +3639,31 @@ function renderSidebarIntegrations() {
   });
 }
 
+async function openEnvPutTerminal(provider: string, name: string) {
+  const project = projectPath();
+  if (!project) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  if (!provider.trim() || !name.trim() || name === "<NAME>") {
+    toast("Env Put needs a provider and secret name", "info");
+    return;
+  }
+  try {
+    await invoke("open_env_put_terminal", { project, provider, name });
+    appendStream({
+      stream: "meta",
+      text: `Launched terminal: shipctl env --provider ${provider} --put ${name} — paste when the CLI prompts.`,
+    });
+    toast(`Env Put opened for ${name} — finish in the terminal`, "ok", 5500);
+  } catch (err) {
+    appendStream({ stream: "stderr", text: String(err) });
+    toast(`Env Put terminal failed — ${String(err).slice(0, 120)}`, "err", 7000, [
+      { id: "preview", label: "Preview log", icon: "open", run: () => openOutputPreview() },
+    ]);
+  }
+}
+
 function applyEnv(plan: EnvPortal | null) {
   const list = document.querySelector("#env-actions");
   if (!list) return;
@@ -3676,7 +3701,7 @@ function applyEnv(plan: EnvPortal | null) {
       const provider = btn.getAttribute("data-provider");
       const name = btn.getAttribute("data-name");
       if (!provider || !name) return;
-      void run(["env", "--project", projectPath(), "--provider", provider, "--put", name]);
+      void openEnvPutTerminal(provider, name);
     });
   });
 }
