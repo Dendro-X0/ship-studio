@@ -1,19 +1,21 @@
 # Ship Studio — product contract
 
-**Status:** Active — CLI + TUI + desktop  
+**Status:** Active — Client · MCP · CLI kernel  
 **Updated:** 2026-09-25  
 
 **Scope of service (who / what / boundary):** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md)  
 **Platforms · Portal · Integrations (Desktop guide surfaces):** [PLATFORMS-AND-PORTAL.md](./PLATFORMS-AND-PORTAL.md)
 
 ```text
-GOAL:     Local shipping hub — launch in minutes; track done · required · optional; final-mile sign → release → deploy
-NOT:      Product docs/demo authoring · replace vendor UIs · store secrets · finish OAuth/store review without the human
+GOAL:     Local shipping hub — Client for humans, MCP for agents, CLI as kernel;
+          final-mile sign → release → deploy without vendor-doc theater
+NOT:      Product docs/demo authoring · replace vendor UIs · store secrets ·
+          finish OAuth/store review without the human · in-app coach theater
 RUNTIME:  Local + offline-first (bridge never requires network; open/login/put are operator-initiated; Verify/Watch = graduated status layers, not Studio-held secrets)
-SHELLS:   shipctl CLI/MCP · shipctl tui · apps/desktop (Tauri sidebar dashboard + Ctrl+K search)
+SHELLS:   Client = Desktop (+ TUI) · MCP = shipctl mcp · CLI = shipctl kernel
 PROOF:    cargo test -p shipctl · scripts/dogfood-advanced-*.sh|.ps1 · Desktop Publish Advanced
-DONE:     Publish portal + adaptive doctor + Verify honesty + Continue fast path + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut + scopes/env/listings/commerce (Polar/Gumroad/Lemon/Stripe/Paddle portal + listing) + assist + desktop shell + Local/Public ship intent + publish progress watch (CLI/Desktop/TUI/MCP) + mobile BaaS portal + Steam/itch/Epic submit + Fly/Railway/Render/DO/Heroku/Amplify/Cloud Run/Azure Static host portals + Launch companion parity + Pulse/Assist/Doctor/Guide notes for those lanes + Desktop Platforms catalog + provider wizards + Portal Open/Docs/Login-CLI terminal (working tree)
-NOT YET:  Operator completes paste / graduate certs / live release / marketplace / registry push / deploy on vendor platforms (see OPERATOR-NEXT) · Desktop reliability hardening · CDP dogfood · provider detect→highlight (see PLATFORMS-AND-PORTAL)
+DONE:     Publish portal + adaptive doctor + Verify honesty + Continue fast path + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut + scopes/env/listings/commerce (Polar/Gumroad/Lemon/Stripe/Paddle portal + listing) + assist + desktop shell + Local/Public ship intent + publish progress watch (CLI/Desktop/TUI/MCP) + mobile BaaS portal + Steam/itch/Epic submit + Fly/Railway/Render/DO/Heroku/Amplify/Cloud Run/Azure Static host portals + Launch companion parity + Pulse/Assist/Doctor/Guide notes for those lanes + Desktop Platforms catalog + provider wizards + Portal Open/Docs/Login-CLI terminal + reliability slices 0–4 + surface law (Client·MCP·CLI)
+NOT YET:  Operator completes paste / graduate certs / live release / marketplace / registry push / deploy on vendor platforms (see OPERATOR-NEXT) · Client honesty bar for founders · Reliability Later · CDP dogfood
 ```
 
 ## Scope of service (summary)
@@ -43,16 +45,18 @@ DO NOT: make operators reassemble the release from eight peer nav destinations �
 ## Architecture
 
 ```text
-┌─ Desktop (Tauri) ─┐     ┌─ TUI (ratatui) ─┐     ┌─ CLI / MCP ─┐
-│  apps/desktop     │     │  shipctl tui    │     │  shipctl *  │
-└────────┬──────────┘     └────────┬────────┘     └──────┬──────┘
-         └────────────┬────────────┴─────────────────────┘
+┌─ Client (Desktop) ─┐     ┌─ Client (TUI) ─┐     ┌─ MCP (agents) ─┐
+│  apps/desktop      │     │  shipctl tui   │     │  shipctl mcp   │
+└────────┬───────────┘     └────────┬───────┘     └────────┬───────┘
+         └────────────┬─────────────┴──────────────────────┘
                       ▼
-                   shipctl
+                   shipctl (CLI kernel)
          guide · portal · secrets · configure · signet · orbit
 ```
 
-Design: `specs/backend/shipping-hub-north-star.md` · `specs/backend/surfaces-cli-tui-desktop.md` · `specs/backend/provider-portal-design.md` · `specs/backend/paste-secret-assist-design.md` · `specs/backend/vault-export-design.md` · `specs/backend/guided-launch-design.md` · `specs/backend/studio-scopes-design.md` · `specs/backend/publish-portal-design.md` · `specs/backend/release-surface-map.md`
+Surfaces law: [SCOPE-OF-SERVICE — Delivery surfaces](./SCOPE-OF-SERVICE.md#delivery-surfaces-client--mcp--cli) · [surfaces-cli-tui-desktop.md](../../specs/backend/surfaces-cli-tui-desktop.md)
+
+Design: `specs/backend/shipping-hub-north-star.md` · `specs/backend/provider-portal-design.md` · `specs/backend/paste-secret-assist-design.md` · `specs/backend/vault-export-design.md` · `specs/backend/guided-launch-design.md` · `specs/backend/studio-scopes-design.md` · `specs/backend/publish-portal-design.md` · `specs/backend/release-surface-map.md`
 
 ## Commands
 

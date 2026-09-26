@@ -102,7 +102,7 @@ These need a **reliability / product slice**, not drive-by UI edits:
 | Quiet Continue / outcome panel | Journey polish still thin after finish |
 | CDP / CodaCtrl dogfood | Tauri needs remote debugging for live MCP client proof |
 | Commerce E2E | Polar paid checkout deferred (`payment_ready`) |
-| Env Put UX | Still CLI-oriented; easy to confuse with “paste into Studio” |
+| Env Put UX | Coach band **CANCELLED** — keep Env Put terminal; host account setup = vendor CLI / agents, not Studio onboarding theater — [vendor-handoff-coach-design](../../specs/backend/vendor-handoff-coach-design.md) |
 
 Investigation seed: [desktop-silent-failures-investigation](../../specs/backend/desktop-silent-failures-investigation.md) · full band: [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md)
 

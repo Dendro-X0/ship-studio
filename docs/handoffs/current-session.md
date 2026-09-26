@@ -2,35 +2,34 @@
 
 **Updated:** 2026-09-25  
 **Branch:** `main`  
-**Status:** Reliability **slices 0–4 closed** (L1) — Later bands parked
+**Status:** Surface law **locked** (Client · MCP · CLI) — idle pending next implementation band
 
 ## Next Atomic Step
 
-**Park reliability** until maintainer picks a Later band (non-Windows terminals · CDP attach · vault UX) or a new design.
+**Park** until maintainer picks the first **Client honesty** implementation band (exact human-gate deep links / Put-primary copy — not coach theater).
 
 ## PAUSED / CANCELLED
 
 | Band | Rule |
 |------|------|
+| **Vendor handoff coach** | **CANCELLED** — [design](../../specs/backend/vendor-handoff-coach-design.md) |
 | Polar paid checkout E2E | Deferred |
 | aperio Advanced L4 | Parked |
 | Mobile store API upload | Deferred |
 | k8s controllers | Out of scope |
 | Drive-by Desktop reliability | Work only via design slices |
-| Reliability Later | Non-Windows terminals · CDP · vault UX — separate activation |
+| Reliability Later | Non-Windows · CDP · vault — separate activation |
 
 ## Last closed
 
 | Band | Link |
 |------|------|
-| **Reliability slice 4** | Advanced Deploy/Flow → terminal; dry-run stays J (this commit) |
-| **Reliability slice 3** | [925f1a9](https://github.com/Dendro-X0/ship-studio/commit/925f1a9) — user load honesty |
-| **Reliability slice 2** | [15be2f4](https://github.com/Dendro-X0/ship-studio/commit/15be2f4) — unified terminal opener |
-| **Reliability slice 1** | [406eed9](https://github.com/Dendro-X0/ship-studio/commit/406eed9) — Env Put terminal |
+| **Surface law (Client · MCP · CLI)** | [SCOPE Delivery surfaces](../product/SCOPE-OF-SERVICE.md) · [surfaces-cli-tui-desktop](../../specs/backend/surfaces-cli-tui-desktop.md) |
+| **Reliability slices 0–4** | [cf692fb](https://github.com/Dendro-X0/ship-studio/commit/cf692fb) |
 
 ## Boot allowlist
 
 1. This file  
-2. [desktop-reliability-design.md](../../specs/backend/desktop-reliability-design.md)  
-3. `apps/desktop/src/main.ts` · `apps/desktop/index.html`  
-4. `pnpm exec tsc --noEmit` · `cargo check -p ship-studio-desktop`  
+2. [SCOPE-OF-SERVICE.md](../product/SCOPE-OF-SERVICE.md) — Delivery surfaces  
+3. [PRODUCT.md](../product/PRODUCT.md)  
+4. [surfaces-cli-tui-desktop.md](../../specs/backend/surfaces-cli-tui-desktop.md)  

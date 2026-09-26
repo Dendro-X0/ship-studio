@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3 (+ working-tree Desktop UX)  
 **Updated:** 2026-09-25  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** + Platforms/Portal [46384c4](https://github.com/Dendro-X0/ship-studio/commit/46384c4). **Reliability design** [desktop-reliability-design](../specs/backend/desktop-reliability-design.md) — **slices 0–4 done** (Later bands parked).
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** + Platforms/Portal [46384c4](https://github.com/Dendro-X0/ship-studio/commit/46384c4). Reliability [cf692fb](https://github.com/Dendro-X0/ship-studio/commit/cf692fb). **Product law:** Client · MCP · CLI — [SCOPE Delivery surfaces](./product/SCOPE-OF-SERVICE.md). Vendor coach **CANCELLED**. Idle.
 
 ## Truth pointers
 

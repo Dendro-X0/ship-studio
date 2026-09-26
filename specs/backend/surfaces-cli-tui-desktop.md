@@ -1,40 +1,57 @@
-# Surfaces — CLI + TUI + Desktop
+# Surfaces — Client · MCP · CLI
 
-**Status:** Active  
-**Updated:** 2026-09-13  
-**Owner:** `crates/shipctl` (CLI/TUI) · `apps/desktop` (Tauri)
+**Status:** Active — product law  
+**Updated:** 2026-09-25  
+**Owner:** `crates/shipctl` (CLI/MCP kernel) · `apps/desktop` (Client) · `shipctl tui` (terminal Client)  
+**Canonical with:** [SCOPE-OF-SERVICE.md](../../docs/product/SCOPE-OF-SERVICE.md) · [PRODUCT.md](../../docs/product/PRODUCT.md)
 
 ## Goal
 
-One shipping portal, **three surfaces**, same engine (`shipctl`):
+One shipping engine (`shipctl`), **three pathways**:
 
-| Surface | Role |
-|---------|------|
-| **CLI** | Scriptable / MCP / JSON (`doctor`, `portal`, `flow`, …) |
-| **TUI** | Terminal wizard: pick providers, open entries, run login/configure/flow |
-| **Desktop** | Same workflow in a window (CodaCtrl-shaped; invokes `shipctl`) |
+| Pathway | Surface | Audience |
+|---------|---------|----------|
+| **Client** | Desktop (Tauri); TUI | Humans — including founders without DevOps fluency |
+| **MCP** | `shipctl mcp` | Agents (Cursor, etc.) assisting local release work |
+| **CLI** | `shipctl` | Kernel + scripts + power users |
+
+Same pattern as **CodaCtrl Studio + CodaCtrl MCP** or **Ghidra + Ghidra MCP**: UX for people, protocol for agents, shared local engine underneath.
 
 ## Invariants
 
-1. Desktop and TUI are thin shells — no second business logic.
-2. Portal semantics stay: navigate entry points; human does OAuth/env.
-3. Bridge does not call vendor HTTPS; shells may open URLs / spawn login CLIs on operator action.
+1. Desktop and TUI are thin Clients — no second business logic; they invoke `shipctl`.  
+2. MCP exposes the same contracts (`ship_publish`, `ship_guide`, `ship_portal`, …) — **no secret custody**; put/login remain human-initiated.  
+3. CLI is the shared kernel. Excellence of the Client may make CLI invisible to buyers; it does not make CLI optional for the architecture.  
+4. Portal semantics: navigate exact next human act (deep link / Put / Login CLI); human does OAuth/env. **Docs is secondary**, never the default setup path.  
+5. Bridge does not call vendor HTTPS with secrets; shells may open URLs / spawn login or put CLIs on operator action.  
+6. Vendor-onboarding theater (in-app coaches that still dump into encyclopedias) is **CANCELLED** — [vendor-handoff-coach-design](./vendor-handoff-coach-design.md).
 
-## TUI v2 (`shipctl tui`)
+## Fee bar
 
-- Screens: Home · Providers (Space toggle) · Portal · Ship wizard (phased)
-- Wizard: Doctor → Pick providers → Portal entries → Configure → Flow dry-run → Done
-- Keys: ↑↓ · Enter · Space · `w` wizard · `o`/`l`/`a` in portal · `n` next · Esc back · `q` quit
-- Non-TTY: refuse with hint to use JSON CLI
+| Pathway | May charge when |
+|---------|-----------------|
+| Client | Non-technical account-holder can finish human gates without jargon docs as the path |
+| MCP | Agents usefully drive plan/continue/watch while humans keep keys |
+| CLI alone | Not a consumer pitch — engineering/script surface |
 
-## Desktop v2
+## TUI
 
-- Portal steps panel (per-step Open / Login CLI, provider filters, Open all)
-- Workflow strip: Doctor → Portal → Sign → Deploy
-- Same command names as TUI home actions
+- Screens: Home · Providers · Portal · Ship wizard  
+- Non-TTY: refuse with hint to use JSON CLI / MCP  
+
+## Desktop (Client)
+
+- Publish spine + Related panels + pulse CTA  
+- Portal: Open / Docs / Login CLI; Env Put → interactive terminal  
+- Must pass Client honesty (SCOPE success criterion 6)
+
+## MCP
+
+- Stdio tools for agents; operator retains control of keys and vendor accounts  
+- Parallel to CodaCtrl MCP (enhance/optimize/debug) and Ghidra MCP (delegate RE) — **assist**, don’t replace human authority on irreversible acts  
 
 ## Proof
 
-- L1: `cargo test -p shipctl`
-- L2: `shipctl tui --help`; `shipctl portal` JSON unchanged
-- Desktop: Portal fills `#portal-panel` from shipctl JSON
+- L1: `cargo test -p shipctl`  
+- L2: `shipctl portal` JSON · Desktop Portal from same JSON · MCP tool list  
+- Product: SCOPE Delivery surfaces section matches this file  

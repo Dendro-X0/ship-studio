@@ -10,7 +10,7 @@ Ship Studio is a **local portal and guide** for release work: it sequences the *
 
 ## Value thesis (why pay vs SaaS starter kits)
 
-Indie and multi-repo operators (dozens of OSS repos, a few commercialized) lose time on **order and surfaces**, not on “another template.” Ship Studio earns its price when the same tool makes **OSS cuts, marketplace listings, host deploys, and commerce gates** faster to complete and harder to miss — practical utility over generic starter kits.
+Indie and multi-repo operators lose time on **order and human gates**, not on “another template.” Ship Studio earns its price when the **Client** makes **OSS cuts, marketplace listings, host deploys, and commerce gates** finishable without surviving vendor encyclopedias — and when **MCP** lets agents assist without taking custody of keys. Linking Docs is not a product.
 
 ---
 
@@ -20,8 +20,10 @@ Indie and multi-repo operators (dozens of OSS repos, a few commercialized) lose 
 |---------|---------------------|
 | Solo / small teams with **many repos** (OSS + a few paid products) who need one local hub for diverse release workflows | Large orgs needing multi-tenant cloud control planes |
 | Operators who ship **multi-surface** products (Web/API + desktop Signet + optional stores/commerce) | Teams that want Ship Studio to *replace* Cloudflare / Polar / store consoles |
-| Operators who already use (or will install) **Signet**, **Orbit**, **gh**, provider CLIs | People who only need a single `wrangler deploy` |
-| People who lose time on **“what next / which dashboard / which script”** | People seeking full auto-publish without human attestation |
+| **Founders / operators who can own vendor accounts** but should not need DevOps fluency to finish a cut (Client pathway) | People seeking full auto-publish without human attestation |
+| Agent-assisted teams (Cursor / MCP) who keep **keys under human control** | People who only need a single `wrangler deploy` with no sequence |
+
+Power users who already live in **Signet / Orbit / gh** remain welcome; they are not the only ICP. The Client must not assume CLI literacy.
 
 ---
 
@@ -98,21 +100,41 @@ Human remaining work is listed in [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) — tha
 └───────────────────────────────────────────────────────┘
 ```
 
-**Studio succeeds** when the operator always knows the next gate and has a one-action path to the right CLI or dashboard.  
+**Studio succeeds** when the operator always knows the next **human gate** and has a one-action path (Put / Login CLI / exact dashboard deep link) — not a reading assignment.  
 **Studio does not fail** when the vendor rejects a submission or DNS is wrong — that remains operator/vendor responsibility.
 
 ---
 
-## Delivery surfaces (how the service is consumed)
+## Delivery surfaces (Client · MCP · CLI)
 
-| Surface | Role |
-|---------|------|
-| `shipctl publish` | Preferred minute wizard |
-| Desktop (Tauri) | Same spine + Related panels + pulse CTA |
-| `shipctl tui` | Terminal Publish (`P`) |
-| MCP | Agent-accessible publish/guide/portal tools |
+Same engine (`shipctl`). Three pathways — like CodaCtrl Studio + CodaCtrl MCP, or Ghidra + Ghidra MCP: humans get a UX client; agents get a protocol; neither replaces the other.
 
-Detail panels (Scopes, Env, Sign, Portal, Ritual, Tools) open **from the current Publish step** — not competing start points.
+| Pathway | Surface today | Role | Fee bar |
+|---------|---------------|------|---------|
+| **Client** | Desktop (Tauri); TUI as terminal client | UX-friendly spine for operators without DevOps fluency — exact next human act, never vendor docs as the path | Charge only if a non-technical account-holder can finish gates without encyclopedic docs |
+| **MCP** | `shipctl mcp` (`ship_*`) | Automated assistance for agents; plan / continue / watch / open gates | Keys and vendor logins stay human-managed; agents orchestrate, they do not own secrets |
+| **CLI** | `shipctl` | Shared **kernel** + power-user/script surface | Not the default buyer story if Client is good; still required under Desktop and MCP |
+
+```text
+┌─ Client (Desktop / TUI) ─┐     ┌─ MCP (agents) ─┐
+│  Human gates · Put/Login │     │  ship_* tools  │
+│  Confirm · plain recover │     │  no key custody│
+└────────────┬─────────────┘     └────────┬───────┘
+             └────────────┬───────────────┘
+                          ▼
+                   shipctl (CLI kernel)
+         detect · plan · publish · portal · secrets put · …
+```
+
+### Surface laws
+
+1. **Client primary for paid UX** — Open/Docs/Login/Put on Desktop must answer “what do I do in the next 60 seconds,” not “go read Workers Secrets.”  
+2. **MCP assists; humans hold keys** — paste/put and OAuth stay operator-initiated (TTY or vendor UI).  
+3. **CLI is kernel, not the product pitch** — if Client is excellent, most buyers never open a shell; `shipctl` still powers Client + MCP.  
+4. **No vendor-onboarding theater** — in-app coaches that still dump people into encyclopedias are **CANCELLED** ([vendor-handoff-coach-design](../../specs/backend/vendor-handoff-coach-design.md)). Prefer exact deep links, Put terminal, or agent-assisted setup outside Studio.  
+5. **One spine** — Publish remains the integrated workflow; detail panels open from the current step.
+
+Detail: [surfaces-cli-tui-desktop.md](../../specs/backend/surfaces-cli-tui-desktop.md) · Human gates: [OPERATOR-NEXT.md](./OPERATOR-NEXT.md)
 
 ---
 
@@ -122,7 +144,8 @@ Detail panels (Scopes, Env, Sign, Portal, Ritual, Tools) open **from the current
 2. Operator can complete a cut without assembling eight nav destinations by hand.  
 3. Mid-flight state survives restart (`.ship/publish.json`).  
 4. Dogfood: `cargo test -p shipctl` · `scripts/dogfood-advanced-*.sh`.  
-5. Real proof: publish at least one of *your* products end-to-end using Studio for sequence.
+5. Real proof: publish at least one of *your* products end-to-end using Studio for sequence.  
+6. **Client honesty:** a founder-owned account can finish a secret/OAuth gate via Put/Login without being stranded on jargon docs as the primary path.
 
 ---
 
@@ -144,4 +167,4 @@ Detail panels (Scopes, Env, Sign, Portal, Ritual, Tools) open **from the current
 
 ## Positioning line (release)
 
-> **Ship Studio** — local final-mile hub: sign → release → deploy, sequenced. Vendors and humans still do the irreversible bits.
+> **Ship Studio** — local final-mile hub: Client for humans, MCP for agents, CLI as kernel. Sign → release → deploy, sequenced. Vendors and humans still do the irreversible bits.

@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Vendor handoff coach — CANCELLED** — in-app coach subtracted after failed product test; Portal Open/Docs restored; host setup stays CLI/agent — [design](./specs/backend/vendor-handoff-coach-design.md)
 - **Desktop reliability slice 4** — Advanced Online Deploy / Flow (with deploy) open `open_shipctl_terminal`; dry-run/doctor stay headless; soft-fail covers auth/login prompts ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
 - **Desktop reliability slice 3** — user-initiated Env / Assist / Scopes loads toast `cmdFailDetail` + Preview on fail; bind/pulse stay silent ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
 - **Desktop reliability slice 2** — single `open_shipctl_terminal` for all TTY flows; soft-fail taxonomy covers missing CLI / no put CLI ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
@@ -36,6 +37,7 @@
 
 ### Changed
 
+- **Product law — Client · MCP · CLI** — Desktop/TUI = Client; MCP = agent assist (keys human-held); `shipctl` = kernel — [SCOPE Delivery surfaces](./docs/product/SCOPE-OF-SERVICE.md) · [surfaces-cli-tui-desktop](./specs/backend/surfaces-cli-tui-desktop.md)
 - **Docs — Desktop reliability design** — command classes J/T/N/L · Env Put terminal · unified opener · soft-fail taxonomy ([investigation](./specs/backend/desktop-reliability-investigation.md) · [design](./specs/backend/desktop-reliability-design.md))
 - **Docs — Hosting portal parity specs** — static audit + vendor tutorial review; tiered improvement plan ([investigation](./specs/backend/hosting-portal-parity-investigation.md) · [design](./specs/backend/hosting-portal-parity-design.md))
 - **Docs — Platforms · Portal · Integrations** — product overview of current Desktop guide surfaces, objectives, and known shortcomings ([PLATFORMS-AND-PORTAL](./docs/product/PLATFORMS-AND-PORTAL.md)); reliability deferred to a design-first slice

@@ -59,6 +59,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S1.2j | **Hosting portal parity** | Tier A–E · Fly/Railway · Pages≠PAT · detect→highlight — [design](../../specs/backend/hosting-portal-parity-design.md) · **slices 0–4 done** |
 | S1.2i | **Platforms · Portal product doc** | Functionality · objectives · known gaps — [PLATFORMS-AND-PORTAL](./PLATFORMS-AND-PORTAL.md) · **docs shipped** |
 | S1.2k | **Desktop reliability (TTY · toasts)** | Env Put · unified opener · soft taxonomy · user load honesty · Ritual N-class — [design](../../specs/backend/desktop-reliability-design.md) · **slices 0–4 done**; Later parked |
+| S1.2l | **Vendor handoff coach** | **CANCELLED** — in-app coach subtracted; prefer official CLI / agents for host setup — [design](../../specs/backend/vendor-handoff-coach-design.md) |
 | S1.2h | **Desktop silent failures** | Login CLI terminal · portal provider guard · actionable fail toasts — [desktop-silent-failures-investigation](../../specs/backend/desktop-silent-failures-investigation.md) · **Desktop slice 1**; continued as S1.2k |
 | S1.2g | **Provider wizard setup** | Hosting/Payments/Email minute loop + Continue publishing — [provider-wizard-setup-design](../../specs/frontend/provider-wizard-setup-design.md) · **Desktop slice 1** |
 | S1.2f | **Platforms catalog** | Hosting + Official signing picker (shared with Integrations chrome) — [platforms-catalog-design](../../specs/frontend/platforms-catalog-design.md) · **Desktop slice 1** |
@@ -94,7 +95,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S2.1 | Release-surface **Db** doctor/scopes gaps | Per [release-surface-map.md](../../specs/backend/release-surface-map.md) — when a ship needs it |
 | S2.2 | Mobile env / listing catalog depth | Still no store API upload |
 | S2.3 | Container live-check | Push stays Confirm |
-| S2.4 | MCP `ship_*` depth | For agent operators; secondary ICP |
+| S2.4 | MCP `ship_*` depth | Agent pathway (surface law); keys stay human — [SCOPE Delivery surfaces](./SCOPE-OF-SERVICE.md) · secondary ICP |
 | S2.5 | Graduate / Authenticode notes Run depth | Still human finishes certs |
 | S2.6 | Suite URL sync dogfood | Sibling projects after marketing.deploy |
 | S2.7 | Watch mode cues | Publish watch prompts when Verify ready — tune noise |
