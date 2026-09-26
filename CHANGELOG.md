@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Desktop reliability slice 2** — single `open_shipctl_terminal` for all TTY flows; soft-fail taxonomy covers missing CLI / no put CLI ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
 - **Desktop Env Put terminal** — Env Put opens interactive `shipctl env --put` (same TTY class as Human Put / Portal Login); no headless stdin ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md) slice 1)
 - **Hosting portal parity (slices 0–4)** — URL hygiene · Fly/Railway Login CLI · Pages≠PAT · Tier A–E docs · detect→Platforms highlight ([hosting-portal-parity-design](./specs/backend/hosting-portal-parity-design.md))
 - **Portal Docs button** — Open goes to vendor settings; Docs opens official tutorials (`docs_url` on portal steps); Cloudflare env Open → Workers & Pages

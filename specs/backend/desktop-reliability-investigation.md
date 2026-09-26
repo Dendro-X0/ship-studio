@@ -34,33 +34,13 @@ Also already terminal-backed: Publish Open · Launch Open · Human Put (`open_*_
 
 Env Put now calls `open_env_put_terminal` (`shipctl env --provider … --put …` in wt/cmd). Still a fifth terminal opener until slice 2 unifies.
 
-### R2 — Terminal opener sprawl + Windows-only
+### R2 — Terminal opener sprawl + Windows-only — **slice 2 fixed**
 
-Four nearly identical Tauri commands:
+All TTY flows use `open_shipctl_terminal(project, args, title?)`. Non-Windows still returns an explicit Err (later band).
 
-- `open_launch_open_terminal`
-- `open_publish_open_terminal`
-- `open_portal_login_terminal`
-- `open_human_put_terminal`
+### R3 — Soft-fail taxonomy incomplete — **slice 2 expanded**
 
-Non-Windows builds return `"… is implemented for Windows in this build"`. Every new interactive action copies the pattern (drift risk). Env Put would be a fifth copy without unification.
-
-### R3 — Soft-fail taxonomy incomplete
-
-`isSoftCmdFailure` today:
-
-```text
-Confirm or Verify | still pending | unknown provider | not a directory
-```
-
-Still sticky-FAILED or opaque for common soft cases:
-
-| Symptom | Typical stderr |
-|---------|----------------|
-| Missing CLI on PATH | `program not found` / `cannot find` / `No such file` |
-| Provider has no put CLI | shipctl bail messages (Fly/Railway/commerce/db) |
-| Cancelled mid-run | often Cancelled label OK; some paths still Failed |
-| Empty stdout JSON parse | loadJsonCmd → null, **no toast** when silent |
+`isSoftCmdFailure` now also matches missing CLI / `has no secret put CLI` / Windows “not recognized”. Further polish is fine; sticky FAILED should stay rare.
 
 ### R4 — Silent `loadJsonCmd` (F3 remainder)
 
@@ -98,7 +78,7 @@ Still blocked without Tauri `--remote-debugging-port`. Out of reliability slices
 | Publish / Launch | Open / Run | **terminal** | OK |
 | Human | Put loop | **terminal** | OK |
 | Env | Load portal | headless JSON | OK if fail toasted when user-clicked |
-| Env | **Put** | **terminal** (`open_env_put_terminal`) | OK (slice 1); unify in slice 2 |
+| Env | **Put** | **terminal** (`open_shipctl_terminal`) | OK (slices 1–2) |
 | Ritual | Doctor / Guide / Configure / Status / dry-run | headless | OK (json-safe) |
 | Ritual | Sign | headless | OK if Signet non-interactive |
 | Ritual | Deploy / Flow (network) | headless | Prefer terminal when Orbit may prompt; or honest toast “run in terminal” |

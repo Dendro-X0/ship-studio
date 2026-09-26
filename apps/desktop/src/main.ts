@@ -1297,6 +1297,16 @@ function polishShipctlUserMessage(raw: string): string | null {
   if (/unknown provider/i.test(t)) {
     return "That provider has no Portal steps — use Open dashboard on Platforms instead.";
   }
+  if (/has no secret put CLI/i.test(t)) {
+    return "This provider has no put CLI — open the vendor dashboard (or Platforms Docs).";
+  }
+  if (
+    /program not found|cannot find|No such file|is not recognized as an internal or external command|The system cannot find the file/i.test(
+      t,
+    )
+  ) {
+    return "CLI missing on PATH — install wrangler/vercel/netlify/orbit/signet or use Platforms Docs.";
+  }
   // Drop raw CLI invocations from operator-facing toasts.
   if (/^shipctl\b/i.test(t) || /\bshipctl publish\b/i.test(t)) {
     return "Finish the current checkpoint on Publish, then Confirm.";
@@ -1352,7 +1362,45 @@ function cmdFailDetail(result: CmdResult): string {
 
 function isSoftCmdFailure(result: CmdResult): boolean {
   const err = `${result.stderr}\n${result.stdout}`.trim();
-  return /Confirm or Verify|still pending|unknown provider|not a directory/i.test(err);
+  return /Confirm or Verify|still pending|unknown provider|not a directory|has no secret put CLI|program not found|cannot find|No such file|is not recognized as an internal or external command|The system cannot find the file/i.test(
+    err,
+  );
+}
+
+/** Class T — interactive shipctl in a real terminal (never headless stdin). */
+async function openShipctlTerminal(
+  args: string[],
+  opts?: { title?: string; okToast?: string; meta?: string },
+): Promise<boolean> {
+  const project = projectPath();
+  if (!project) {
+    toast("Bind a project first", "info");
+    return false;
+  }
+  if (!args.length) {
+    toast("No shipctl args for terminal", "err");
+    return false;
+  }
+  try {
+    await invoke("open_shipctl_terminal", {
+      project,
+      args,
+      title: opts?.title ?? "Ship Studio",
+    });
+    if (opts?.meta) {
+      appendStream({ stream: "meta", text: opts.meta });
+    }
+    if (opts?.okToast) {
+      toast(opts.okToast, "ok", 5500);
+    }
+    return true;
+  } catch (err) {
+    appendStream({ stream: "stderr", text: String(err) });
+    toast(`Terminal failed — ${String(err).slice(0, 120)}`, "err", 7000, [
+      { id: "preview", label: "Preview log", icon: "open", run: () => openOutputPreview() },
+    ]);
+    return false;
+  }
 }
 
 async function openPortalLoginTerminal(provider: string) {
@@ -1365,16 +1413,14 @@ async function openPortalLoginTerminal(provider: string) {
     toast("No CLI login for this provider — use Open on the step URL", "info");
     return;
   }
-  try {
-    await invoke("open_portal_login_terminal", { project, provider });
-    appendStream({
-      stream: "meta",
-      text: `Launched terminal: shipctl portal --provider ${provider} --login — complete OAuth there.`,
-    });
-    toast(`Login CLI opened for ${provider} — finish in the terminal`, "ok", 5500);
-  } catch (e) {
-    toast(String(e), "err", 7000);
-  }
+  await openShipctlTerminal(
+    ["portal", "--project", project, "--provider", provider, "--login"],
+    {
+      title: "Ship Studio portal login",
+      meta: `Launched terminal: shipctl portal --provider ${provider} --login — complete OAuth there.`,
+      okToast: `Login CLI opened for ${provider} — finish in the terminal`,
+    },
+  );
 }
 
 /** Pending Next / pause — offer the right next action, not a Verify red herring on Auto steps. */
@@ -3649,19 +3695,14 @@ async function openEnvPutTerminal(provider: string, name: string) {
     toast("Env Put needs a provider and secret name", "info");
     return;
   }
-  try {
-    await invoke("open_env_put_terminal", { project, provider, name });
-    appendStream({
-      stream: "meta",
-      text: `Launched terminal: shipctl env --provider ${provider} --put ${name} — paste when the CLI prompts.`,
-    });
-    toast(`Env Put opened for ${name} — finish in the terminal`, "ok", 5500);
-  } catch (err) {
-    appendStream({ stream: "stderr", text: String(err) });
-    toast(`Env Put terminal failed — ${String(err).slice(0, 120)}`, "err", 7000, [
-      { id: "preview", label: "Preview log", icon: "open", run: () => openOutputPreview() },
-    ]);
-  }
+  await openShipctlTerminal(
+    ["env", "--project", project, "--provider", provider, "--put", name],
+    {
+      title: "Ship Studio env put",
+      meta: `Launched terminal: shipctl env --provider ${provider} --put ${name} — paste when the CLI prompts.`,
+      okToast: `Env Put opened for ${name} — finish in the terminal`,
+    },
+  );
 }
 
 function applyEnv(plan: EnvPortal | null) {
@@ -5694,13 +5735,15 @@ async function runWizard() {
         cur?.kind === "sign" ||
         cur?.kind === "deploy";
       if (needsTerminal) {
-        try {
-          await invoke("open_publish_open_terminal", { project });
-          appendStream({
-            stream: "meta",
-            text: "Launched terminal: shipctl publish open — complete the step, then Verify/Confirm here.",
-          });
-          toast("Terminal opened for this step", "ok");
+        const opened = await openShipctlTerminal(
+          ["publish", "--project", project, "open"],
+          {
+            title: "Ship Studio publish",
+            meta: "Launched terminal: shipctl publish open — complete the step, then Verify/Confirm here.",
+            okToast: "Terminal opened for this step",
+          },
+        );
+        if (opened) {
           window.setTimeout(() => {
             void (async () => {
               const status = await invoke<CmdResult>("run_shipctl", {
@@ -5709,7 +5752,6 @@ async function runWizard() {
               });
               if (status?.ok && status.stdout) {
                 try {
-                  // Refresh plan data without yanking off Sign/Portal.
                   applyPublishView(JSON.parse(status.stdout) as PublishView);
                 } catch {
                   /* ignore */
@@ -5717,11 +5759,7 @@ async function runWizard() {
               }
             })();
           }, 1500);
-        } catch (e) {
-          appendStream({
-            stream: "stderr",
-            text: `open terminal failed: ${String(e)} — falling back to in-app open`,
-          });
+        } else {
           void publishAction(["open"]);
         }
       } else {
@@ -5844,20 +5882,19 @@ async function runWizard() {
         cur?.kind === "sign" ||
         cur?.kind === "deploy";
       if (needsTerminal) {
-        try {
-          await invoke("open_launch_open_terminal", { project });
-          appendStream({
-            stream: "meta",
-            text: "Launched terminal: shipctl launch open — complete the step, then Verify/Confirm here.",
-          });
+        const opened = await openShipctlTerminal(
+          ["launch", "--project", project, "open"],
+          {
+            title: "Ship Studio launch",
+            meta: "Launched terminal: shipctl launch open — complete the step, then Verify/Confirm here.",
+            okToast: "Terminal opened for this step",
+          },
+        );
+        if (opened) {
           window.setTimeout(() => {
             void refreshLaunch();
           }, 1500);
-        } catch (e) {
-          appendStream({
-            stream: "stderr",
-            text: `open terminal failed: ${String(e)} — falling back to in-app open`,
-          });
+        } else {
           void launchAction(["open"]);
         }
       } else {
@@ -5888,16 +5925,15 @@ async function runWizard() {
   document.querySelector("#btn-human-put")?.addEventListener("click", async () => {
     const project = projectPath();
     if (!project) return;
-    try {
-      await invoke("open_human_put_terminal", { project });
-      appendStream({
-        stream: "meta",
-        text: "Launched terminal: shipctl human --no-open --put — paste each value when prompted.",
-      });
-      setStep("paste", "done");
-    } catch (err) {
-      appendStream({ stream: "stderr", text: String(err) });
-    }
+    const opened = await openShipctlTerminal(
+      ["human", "--project", project, "--no-open", "--put"],
+      {
+        title: "Ship Studio paste",
+        meta: "Launched terminal: shipctl human --no-open --put — paste each value when prompted.",
+        okToast: "Paste terminal opened — finish puts there",
+      },
+    );
+    if (opened) setStep("paste", "done");
   });
   document.querySelector("#btn-guide")?.addEventListener("click", () =>
     run(["guide", "--project", projectPath()]),

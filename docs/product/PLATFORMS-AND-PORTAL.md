@@ -65,7 +65,7 @@ Specs: [platforms-catalog-design](../../specs/frontend/platforms-catalog-design.
 | Plan | Offline JSON steps per detected / filtered provider |
 | **Open** | Vendor **settings** UI (`entry_url`) |
 | **Docs** | Official tutorial (`docs_url`) — not a substitute for Open |
-| **Login CLI** | Interactive terminal (`open_portal_login_terminal`) for OAuth rows only |
+| **Login CLI** | Interactive terminal (`open_shipctl_terminal`) for OAuth rows only |
 | Recover rows | Omitted when create URL ≡ token URL (no triple Cloudflare API-tokens links) |
 
 Backend catalog: [provider-portal-design](../../specs/backend/provider-portal-design.md) · `crates/shipctl/src/portal.rs` · [hosting-portal-parity](../../specs/backend/hosting-portal-parity-design.md)
@@ -94,7 +94,7 @@ These need a **reliability / product slice**, not drive-by UI edits:
 
 | Gap | Why it hurts |
 |-----|----------------|
-| Desktop command reliability | **Slice 1 done** — Env Put opens terminal; next: unified opener + soft taxonomy — [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md) |
+| Desktop command reliability | **Slices 1–2 done** — Env Put terminal · unified `open_shipctl_terminal` · soft-fail taxonomy; next: user-load honesty — [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md) |
 | Provider catalog depth | Hosting list is a guide; Orbit/Fly/Railway/etc. lack full portal parity with Cloudflare/Vercel — see [hosting-portal-parity-investigation](../../specs/backend/hosting-portal-parity-investigation.md) · [design](../../specs/backend/hosting-portal-parity-design.md) |
 | Stale / colliding Open·Docs | Netlify docs path moved; Fly/Railway dashboard Open repeated across steps — same design |
 | GitHub Pages vs GitHub auth | **Slice 2 done** — Pages card is Open GitHub + Docs only; PAT stays on Portal → GitHub |

@@ -196,42 +196,41 @@ fn pick_vault_save(default_name: Option<String>) -> Result<Option<String>, Strin
     Ok(file.map(|p| p.display().to_string()))
 }
 
-/// Open an interactive terminal for `shipctl launch open` (OAuth / sign / deploy run).
+/// Open an interactive terminal running `shipctl <args>` in `project`.
+/// Prefer this for any TTY / stdin flow (login, put, publish open). Windows: wt → cmd start.
 #[tauri::command]
-fn open_launch_open_terminal(project: String) -> Result<(), String> {
+fn open_shipctl_terminal(
+    project: String,
+    args: Vec<String>,
+    title: Option<String>,
+) -> Result<(), String> {
     let shipctl = resolve_shipctl()?;
     let project_path = PathBuf::from(&project);
     if !project_path.is_dir() {
         return Err(format!("not a directory: {project}"));
     }
+    if args.is_empty() {
+        return Err("shipctl args are required".into());
+    }
+    let window_title = title.unwrap_or_else(|| "Ship Studio".into());
+    let shipctl_s = shipctl.to_str().unwrap_or("shipctl").to_string();
 
     #[cfg(windows)]
     {
-        let wt = Command::new("wt")
-            .args([
-                "-d",
-                &project,
-                shipctl.to_str().unwrap_or("shipctl"),
-                "launch",
-                "--project",
-                &project,
-                "open",
-            ])
-            .spawn();
-        if wt.is_ok() {
+        let mut wt_args = vec!["-d".to_string(), project.clone(), shipctl_s.clone()];
+        wt_args.extend(args.iter().cloned());
+        if Command::new("wt").args(&wt_args).spawn().is_ok() {
             return Ok(());
         }
+        let mut cmd_args = vec![
+            "/C".to_string(),
+            "start".to_string(),
+            window_title,
+            shipctl_s,
+        ];
+        cmd_args.extend(args);
         Command::new("cmd")
-            .args([
-                "/C",
-                "start",
-                "Ship Studio launch",
-                shipctl.to_str().unwrap_or("shipctl"),
-                "launch",
-                "--project",
-                &project,
-                "open",
-            ])
+            .args(&cmd_args)
             .spawn()
             .map_err(|e| format!("spawn terminal: {e}"))?;
         return Ok(());
@@ -239,226 +238,8 @@ fn open_launch_open_terminal(project: String) -> Result<(), String> {
 
     #[cfg(not(windows))]
     {
-        let _ = (&shipctl, &project_path);
-        Err("open_launch_open_terminal is implemented for Windows in this build".into())
-    }
-}
-
-/// Open an interactive terminal for `shipctl publish open`.
-#[tauri::command]
-fn open_publish_open_terminal(project: String) -> Result<(), String> {
-    let shipctl = resolve_shipctl()?;
-    let project_path = PathBuf::from(&project);
-    if !project_path.is_dir() {
-        return Err(format!("not a directory: {project}"));
-    }
-
-    #[cfg(windows)]
-    {
-        let wt = Command::new("wt")
-            .args([
-                "-d",
-                &project,
-                shipctl.to_str().unwrap_or("shipctl"),
-                "publish",
-                "--project",
-                &project,
-                "open",
-            ])
-            .spawn();
-        if wt.is_ok() {
-            return Ok(());
-        }
-        Command::new("cmd")
-            .args([
-                "/C",
-                "start",
-                "Ship Studio publish",
-                shipctl.to_str().unwrap_or("shipctl"),
-                "publish",
-                "--project",
-                &project,
-                "open",
-            ])
-            .spawn()
-            .map_err(|e| format!("spawn terminal: {e}"))?;
-        return Ok(());
-    }
-
-    #[cfg(not(windows))]
-    {
-        let _ = (&shipctl, &project_path);
-        Err("open_publish_open_terminal is implemented for Windows in this build".into())
-    }
-}
-
-/// Open an interactive terminal for `shipctl portal --provider <id> --login`.
-#[tauri::command]
-fn open_portal_login_terminal(project: String, provider: String) -> Result<(), String> {
-    let shipctl = resolve_shipctl()?;
-    let project_path = PathBuf::from(&project);
-    if !project_path.is_dir() {
-        return Err(format!("not a directory: {project}"));
-    }
-    let provider = provider.trim();
-    if provider.is_empty() {
-        return Err("provider is required".into());
-    }
-
-    #[cfg(windows)]
-    {
-        let wt = Command::new("wt")
-            .args([
-                "-d",
-                &project,
-                shipctl.to_str().unwrap_or("shipctl"),
-                "portal",
-                "--project",
-                &project,
-                "--provider",
-                provider,
-                "--login",
-            ])
-            .spawn();
-        if wt.is_ok() {
-            return Ok(());
-        }
-        Command::new("cmd")
-            .args([
-                "/C",
-                "start",
-                "Ship Studio portal login",
-                shipctl.to_str().unwrap_or("shipctl"),
-                "portal",
-                "--project",
-                &project,
-                "--provider",
-                provider,
-                "--login",
-            ])
-            .spawn()
-            .map_err(|e| format!("spawn terminal: {e}"))?;
-        return Ok(());
-    }
-
-    #[cfg(not(windows))]
-    {
-        let _ = (&shipctl, &project_path, provider);
-        Err("open_portal_login_terminal is implemented for Windows in this build".into())
-    }
-}
-
-/// Open an interactive terminal for `shipctl human --no-open --put` (paste loop).
-#[tauri::command]
-fn open_human_put_terminal(project: String) -> Result<(), String> {
-    let shipctl = resolve_shipctl()?;
-    let project_path = PathBuf::from(&project);
-    if !project_path.is_dir() {
-        return Err(format!("not a directory: {project}"));
-    }
-
-    #[cfg(windows)]
-    {
-        // Prefer Windows Terminal; fall back to cmd.
-        let wt = Command::new("wt")
-            .args([
-                "-d",
-                &project,
-                shipctl.to_str().unwrap_or("shipctl"),
-                "human",
-                "--project",
-                &project,
-                "--no-open",
-                "--put",
-            ])
-            .spawn();
-        if wt.is_ok() {
-            return Ok(());
-        }
-        Command::new("cmd")
-            .args([
-                "/C",
-                "start",
-                "Ship Studio paste",
-                shipctl.to_str().unwrap_or("shipctl"),
-                "human",
-                "--project",
-                &project,
-                "--no-open",
-                "--put",
-            ])
-            .spawn()
-            .map_err(|e| format!("spawn terminal: {e}"))?;
-        return Ok(());
-    }
-
-    #[cfg(not(windows))]
-    {
-        let _ = (&shipctl, &project_path);
-        Err("open_human_put_terminal is implemented for Windows in this build".into())
-    }
-}
-
-/// Open an interactive terminal for `shipctl env --provider <id> --put <name>`.
-/// Child CLIs (wrangler secret put, vercel env add, …) need a real TTY — never headless.
-#[tauri::command]
-fn open_env_put_terminal(project: String, provider: String, name: String) -> Result<(), String> {
-    let shipctl = resolve_shipctl()?;
-    let project_path = PathBuf::from(&project);
-    if !project_path.is_dir() {
-        return Err(format!("not a directory: {project}"));
-    }
-    let provider = provider.trim();
-    let name = name.trim();
-    if provider.is_empty() {
-        return Err("provider is required".into());
-    }
-    if name.is_empty() || name == "<NAME>" {
-        return Err("secret name is required".into());
-    }
-
-    #[cfg(windows)]
-    {
-        let wt = Command::new("wt")
-            .args([
-                "-d",
-                &project,
-                shipctl.to_str().unwrap_or("shipctl"),
-                "env",
-                "--project",
-                &project,
-                "--provider",
-                provider,
-                "--put",
-                name,
-            ])
-            .spawn();
-        if wt.is_ok() {
-            return Ok(());
-        }
-        Command::new("cmd")
-            .args([
-                "/C",
-                "start",
-                "Ship Studio env put",
-                shipctl.to_str().unwrap_or("shipctl"),
-                "env",
-                "--project",
-                &project,
-                "--provider",
-                provider,
-                "--put",
-                name,
-            ])
-            .spawn()
-            .map_err(|e| format!("spawn terminal: {e}"))?;
-        return Ok(());
-    }
-
-    #[cfg(not(windows))]
-    {
-        let _ = (&shipctl, &project_path, provider, name);
-        Err("open_env_put_terminal is implemented for Windows in this build".into())
+        let _ = (&shipctl, &project_path, &args, &window_title);
+        Err("open_shipctl_terminal is implemented for Windows in this build".into())
     }
 }
 
@@ -942,11 +723,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             pick_project,
             pick_vault_save,
-            open_human_put_terminal,
-            open_env_put_terminal,
-            open_launch_open_terminal,
-            open_publish_open_terminal,
-            open_portal_login_terminal,
+            open_shipctl_terminal,
             run_git,
             run_shipctl,
             run_shipctl_env,
