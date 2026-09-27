@@ -32,11 +32,25 @@
 
 ### Fixed
 
+- **Launch auth assist** — oauth / GitHub gates expose **Login CLI** (official CLI in a terminal); Run local uses interactive TTY; `signet identity` Open creates when missing — not “auth elsewhere then return” ([launch-auth-assist-investigation](./specs/backend/launch-auth-assist-investigation.md))
 - **Verify / Watch honesty** — successful local Verify no longer auto-marks Human/OAuth/deploy gates Done (Confirm still required). Fixes MCP `ship_publish_watch` silently advancing Scopes when active scopes exist
 - **Continue toast honesty** — no more `publish · done` when Continue only pauses at a human gate; copy says paused / Confirm next
 
 ### Changed
 
+- **Self-host Deploy stream** — `shipctl selfhost` detects static root, streams phases, writes last-run; Deployment **Deploy** opens Output dock ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
+- **Self-host catalog** — Deployment **Self-host** local-auto card (Orbit only when `orbit_configured`) ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
+- **Studio self-host (design)** — local-auto lane: stream deploy + non-step checks (disk/CLI verify); Docker cousin, not vendor Confirm; Orbit gated ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
+- **Sign catalog grid** — Official signing cards (Apple · Microsoft · Play · GitHub) restored on Sign, same layout as Deployment / Integrations; Check status paths stay below
+- **Back navigation** — topbar **← Back** returns to the previous page (Alt+← / CmdK “Go back”); **Back to Publish** still jumps to the publish spine when mid-flight
+- **Launch choice board (design)** — Launch becomes optional lanes → Open Sign / Deployment / Integrations / Env; prep collapsed; payments opt-in ([launch-choice-board-design](./specs/frontend/launch-choice-board-design.md))
+- **Launch panel redirects** — Launch spine folds stores/hosts/Signet/commerce into **Open Sign** / **Open Deployment** / **Open Integrations** (Integrations only when payments detected) ([launch-panel-redirects-design](./specs/frontend/launch-panel-redirects-design.md))
+- **Launch / Publish host login** — one `oauth.hosts` gate with **Open Deployment** (not N× Cloudflare/Vercel/Netlify oauth rows) ([deployment-nav-design](./specs/frontend/deployment-nav-design.md))
+- **Deployment nav** — Ship → **Deployment** (single item, like Sign); removed Platforms sidebar tree of Orbit/CF/Vercel; panel is Hosting-only; Official signing stays on Sign ([deployment-nav-design](./specs/frontend/deployment-nav-design.md))
+- **Launch portal cards** — each Launch step shows detail + Login CLI / Open portal / Run local (not a title-only PENDING list); current gate highlighted
+- **GitHub Release Open** — always `github.com/new` (create repo) + step guide (init → push → tag → CI/CD → release); never bare `/releases/new` 404 or a hard-coded product Releases URL
+- **Scopes Target icons** — generic surface glyphs (desktop · mobile · web · API · container); no Tauri/Node/vendor logos in Targets
+- **Scopes Target labels** — `{Surface} – {Framework}` from detected stack (e.g. `Desktop – Tauri`, `Website – Next.js` / `Static`, `API – Express`); Harbor T1 GIFs use framework titles
 - **Ship Studio overhaul O5** — Harbor Client-honesty checklist + demo SCRIPT note; S1.2m / band #51 closed ([evidence](./docs/handoffs/evidence-harbor-client-honesty.md))
 - **Ship Studio overhaul O4** — Platforms catalog: **Put secrets** primary for CF/Vercel/Netlify; Docs → Learn more; Put-first wizard copy ([overhaul](./specs/backend/ship-studio-overhaul-design.md))
 - **Ship Studio overhaul O3** — MCP assist contract: `ship_*` inventory, key-custody rules, S2.4 gap list ([mcp-assist-contract-design](./specs/backend/mcp-assist-contract-design.md))

@@ -71,6 +71,10 @@
                 <span class="nav-ico" aria-hidden="true">✦</span>
                 Sign
               </button>
+              <button type="button" class="nav-item" data-nav="platforms" title="Hosting / deploy hosts">
+                <span class="nav-ico" aria-hidden="true">⬡</span>
+                Deployment
+              </button>
               <button type="button" class="nav-item" data-nav="env">
                 <span class="nav-ico" aria-hidden="true">⌘</span>
                 Env / tokens
@@ -87,17 +91,6 @@
               <button type="button" class="nav-item nav-sub" data-nav="scopes">
                 <span class="nav-ico" aria-hidden="true">▤</span>
                 Manage scopes
-              </button>
-            </div>
-          </details>
-
-          <details class="nav-section" data-nav-section="platforms" open>
-            <summary class="nav-section-sum">Platforms</summary>
-            <div class="nav-section-body">
-              <div class="nav-tree" id="sidebar-platforms"></div>
-              <button type="button" class="nav-item nav-sub" data-nav="platforms">
-                <span class="nav-ico" aria-hidden="true">⬡</span>
-                All platforms
               </button>
             </div>
           </details>
@@ -174,6 +167,9 @@
             </p>
           </div>
           <div class="topbar-right">
+            <button type="button" id="btn-back-view" class="back-view" hidden title="Previous page (Alt+←)">
+              ← Back
+            </button>
             <button type="button" id="btn-back-publish" class="back-publish" hidden title="Return to the publish spine">
               Back to Publish
             </button>
@@ -487,9 +483,10 @@
             <section class="portal-panel">
               <div class="ritual-head">
                 <div>
-                  <label>Signing paths</label>
+                  <label>Sign</label>
                   <p class="hint" id="sign-hint">
-                    Self-sign locally with Signet, then finish official Apple / Windows / Play / GitHub when you ship stores.
+                    Self-sign locally with Signet (Check status). Official stores — pick a card,
+                    Open dashboard, finish on the vendor site. Studio never buys certs or uploads.
                   </p>
                 </div>
                 <div class="portal-actions">
@@ -503,6 +500,28 @@
                 aria-live="polite"
                 hidden
               ></div>
+            </section>
+            <div class="int-layout">
+              <div id="sign-catalog"></div>
+              <aside class="int-wizard" id="sign-wizard" hidden>
+                <h2 id="sign-wizard-title">Official</h2>
+                <p class="hint" id="sign-wizard-blurb"></p>
+                <ol class="int-steps" id="sign-wizard-steps"></ol>
+                <div class="hero-cta int-actions">
+                  <button type="button" class="primary" id="sign-open">Open dashboard</button>
+                  <button type="button" id="sign-continue-publish" title="Return to the Publish spine">
+                    Continue publishing
+                  </button>
+                </div>
+              </aside>
+            </div>
+            <section class="portal-panel sign-paths-panel">
+              <div class="ritual-head">
+                <div>
+                  <label>Signing paths</label>
+                  <p class="hint">From Check status — self / official / submit for this repo.</p>
+                </div>
+              </div>
               <ul class="portal-steps" id="sign-paths"></ul>
             </section>
           </section>
@@ -513,7 +532,8 @@
                 <div>
                   <label>Guided launch</label>
                   <p class="hint" id="launch-hint">
-                    Companion stepper — prefer Publish for the full minute path. Same Open → Confirm → Next pattern.
+                    Companion portals — one gate at a time: Open vendor / Run local → Confirm → Next.
+                    Prefer Publish for the full minute spine.
                   </p>
                 </div>
                 <div class="portal-actions">
@@ -615,15 +635,22 @@
             </section>
           </section>
 
-          <section class="view" data-view="platforms" aria-label="Platforms" hidden>
-            <p class="hint">
-              Pick a host or official signing platform. Put secrets in Studio’s terminal when the host
-              supports it — Learn more is optional. Studio does not deploy or notarize for you.
-            </p>
+          <section class="view" data-view="platforms" aria-label="Deployment" hidden>
+            <section class="portal-panel">
+              <div class="ritual-head">
+                <div>
+                  <label>Deployment</label>
+                  <p class="hint">
+                    Pick a host. Self-host streams a local Deploy. Vendor cards: Put / Login CLI /
+                    Open dashboard — Studio does not deploy SaaS for you. Official signing is under Sign.
+                  </p>
+                </div>
+              </div>
+            </section>
             <div class="int-layout">
               <div id="platforms-catalog"></div>
               <aside class="int-wizard" id="platforms-wizard" hidden>
-                <h2 id="plat-wizard-title">Platform</h2>
+                <h2 id="plat-wizard-title">Host</h2>
                 <p class="hint" id="plat-wizard-blurb"></p>
                 <ol class="int-steps" id="plat-wizard-steps"></ol>
                 <div class="hero-cta int-actions">

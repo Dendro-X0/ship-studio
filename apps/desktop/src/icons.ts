@@ -22,6 +22,7 @@ const PROVIDER_ICONS: Record<string, LocalIcon> = {
   paddle: { file: "paddle.svg", tone: "ink" },
   resend: { file: "Resend_dark.svg" },
   orbit: { file: "lighthouse.svg" },
+  selfhost: { file: "lighthouse.svg" },
   cloudflare: { file: "cloudflare.svg" },
   vercel: { file: "Vercel_dark.svg" },
   netlify: { file: "netlify.svg" },
@@ -31,6 +32,7 @@ const PROVIDER_ICONS: Record<string, LocalIcon> = {
   "apple-sign": { file: "Apple_dark.svg" },
   "microsoft-sign": { file: "microsoft.svg" },
   "google-play": { file: "googleplay.svg" },
+  "github-sign": { file: "GitHub_dark.svg" },
 };
 
 export function providerIcon(id: string): LocalIcon {
@@ -50,27 +52,46 @@ export function providerIconHtml(id: string): string {
   return integrationIconHtml(id);
 }
 
+export function scopeIcon(scope: {
+  kind?: string;
+  provider?: string | null;
+  signals?: string[];
+}): LocalIcon {
+  const kind = (scope.kind ?? "").toLowerCase();
+  // Surface kinds only — never vendor/framework logos in Targets.
+  switch (kind) {
+    case "desktop":
+      return { file: "scope-desktop.svg", tone: "ink" };
+    case "mobile":
+      return { file: "scope-mobile.svg", tone: "ink" };
+    case "api":
+      return { file: "scope-api.svg", tone: "ink" };
+    case "container":
+      return { file: "scope-container.svg", tone: "ink" };
+    case "web":
+    case "docs":
+      return { file: "scope-web.svg", tone: "ink" };
+    default:
+      return { file: "scope-web.svg", tone: "ink" };
+  }
+}
+
+/** @deprecated Prefer scopeIcon(); kept for call sites that only need the file name. */
 export function scopeIconFile(scope: {
   kind?: string;
   provider?: string | null;
   signals?: string[];
 }): string {
-  const signals = (scope.signals ?? []).map((s) => s.toLowerCase());
-  const kind = (scope.kind ?? "").toLowerCase();
-  const provider = (scope.provider ?? "").toLowerCase();
-  if (signals.includes("tauri") || kind === "desktop") return "tauri.svg";
-  if (signals.includes("docker") || signals.includes("compose") || kind === "container") {
-    return "docker.svg";
-  }
-  if (provider === "vercel" || signals.includes("vercel")) return "Vercel_dark.svg";
-  if (provider === "netlify" || signals.includes("netlify")) return "netlify.svg";
-  if (provider === "supabase" || signals.includes("supabase")) return "supabase.svg";
-  if (signals.includes("appwrite")) return "appwrite.svg";
-  if (kind === "api" || signals.includes("wrangler")) return "hono.svg";
-  if (signals.includes("rust")) return "Rust_dark.svg";
-  if (kind === "docs") return "/file.svg";
-  if (signals.includes("node") || kind === "web") return "nodejs.svg";
-  return "/file.svg";
+  return scopeIcon(scope).file;
+}
+
+export function scopeIconHtml(scope: {
+  kind?: string;
+  provider?: string | null;
+  signals?: string[];
+}): string {
+  const icon = scopeIcon(scope);
+  return iconImg(icon.file, { tone: icon.tone });
 }
 
 export const SCOPE_KIND_ORDER = ["api", "web", "desktop", "mobile", "container", "docs", "root"];

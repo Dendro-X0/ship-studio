@@ -1,12 +1,21 @@
 # Current session — Ship Studio
 
-**Updated:** 2026-09-25  
+**Updated:** 2026-09-26  
 **Branch:** `main`  
-**Status:** Overhaul **O0–O5 done** — band #51 / S1.2m closed
+**Status:** **S1.1** GIF recording — T1/T3 in hand; next T6 Sign Open + T7 Deploy Open
 
 ## Next Atomic Step
 
-**S1.1 — Live demo GIFs** on v0.2.3+ with Harbor (`fixtures/harbor`) — [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) · [demo-subject-design](../../specs/frontend/demo-subject-design.md). (Or activate S0.8 / S2.4 from backlog explicitly.)
+**S1.1 — Record `06-sign-open.gif` + `07-deploy-open.gif`** (operator). Navigation only: Sign → one official portal; Deployment → one host Open dashboard. No paid signing, no live deploy. Compress prior captures → `01-bind` / `03-confirm-next`. Shot lists: [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md).
+
+## Design queue (not coding until activated)
+
+| Item | Spec |
+|------|------|
+| **Studio self-host Slice 3+** | [studio-selfhost-guide-design](../../specs/frontend/studio-selfhost-guide-design.md) — non-step health checks (Slices 1–2 shipped: catalog + stream Deploy) |
+| Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) |
+| Deployment nav | [deployment-nav-design](../../specs/frontend/deployment-nav-design.md) (shipped) |
+| Panel redirects | [launch-panel-redirects-design](../../specs/frontend/launch-panel-redirects-design.md) (shipped) |
 
 ## PAUSED / CANCELLED
 
@@ -24,14 +33,17 @@
 
 | Band | Link |
 |------|------|
-| **Overhaul O5** | [evidence-harbor-client-honesty](./evidence-harbor-client-honesty.md) — Harbor checklist · SCRIPT note · S1.2m closed |
-| **Overhaul O4** | [5350637](https://github.com/Dendro-X0/ship-studio/commit/5350637) — Platforms Put secrets · Learn more |
-| **Overhaul O3** | [7470dfd](https://github.com/Dendro-X0/ship-studio/commit/7470dfd) — MCP assist contract |
+| **Self-host stream (S2)** | `shipctl selfhost` + Deployment **Deploy** streams; Harbor `apps/website` |
+| **Self-host catalog (S1)** | Deployment **Self-host** card; Orbit gated on `orbit_configured` |
+| **Sign catalog grid** | Official signing cards restored on Sign (Apple · Microsoft · Play · GitHub) — same layout as Deployment / Integrations |
+| **Overhaul O5** | [evidence-harbor-client-honesty](./evidence-harbor-client-honesty.md) |
+| **Overhaul O4** | [5350637](https://github.com/Dendro-X0/ship-studio/commit/5350637) |
+| **Overhaul O3** | [7470dfd](https://github.com/Dendro-X0/ship-studio/commit/7470dfd) |
 | **Overhaul O0–O2** | [b383a99](https://github.com/Dendro-X0/ship-studio/commit/b383a99) |
 
 ## Boot allowlist
 
 1. This file  
-2. [improvement-backlog.md](../product/improvement-backlog.md) (suggested order)  
-3. [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) · `fixtures/harbor`  
-4. [ship-studio-overhaul-design.md](../../specs/backend/ship-studio-overhaul-design.md) (complete)  
+2. [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md)  
+3. `fixtures/harbor` + `scripts/harbor-reset`  
+4. [demo-subject-design](../../specs/frontend/demo-subject-design.md)  

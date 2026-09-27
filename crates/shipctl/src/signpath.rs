@@ -188,8 +188,8 @@ pub fn plan_for(project: &Path) -> SignPortal {
         id: "official.github".into(),
         kind: "official".into(),
         title: "Official — GitHub Release".into(),
-        detail: "`signet release` after gh auth, or confirm on github.com/releases/new.".into(),
-        entry_url: Some("https://github.com/releases/new".into()),
+        detail: config::GITHUB_RELEASE_GUIDE.into(),
+        entry_url: Some(config::github_release_open_url(project)),
         run: Some(vec![
             "signet".into(),
             "release".into(),
@@ -219,6 +219,31 @@ pub fn plan_for(project: &Path) -> SignPortal {
 mod tests {
     use super::*;
     use std::fs;
+
+    #[test]
+    fn github_release_open_is_create_repo_guide() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-signpath-gh-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("src-tauri")).unwrap();
+        fs::write(dir.join("signet.toml"), "name = \"demo\"\n").unwrap();
+        let portal = plan_for(&dir);
+        let gh = portal
+            .paths
+            .iter()
+            .find(|p| p.id == "official.github")
+            .expect("official.github");
+        assert_eq!(gh.entry_url.as_deref(), Some("https://github.com/new"));
+        assert!(gh.detail.contains("create the GitHub repo"));
+        assert!(gh.detail.contains("CI/CD"));
+        assert_ne!(gh.entry_url.as_deref(), Some("https://github.com/releases/new"));
+        let _ = fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn mobile_sign_portal_splits_certs_and_submit() {

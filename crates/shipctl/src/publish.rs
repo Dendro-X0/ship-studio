@@ -435,28 +435,37 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
         ));
     }
 
-    for id in &portal.providers {
-        let Ok(pid) = ProviderId::parse(id) else {
-            continue;
-        };
-        if matches!(pid, ProviderId::Polar | ProviderId::Github) {
-            continue;
-        }
-        let (title, hint) = match pid {
-            ProviderId::Cloudflare => ("Cloudflare — Wrangler login", "wrangler login → whoami"),
-            ProviderId::Vercel => ("Vercel — CLI login", "vercel login → whoami"),
-            ProviderId::Netlify => ("Netlify — CLI login", "netlify login"),
-            _ => continue,
-        };
+    let host_labels: Vec<&str> = portal
+        .providers
+        .iter()
+        .filter_map(|id| {
+            let Ok(pid) = ProviderId::parse(id) else {
+                return None;
+            };
+            match pid {
+                ProviderId::Cloudflare
+                | ProviderId::Vercel
+                | ProviderId::Netlify
+                | ProviderId::Fly
+                | ProviderId::Railway => Some(pid.label()),
+                _ => None,
+            }
+        })
+        .collect();
+    if !host_labels.is_empty() {
+        // One Deployment gate — not N× oauth.cloudflare / oauth.vercel / …
         steps.push(step(
-            format!("oauth.{}", pid.as_str()),
-            title,
+            "oauth.hosts",
+            "Deployment — host login / Put secrets",
             PubKind::Oauth,
-            hint,
+            format!(
+                "Open Deployment for {} — Login CLI / Put / dashboard there, then Verify → Confirm.",
+                host_labels.join(" · ")
+            ),
             2,
             None,
             None,
-            Some("portal"),
+            Some("platforms"),
         ));
     }
 
@@ -764,9 +773,9 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "sign.self.release",
             "Publish — GitHub Release (network)",
             PubKind::Sign,
-            "Live `signet release` after gh auth. Confirm when the release is up.",
+            config::GITHUB_RELEASE_GUIDE,
             3,
-            Some("https://github.com/releases/new".into()),
+            Some(config::github_release_open_url(project)),
             Some(vec![
                 "signet".into(),
                 "release".into(),
@@ -786,9 +795,9 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "release.github",
             "Release — GitHub Release cut",
             PubKind::Human,
-            "Run `gh release list` (read-only), then Open Releases → create tag/assets. Confirm after the draft is published. Does not claim verified publisher. Bridge never creates releases.",
+            config::GITHUB_RELEASE_GUIDE,
             3,
-            config::github_releases_new_url(project),
+            Some(config::github_release_open_url(project)),
             Some(vec![
                 "gh".into(),
                 "release".into(),
@@ -809,8 +818,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             PubKind::Check,
             "No Cloudflare/Vercel/Netlify host detected. The final-mile cut is Signet build → release (+ optional marketing.deploy). Orbit deploy is not the desktop ship path.",
             1,
-            config::github_releases_new_url(project)
-                .or_else(|| Some("https://github.com/releases".into())),
+            Some(config::github_release_open_url(project)),
             None,
             Some("sign"),
         ));
@@ -1594,6 +1602,11 @@ pub fn open_current(project: &Path) -> Result<PublishView> {
         portal::open_url(url)?;
     }
     if step.kind == PubKind::Oauth {
+        // Collapsed oauth.hosts → Desktop opens Deployment; CLI open is per-provider only.
+        if step.id == "oauth.hosts" {
+            save_state(project, &state)?;
+            return Ok(view(&state));
+        }
         let work = if step.id.contains("cloudflare") {
             secrets::wrangler_workdir(project)
         } else {
@@ -1737,31 +1750,42 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
                 Err(e) => (false, format!("{e:#}")),
             }
         }
-        PubKind::Oauth if step.id.contains("cloudflare") => {
-            match run_capture("wrangler", &["whoami"], project) {
-                Ok((code, text)) => (
-                    code == 0 && !text.to_lowercase().contains("not logged"),
-                    if code == 0 {
-                        "wrangler whoami ok".into()
-                    } else {
-                        "wrangler not logged in".into()
-                    },
-                ),
-                Err(e) => (false, format!("{e:#}")),
+        PubKind::Oauth if step.id == "oauth.hosts" || step.id.starts_with("oauth.") => {
+            let mut ok_any = false;
+            let mut msgs: Vec<String> = Vec::new();
+            if let Ok((code, text)) = run_capture("wrangler", &["whoami"], project) {
+                let good = code == 0 && !text.to_lowercase().contains("not logged");
+                ok_any |= good;
+                msgs.push(if good {
+                    "wrangler ok".into()
+                } else {
+                    "wrangler not logged in".into()
+                });
             }
-        }
-        PubKind::Oauth if step.id.contains("vercel") => {
-            match run_capture("vercel", &["whoami"], project) {
-                Ok((code, _)) => (
-                    code == 0,
-                    if code == 0 {
-                        "vercel whoami ok".into()
-                    } else {
-                        "vercel not logged in".into()
-                    },
-                ),
-                Err(e) => (false, format!("{e:#}")),
+            if let Ok((code, _)) = run_capture("vercel", &["whoami"], project) {
+                ok_any |= code == 0;
+                msgs.push(if code == 0 {
+                    "vercel ok".into()
+                } else {
+                    "vercel not logged in".into()
+                });
             }
+            if let Ok((code, _)) = run_capture("netlify", &["status"], project) {
+                ok_any |= code == 0;
+                msgs.push(if code == 0 {
+                    "netlify ok".into()
+                } else {
+                    "netlify not logged in".into()
+                });
+            }
+            (
+                ok_any,
+                if ok_any {
+                    format!("host login ok ({})", msgs.join(" · "))
+                } else {
+                    "Open Deployment → Login CLI, then Verify / Confirm".into()
+                },
+            )
         }
         PubKind::Deploy => {
             let deploy = crate::pulse::inspect_deploy(project);
@@ -2443,8 +2467,8 @@ mod tests {
         )
         .unwrap();
         assert!(
-            public.steps.iter().any(|s| s.id == "oauth.vercel"),
-            "public should keep oauth.vercel"
+            public.steps.iter().any(|s| s.id == "oauth.hosts"),
+            "public should keep one Deployment host-login gate"
         );
         assert!(
             public.steps.iter().any(|s| s.id == "env.sprint"),
@@ -2857,8 +2881,14 @@ mod tests {
         assert!(portal.providers.iter().any(|p| p == "azurestatic"));
 
         let launch = crate::launch::load_or_build(&dir).unwrap();
-        assert!(launch.steps.iter().any(|s| s.id == "host.cloudrun"));
-        assert!(launch.steps.iter().any(|s| s.id == "host.azurestatic"));
+        assert!(
+            launch
+                .steps
+                .iter()
+                .any(|s| s.id == "deploy.panel" || s.id == "oauth.hosts"),
+            "Launch folds host.* into Deployment"
+        );
+        assert!(!launch.steps.iter().any(|s| s.id.starts_with("host.")));
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -3117,14 +3147,15 @@ mod tests {
             .unwrap();
         assert_eq!(
             step.entry_url.as_deref(),
-            Some("https://github.com/acme/app/releases/new")
+            Some("https://github.com/new")
         );
         assert_eq!(step.desktop_view.as_deref(), Some("dashboard"));
         let run = step.run.as_ref().expect("gh release list run");
         assert_eq!(run[0], "gh");
         assert_eq!(run[1], "release");
         assert_eq!(run[2], "list");
-        assert!(step.detail.contains("Bridge never creates releases"));
+        assert!(step.detail.contains("create the GitHub repo"));
+        assert!(step.detail.contains("Studio never creates"));
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "release.github"));
         let _ = fs::remove_dir_all(&dir);

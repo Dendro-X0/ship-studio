@@ -1321,6 +1321,15 @@ pub fn github_releases_new_url(project: &Path) -> Option<String> {
     github_repo_web_url(project).map(|base| format!("{base}/releases/new"))
 }
 
+/// Public Open for the GitHub Release choreography — always **create a repo**, never a
+/// bare `/releases/new` 404 or a hard-coded product Releases URL.
+pub fn github_release_open_url(_project: &Path) -> String {
+    "https://github.com/new".into()
+}
+
+/// Step guide shown on GitHub Release gates (Open starts at create-repo).
+pub const GITHUB_RELEASE_GUIDE: &str = "Open → create the GitHub repo → git init · commit · push → tag → CI/CD builds artifacts → Run `signet release` (or draft on Releases) → Confirm. Studio never creates the repo, CI, or release for you.";
+
 /// `https://github.com/owner/repo` from `git remote get-url origin`, if parseable.
 pub fn github_repo_web_url(project: &Path) -> Option<String> {
     let out = std::process::Command::new("git")

@@ -14,6 +14,7 @@ mod publish;
 mod pulse;
 mod scopes;
 mod secrets;
+mod selfhost;
 mod ship;
 mod signpath;
 mod tui;
@@ -180,6 +181,11 @@ enum Commands {
         offline: bool,
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
+    },
+    /// Local self-host lane — stream detect/validate; Studio-owned (not Orbit/SaaS).
+    Selfhost {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
     },
     /// configure → sign → deploy (or print plan with --dry-run).
     Flow {
@@ -791,6 +797,9 @@ fn main() -> Result<()> {
             if code != 0 {
                 bail!("orbit exited {code}");
             }
+        }
+        Commands::Selfhost { project } => {
+            let _ = selfhost::run(&project)?;
         }
         Commands::Flow {
             project,

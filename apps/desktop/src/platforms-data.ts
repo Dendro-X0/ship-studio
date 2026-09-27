@@ -1,21 +1,22 @@
-/** Hosting + official signing catalog (Platforms view). */
+/** Hosting (Deployment) + Official signing (Sign) catalog entries. */
 
 import type { ProviderWizard } from "./types";
 
 export const PLATFORM_WIZARDS: ProviderWizard[] = [
   {
-    id: "orbit",
+    id: "selfhost",
     group: "Hosting",
-    title: "Orbit",
-    blurb: "Local Orbit deploy when the project is Orbit-configured.",
-    openUrl: "https://github.com/Dendro-X0/orbit",
-    needsPublic: true,
-    deployArgs: "status",
+    title: "Self-host",
+    blurb:
+      "Local auto lane — Studio streams the run and checks it (Docker cousin; not a cloud host).",
+    openUrl: "https://github.com/Dendro-X0/ship-studio",
+    openLabel: "Deploy",
+    needsPublic: false,
     steps: [
-      "Set intent to Public (Local skips hosted deploy).",
-      "Confirm Orbit is on PATH and this repo has orbit.toml / .orbit.",
-      "Run deploy from Ritual or Tools — Studio does not upload for you.",
-      "Copy the live URL → Publish Live check → Confirm.",
+      "Self-host runs on this machine — no Dendro datacenter, no vendor OAuth for the cut.",
+      "Deploy streams shipctl selfhost in the Output dock (Cancel unlocks if stuck).",
+      "Detects a static root (apps/website · public · dist) and writes .ship/last-run.json.",
+      "Health / serve probes land next — public SaaS cutover still uses the cards below.",
     ],
   },
   {
@@ -114,6 +115,23 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
     ],
   },
   {
+    id: "orbit",
+    group: "Hosting",
+    title: "Orbit",
+    blurb:
+      "Local Orbit CLI → your Cloudflare / Vercel / Netlify (only when this repo is Orbit-configured).",
+    openUrl: "https://github.com/Dendro-X0/orbit",
+    openLabel: "Orbit docs",
+    needsPublic: true,
+    deployArgs: "status",
+    steps: [
+      "Orbit is a local CLI, not a datacenter product — you still need a host account.",
+      "Confirm Orbit is on PATH and this repo has orbit.toml / .orbit.",
+      "Run deploy from Ritual or Tools — Studio does not upload for you.",
+      "Copy the live URL → Publish Live check → Confirm.",
+    ],
+  },
+  {
     id: "apple-sign",
     group: "Official signing",
     title: "Apple",
@@ -152,6 +170,35 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
       "Confirm the listing / submit step on Publish when it is current.",
     ],
   },
+  {
+    id: "github-sign",
+    group: "Official signing",
+    title: "GitHub Release",
+    blurb: "Create the repo / draft release — Studio opens the door only.",
+    openUrl: "https://github.com/new",
+    needsPublic: false,
+    steps: [
+      "Open GitHub → create the repo (or open Releases when the remote exists).",
+      "Signet release / CI still run on your machine — never inside Studio.",
+      "Confirm on Publish after the release cut is live.",
+    ],
+  },
 ];
 
-export const PLATFORM_GROUPS = ["Hosting", "Official signing"] as const;
+export const PLATFORM_GROUPS = ["Hosting"] as const;
+
+/** Official store / cert lanes — rendered as a grid on the Sign panel. */
+export const SIGN_GROUPS = ["Official signing"] as const;
+
+export function signingCatalogEntries() {
+  return PLATFORM_WIZARDS.filter((w) => w.group === "Official signing");
+}
+
+/** Hosting cards; Orbit only when the bound project is Orbit-configured. */
+export function hostingCatalogEntries(opts?: { orbitConfigured?: boolean }) {
+  return PLATFORM_WIZARDS.filter((w) => {
+    if (w.group !== "Hosting") return false;
+    if (w.id === "orbit") return Boolean(opts?.orbitConfigured);
+    return true;
+  });
+}

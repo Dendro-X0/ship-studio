@@ -521,15 +521,15 @@ body::before {
   appearance: none;
   font: inherit;
   display: flex;
-  align-items: flex-start;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.45rem;
   width: 100%;
   text-align: left;
   border: 0;
   background: transparent;
   color: var(--muted);
   border-radius: 8px;
-  padding: 0.28rem 0.55rem 0.28rem 0.7rem;
+  padding: 0.32rem 0.55rem 0.32rem 0.55rem;
   cursor: pointer;
 }
 
@@ -552,7 +552,8 @@ body::before {
   width: 0.8rem;
   flex: none;
   font-size: 0.65rem;
-  line-height: 1.4;
+  line-height: 1;
+  text-align: center;
 }
 
 .nav-ico-img {
@@ -560,7 +561,12 @@ body::before {
   height: 16px;
   flex: none;
   object-fit: contain;
-  margin-top: 1px;
+  margin-top: 0;
+}
+
+/* Targets: status mark · surface icon · label — icon sits mid-leading, not flush left */
+.nav-target > .nav-ico-img {
+  margin-inline: 0.1rem 0.05rem;
 }
 
 .nav-ico-img[data-tone="ink"] {
@@ -1224,6 +1230,7 @@ button.chip:focus-visible {
   justify-content: flex-end;
 }
 
+.back-view,
 .back-publish {
   border-color: var(--accent);
   color: var(--accent-text);
@@ -1232,6 +1239,13 @@ button.chip:focus-visible {
   padding: 0.35rem 0.7rem;
 }
 
+.back-view {
+  border-color: var(--border);
+  color: var(--text);
+  background: transparent;
+}
+
+.back-view:hover:not(:disabled),
 .back-publish:hover:not(:disabled) {
   border-color: var(--accent-bright);
 }
@@ -2557,6 +2571,18 @@ body[data-publish-ui="list"] #publish-stage {
 
 .launch-current .title {
   font-weight: 600;
+}
+
+.launch-portal-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.launch-portal-ctas .primary,
+#launch-steps .btns .primary {
+  min-height: 2rem;
 }
 
 .row {

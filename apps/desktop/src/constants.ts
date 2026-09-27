@@ -85,7 +85,7 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
   },
   sign: {
     title: "Sign",
-    desc: "Detail panel — self-sign, official certificates, or store submit portals for this step.",
+    desc: "Official signing grid + Signet Check status — Open dashboard, finish on the vendor site.",
   },
   launch: {
     title: "Launch",
@@ -100,8 +100,8 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
     desc: "Payment and email wizards — open the vendor, then confirm here.",
   },
   platforms: {
-    title: "Platforms",
-    desc: "Hosting and official signing — pick a provider, open their UI, then Confirm on Publish.",
+    title: "Deployment",
+    desc: "Hosting hosts — Put / Login CLI / Open dashboard. Official signing is under Sign.",
   },
   ritual: {
     title: "Ritual",
@@ -126,6 +126,6 @@ export const RELATED_VIEW_LABELS: Record<string, string> = {
   tools: "Open Tools",
   launch: "Open Launch",
   dashboard: "Open Dashboard",
-  platforms: "Open Platforms",
+  platforms: "Open Deployment",
   integrations: "Open Integrations",
 };

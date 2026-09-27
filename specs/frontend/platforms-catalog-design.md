@@ -13,24 +13,26 @@ Deploy and Official signing dead-end into Sign paths or “Use Local” without 
 ## North star
 
 ```text
-Inspection Deploy / Official CTA
-  → Platforms catalog (same chrome as Integrations)
-  → pick Hosting or Official signing provider
-  → checklist + Open / Docs / Portal steps (when honest) → Continue publishing
+Ship → Deployment (single nav, like Sign)
+  → Hosting catalog + wizard
+  → Put / Login CLI / Open / Continue publishing
 ```
 
-One **provider catalog** utility powers Integrations and Platforms.
+Official signing stays on **Sign** as its own catalog grid (Apple · Microsoft · Play · GitHub) — same `int-layout` as Deployment / Integrations. Probe **Choose platform** → Sign. No sidebar tree of Orbit / Cloudflare / Vercel.
 
-## Slice 1 (shipped)
+See [deployment-nav-design](./deployment-nav-design.md).
+
+## Slice 1 (shipped) — superseded by Deployment nav
 
 | Surface | Behavior |
 |---------|----------|
-| View | `platforms` — catalog + wizard aside (reuse `.int-*` chrome) |
-| Sidebar | **Platforms** tree: Hosting · Official signing (mirror Payments · Email) |
-| Deploy CTA | Probe **Choose host** → Platforms (Hosting) |
-| Official CTA | Probe **Choose platform** → Platforms (Official signing) |
+| View | `platforms` chrome = **Deployment** — Hosting catalog + wizard |
+| Sidebar | **Ship → Deployment** (single item); Platforms section removed |
+| Deploy CTA | Probe **Choose host** → Deployment |
+| Official CTA | Probe **Choose platform** → Sign catalog grid |
 | Select | Open vendor URL; optional Portal filter / ritual `deploy_args` hint |
-| Shared util | `provider-catalog.ts` — catalog grid · sidebar rows · wizard paint |
+| Shared util | `provider-catalog.ts` — catalog grid · wizard paint |
+| Sign view | `#sign-catalog` + `#sign-wizard` — Official signing cards; Check status paths below |
 
 ### Hosting (honest) — Desktop catalog = Tiers A+B+C+E
 
@@ -39,13 +41,13 @@ One **provider catalog** utility powers Integrations and Platforms.
 | A | Cloudflare · Vercel · Netlify — Portal Login CLI |
 | B | Fly · Railway — Portal Login CLI |
 | C | GitHub Pages — Open GitHub + Docs only (no PAT portal) |
-| E | Orbit — no portal id |
+| E | Orbit — gated on `orbit_configured`; **Self-host** = Studio local-auto lane ([studio-selfhost-guide-design](./studio-selfhost-guide-design.md)) |
 
 **Tier D** (Render · DO · Heroku · Amplify · Cloud Run · Azure SWA): Advanced Publish `host.*` + `shipctl portal --provider` only — not Platforms cards yet.
 
 ### Official signing (honest)
 
-Apple · Microsoft · Google Play — guide only; Confirm stays on Publish after vendor work.
+Apple · Microsoft · Google Play · GitHub Release — guide + Open dashboard only; Confirm stays on Publish after vendor work.
 
 ## Non-goals
 
@@ -60,7 +62,8 @@ Apple · Microsoft · Google Play — guide only; Confirm stays on Publish after
 | Layer | Check |
 |-------|--------|
 | L1 | desktop `tsc` |
-| L2 | Publish probe → Choose host → Platforms list; Official → same view Signing group |
+| L2 | Publish probe → Choose host → Deployment Hosting list; Official → Sign catalog grid |
+| L2 | Sign → Apple/Microsoft/Play/GitHub cards + Open dashboard / Continue publishing |
 | L2 | GitHub Pages → Docs visible; Portal steps hidden |
 
 ## Later

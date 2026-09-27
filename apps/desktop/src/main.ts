@@ -23,11 +23,10 @@ import {
   integrationIconHtml,
   providerIconHtml,
   SCOPE_KIND_ORDER,
-  scopeIconFile,
-  iconImg,
+  scopeIconHtml,
 } from "./icons";
 import { INTEGRATION_WIZARDS } from "./integrations-data";
-import { PLATFORM_GROUPS, PLATFORM_WIZARDS } from "./platforms-data";
+import { PLATFORM_GROUPS, PLATFORM_WIZARDS, SIGN_GROUPS, hostingCatalogEntries, signingCatalogEntries } from "./platforms-data";
 import {
   highlightProviderSidebar,
   paintProviderWizard,
@@ -564,7 +563,7 @@ function stageGuideline(step: {
   const kind = (step.kind ?? "").toLowerCase();
   const id = step.id ?? "";
   if ((step.verify_status ?? "").toLowerCase() === "human_attest") {
-    return `${layerPrefix}Open the official UI, finish there, return → Confirm. Studio does not hold tokens.`;
+    return `${layerPrefix}Use Login CLI or Open portal for auth, then Verify → Confirm. Studio does not hold tokens.`;
   }
   if (isScopesStep(step)) {
     return `${layerPrefix}Choose what you’re shipping below, then Confirm & continue.`;
@@ -576,7 +575,10 @@ function stageGuideline(step: {
     if ((step.id ?? "") === "live_check") {
       return `${layerPrefix}Needs a live URL or deploy evidence. If this is a desktop-only cut, switch intent to Local (Live check is omitted).`;
     }
-    return `${layerPrefix}Open the official UI if needed. Confirm when you finished there.`;
+    if (kind === "oauth") {
+      return `${layerPrefix}Sign in opens Login CLI in a terminal — Verify when login succeeds, then Confirm.`;
+    }
+    return `${layerPrefix}Open portal if you need the vendor UI, then Confirm.`;
   }
   if (kind === "sign" && id.includes("release") && !id.includes("dry")) {
     return `${layerPrefix}Run local Signet for this cut, then Confirm when the artifact is ready.`;
@@ -1295,7 +1297,7 @@ function polishShipctlUserMessage(raw: string): string | null {
     return null; // handled by toastPublishGatePending
   }
   if (/unknown provider/i.test(t)) {
-    return "That provider has no Portal steps — use Open dashboard on Platforms instead.";
+    return "That provider has no Portal steps — use Open dashboard on Deployment instead.";
   }
   if (/has no secret put CLI/i.test(t)) {
     return "This provider has no put CLI — open the vendor dashboard (or Learn more).";
@@ -1423,6 +1425,91 @@ async function openPortalLoginTerminal(provider: string) {
   );
 }
 
+/** Provider id for Launch/Publish Login CLI from step id / GitHub URL. */
+function loginProviderForStep(step: {
+  id?: string | null;
+  kind?: string | null;
+  entry_url?: string | null;
+} | null | undefined): string | null {
+  if (!step) return null;
+  const id = (step.id ?? "").toLowerCase();
+  // Collapsed host gate opens Deployment — not a single-provider Login CLI.
+  if (id === "oauth.hosts" || id === "deploy.hosts") return null;
+  const oauth = /^oauth\.(.+)$/.exec(id);
+  if (oauth) return oauth[1];
+  const url = (step.entry_url ?? "").toLowerCase();
+  if (
+    id.includes("github") ||
+    id === "signet.release" ||
+    id === "ship.desktop_cut" ||
+    url.includes("github.com")
+  ) {
+    return "github";
+  }
+  return null;
+}
+
+/** Header Open / card Run — interactive terminal when the gate needs a TTY. */
+async function openLaunchCurrentGate() {
+  const project = projectPath();
+  if (!project) return;
+  const cur = lastLaunch?.current;
+  const related = (cur?.desktop_view ?? "").trim();
+  if (related && RELATED_VIEW_LABELS[related]) {
+    if (related === "platforms") {
+      openPlatformsCatalog({ preferGroup: "Hosting" });
+    } else if (related === "integrations") {
+      setView("integrations");
+      renderIntegrations();
+    } else {
+      setView(related);
+    }
+    toast(`${RELATED_VIEW_LABELS[related]} — finish there, then Verify → Confirm`, "info", 5000);
+    return;
+  }
+  const kind = (cur?.kind ?? "").toLowerCase();
+  const loginProvider = loginProviderForStep(cur);
+
+  if (kind === "oauth" && loginProvider) {
+    await openPortalLoginTerminal(loginProvider);
+    window.setTimeout(() => {
+      void refreshLaunch();
+    }, 1500);
+    return;
+  }
+
+  const needsTerminal =
+    Boolean(cur?.run?.length) ||
+    kind === "oauth" ||
+    kind === "paste" ||
+    kind === "sign" ||
+    kind === "deploy";
+  if (needsTerminal) {
+    const opened = await openShipctlTerminal(
+      ["launch", "--project", project, "open"],
+      {
+        title: "Ship Studio launch",
+        meta: "Launched terminal: shipctl launch open — complete auth / run there, then Verify/Confirm here.",
+        okToast: "Terminal opened for this step",
+      },
+    );
+    if (opened) {
+      window.setTimeout(() => {
+        void refreshLaunch();
+      }, 1500);
+    } else {
+      void launchAction(["open"]);
+    }
+    return;
+  }
+
+  if (cur?.entry_url) {
+    await openUrl(cur.entry_url);
+    return;
+  }
+  void launchAction(["open"]);
+}
+
 /** Pending Next / pause — offer the right next action, not a Verify red herring on Auto steps. */
 function toastPublishGatePending() {
   const cur = lastPublish?.current;
@@ -1518,7 +1605,7 @@ function toastPublishGatePending() {
 
   const message =
     gate === "open"
-      ? `Finish «${title}» on the official site, then come back and Confirm.`
+      ? `«${title}» — Login CLI or Open portal for auth, then Verify → Confirm.`
       : `Confirm «${title}» when ready (Verify checks local evidence first).`;
 
   toast(message, "err", 8000, actions);
@@ -1568,13 +1655,13 @@ function bindStatusProbeActions(host: HTMLElement) {
         return;
       }
       if (action === "view-paths" || action === "choose-platform") {
-        openPlatformsCatalog({ preferGroup: "Official signing", selectId: "apple-sign" });
+        openSignCatalog({ selectId: "apple-sign" });
         return;
       }
       if (action === "choose-host") {
         openPlatformsCatalog({
           preferGroup: "Hosting",
-          selectId: preferredHostingPlatformId(lastDetected) ?? "orbit",
+          selectId: preferredHostingPlatformId(lastDetected) ?? "selfhost",
         });
         return;
       }
@@ -1826,6 +1913,10 @@ async function refreshStatusProbes(opts?: { animate?: boolean; views?: Array<"si
 
 
 let activeViewId = "dashboard";
+/** Stack of prior views for ← Back (not including the current view). */
+const viewHistory: string[] = [];
+const VIEW_HISTORY_MAX = 24;
+let setViewFromBack = false;
 
 function publishMidFlight(): boolean {
   return Boolean(lastPublish?.steps?.length && !lastPublish.finished);
@@ -1839,6 +1930,37 @@ function syncBackToPublish() {
   btn.disabled = !show;
 }
 
+function syncBackView() {
+  const btn = document.querySelector<HTMLButtonElement>("#btn-back-view");
+  if (!btn) return;
+  const prev = viewHistory[viewHistory.length - 1];
+  const show = Boolean(prev && prev !== activeViewId);
+  btn.hidden = !show;
+  btn.disabled = !show;
+  if (show && prev) {
+    const label = VIEW_META[prev]?.title ?? prev;
+    btn.title = `Back to ${label} (Alt+←)`;
+    btn.textContent = `← ${label}`;
+  } else {
+    btn.textContent = "← Back";
+    btn.title = "Previous page (Alt+←)";
+  }
+}
+
+/** Return to the previous view, if any. */
+function goBackView(): boolean {
+  while (viewHistory.length) {
+    const prev = viewHistory.pop()!;
+    if (prev === activeViewId || !VIEW_META[prev]) continue;
+    setViewFromBack = true;
+    setView(prev);
+    setViewFromBack = false;
+    return true;
+  }
+  syncBackView();
+  return false;
+}
+
 function afterPaint(fn: () => void) {
   requestAnimationFrame(() => {
     requestAnimationFrame(fn);
@@ -1848,7 +1970,6 @@ function afterPaint(fn: () => void) {
 const NAV_SECTION_DEFAULTS: Record<string, boolean> = {
   ship: true,
   targets: true,
-  platforms: true,
   integrations: true,
   more: true,
   run: true,
@@ -1860,7 +1981,7 @@ const VIEW_TO_NAV_SECTION: Record<string, string> = {
   sign: "ship",
   env: "ship",
   scopes: "targets",
-  platforms: "platforms",
+  platforms: "ship",
   integrations: "integrations",
   assist: "more",
   launch: "more",
@@ -1915,6 +2036,12 @@ function ensureNavSectionOpen(viewId: string) {
 function setView(id: string) {
   if (!VIEW_META[id]) return;
   const prev = activeViewId;
+  if (prev !== id && !setViewFromBack && VIEW_META[prev]) {
+    if (viewHistory[viewHistory.length - 1] !== prev) {
+      viewHistory.push(prev);
+      if (viewHistory.length > VIEW_HISTORY_MAX) viewHistory.shift();
+    }
+  }
   activeViewId = id;
   ensureNavSectionOpen(id);
   document.querySelectorAll<HTMLElement>(".view").forEach((el) => {
@@ -1935,11 +2062,12 @@ function setView(id: string) {
   }
   // Avoid full identity + sidebar rebuild on every nav (multi-second freeze on large projects).
   syncBackToPublish();
+  syncBackView();
   if (id === "output") syncOutputMirror();
   if (id === "integrations") renderIntegrations();
   if (id === "platforms") renderPlatforms();
+  if (id === "sign") renderSignCatalog();
   if (id === "integrations" || prev === "integrations") highlightSidebarIntegration();
-  if (id === "platforms" || prev === "platforms") highlightSidebarPlatforms();
   if (id === "sign" && projectPath()) {
     afterPaint(() => {
       void refreshStatusProbes({ views: ["sign"], animate: true });
@@ -1964,6 +2092,15 @@ function highlightSidebarIntegration() {
 
 function commandItems(): CmdItem[] {
   return [
+    {
+      id: "nav-back",
+      title: "Go back",
+      keywords: "previous page back history",
+      group: "Navigate",
+      run: () => {
+        if (!goBackView()) toast("No previous page", "info", 2000);
+      },
+    },
     {
       id: "nav-dashboard",
       title: "Go to Dashboard",
@@ -2029,10 +2166,17 @@ function commandItems(): CmdItem[] {
     },
     {
       id: "nav-platforms",
-      title: "Go to Platforms",
-      keywords: "deploy host vercel cloudflare netlify orbit apple microsoft signing",
+      title: "Go to Deployment",
+      keywords: "deploy host vercel cloudflare netlify selfhost orbit fly railway pages hosting",
       group: "Navigate",
-      run: () => openPlatformsCatalog(),
+      run: () => openPlatformsCatalog({ preferGroup: "Hosting" }),
+    },
+    {
+      id: "nav-selfhost",
+      title: "Self-host (Deployment)",
+      keywords: "selfhost local auto stream docker cousin",
+      group: "Navigate",
+      run: () => openPlatformsCatalog({ preferGroup: "Hosting", selectId: "selfhost" }),
     },
     {
       id: "nav-ritual",
@@ -2433,7 +2577,7 @@ async function openPortalProvider(provider: string) {
   }
   if (!isPortalProvider(provider)) {
     toast(
-      `No Portal plan for «${provider}» — use Open dashboard on Platforms`,
+      `No Portal plan for «${provider}» — use Open dashboard on Deployment`,
       "info",
       5500,
     );
@@ -2476,8 +2620,8 @@ function setupPolarPortal() {
 
 
 let selectedIntegration = "polar";
-let selectedPlatform = "orbit";
-let platformsPreferGroup: string | null = null;
+let selectedPlatform = "selfhost";
+let selectedSignLane = "apple-sign";
 
 function integrationAllowed(wiz: IntegrationWizard): boolean {
   if (!projectPath()) return false;
@@ -2544,7 +2688,7 @@ function paintIntegrationWizard() {
 
 function preferredHostingPlatformId(detected?: Detected | null): string | null {
   if (!detected) return null;
-  // Orbit-deploy hosts first (Tier A), then CLI hosts, Pages, Orbit.
+  // Orbit-deploy hosts first (Tier A), then CLI hosts, Pages, Orbit, Self-host.
   if (detected.wrangler) return "cloudflare";
   if (detected.vercel) return "vercel";
   if (detected.netlify) return "netlify";
@@ -2555,19 +2699,17 @@ function preferredHostingPlatformId(detected?: Detected | null): string | null {
   }
   if (detected.marketing_host === "pages") return "github-pages";
   if (detected.orbit_configured) return "orbit";
-  return null;
+  return "selfhost";
 }
 
 function openPlatformsCatalog(opts?: { preferGroup?: string; selectId?: string }) {
-  if (opts?.preferGroup) platformsPreferGroup = opts.preferGroup;
+  if (opts?.preferGroup === "Official signing") {
+    openSignCatalog({ selectId: opts.selectId ?? "apple-sign" });
+    return;
+  }
   const preferredHost = preferredHostingPlatformId(lastDetected);
   if (opts?.selectId) selectedPlatform = opts.selectId;
-  else if (opts?.preferGroup === "Official signing") selectedPlatform = "apple-sign";
-  else if (opts?.preferGroup === "Hosting") selectedPlatform = preferredHost ?? "orbit";
-  else if (preferredHost) {
-    selectedPlatform = preferredHost;
-    platformsPreferGroup = "Hosting";
-  }
+  else selectedPlatform = preferredHost ?? "selfhost";
   if (!projectPath()) {
     toast("Bind a project first", "info");
     return;
@@ -2576,15 +2718,82 @@ function openPlatformsCatalog(opts?: { preferGroup?: string; selectId?: string }
   selectPlatform(selectedPlatform);
 }
 
+function openSignCatalog(opts?: { selectId?: string }) {
+  if (!projectPath()) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  if (opts?.selectId) selectedSignLane = opts.selectId;
+  setView("sign");
+  selectSignLane(selectedSignLane);
+}
+
+function signCatalogEntries() {
+  return signingCatalogEntries();
+}
+
+function renderSignCatalog() {
+  const host = document.querySelector<HTMLElement>("#sign-catalog");
+  if (!host) return;
+  const entries = signCatalogEntries();
+  if (!entries.some((e) => e.id === selectedSignLane)) {
+    selectedSignLane = entries[0]?.id ?? "apple-sign";
+  }
+  renderProviderCatalogGrid({
+    host,
+    entries,
+    groups: SIGN_GROUPS,
+    selectedId: selectedSignLane,
+    preferGroup: "Official signing",
+    iconHtml: providerIconHtml,
+    onSelect: (id) => {
+      selectSignLane(id);
+    },
+  });
+  paintSignWizard();
+}
+
+function selectSignLane(id: string) {
+  const wiz = signCatalogEntries().find((w) => w.id === id);
+  if (!wiz) return;
+  if (!projectPath()) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  selectedSignLane = id;
+  if (activeViewId !== "sign") setView("sign");
+  else renderSignCatalog();
+}
+
+function paintSignWizard() {
+  const wiz = signCatalogEntries().find((w) => w.id === selectedSignLane) ?? null;
+  paintProviderWizard({
+    entry: wiz,
+    panel: document.querySelector<HTMLElement>("#sign-wizard"),
+    titleEl: document.querySelector("#sign-wizard-title"),
+    blurbEl: document.querySelector("#sign-wizard-blurb"),
+    stepsEl: document.querySelector("#sign-wizard-steps"),
+    openBtn: document.querySelector<HTMLButtonElement>("#sign-open"),
+  });
+}
+
+function deployCatalogEntries() {
+  return hostingCatalogEntries({ orbitConfigured: Boolean(lastDetected?.orbit_configured) });
+}
+
 function renderPlatforms() {
   const host = document.querySelector<HTMLElement>("#platforms-catalog");
   if (!host) return;
+  const entries = deployCatalogEntries();
+  if (!entries.some((e) => e.id === selectedPlatform)) {
+    selectedPlatform = preferredHostingPlatformId(lastDetected) ?? entries[0]?.id ?? "selfhost";
+  }
   renderProviderCatalogGrid({
     host,
-    entries: PLATFORM_WIZARDS,
+    entries,
     groups: PLATFORM_GROUPS,
     selectedId: selectedPlatform,
-    preferGroup: platformsPreferGroup,
+    preferGroup: "Hosting",
     iconHtml: providerIconHtml,
     onSelect: (id) => {
       selectPlatform(id);
@@ -2594,25 +2803,21 @@ function renderPlatforms() {
 }
 
 function selectPlatform(id: string) {
-  const wiz = PLATFORM_WIZARDS.find((w) => w.id === id);
+  const wiz = deployCatalogEntries().find((w) => w.id === id);
   if (!wiz) return;
   if (!projectPath()) {
     toast("Bind a project first", "info");
     return;
   }
   selectedPlatform = id;
-  if (wiz.group === "Hosting") platformsPreferGroup = "Hosting";
-  if (wiz.group === "Official signing") platformsPreferGroup = "Official signing";
   if (activeViewId !== "platforms") setView("platforms");
-  else {
-    renderPlatforms();
-    highlightSidebarPlatforms();
-  }
+  else renderPlatforms();
 }
 
 function paintPlatformWizard() {
-  const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform) ?? null;
-  const showLocal = wiz?.group === "Hosting" && shipIntent() === "public";
+  const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform) ?? null;
+  const showLocal =
+    wiz?.group === "Hosting" && wiz.id !== "selfhost" && shipIntent() === "public";
   const showPut = Boolean(wiz?.provider && providerHasEnvPut(wiz.provider));
   paintProviderWizard({
     entry: wiz,
@@ -2629,37 +2834,6 @@ function paintPlatformWizard() {
   });
   const localBtn = document.querySelector<HTMLButtonElement>("#plat-use-local");
   if (localBtn) localBtn.hidden = !showLocal;
-}
-
-function renderSidebarPlatforms() {
-  const host = document.querySelector<HTMLElement>("#sidebar-platforms");
-  if (!host) return;
-  renderProviderSidebarTree({
-    host,
-    entries: PLATFORM_WIZARDS,
-    groups: PLATFORM_GROUPS,
-    selectedId: selectedPlatform,
-    activeView: activeViewId === "platforms",
-    iconHtml: providerIconHtml,
-    dataAttr: "data-side-plat",
-    onSelect: (id) => {
-      if (!projectPath()) {
-        toast("Bind a project first", "info");
-        return;
-      }
-      setView("platforms");
-      selectPlatform(id);
-    },
-  });
-}
-
-function highlightSidebarPlatforms() {
-  highlightProviderSidebar(
-    "#sidebar-platforms",
-    "data-side-plat",
-    selectedPlatform,
-    activeViewId === "platforms",
-  );
 }
 
 function routeDetectChip(label: string) {
@@ -2700,7 +2874,12 @@ function routeDetectChip(label: string) {
       setView("sign");
       return;
     case "orbit":
-      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "orbit" });
+      if (lastDetected?.orbit_configured) {
+        openPlatformsCatalog({ preferGroup: "Hosting", selectId: "orbit" });
+      } else {
+        openPlatformsCatalog({ preferGroup: "Hosting", selectId: "selfhost" });
+        toast("Orbit only when this repo is Orbit-configured — Self-host is the local lane", "info", 4500);
+      }
       return;
     default:
       setView("portal");
@@ -3184,6 +3363,8 @@ async function openRelatedStudioView(view: string): Promise<boolean> {
     document.querySelector<HTMLButtonElement>("#btn-portal")?.click();
   } else if (id === "launch") {
     await refreshLaunch();
+  } else if (id === "platforms") {
+    openPlatformsCatalog({ preferGroup: "Hosting" });
   } else if (id === "tools") {
     /* stay — doctor available on Tools */
   } else if (id === "dashboard") {
@@ -3650,8 +3831,8 @@ function renderSidebarTargets() {
           const on = active.has(id);
           const path = s.relative && s.relative !== "." ? s.relative : s.label ?? id;
           return `<button type="button" class="nav-target${on ? " is-on" : ""}" data-target="${escapeHtml(id)}" aria-pressed="${on ? "true" : "false"}">
-            ${iconImg(scopeIconFile(s))}
             <span class="nav-target-mark" aria-hidden="true">${on ? "●" : "○"}</span>
+            ${scopeIconHtml(s)}
             <span class="nav-target-text">
               <span class="nav-target-name">${escapeHtml(s.label ?? id)}</span>
               <span class="nav-target-path">${escapeHtml(path)}</span>
@@ -3926,7 +4107,9 @@ function applyPortalPlan(plan: PortalPlan | null) {
             s.provider ?? "",
           )}">Put</button>`
         : "";
-      const openBtn = `<button type="button" class="portal-open${canPut ? "" : " primary"}" data-url="${escapeHtml(
+      const openBtn = `<button type="button" class="portal-open${
+        canPut || (kind === "oauth" && canLogin) ? "" : " primary"
+      }" data-url="${escapeHtml(
         url,
       )}" ${openDisabled} title="${escapeHtml(url || "No settings URL for this step")}">${openLabel}</button>`;
       const docsBtn = docs
@@ -4132,6 +4315,7 @@ const PANEL_FIRST_VIEWS = new Set([
   "launch",
   "dashboard",
   "integrations",
+  "platforms",
 ]);
 
 /** Related views worth leaving Publish for. Dashboard is not — it caused a bounce. */
@@ -4661,38 +4845,196 @@ function applyLaunchView(view: LaunchView | null) {
   const currentEl = document.querySelector<HTMLElement>("#launch-current");
   const list = document.querySelector<HTMLElement>("#launch-steps");
   const hint = document.querySelector<HTMLElement>("#launch-hint");
+  const openBtn = document.querySelector<HTMLButtonElement>("#btn-launch-open");
   if (!currentEl || !list) return;
   if (!view?.steps?.length) {
     currentEl.innerHTML =
       '<p class="detail empty-hint">Refresh Launch to build the adaptive plan for this repo.</p>';
     list.innerHTML = "";
+    if (openBtn) openBtn.textContent = "Open / Run";
     return;
   }
   setView("launch");
   const cur = view.current;
+  const curKind = (cur?.kind ?? "").toLowerCase();
+  const curRelated = (cur?.desktop_view ?? "").trim();
+  const curLogin = loginProviderForStep(cur);
+  const curHasUrl = Boolean(cur?.entry_url);
+  const curHasRun = Boolean(cur?.run?.length);
+  if (openBtn) {
+    openBtn.textContent =
+      curRelated === "platforms"
+        ? "Open Deployment"
+        : curRelated && RELATED_VIEW_LABELS[curRelated]
+          ? RELATED_VIEW_LABELS[curRelated].replace(/^Open /, "Open ")
+          : curKind === "oauth" || curLogin
+            ? "Login CLI"
+            : curHasUrl && !curHasRun
+              ? "Open portal"
+              : curHasRun && !curHasUrl
+                ? "Run local"
+                : "Open / Run";
+  }
   if (hint) {
     hint.textContent = view.finished
-      ? "Launch workflow finished."
-      : `Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ${view.done_count ?? 0} done — Open/Run on official platforms or local Signet/Orbit, then Verify/Confirm.`;
+      ? "Launch workflow finished — prefer Publish if you still need the minute spine."
+      : `Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ${view.done_count ?? 0} done — Open Deployment / Login CLI / Run local, then Verify → Confirm.`;
   }
+
+  const renderCtas = (
+    step: NonNullable<LaunchView["current"]>,
+    isCurrent: boolean,
+  ): string => {
+    const kind = (step.kind ?? "").toLowerCase();
+    const related = (step.desktop_view ?? "").trim();
+    const url = step.entry_url ?? "";
+    const hasRun = Boolean(step.run?.length);
+    const loginProv = loginProviderForStep(step);
+    const parts: string[] = [];
+
+    if (related && RELATED_VIEW_LABELS[related]) {
+      const label =
+        related === "platforms"
+          ? "Open Deployment"
+          : related === "sign"
+            ? "Open Sign"
+            : related === "integrations"
+              ? "Open Integrations"
+              : related === "env"
+                ? "Open Env"
+                : RELATED_VIEW_LABELS[related];
+      parts.push(
+        `<button type="button" class="primary launch-step-related" data-view="${escapeHtml(
+          related,
+        )}">${escapeHtml(label)}</button>`,
+      );
+    } else if (kind === "oauth" && loginProv) {
+      parts.push(
+        `<button type="button" class="primary launch-step-login" data-provider="${escapeHtml(
+          loginProv,
+        )}">Login CLI</button>`,
+      );
+    } else {
+      if (loginProv) {
+        parts.push(
+          `<button type="button" class="primary launch-step-login" data-provider="${escapeHtml(
+            loginProv,
+          )}">Login CLI</button>`,
+        );
+      }
+      if (url) {
+        parts.push(
+          `<button type="button" class="${
+            loginProv ? "" : "primary "
+          }launch-step-open" data-url="${escapeHtml(url)}">Open portal</button>`,
+        );
+      }
+      if (hasRun) {
+        parts.push(
+          `<button type="button" class="${
+            loginProv || url ? "" : "primary "
+          }launch-step-run" data-current="1" ${
+            isCurrent ? "" : "disabled"
+          }>${isCurrent ? "Run local" : "Run when current"}</button>`,
+        );
+      }
+    }
+    if (!parts.length) {
+      parts.push(
+        `<button type="button" class="primary" disabled>${
+          isCurrent ? "Confirm when ready" : "Advance with Next"
+        }</button>`,
+      );
+    }
+    return `<div class="btns launch-portal-ctas">${parts.join("")}</div>`;
+  };
+
   currentEl.innerHTML = cur
     ? `<div class="title">${statusKindHtml(cur.status ?? cur.kind)}${escapeHtml(cur.title ?? "")}</div>
        <p class="detail">${escapeHtml(cur.detail ?? "")}${
-         cur.run?.length ? ` · run: ${escapeHtml(cur.run.join(" "))}` : ""
-       }${
          cur.verify_hint ? ` · verify: ${escapeHtml(cur.verify_hint)}` : ""
-       }</p>`
+       }</p>
+       ${renderCtas(cur, true)}`
     : "<p class=\"detail\">No current step</p>";
+
   list.innerHTML = (view.steps ?? [])
     .map((s, i) => {
       const active = i === view.current_index ? " active-step" : "";
-      return `<li class="portal-step${active}">
+      const kind = (s.kind ?? "").toLowerCase();
+      return `<li class="portal-step${active}" data-launch-idx="${i}">
         <div class="meta">
-          <div class="title">${statusKindHtml(s.status)}${escapeHtml(s.title ?? s.id ?? "")}</div>
+          <div class="title">${statusKindHtml(s.status)}${
+            kind
+              ? `<span class="kind kind-${escapeHtml(kind)}">${escapeHtml(kind)}</span>`
+              : ""
+          }${escapeHtml(s.title ?? s.id ?? "")}</div>
+          <p class="detail">${escapeHtml(s.detail ?? "")}</p>
         </div>
+        ${renderCtas(s, i === view.current_index)}
       </li>`;
     })
     .join("");
+
+  const bindLogin = (root: ParentNode) => {
+    root.querySelectorAll<HTMLButtonElement>(".launch-step-login").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const provider = btn.getAttribute("data-provider") || "";
+        void openPortalLoginTerminal(provider).then(() => {
+          window.setTimeout(() => {
+            void refreshLaunch();
+          }, 1500);
+        });
+      });
+    });
+  };
+  const bindRelated = (root: ParentNode) => {
+    root.querySelectorAll<HTMLButtonElement>(".launch-step-related").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const viewId = (btn.getAttribute("data-view") || "").trim();
+        if (viewId === "platforms") {
+          openPlatformsCatalog({ preferGroup: "Hosting" });
+        } else if (viewId === "integrations") {
+          setView("integrations");
+          renderIntegrations();
+        } else if (viewId) {
+          setView(viewId);
+        }
+        toast(
+          `${RELATED_VIEW_LABELS[viewId] ?? viewId} — finish there, then Verify → Confirm`,
+          "info",
+          5000,
+        );
+      });
+    });
+  };
+  bindLogin(currentEl);
+  bindLogin(list);
+  bindRelated(currentEl);
+  bindRelated(list);
+
+  currentEl.querySelectorAll<HTMLButtonElement>(".launch-step-open").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-url");
+      if (url) await openUrl(url);
+    });
+  });
+  currentEl.querySelectorAll<HTMLButtonElement>(".launch-step-run").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      void openLaunchCurrentGate();
+    });
+  });
+  list.querySelectorAll<HTMLButtonElement>(".launch-step-open").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const url = btn.getAttribute("data-url");
+      if (url) await openUrl(url);
+    });
+  });
+  list.querySelectorAll<HTMLButtonElement>(".launch-step-run").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (btn.disabled) return;
+      void openLaunchCurrentGate();
+    });
+  });
 }
 
 async function refreshLaunch() {
@@ -4921,14 +5263,12 @@ function applyDetected(detected?: Detected) {
       });
     });
   }
-  // Soft-select Platforms card when already on the view (no navigation).
+  // Soft-select Deployment host card when already on the view (no navigation).
   const preferred = preferredHostingPlatformId(detected);
-  if (preferred && activeViewId === "platforms" && platformsPreferGroup !== "Official signing") {
+  if (preferred && activeViewId === "platforms") {
     if (selectedPlatform !== preferred) {
       selectedPlatform = preferred;
-      platformsPreferGroup = "Hosting";
       renderPlatforms();
-      highlightSidebarPlatforms();
     }
   }
   syncProjectIdentity();
@@ -5078,6 +5418,7 @@ async function run(
         args[0] === "sign-paths" ||
         args[0] === "assist" ||
         args[0] === "status" ||
+        args[0] === "selfhost" ||
         args[0] === "flow")
     ) {
       const pretty = prettyMaybe(result.stdout);
@@ -5273,7 +5614,6 @@ window.addEventListener("DOMContentLoaded", () => {
   setView("dashboard");
   renderSidebarTargets();
   renderSidebarIntegrations();
-  renderSidebarPlatforms();
   setTitle(null);
   wireWindowChrome();
 
@@ -5290,6 +5630,9 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  document.querySelector("#btn-back-view")?.addEventListener("click", () => {
+    if (!goBackView()) toast("No previous page", "info", 2000);
+  });
   document.querySelector("#btn-back-publish")?.addEventListener("click", () => {
     setView("publish");
     if (!lastPublish?.steps?.length) {
@@ -5408,6 +5751,16 @@ window.addEventListener("DOMContentLoaded", () => {
       toast("Bind a project first", "info");
       return;
     }
+    if (wiz.id === "selfhost") {
+      applyOutputDock(true);
+      toast("Self-host Deploy — streaming in Output", "ok", 3500);
+      const result = await run(["selfhost"], { quietToast: true });
+      if (!result) return;
+      if (result.cancelled) toast("selfhost cancelled", "err");
+      else if (result.ok) toast("Self-host ready — last-run written (health checks next)", "ok", 5000);
+      else toast("Self-host found no static surface — see Output", "err", 5000);
+      return;
+    }
     await openUrl(wiz.openUrl);
     if (wiz.deployArgs) {
       const dep = deployArgsEl();
@@ -5418,6 +5771,28 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     }
     toast(`Opened ${wiz.title}`, "ok");
+  });
+  document.querySelector("#sign-open")?.addEventListener("click", async () => {
+    const wiz = signCatalogEntries().find((w) => w.id === selectedSignLane);
+    if (!wiz?.openUrl) {
+      toast("No dashboard URL for this signing lane", "info");
+      return;
+    }
+    if (!projectPath()) {
+      toast("Bind a project first", "info");
+      return;
+    }
+    await openUrl(wiz.openUrl);
+    toast(`Opened ${wiz.title} — finish on the vendor site`, "ok", 4500);
+  });
+  document.querySelector("#sign-continue-publish")?.addEventListener("click", () => {
+    if (!projectPath()) {
+      toast("Bind a project first", "info");
+      return;
+    }
+    setView("publish");
+    toast("Back on Publish — Confirm the signing gate when ready", "ok", 4500);
+    void refreshPublish();
   });
   document.querySelector("#plat-put")?.addEventListener("click", () => {
     const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
@@ -5499,6 +5874,11 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
     if (isTypingTarget(ev.target)) return;
+    if (ev.altKey && (ev.key === "ArrowLeft" || ev.key === "Left")) {
+      ev.preventDefault();
+      if (!goBackView()) toast("No previous page", "info", 2000);
+      return;
+    }
     if (!ctrl || !projectPath()) return;
     if (ev.key === "d" || ev.key === "D") {
       ev.preventDefault();
@@ -5868,21 +6248,42 @@ async function runWizard() {
           return;
         }
         await openRelatedStudioView(related);
-        toast(`${RELATED_VIEW_LABELS[related] ?? related} — finish, then Confirm`, "info");
+        toast(`${RELATED_VIEW_LABELS[related] ?? related} — Login CLI / Open if needed, then Confirm`, "info");
         // Panel-first steps (Scopes / Env / …): stay there — do not force Publish or a terminal.
         if (PANEL_FIRST_VIEWS.has(related)) return;
       }
+      const kind = (cur?.kind ?? "").toLowerCase();
+      const loginProvider = loginProviderForStep(cur);
+      if (kind === "oauth" && loginProvider) {
+        await openPortalLoginTerminal(loginProvider);
+        window.setTimeout(() => {
+          void (async () => {
+            const status = await invoke<CmdResult>("run_shipctl", {
+              project,
+              args: publishArgs(),
+            });
+            if (status?.ok && status.stdout) {
+              try {
+                applyPublishView(JSON.parse(status.stdout) as PublishView);
+              } catch {
+                /* ignore */
+              }
+            }
+          })();
+        }, 1500);
+        return;
+      }
       const needsTerminal =
         Boolean(cur?.run?.length) ||
-        cur?.kind === "oauth" ||
-        cur?.kind === "sign" ||
-        cur?.kind === "deploy";
+        kind === "oauth" ||
+        kind === "sign" ||
+        kind === "deploy";
       if (needsTerminal) {
         const opened = await openShipctlTerminal(
           ["publish", "--project", project, "open"],
           {
             title: "Ship Studio publish",
-            meta: "Launched terminal: shipctl publish open — complete the step, then Verify/Confirm here.",
+            meta: "Launched terminal: shipctl publish open — complete auth / run there, then Verify/Confirm here.",
             okToast: "Terminal opened for this step",
           },
         );
@@ -6014,36 +6415,7 @@ async function runWizard() {
     renderPublishStage(lastPublish);
   });
   document.querySelector("#btn-launch-open")?.addEventListener("click", () => {
-    void (async () => {
-      const project = projectPath();
-      if (!project) return;
-      const cur = lastLaunch?.current;
-      const needsTerminal =
-        Boolean(cur?.run?.length) ||
-        cur?.kind === "oauth" ||
-        cur?.kind === "paste" ||
-        cur?.kind === "sign" ||
-        cur?.kind === "deploy";
-      if (needsTerminal) {
-        const opened = await openShipctlTerminal(
-          ["launch", "--project", project, "open"],
-          {
-            title: "Ship Studio launch",
-            meta: "Launched terminal: shipctl launch open — complete the step, then Verify/Confirm here.",
-            okToast: "Terminal opened for this step",
-          },
-        );
-        if (opened) {
-          window.setTimeout(() => {
-            void refreshLaunch();
-          }, 1500);
-        } else {
-          void launchAction(["open"]);
-        }
-      } else {
-        void launchAction(["open"]);
-      }
-    })();
+    void openLaunchCurrentGate();
   });
   document.querySelector("#btn-launch-verify")?.addEventListener("click", () => {
     void launchAction(["verify"]);

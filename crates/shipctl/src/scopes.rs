@@ -115,11 +115,53 @@ fn signals_for(dir: &Path) -> Vec<String> {
     if has(dir, "netlify.toml") || dir.join(".netlify").is_dir() {
         s.push("netlify".into());
     }
-    if dir.join("src-tauri").is_dir() {
+    if dir.join("src-tauri").is_dir() || has(dir, "tauri.conf.json") {
         s.push("tauri".into());
+    }
+    if has(dir, "electron-builder.yml")
+        || has(dir, "electron-builder.json")
+        || dir.join("electron").is_dir()
+    {
+        s.push("electron".into());
+    }
+    if has(dir, "wails.json") || dir.join("frontend").join("wailsjs").is_dir() {
+        s.push("wails".into());
+    }
+    if has_dotnet(dir) {
+        s.push("dotnet".into());
+    }
+    if has(dir, "next.config.js")
+        || has(dir, "next.config.ts")
+        || has(dir, "next.config.mjs")
+        || has(dir, "next.config.cjs")
+    {
+        s.push("next".into());
+    }
+    if has(dir, "astro.config.mjs")
+        || has(dir, "astro.config.ts")
+        || has(dir, "astro.config.js")
+    {
+        s.push("astro".into());
+    }
+    if has(dir, "nuxt.config.ts") || has(dir, "nuxt.config.js") {
+        s.push("nuxt".into());
+    }
+    if has(dir, "svelte.config.js") || has(dir, "svelte.config.ts") {
+        s.push("svelte".into());
     }
     if has(dir, "package.json") {
         s.push("node".into());
+        push_npm_framework_signals(dir, &mut s);
+    }
+    if has(dir, "index.html")
+        && !s.iter().any(|x| {
+            matches!(
+                x.as_str(),
+                "next" | "react" | "vue" | "svelte" | "astro" | "nuxt" | "remix"
+            )
+        })
+    {
+        s.push("static".into());
     }
     // Mobile — local layout only (no vendor HTTPS).
     let name = dir
@@ -166,7 +208,86 @@ fn signals_for(dir: &Path) -> Vec<String> {
         s.push("compose".into());
         s.push("docker".into());
     }
+    s.sort();
+    s.dedup();
     s
+}
+
+fn has_dotnet(dir: &Path) -> bool {
+    let Ok(entries) = fs::read_dir(dir) else {
+        return false;
+    };
+    entries.flatten().any(|ent| {
+        ent.path()
+            .extension()
+            .and_then(|e| e.to_str())
+            .is_some_and(|e| matches!(e, "csproj" | "fsproj" | "vbproj" | "sln"))
+    })
+}
+
+fn push_npm_framework_signals(dir: &Path, s: &mut Vec<String>) {
+    let Ok(raw) = fs::read_to_string(dir.join("package.json")) else {
+        return;
+    };
+    let Ok(v) = serde_json::from_str::<serde_json::Value>(&raw) else {
+        return;
+    };
+    let mut deps = serde_json::Map::new();
+    for key in ["dependencies", "devDependencies", "peerDependencies"] {
+        if let Some(obj) = v.get(key).and_then(|x| x.as_object()) {
+            for (k, val) in obj {
+                deps.insert(k.clone(), val.clone());
+            }
+        }
+    }
+    let has_dep = |name: &str| deps.contains_key(name);
+    if has_dep("next") {
+        s.push("next".into());
+    }
+    if has_dep("react-native") || has_dep("react-native-web") {
+        s.push("react-native".into());
+        s.push("mobile".into());
+    }
+    if has_dep("expo") || has_dep("expo-router") {
+        s.push("expo".into());
+        s.push("mobile".into());
+    }
+    if has_dep("@remix-run/react") || has_dep("@remix-run/node") {
+        s.push("remix".into());
+    }
+    if has_dep("astro") {
+        s.push("astro".into());
+    }
+    if has_dep("nuxt") {
+        s.push("nuxt".into());
+    }
+    if has_dep("vue") || has_dep("nuxt") {
+        s.push("vue".into());
+    }
+    if has_dep("svelte") || has_dep("@sveltejs/kit") {
+        s.push("svelte".into());
+    }
+    if has_dep("react") && !has_dep("react-native") && !has_dep("next") {
+        s.push("react".into());
+    }
+    if has_dep("express") {
+        s.push("express".into());
+    }
+    if has_dep("@nestjs/core") {
+        s.push("nest".into());
+    }
+    if has_dep("fastify") {
+        s.push("fastify".into());
+    }
+    if has_dep("hono") {
+        s.push("hono".into());
+    }
+    if has_dep("electron") {
+        s.push("electron".into());
+    }
+    if has_dep("@tauri-apps/api") || has_dep("@tauri-apps/cli") {
+        s.push("tauri".into());
+    }
 }
 
 fn file_mentions(dir: &Path, names: &[&str], needle: &str) -> bool {
@@ -219,14 +340,130 @@ fn make_scope(project: &Path, dir: &Path, id: &str, kind: ScopeKind, label: &str
     }
 }
 
+/// `{Surface} – {Framework} | {Framework}` from detected signals (sidebar groups by kind).
+fn scope_label(kind: ScopeKind, signals: &[String]) -> String {
+    let surface = match kind {
+        ScopeKind::Desktop => "Desktop",
+        ScopeKind::Web | ScopeKind::Docs => "Website",
+        ScopeKind::Api => "API",
+        ScopeKind::Mobile => "Mobile",
+        ScopeKind::Container => "Container",
+        ScopeKind::Root => "Project",
+    };
+    let stack = framework_stack(kind, signals);
+    if stack.is_empty() {
+        return surface.into();
+    }
+    format!("{surface} – {}", stack.join(" | "))
+}
+
+fn framework_stack(kind: ScopeKind, signals: &[String]) -> Vec<&'static str> {
+    let has = |id: &str| signals.iter().any(|s| s == id);
+    let mut out: Vec<&'static str> = Vec::new();
+    match kind {
+        ScopeKind::Desktop => {
+            if has("tauri") {
+                out.push("Tauri");
+            }
+            if has("electron") {
+                out.push("Electron");
+            }
+            if has("wails") {
+                out.push("Wails");
+            }
+            if has("dotnet") {
+                out.push(".NET");
+            }
+        }
+        ScopeKind::Web | ScopeKind::Docs => {
+            if has("next") {
+                out.push("Next.js");
+            }
+            if has("remix") {
+                out.push("Remix");
+            }
+            if has("astro") {
+                out.push("Astro");
+            }
+            if has("nuxt") {
+                out.push("Nuxt");
+            }
+            if has("svelte") {
+                out.push("Svelte");
+            }
+            if has("vue") && !has("nuxt") {
+                out.push("Vue");
+            }
+            if has("react") && !has("next") && !has("remix") {
+                out.push("React");
+            }
+            if out.is_empty() && has("static") {
+                out.push("Static");
+            }
+            if out.is_empty() && has("node") {
+                out.push("Node");
+            }
+        }
+        ScopeKind::Api => {
+            if has("wrangler") {
+                out.push("Workers");
+            }
+            if has("express") {
+                out.push("Express");
+            }
+            if has("nest") {
+                out.push("NestJS");
+            }
+            if has("fastify") {
+                out.push("Fastify");
+            }
+            if has("hono") {
+                out.push("Hono");
+            }
+            if out.is_empty() && has("node") {
+                out.push("Node.js");
+            }
+        }
+        ScopeKind::Mobile => {
+            if has("react-native") {
+                out.push("React Native");
+            }
+            if has("expo") && !has("react-native") {
+                out.push("Expo");
+            }
+            if has("flutter") {
+                out.push("Flutter");
+            }
+            if has("capacitor") {
+                out.push("Capacitor");
+            }
+            if out.is_empty() && has("android") {
+                out.push("Android");
+            }
+            if out.is_empty() && has("ios") {
+                out.push("iOS");
+            }
+        }
+        ScopeKind::Container => {
+            if has("compose") {
+                out.push("Compose");
+            } else if has("docker") {
+                out.push("Docker");
+            }
+        }
+        ScopeKind::Root => {}
+    }
+    out
+}
+
 fn consider(project: &Path, dir: &Path, id_hint: &str, out: &mut Vec<Scope>) {
     let signals = signals_for(dir);
     if signals.is_empty() {
         return;
     }
-    if signals.len() == 1 && signals[0] == "node" && !has(dir, "vercel.json") {
-        // Bare Node apps at the repo root are too noisy. Workspace packages
-        // (apps/* , packages/*) are real deploy/release targets.
+    // Bare Node at repo root is noise. Workspace packages + framework/static signals stay.
+    let only_node = signals.iter().all(|x| x == "node");
+    if only_node && !has(dir, "vercel.json") {
         let rel_path = rel(project, dir);
         let workspace_pkg = rel_path.starts_with("apps/") || rel_path.starts_with("packages/");
         if !workspace_pkg {
@@ -254,15 +491,7 @@ fn consider(project: &Path, dir: &Path, id_hint: &str, out: &mut Vec<Scope>) {
     if out.iter().any(|s| s.id == id || s.root == dir.display().to_string()) {
         return;
     }
-    let label = match kind {
-        ScopeKind::Web => format!("Web — {name}"),
-        ScopeKind::Api => format!("API — {name}"),
-        ScopeKind::Desktop => format!("Desktop — {name}"),
-        ScopeKind::Docs => format!("Docs — {name}"),
-        ScopeKind::Mobile => format!("Mobile — {name}"),
-        ScopeKind::Container => format!("Container — {name}"),
-        ScopeKind::Root => "Root".into(),
-    };
+    let label = scope_label(kind.clone(), &signals);
     out.push(make_scope(project, dir, &id, kind, &label));
 }
 
@@ -302,13 +531,7 @@ pub fn detect(project: &Path) -> Vec<Scope> {
                     ScopeKind::Container => "container.root".into(),
                     _ => "web.root".into(),
                 };
-                s.label = match s.kind {
-                    ScopeKind::Api => "API — project root".into(),
-                    ScopeKind::Desktop => "Desktop — project root".into(),
-                    ScopeKind::Mobile => "Mobile — project root".into(),
-                    ScopeKind::Container => "Container — project root".into(),
-                    _ => "Web — project root".into(),
-                };
+                s.label = scope_label(s.kind.clone(), &s.signals);
             }
         }
     }
@@ -459,6 +682,60 @@ pub fn set_active(project: &Path, ids: Vec<String>) -> Result<ScopesPlan> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn labels_use_framework_stack() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-scopes-labels-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("apps/desktop/src-tauri")).unwrap();
+        fs::create_dir_all(dir.join("apps/website")).unwrap();
+        fs::write(dir.join("apps/desktop/package.json"), "{}\n").unwrap();
+        fs::write(dir.join("apps/website/package.json"), "{}\n").unwrap();
+        fs::write(dir.join("apps/website/index.html"), "<html></html>\n").unwrap();
+        fs::create_dir_all(dir.join("apps/api")).unwrap();
+        fs::write(
+            dir.join("apps/api/package.json"),
+            r#"{"dependencies":{"express":"^4.0.0"}}"#,
+        )
+        .unwrap();
+        fs::create_dir_all(dir.join("apps/web")).unwrap();
+        fs::write(
+            dir.join("apps/web/package.json"),
+            r#"{"dependencies":{"next":"^14.0.0","react":"^18.0.0"}}"#,
+        )
+        .unwrap();
+        let plan = plan_for(&dir);
+        let desk = plan
+            .scopes
+            .iter()
+            .find(|s| s.kind == ScopeKind::Desktop)
+            .expect("desktop");
+        let docs = plan
+            .scopes
+            .iter()
+            .find(|s| s.relative.replace('\\', "/") == "apps/website")
+            .expect("website");
+        let api = plan
+            .scopes
+            .iter()
+            .find(|s| s.kind == ScopeKind::Api)
+            .expect("api");
+        let web = plan
+            .scopes
+            .iter()
+            .find(|s| s.relative.replace('\\', "/") == "apps/web")
+            .expect("web");
+        assert_eq!(desk.label, "Desktop – Tauri");
+        assert_eq!(docs.label, "Website – Static");
+        assert_eq!(api.label, "API – Express");
+        assert_eq!(web.label, "Website – Next.js");
+    }
 
     #[test]
     fn detects_web_and_api() {

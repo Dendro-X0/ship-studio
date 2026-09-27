@@ -7,7 +7,6 @@ use crate::human;
 use crate::portal::{self, ProviderId};
 use crate::scopes;
 use crate::secrets;
-use crate::signpath;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -59,6 +58,9 @@ pub struct LaunchStep {
     /// Local CLI to run on Open/Run, e.g. `["signet","build"]` or `["shipctl","deploy"]`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub run: Option<Vec<String>>,
+    /// Desktop related panel — e.g. `platforms` opens Deployment (not a vendor URL).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub desktop_view: Option<String>,
     pub status: StepStatus,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub verified_at: Option<String>,
@@ -128,6 +130,19 @@ fn step(
     verify_hint: Option<String>,
     run: Option<Vec<String>>,
 ) -> LaunchStep {
+    step_with_view(id, title, kind, detail, entry_url, verify_hint, run, None)
+}
+
+fn step_with_view(
+    id: &str,
+    title: &str,
+    kind: StepKind,
+    detail: &str,
+    entry_url: Option<String>,
+    verify_hint: Option<String>,
+    run: Option<Vec<String>>,
+    desktop_view: Option<&str>,
+) -> LaunchStep {
     LaunchStep {
         id: id.into(),
         title: title.into(),
@@ -138,6 +153,7 @@ fn step(
         put_provider: None,
         put_name: None,
         run,
+        desktop_view: desktop_view.map(|s| s.into()),
         status: StepStatus::Pending,
         verified_at: None,
     }
@@ -189,53 +205,50 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         None,
     ));
 
-    for id in &portal.providers {
-        let Ok(pid) = ProviderId::parse(id) else {
-            continue;
-        };
-        if matches!(pid, ProviderId::Polar | ProviderId::Github) {
-            continue;
-        }
-        let (title, hint) = match pid {
-            ProviderId::Cloudflare => (
-                "Cloudflare — Wrangler OAuth",
-                "wrangler whoami (prefer OAuth over API tokens)",
-            ),
-            ProviderId::Vercel => ("Vercel — CLI login", "vercel whoami"),
-            ProviderId::Netlify => ("Netlify — CLI login", "netlify status"),
-            _ => continue,
-        };
-        steps.push(step(
-            &format!("oauth.{}", pid.as_str()),
-            title,
+    let host_logins: Vec<&str> = portal
+        .providers
+        .iter()
+        .filter_map(|id| {
+            let Ok(pid) = ProviderId::parse(id) else {
+                return None;
+            };
+            match pid {
+                ProviderId::Cloudflare | ProviderId::Vercel | ProviderId::Netlify
+                | ProviderId::Fly | ProviderId::Railway => Some(pid.label()),
+                _ => None,
+            }
+        })
+        .collect();
+    if !host_logins.is_empty() {
+        steps.push(step_with_view(
+            "oauth.hosts",
+            "Deployment — host login / Put secrets",
             StepKind::Oauth,
-            "Complete login on the official site / CLI — then Verify.",
+            &format!(
+                "Open Deployment for {} — Login CLI / Put / dashboard there, then Verify → Confirm.",
+                host_logins.join(" · ")
+            ),
             None,
-            Some(hint.into()),
+            Some("Confirm after host login (or Verify when whoami succeeds)".into()),
             None,
+            Some("platforms"),
         ));
     }
 
-    for h in &put_queue {
-        steps.push(LaunchStep {
-            id: format!("paste.{}", h.name),
-            title: format!("Paste secret — {} → {}", h.name, h.provider),
-            kind: StepKind::Paste,
-            detail: format!(
-                "Open the source page, copy the value, then put via `{}`. Confirm when done.",
-                h.put_cli.join(" ")
+    if !put_queue.is_empty() {
+        steps.push(step_with_view(
+            "env.sprint",
+            "Env — create / paste / put secrets",
+            StepKind::Paste,
+            &format!(
+                "{} secret(s) to put. Open Env — paste on vendor sites, Put in the terminal, then Confirm.",
+                put_queue.len()
             ),
-            entry_url: h.entry_url.clone(),
-            verify_hint: Some(format!(
-                "confirm after paste, or wrangler secret list | find {}",
-                h.name
-            )),
-            put_provider: Some(h.provider.clone()),
-            put_name: Some(h.name.clone()),
-            run: None,
-            status: StepStatus::Pending,
-            verified_at: None,
-        });
+            put_queue.first().and_then(|h| h.entry_url.clone()),
+            Some("confirm after puts".into()),
+            None,
+            Some("env"),
+        ));
     }
 
     steps.push(step(
@@ -270,19 +283,15 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
     let selected = scopes::selected(project);
     if selected.len() > 1 || selected.iter().any(|s| s.relative != "." && !s.relative.is_empty())
     {
-        steps.push(step(
+        steps.push(step_with_view(
             "scopes",
             "Scopes — Web / API / Desktop directories",
             StepKind::Auto,
-            "Confirm which directories to ship. `shipctl scopes set --ids …` then Verify.",
+            "Open Scopes to confirm which directories to ship, then Confirm.",
             None,
             Some("active scopes saved".into()),
-            Some(vec![
-                "shipctl".into(),
-                "scopes".into(),
-                "--project".into(),
-                ".".into(),
-            ]),
+            None,
+            Some("scopes"),
         ));
     }
 
@@ -325,520 +334,135 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         ));
     }
 
-    if include_self {
-        if !detected.signet_toml {
-            steps.push(step(
-                "signet.scan",
-                "Signet — scan/init project signing config",
-                StepKind::Sign,
-                "Create signet.toml from repo scan (or init).",
-                None,
-                Some("signet.toml exists".into()),
-                Some(vec!["signet".into(), "scan".into(), "--apply".into()]),
-            ));
+    // Panel redirects — not one row per vendor (Sign / Deployment / Integrations).
+    let needs_sign = include_self
+        || include_official
+        || detected.tauri
+        || detected.mobile
+        || detected.android
+        || detected.ios
+        || detected.expo
+        || detected.steam
+        || detected.itch
+        || detected.epic
+        || detected.graduate_sign;
+    if needs_sign {
+        let mut bits = Vec::new();
+        if include_self {
+            bits.push("Signet identity/build/release");
         }
-        steps.push(step(
-            "signet.identity",
-            "Signet — signing identity",
-            StepKind::Sign,
-            "Ensure a local signing identity exists (create once).",
-            None,
-            Some("signet identity list shows an identity".into()),
-            Some(vec!["signet".into(), "identity".into(), "list".into()]),
-        ));
-        steps.push(step(
-            "signet.build",
-            "Signet — build & sign artifacts",
-            StepKind::Sign,
-            "Build and sign desktop/mobile artifacts. Network may be used for timestamps.",
-            None,
-            Some("signet build exit 0 (or confirm)".into()),
-            Some(vec!["signet".into(), "build".into()]),
-        ));
-        if !detected.trust_md {
-            steps.push(step(
-                "trust.pack",
-                "Trust — TRUST.md + checksums",
-                StepKind::Sign,
-                "Add TRUST.md (honesty: self-signed / SmartScreen expected). Attach SHA256SUMS (± minisign) with the release. Confirm when the pack exists.",
-                None,
-                Some("confirm when TRUST.md + checksums exist".into()),
-                None,
-            ));
+        if include_official || detected.tauri || detected.mobile {
+            bits.push("official certs / store submit");
         }
-        steps.push(step(
-            "signet.ship_plan",
-            "Signet — multi-platform ship plan",
+        if detected.steam || detected.itch || detected.epic {
+            bits.push("marketplace submit");
+        }
+        steps.push(step_with_view(
+            "sign.panel",
+            "Sign — identity / build / stores",
             StepKind::Sign,
-            "Review coverage plan before CI/collect/release.",
-            None,
-            Some("signet ship --plan exit 0".into()),
-            Some(vec!["signet".into(), "ship".into(), "--plan".into()]),
-        ));
-        steps.push(step(
-            "signet.release_dry",
-            "Signet — release dry-run (checksums / GitHub payload)",
-            StepKind::Sign,
-            "Offline-ish check of release packaging. Set tag via SIGNET_RELEASE_TAG or confirm.",
-            None,
-            Some("signet release --dry-run exit 0".into()),
-            Some(vec![
-                "signet".into(),
-                "release".into(),
-                "--dry-run".into(),
-                "--tag".into(),
-                std::env::var("SIGNET_RELEASE_TAG").unwrap_or_else(|_| "v0.1.0".into()),
-            ]),
-        ));
-        steps.push(step(
-            "signet.release",
-            "Signet — publish GitHub Release (network)",
-            StepKind::Sign,
-            "Live release upload. Requires gh auth. Confirm after success.",
-            Some("https://github.com/releases/new".into()),
-            Some("confirm after signet release succeeds".into()),
-            Some(vec![
-                "signet".into(),
-                "release".into(),
-                "--tag".into(),
-                std::env::var("SIGNET_RELEASE_TAG").unwrap_or_else(|_| "v0.1.0".into()),
-            ]),
-        ));
-    }
-
-    if detected.graduate_sign {
-        steps.push(step(
-            "sign.graduate",
-            "Graduate — OV / notarization",
-            StepKind::Sign,
-            "Run Signet graduate notes, then apply/ov-sign/azure-sign/notarize as configured. Confirm when CI secrets + identities exist. Do not claim verified publisher or SmartScreen silence until true.",
-            Some(
-                "https://learn.microsoft.com/en-us/azure/trusted-signing/"
-                    .into(),
+            &format!(
+                "Open Sign for {} — Confirm when that work is done.",
+                if bits.is_empty() {
+                    "signing paths".into()
+                } else {
+                    bits.join(" · ")
+                }
             ),
-            Some("confirm after graduate notes / identities".into()),
-            Some(vec!["signet".into(), "graduate".into(), "notes".into()]),
+            None,
+            Some("confirm after Sign panel work".into()),
+            None,
+            Some("sign"),
         ));
     }
 
-    if include_official && wants_signet {
-        for p in signpath::plan_for(project).paths {
-            if p.kind != "official" {
-                continue;
-            }
-            if p.id == "graduate.checklist" {
-                continue;
-            }
-            steps.push(step(
-                &format!("sign.{}", p.id),
-                &p.title,
-                StepKind::Sign,
-                &p.detail,
-                p.entry_url.clone(),
-                Some("confirm after vendor UI, or skip with next --force".into()),
-                p.run.clone(),
-            ));
+    let needs_deploy_panel = detected.marketing_site
+        || detected.d1
+        || detected.neon
+        || detected.supabase
+        || detected.turso
+        || detected.fly
+        || detected.railway
+        || detected.render
+        || detected.digitalocean
+        || detected.heroku
+        || detected.amplify
+        || detected.cloudrun
+        || detected.azurestatic
+        || detected.firebase
+        || detected.appwrite
+        || detected.convex
+        || (detected.mobile
+            && (detected.firebase || detected.appwrite || detected.convex || detected.supabase));
+    // oauth.hosts already covers CF/Vercel/Netlify/Fly/Railway login; add Deployment only if other host work remains.
+    if host_logins.is_empty() && needs_deploy_panel {
+        steps.push(step_with_view(
+            "deploy.panel",
+            "Deployment — host / landing / DB",
+            StepKind::Deploy,
+            "Open Deployment for host login, landing cutover, and DB/BaaS provision — Confirm when live.",
+            None,
+            Some("confirm after Deployment panel work".into()),
+            None,
+            Some("platforms"),
+        ));
+    } else if !host_logins.is_empty() && needs_deploy_panel {
+        // Enrich the existing oauth.hosts detail via a note — gate already present.
+        if let Some(s) = steps.iter_mut().find(|s| s.id == "oauth.hosts") {
+            s.detail = format!(
+                "{} Also use Deployment for landing / DB when needed.",
+                s.detail
+            );
         }
     }
 
-    // Non-Signet-self projects still cut GitHub Releases by hand.
-    if config::github_releases_new_url(project).is_some() && !include_self {
-        steps.push(step(
-            "release.github",
-            "Release — GitHub Release cut",
-            StepKind::List,
-            "Run `gh release list` (read-only), then Open Releases → create tag/assets. Confirm after the draft is published. Bridge never creates releases.",
-            config::github_releases_new_url(project),
-            Some("confirm after GitHub Release is published".into()),
-            Some(vec![
-                "gh".into(),
-                "release".into(),
-                "list".into(),
-                "--limit".into(),
-                "5".into(),
-            ]),
-        ));
-    }
-
-    let orbit_host = detected.wrangler || detected.vercel || detected.netlify;
-    if wants_signet && !orbit_host {
-        steps.push(step(
-            "ship.desktop_cut",
-            "Desktop cut — Signet release is the deploy",
-            StepKind::Sign,
-            "No Cloudflare/Vercel/Netlify host detected. The final-mile cut is Signet build → release (+ optional marketing.deploy). Orbit deploy is not the desktop ship path.",
-            config::github_releases_new_url(project)
-                .or_else(|| Some("https://github.com/releases".into())),
-            Some("confirm after Signet release is the live cut".into()),
-            None,
-        ));
-    }
-
-    if detected.d1 || detected.neon || detected.supabase || detected.turso {
-        let entry = if detected.neon {
-            Some("https://console.neon.tech".into())
-        } else if detected.supabase {
-            Some("https://supabase.com/dashboard".into())
-        } else if detected.turso {
-            Some("https://turso.tech/app".into())
-        } else {
-            Some("https://dash.cloudflare.com/?to=/:account/workers/d1".into())
-        };
+    let needs_integrations = detected.polar
+        || detected.gumroad
+        || detected.lemon
+        || detected.stripe
+        || detected.paddle;
+    if needs_integrations {
         let mut bits = Vec::new();
-        if detected.d1 {
-            bits.push("D1");
+        if detected.polar {
+            bits.push("Polar");
         }
-        if detected.neon {
-            bits.push("Neon");
+        if detected.gumroad {
+            bits.push("Gumroad");
         }
-        if detected.supabase {
-            bits.push("Supabase");
+        if detected.lemon {
+            bits.push("Lemon");
         }
-        if detected.turso {
-            bits.push("Turso");
+        if detected.stripe {
+            bits.push("Stripe");
         }
-        steps.push(step(
-            "db.provision",
-            &format!("Database — provision ({})", bits.join(" · ")),
-            StepKind::Deploy,
-            "Create the DB on the vendor console, copy the connection string, put on the deploy target, then Confirm. Studio never creates databases.",
-            entry,
-            Some("confirm after DB provision + put".into()),
+        if detected.paddle {
+            bits.push("Paddle");
+        }
+        steps.push(step_with_view(
+            "integrations.panel",
+            "Integrations — payments / checkout",
+            StepKind::List,
+            &format!(
+                "Open Integrations for {} — only when this app sells. Confirm when listings are updated.",
+                bits.join(" · ")
+            ),
             None,
+            Some("confirm after Integrations work (or skip if N/A)".into()),
+            None,
+            Some("integrations"),
         ));
     }
 
-    if detected.mobile
-        && (detected.firebase || detected.appwrite || detected.convex || detected.supabase)
-    {
-        let entry = if detected.firebase {
-            Some("https://console.firebase.google.com/".into())
-        } else if detected.appwrite {
-            Some("https://cloud.appwrite.io/".into())
-        } else if detected.convex {
-            Some("https://dashboard.convex.dev/".into())
-        } else {
-            Some("https://supabase.com/dashboard".into())
-        };
-        let mut bits = Vec::new();
-        if detected.firebase {
-            bits.push("Firebase");
-        }
-        if detected.appwrite {
-            bits.push("Appwrite");
-        }
-        if detected.convex {
-            bits.push("Convex");
-        }
-        if detected.supabase {
-            bits.push("Supabase Auth");
-        }
-        steps.push(step(
-            "baas.provision",
-            &format!("Mobile BaaS — provision ({})", bits.join(" · ")),
-            StepKind::Deploy,
-            "Open the vendor console, create Auth / client keys for the mobile app, put values on the host, then Confirm. Studio never calls the BaaS APIs.",
-            entry,
-            Some("confirm after BaaS console setup".into()),
-            None,
-        ));
-    }
-    if detected.fly {
-        steps.push(step(
-            "host.fly",
-            "Host — Fly.io dashboard",
-            StepKind::Deploy,
-            "Launch/scale the app on Fly (dashboard or flyctl). Studio only opens the official page — never deploys for you.",
-            Some("https://fly.io/dashboard".into()),
-            Some("confirm when the app is live".into()),
-            None,
-        ));
-    }
-    if detected.railway {
-        steps.push(step(
-            "host.railway",
-            "Host — Railway dashboard",
-            StepKind::Deploy,
-            "Create/deploy the service on Railway. Studio only opens the official page.",
-            Some("https://railway.app/dashboard".into()),
-            Some("confirm when the service is live".into()),
-            None,
-        ));
-    }
-    if detected.render {
-        steps.push(step(
-            "host.render",
-            "Host — Render dashboard",
-            StepKind::Deploy,
-            "Create/deploy the service on Render. Studio only opens the official page.",
-            Some("https://dashboard.render.com/".into()),
-            Some("confirm when the service is live".into()),
-            None,
-        ));
-    }
-    if detected.digitalocean {
-        steps.push(step(
-            "host.digitalocean",
-            "Host — DigitalOcean App Platform",
-            StepKind::Deploy,
-            "Create/deploy the app on DigitalOcean App Platform. Studio only opens the official page.",
-            Some("https://cloud.digitalocean.com/apps".into()),
-            Some("confirm when the app is live".into()),
-            None,
-        ));
-    }
-    if detected.heroku {
-        steps.push(step(
-            "host.heroku",
-            "Host — Heroku dashboard",
-            StepKind::Deploy,
-            "Create/deploy the app on Heroku. Studio only opens the official page — never deploys for you.",
-            Some("https://dashboard.heroku.com/apps".into()),
-            Some("confirm when the app is live".into()),
-            None,
-        ));
-    }
-    if detected.amplify {
-        steps.push(step(
-            "host.amplify",
-            "Host — AWS Amplify console",
-            StepKind::Deploy,
-            "Create/deploy the app on AWS Amplify. Studio only opens the official page — never deploys for you.",
-            Some("https://console.aws.amazon.com/amplify/home".into()),
-            Some("confirm when the app is live".into()),
-            None,
-        ));
-    }
-    if detected.cloudrun {
-        steps.push(step(
-            "host.cloudrun",
-            "Host — Google Cloud Run",
-            StepKind::Deploy,
-            "Create/deploy the service on Cloud Run. Studio only opens the official page — never deploys for you.",
-            Some("https://console.cloud.google.com/run".into()),
-            Some("confirm when the service is live".into()),
-            None,
-        ));
-    }
-    if detected.azurestatic {
-        steps.push(step(
-            "host.azurestatic",
-            "Host — Azure Static Web Apps",
-            StepKind::Deploy,
-            "Create/deploy the static web app on Azure. Studio only opens the official page — never deploys for you.",
-            Some("https://portal.azure.com/#view/HubsExtension/BrowseResource/resourceType/Microsoft.Web%2FstaticSites".into()),
-            Some("confirm when the app is live".into()),
-            None,
-        ));
-    }
-
-    if detected.polar {
-        steps.push(step(
-            "listing.polar",
-            "Listing — Polar product / checkout (official dashboard)",
+    if detected.npm_publish || detected.crates_publish || detected.huggingface {
+        steps.push(step_with_view(
+            "listing.packages",
+            "Packages — npm / crates / Hub",
             StepKind::List,
-            "Update Polar product listing & checkout URL on polar.sh — Ship Studio only opens the door.",
-            Some("https://polar.sh/dashboard".into()),
-            Some("confirm listing/checkout updated".into()),
+            "Open Portal for registry login / dry-run publish docs — Confirm when the version is live. Bridge never publishes.",
             None,
-        ));
-    }
-    if detected.gumroad {
-        steps.push(step(
-            "listing.gumroad",
-            "Listing — Gumroad product / checkout",
-            StepKind::List,
-            "Create/update the Gumroad product on app.gumroad.com — Studio only opens the door.",
-            Some("https://app.gumroad.com/".into()),
-            Some("confirm listing/checkout updated".into()),
+            Some("confirm after package publish".into()),
             None,
-        ));
-    }
-    if detected.lemon {
-        steps.push(step(
-            "listing.lemon",
-            "Listing — Lemon Squeezy product / checkout",
-            StepKind::List,
-            "Create/update the Lemon product on app.lemonsqueezy.com — Studio only opens the door.",
-            Some("https://app.lemonsqueezy.com/".into()),
-            Some("confirm listing/checkout updated".into()),
-            None,
-        ));
-    }
-    if detected.stripe {
-        steps.push(step(
-            "listing.stripe",
-            "Listing — Stripe product / Payment Link",
-            StepKind::List,
-            "Create/update Stripe products or Payment Links on the dashboard — Studio never creates charges.",
-            Some("https://dashboard.stripe.com/".into()),
-            Some("confirm listing/checkout updated".into()),
-            None,
-        ));
-    }
-    if detected.paddle {
-        steps.push(step(
-            "listing.paddle",
-            "Listing — Paddle product / price",
-            StepKind::List,
-            "Create/update Paddle products on the vendor dashboard — Studio never creates transactions.",
-            Some("https://vendors.paddle.com/".into()),
-            Some("confirm listing/checkout updated".into()),
-            None,
-        ));
-    }
-    if detected.npm_publish {
-        steps.push(step(
-            "listing.npm",
-            "Listing — npm publish",
-            StepKind::List,
-            "Run `npm publish --dry-run` first. Live publish (OTP) stays on your machine — Confirm when the version is live. Bridge never publishes.",
-            Some("https://www.npmjs.com/login".into()),
-            Some("confirm after dry-run / live publish".into()),
-            Some(vec![
-                "npm".into(),
-                "publish".into(),
-                "--dry-run".into(),
-            ]),
-        ));
-    }
-    if detected.crates_publish {
-        steps.push(step(
-            "listing.crates",
-            "Listing — crates.io publish",
-            StepKind::List,
-            "Run `cargo publish --dry-run` first. Live publish stays on your machine — Confirm when crates.io shows the version. Bridge never publishes.",
-            Some("https://crates.io/me".into()),
-            Some("confirm after dry-run / live publish".into()),
-            Some(vec![
-                "cargo".into(),
-                "publish".into(),
-                "--dry-run".into(),
-            ]),
-        ));
-    }
-    if detected.huggingface {
-        steps.push(step(
-            "listing.huggingface",
-            "Listing — Hugging Face Hub",
-            StepKind::List,
-            "Create/update the model or dataset repo on huggingface.co; upload with huggingface-cli on your machine. Bridge never uploads.",
-            Some("https://huggingface.co/docs/hub/repositories-getting-started".into()),
-            Some("confirm when the Hub repo is public".into()),
-            None,
-        ));
-    }
-    if detected.steam {
-        steps.push(step(
-            "listing.steam",
-            "Listing — Steamworks partner",
-            StepKind::List,
-            "Steam store presence stays on partner.steamgames.com — depots/builds are the next Submit step.",
-            Some("https://partner.steamgames.com/".into()),
-            Some("confirm listing updated".into()),
-            None,
-        ));
-        steps.push(step(
-            "submit.steam",
-            "Submit — Steam depots / builds",
-            StepKind::List,
-            "Upload the build and set depots on Steamworks. Studio only opens the docs — never Steam API upload.",
-            Some("https://partner.steamgames.com/doc/sdk/uploading".into()),
-            Some("confirm when the build is live".into()),
-            None,
-        ));
-    }
-    if detected.itch {
-        steps.push(step(
-            "listing.itch",
-            "Listing — itch.io dashboard",
-            StepKind::List,
-            "Store page / pricing on itch.io — build push is the next Submit step (butler).",
-            Some("https://itch.io/dashboard".into()),
-            Some("confirm listing updated".into()),
-            None,
-        ));
-        steps.push(step(
-            "submit.itch",
-            "Submit — itch.io butler push",
-            StepKind::List,
-            "Push the build with butler (or the itch dashboard). Studio only opens the docs — never runs butler.",
-            Some("https://itch.io/docs/butler/".into()),
-            Some("confirm when the build is live".into()),
-            None,
-        ));
-    }
-    if detected.epic {
-        steps.push(step(
-            "listing.epic",
-            "Listing — Epic Games Store portal",
-            StepKind::List,
-            "Epic product listing stays on the developer portal — binary upload is the next Submit step.",
-            Some("https://dev.epicgames.com/portal".into()),
-            Some("confirm listing updated".into()),
-            None,
-        ));
-        steps.push(step(
-            "submit.epic",
-            "Submit — Epic binary / artifacts",
-            StepKind::List,
-            "Upload binaries on Epic publishing tools. Studio only opens the docs — never uploads for you.",
-            Some("https://dev.epicgames.com/docs/epic-games-store/".into()),
-            Some("confirm when the build is submitted".into()),
-            None,
-        ));
-    }
-    if detected.android || detected.expo || (detected.mobile && !detected.ios) {
-        steps.push(step(
-            "listing.play",
-            "Listing — Google Play Console",
-            StepKind::List,
-            "Store listing, screenshots, and release track on Play Console — then Confirm.",
-            Some("https://play.google.com/console".into()),
-            Some("confirm listing updated".into()),
-            None,
-        ));
-        steps.push(step(
-            "submit.play",
-            "Submit — Play production / review",
-            StepKind::List,
-            "Promote the release track and send for review on Play Console — Studio never uploads APKs/AABs.",
-            Some("https://play.google.com/console".into()),
-            Some("confirm after review submit".into()),
-            None,
-        ));
-    }
-    if detected.ios || detected.expo || (detected.mobile && !detected.android) {
-        steps.push(step(
-            "listing.app_store",
-            "Listing — App Store Connect",
-            StepKind::List,
-            "App record, metadata, and pricing on App Store Connect — then Confirm.",
-            Some("https://appstoreconnect.apple.com".into()),
-            Some("confirm listing updated".into()),
-            None,
-        ));
-    }
-    if detected.ios || detected.expo || detected.tauri || (detected.mobile && !detected.android) {
-        steps.push(step(
-            "submit.app_store",
-            "Submit — App Store review",
-            StepKind::List,
-            "Submit for Review on App Store Connect after listing + build — Studio never uploads binaries.",
-            Some("https://appstoreconnect.apple.com".into()),
-            Some("confirm after review submit".into()),
-            None,
-        ));
-    }
-    if detected.tauri {
-        steps.push(step(
-            "submit.microsoft",
-            "Submit — Microsoft Store",
-            StepKind::List,
-            "Partner Center product submission / certification — Studio never uploads packages.",
-            Some("https://partner.microsoft.com/dashboard/products".into()),
-            Some("confirm after Partner Center submit".into()),
-            None,
+            Some("portal"),
         ));
     }
 
@@ -950,25 +574,6 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             &push_detail,
             Some(config::container_docs_url(project).into()),
             Some("confirm when image is in the registry".into()),
-            None,
-        ));
-    }
-
-    if detected.marketing_site {
-        let host = if detected.marketing_host.is_empty() {
-            "your host".into()
-        } else {
-            detected.marketing_host.clone()
-        };
-        steps.push(step(
-            "marketing.deploy",
-            "Marketing — public landing deploy",
-            StepKind::Deploy,
-            &format!(
-                "Deploy or cut over the download / HOOK / docs landing ({host}). Confirm when the canonical URL serves this build. Bridge does not touch DNS."
-            ),
-            Some(config::marketing_deploy_url(project)),
-            Some("confirm when the landing URL is live".into()),
             None,
         ));
     }
@@ -1232,7 +837,9 @@ pub fn open_current(project: &Path) -> Result<LaunchView> {
             }
         }
     }
-    if let Some(argv) = &step.run {
+    if step.id == "signet.identity" {
+        assist_signet_identity(project)?;
+    } else if let Some(argv) = &step.run {
         let code = execute_run(project, argv)?;
         if code == 0 && auto_done_after_run(&step) {
             if let Some(s) = state.steps.get_mut(idx) {
@@ -1248,6 +855,40 @@ pub fn open_current(project: &Path) -> Result<LaunchView> {
     }
     save_state(project, &state)?;
     Ok(view(&state))
+}
+
+/// Interactive: list identities; if none, run `signet identity create` in this TTY.
+fn assist_signet_identity(project: &Path) -> Result<()> {
+    let bin = resolve_run_bin("signet")?;
+    let (code, text) = run_capture("signet", &["identity", "list"], project).unwrap_or((1, String::new()));
+    let has = code == 0
+        && text.lines().any(|l| {
+            let t = l.trim();
+            !t.is_empty()
+                && !t.starts_with('{')
+                && !t.to_ascii_lowercase().contains("no identit")
+        });
+    if has {
+        eprintln!("$ {} identity list\n{text}", bin.display());
+        eprintln!("signing identity present — Verify / Confirm in Studio");
+        return Ok(());
+    }
+    eprintln!("no signing identity yet — launching `signet identity create` (follow prompts)");
+    let status = Command::new(&bin)
+        .args(["identity", "create"])
+        .current_dir(project)
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()
+        .with_context(|| "signet identity create")?;
+    if !status.success() {
+        eprintln!(
+            "signet identity create exited {} — fix, retry Open/Run, or Confirm if you created one elsewhere",
+            status.code().unwrap_or(1)
+        );
+    }
+    Ok(())
 }
 
 fn run_capture(bin: &str, args: &[&str], cwd: &Path) -> Result<(i32, String)> {
@@ -1354,31 +995,43 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, LaunchView)> {
                 format!("{} active scope(s)", plan.active.len()),
             )
         }
-        StepKind::Oauth if step.id.contains("cloudflare") => {
-            let (code, text) = run_capture("wrangler", &["whoami"], project)?;
-            (
-                code == 0 && !text.to_lowercase().contains("not logged"),
-                if code == 0 {
-                    "wrangler whoami ok".into()
+        StepKind::Oauth if step.id == "oauth.hosts" || step.id.starts_with("oauth.") => {
+            // Collapsed host gate — any logged-in deploy CLI counts; else Confirm after Deployment.
+            let mut ok_any = false;
+            let mut msgs: Vec<String> = Vec::new();
+            if let Ok((code, text)) = run_capture("wrangler", &["whoami"], project) {
+                let good = code == 0 && !text.to_lowercase().contains("not logged");
+                ok_any |= good;
+                msgs.push(if good {
+                    "wrangler ok".into()
                 } else {
-                    format!("wrangler whoami failed — run Open / wrangler login: {text}")
+                    "wrangler not logged in".into()
+                });
+            }
+            if let Ok((code, _)) = run_capture("vercel", &["whoami"], project) {
+                ok_any |= code == 0;
+                msgs.push(if code == 0 {
+                    "vercel ok".into()
+                } else {
+                    "vercel not logged in".into()
+                });
+            }
+            if let Ok((code, _)) = run_capture("netlify", &["status"], project) {
+                ok_any |= code == 0;
+                msgs.push(if code == 0 {
+                    "netlify ok".into()
+                } else {
+                    "netlify not logged in".into()
+                });
+            }
+            (
+                ok_any,
+                if ok_any {
+                    format!("host login ok ({})", msgs.join(" · "))
+                } else {
+                    "Open Deployment → Login CLI, then Verify / Confirm".into()
                 },
             )
-        }
-        StepKind::Oauth if step.id.contains("vercel") => {
-            let (code, _) = run_capture("vercel", &["whoami"], project)?;
-            (
-                code == 0,
-                if code == 0 {
-                    "vercel whoami ok".into()
-                } else {
-                    "vercel whoami failed — run Open / vercel login".into()
-                },
-            )
-        }
-        StepKind::Oauth if step.id.contains("netlify") => {
-            let (code, _) = run_capture("netlify", &["status"], project)?;
-            (code == 0, if code == 0 { "netlify status ok".into() } else { "netlify not logged in".into() })
         }
         StepKind::Paste => {
             // Prefer soft confirm; optional network list.
@@ -1540,16 +1193,11 @@ mod tests {
         fs::write(dir.join("wrangler.toml"), "name = \"x\"\n# Secrets\n# - GITHUB_TOKEN\n").unwrap();
         let state = load_or_build(&dir).unwrap();
         assert!(state.steps.iter().any(|s| s.id == "doctor"));
-        assert!(state.steps.iter().any(|s| s.id == "deploy" || s.id.starts_with("deploy.")));
+        assert!(state.steps.iter().any(|s| s.id == "deploy" || s.id.starts_with("deploy.") || s.id == "oauth.hosts"));
         assert!(state.steps.iter().any(|s| s.id == "intent"));
-        assert!(state.steps.iter().any(|s| s.id.starts_with("paste.")));
+        assert!(state.steps.iter().any(|s| s.id == "env.sprint"));
         assert!(!state.steps.iter().any(|s| s.id.starts_with("signet.")));
-        let deploy = state
-            .steps
-            .iter()
-            .find(|s| s.id == "deploy" || s.id.starts_with("deploy."))
-            .unwrap();
-        assert!(deploy.run.is_some());
+        assert!(!state.steps.iter().any(|s| s.id.starts_with("paste.")));
         let v = view(&state);
         assert!(!v.finished);
         assert_eq!(v.current.as_ref().unwrap().id, "doctor");
@@ -1568,14 +1216,12 @@ mod tests {
         fs::create_dir_all(dir.join("src-tauri")).unwrap();
         fs::write(dir.join("package.json"), "{}\n").unwrap();
         let state = load_or_build(&dir).unwrap();
-        assert!(state.steps.iter().any(|s| s.id == "signet.scan"));
-        assert!(state.steps.iter().any(|s| s.id == "signet.build"));
-        assert!(state.steps.iter().any(|s| s.id == "signet.release_dry"));
-        assert!(state.steps.iter().any(|s| s.id == "signet.release"));
+        assert!(state.steps.iter().any(|s| s.id == "sign.panel"));
+        assert!(!state.steps.iter().any(|s| s.id.starts_with("signet.")));
+        let sign = state.steps.iter().find(|s| s.id == "sign.panel").unwrap();
+        assert_eq!(sign.kind, StepKind::Sign);
+        assert_eq!(sign.desktop_view.as_deref(), Some("sign"));
         assert!(state.steps.iter().any(|s| s.id == "deploy" || s.id.starts_with("deploy.")));
-        let build = state.steps.iter().find(|s| s.id == "signet.build").unwrap();
-        assert_eq!(build.kind, StepKind::Sign);
-        assert_eq!(build.run.as_ref().unwrap()[0], "signet");
     }
 
     #[test]
@@ -1615,20 +1261,17 @@ mod tests {
         )
         .unwrap();
         let state = load_or_build(&dir).unwrap();
-        assert!(state.steps.iter().any(|s| s.id == "listing.polar"));
-        assert!(state.steps.iter().any(|s| s.id == "listing.gumroad"));
-        assert!(state.steps.iter().any(|s| s.id == "listing.lemon"));
-        assert!(state.steps.iter().any(|s| s.id == "listing.stripe"));
-        assert!(state.steps.iter().any(|s| s.id == "listing.paddle"));
-        let stripe = state
+        assert!(
+            state.steps.iter().any(|s| s.id == "integrations.panel"),
+            "commerce → one Integrations redirect"
+        );
+        let integ = state
             .steps
             .iter()
-            .find(|s| s.id == "listing.stripe")
+            .find(|s| s.id == "integrations.panel")
             .unwrap();
-        assert_eq!(
-            stripe.entry_url.as_deref(),
-            Some("https://dashboard.stripe.com/")
-        );
+        assert_eq!(integ.desktop_view.as_deref(), Some("integrations"));
+        assert!(!state.steps.iter().any(|s| s.id.starts_with("listing.")));
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -1648,23 +1291,15 @@ mod tests {
         fs::write(dir.join("firebase.json"), "{}\n").unwrap();
         fs::write(dir.join("build.gradle"), "// android\n").unwrap();
         let state = load_or_build(&dir).unwrap();
-        assert!(state.steps.iter().any(|s| s.id == "baas.provision"));
-        let baas = state
-            .steps
-            .iter()
-            .find(|s| s.id == "baas.provision")
-            .unwrap();
-        assert_eq!(
-            baas.entry_url.as_deref(),
-            Some("https://console.firebase.google.com/")
+        assert!(
+            state
+                .steps
+                .iter()
+                .any(|s| s.id == "deploy.panel" || s.id == "oauth.hosts"),
+            "host/BaaS → Deployment redirect"
         );
-        let fly = state.steps.iter().find(|s| s.id == "host.fly").unwrap();
-        assert_eq!(fly.entry_url.as_deref(), Some("https://fly.io/dashboard"));
-        let heroku = state.steps.iter().find(|s| s.id == "host.heroku").unwrap();
-        assert_eq!(
-            heroku.entry_url.as_deref(),
-            Some("https://dashboard.heroku.com/apps")
-        );
+        assert!(!state.steps.iter().any(|s| s.id == "baas.provision"));
+        assert!(!state.steps.iter().any(|s| s.id.starts_with("host.")));
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -1686,21 +1321,12 @@ mod tests {
         )
         .unwrap();
         let state = load_or_build(&dir).unwrap();
-        assert!(state.steps.iter().any(|s| s.id == "listing.steam"));
-        assert!(state.steps.iter().any(|s| s.id == "submit.steam"));
-        assert!(state.steps.iter().any(|s| s.id == "listing.itch"));
-        assert!(state.steps.iter().any(|s| s.id == "submit.itch"));
-        assert!(state.steps.iter().any(|s| s.id == "listing.epic"));
-        assert!(state.steps.iter().any(|s| s.id == "submit.epic"));
-        let submit = state
-            .steps
-            .iter()
-            .find(|s| s.id == "submit.steam")
-            .unwrap();
-        assert_eq!(
-            submit.entry_url.as_deref(),
-            Some("https://partner.steamgames.com/doc/sdk/uploading")
+        assert!(
+            state.steps.iter().any(|s| s.id == "sign.panel"),
+            "marketplace → Sign panel"
         );
+        assert!(!state.steps.iter().any(|s| s.id.starts_with("listing.")));
+        assert!(!state.steps.iter().any(|s| s.id.starts_with("submit.")));
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -1715,16 +1341,11 @@ mod tests {
         ));
         let _ = fs::remove_dir_all(&mobile);
         fs::create_dir_all(mobile.join("android")).unwrap();
-        fs::write(mobile.join("build.gradle"), "// android\n").unwrap();
+        fs::write(mobile.join("build.gradle"), "// android
+").unwrap();
         let m = load_or_build(&mobile).unwrap();
-        assert!(m.steps.iter().any(|s| s.id == "listing.play"));
-        assert!(m.steps.iter().any(|s| s.id == "submit.play"));
-        assert!(!m.steps.iter().any(|s| s.id == "submit.microsoft"));
-        let play = m.steps.iter().find(|s| s.id == "listing.play").unwrap();
-        assert_eq!(
-            play.entry_url.as_deref(),
-            Some("https://play.google.com/console")
-        );
+        assert!(m.steps.iter().any(|s| s.id == "sign.panel"));
+        assert!(!m.steps.iter().any(|s| s.id.starts_with("submit.")));
         let _ = fs::remove_dir_all(&mobile);
 
         let tauri = std::env::temp_dir().join(format!(
@@ -1736,19 +1357,13 @@ mod tests {
         ));
         let _ = fs::remove_dir_all(&tauri);
         fs::create_dir_all(tauri.join("src-tauri")).unwrap();
-        fs::write(tauri.join("package.json"), "{}\n").unwrap();
+        fs::write(tauri.join("package.json"), "{}
+").unwrap();
         let t = load_or_build(&tauri).unwrap();
-        assert!(
-            !t.steps.iter().any(|s| s.id == "listing.play" || s.id == "submit.play"),
-            "Tauri-only must not get Play lanes"
-        );
-        assert!(t.steps.iter().any(|s| s.id == "submit.app_store"));
-        assert!(t.steps.iter().any(|s| s.id == "submit.microsoft"));
-        let ms = t.steps.iter().find(|s| s.id == "submit.microsoft").unwrap();
-        assert_eq!(
-            ms.entry_url.as_deref(),
-            Some("https://partner.microsoft.com/dashboard/products")
-        );
+        assert!(t.steps.iter().any(|s| s.id == "sign.panel"));
+        assert!(!t.steps.iter().any(|s| s.id.starts_with("submit.")));
+        let sign = t.steps.iter().find(|s| s.id == "sign.panel").unwrap();
+        assert_eq!(sign.desktop_view.as_deref(), Some("sign"));
         let _ = fs::remove_dir_all(&tauri);
     }
 
@@ -1770,56 +1385,23 @@ mod tests {
         .unwrap();
         fs::write(
             dir.join("Cargo.toml"),
-            "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+            "[package]
+name = \"demo\"
+version = \"0.1.0\"
+edition = \"2021\"
+",
         )
         .unwrap();
         fs::write(dir.join(".ship/markets.json"), r#"["hf"]"#).unwrap();
         let state = load_or_build(&dir).unwrap();
-        assert!(state.steps.iter().any(|s| s.id == "listing.npm"));
-        assert!(state.steps.iter().any(|s| s.id == "listing.crates"));
-        assert!(state.steps.iter().any(|s| s.id == "listing.huggingface"));
-        let npm = state.steps.iter().find(|s| s.id == "listing.npm").unwrap();
-        assert_eq!(
-            npm.run.as_ref().map(|r| r.as_slice()),
-            Some(
-                [
-                    "npm".to_string(),
-                    "publish".to_string(),
-                    "--dry-run".to_string()
-                ]
-                .as_slice()
-            )
-        );
-        assert_eq!(
-            npm.entry_url.as_deref(),
-            Some("https://www.npmjs.com/login")
-        );
-        let crates = state
+        assert!(state.steps.iter().any(|s| s.id == "listing.packages"));
+        let pkg = state
             .steps
             .iter()
-            .find(|s| s.id == "listing.crates")
+            .find(|s| s.id == "listing.packages")
             .unwrap();
-        assert_eq!(
-            crates.run.as_ref().map(|r| r.as_slice()),
-            Some(
-                [
-                    "cargo".to_string(),
-                    "publish".to_string(),
-                    "--dry-run".to_string()
-                ]
-                .as_slice()
-            )
-        );
-        let hf = state
-            .steps
-            .iter()
-            .find(|s| s.id == "listing.huggingface")
-            .unwrap();
-        assert_eq!(
-            hf.entry_url.as_deref(),
-            Some("https://huggingface.co/docs/hub/repositories-getting-started")
-        );
-        assert!(hf.run.is_none());
+        assert_eq!(pkg.desktop_view.as_deref(), Some("portal"));
+        assert!(!state.steps.iter().any(|s| s.id == "listing.npm"));
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -1841,12 +1423,12 @@ mod tests {
         .unwrap();
         fs::write(db.join(".env.local"), "NEON_DATABASE_URL=\n").unwrap();
         let d = load_or_build(&db).unwrap();
-        assert!(d.steps.iter().any(|s| s.id == "db.provision"));
-        let provision = d.steps.iter().find(|s| s.id == "db.provision").unwrap();
-        assert_eq!(
-            provision.entry_url.as_deref(),
-            Some("https://console.neon.tech")
+        assert!(
+            d.steps
+                .iter()
+                .any(|s| s.id == "deploy.panel" || s.id == "oauth.hosts")
         );
+        assert!(!d.steps.iter().any(|s| s.id == "db.provision"));
         let _ = fs::remove_dir_all(&db);
 
         let mkt = std::env::temp_dir().join(format!(
@@ -1861,16 +1443,13 @@ mod tests {
         fs::write(mkt.join("apps/website/index.html"), "<h1>site</h1>\n").unwrap();
         fs::write(mkt.join("vercel.json"), "{}\n").unwrap();
         let m = load_or_build(&mkt).unwrap();
-        assert!(m.steps.iter().any(|s| s.id == "marketing.deploy"));
-        let marketing = m
-            .steps
-            .iter()
-            .find(|s| s.id == "marketing.deploy")
-            .unwrap();
-        assert!(marketing
-            .entry_url
-            .as_ref()
-            .is_some_and(|u| u.contains("vercel") || u.contains("pages") || u.contains("netlify")));
+        assert!(
+            m.steps
+                .iter()
+                .any(|s| s.id == "oauth.hosts" || s.id == "deploy.panel"),
+            "marketing/host → Deployment"
+        );
+        assert!(!m.steps.iter().any(|s| s.id == "marketing.deploy"));
         let _ = fs::remove_dir_all(&mkt);
 
         let suite = std::env::temp_dir().join(format!(
@@ -1969,14 +1548,9 @@ mod tests {
         fs::write(legal.join("signet.toml"), "name = \"x\"\n").unwrap();
         let l = load_or_build(&legal).unwrap();
         assert!(l.steps.iter().any(|s| s.id == "legal.baseline"));
-        assert!(l.steps.iter().any(|s| s.id == "trust.pack"));
-        assert!(l.steps.iter().any(|s| s.id == "ship.desktop_cut"));
-        let cut = l
-            .steps
-            .iter()
-            .find(|s| s.id == "ship.desktop_cut")
-            .unwrap();
-        assert!(cut.entry_url.is_some());
+        assert!(l.steps.iter().any(|s| s.id == "sign.panel"));
+        assert!(!l.steps.iter().any(|s| s.id == "trust.pack"));
+        assert!(!l.steps.iter().any(|s| s.id == "ship.desktop_cut"));
         let _ = fs::remove_dir_all(&legal);
 
         let grad = std::env::temp_dir().join(format!(
@@ -1994,19 +1568,11 @@ mod tests {
         )
         .unwrap();
         let g = load_or_build(&grad).unwrap();
-        assert!(g.steps.iter().any(|s| s.id == "sign.graduate"));
-        let graduate = g.steps.iter().find(|s| s.id == "sign.graduate").unwrap();
-        assert_eq!(
-            graduate.run.as_ref().map(|r| r.as_slice()),
-            Some(
-                [
-                    "signet".to_string(),
-                    "graduate".to_string(),
-                    "notes".to_string()
-                ]
-                .as_slice()
-            )
+        assert!(
+            g.steps.iter().any(|s| s.id == "sign.panel"),
+            "graduate → Sign panel"
         );
+        assert!(!g.steps.iter().any(|s| s.id == "sign.graduate"));
         let _ = fs::remove_dir_all(&grad);
 
         let rel = std::env::temp_dir().join(format!(
@@ -2031,19 +1597,8 @@ mod tests {
             .current_dir(&rel)
             .status();
         let r = load_or_build(&rel).unwrap();
-        assert!(
-            r.steps.iter().any(|s| s.id == "release.github"),
-            "web package with GitHub origin should get release.github"
-        );
-        let step = r.steps.iter().find(|s| s.id == "release.github").unwrap();
-        assert_eq!(
-            step.entry_url.as_deref(),
-            Some("https://github.com/acme/app/releases/new")
-        );
-        let run = step.run.as_ref().expect("gh release list");
-        assert_eq!(run[0], "gh");
-        assert_eq!(run[1], "release");
-        assert_eq!(run[2], "list");
+        // Without Signet self-path, GitHub release work lives on Sign — not a Launch row.
+        assert!(!r.steps.iter().any(|s| s.id == "release.github"));
         let _ = fs::remove_dir_all(&rel);
     }
 }

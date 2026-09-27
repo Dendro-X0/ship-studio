@@ -102,12 +102,18 @@ export type LaunchView = {
     status?: string;
     verify_hint?: string | null;
     run?: string[] | null;
+    desktop_view?: string | null;
   } | null;
   steps?: Array<{
     id?: string;
     title?: string;
     status?: string;
     kind?: string;
+    detail?: string;
+    entry_url?: string | null;
+    verify_hint?: string | null;
+    run?: string[] | null;
+    desktop_view?: string | null;
   }>;
   notes?: string[];
 };
