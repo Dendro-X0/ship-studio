@@ -1,7 +1,7 @@
 # Launch choice board — design
 
-**Status:** Proposed (next after panel redirects)  
-**Updated:** 2026-09-26  
+**Status:** L1–L2 shipped — L3+ queued  
+**Updated:** 2026-09-27  
 **Parents:** [launch-panel-redirects-design](./launch-panel-redirects-design.md) · [deployment-nav-design](./deployment-nav-design.md) · [platforms-catalog-design](./platforms-catalog-design.md)  
 **Surfaces:** Desktop Launch · Sign · Deployment · Integrations · Env · Scopes
 
@@ -99,8 +99,8 @@ Launch never asks “login Cloudflare *and* Vercel *and* Netlify.”
 | Slice | Work | Proof |
 |-------|------|--------|
 | **L0** | This design + handoff queue | Spec only |
-| **L1** | Launch view chrome: Band A/B/C layout (Desktop); keep shipctl step ids, regroup in UI | Harbor shows ≤6 visible lane cards |
-| **L2** | shipctl: emit `lane` + `optional` + `suggested` on steps; drop flow/deploy from Launch when Local | `cargo test -p shipctl` |
+| **L1** | Launch view chrome: Band A/B/C layout (Desktop); keep shipctl step ids, regroup in UI | **Done** — Prep collapsed · lane cards · Ship cut |
+| **L2** | shipctl: emit `lane` + `optional` + `suggested` on steps; drop flow/deploy from Launch when Local | **Done** — annotate + Local omits Orbit cut |
 | **L3** | Payments lane opt-in (studio.json / UI toggle); Integrations hidden until on | Harbor no Payments card by default |
 | **L4** | Deployment “primary host” remembered; oauth.hosts verify that host only | Verify uses chosen provider |
 
@@ -119,4 +119,4 @@ Launch never asks “login Cloudflare *and* Vercel *and* Netlify.”
 
 ## Decision for maintainer
 
-Adopt **choice board** (Bands A/B/C) as the Launch north star. Next code slice = **L1** (UI regroup only) unless S1.1 GIF recording must finish first on the current 9-step list.
+Adopt **choice board** (Bands A/B/C) as the Launch north star. **L1–L2 shipped**. Next = **L3** (Payments opt-in) when activated.

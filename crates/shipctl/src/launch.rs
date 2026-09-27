@@ -61,6 +61,15 @@ pub struct LaunchStep {
     /// Desktop related panel — e.g. `platforms` opens Deployment (not a vendor URL).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub desktop_view: Option<String>,
+    /// Choice-board band: `prep` · `targets` · `sign` · `deployment` · `payments` · `env` · `legal` · `cut`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lane: Option<String>,
+    /// Optional human lane — Skip / Next without fake irreversible Done.
+    #[serde(default)]
+    pub optional: bool,
+    /// Detection suggests this lane (UI badge).
+    #[serde(default)]
+    pub suggested: bool,
     pub status: StepStatus,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub verified_at: Option<String>,
@@ -154,8 +163,58 @@ fn step_with_view(
         put_name: None,
         run,
         desktop_view: desktop_view.map(|s| s.into()),
+        lane: None,
+        optional: false,
+        suggested: false,
         status: StepStatus::Pending,
         verified_at: None,
+    }
+}
+
+fn choice_lane(id: &str) -> &'static str {
+    match id {
+        "doctor" | "configure" | "intent" => "prep",
+        "scopes" => "targets",
+        "legal.baseline" => "legal",
+        "sign.panel" => "sign",
+        "oauth.hosts" | "deploy.panel" => "deployment",
+        "integrations.panel" => "payments",
+        "env.sprint" => "env",
+        "flow_dry_run" | "deploy" | "selfhost.deploy" | "listing.packages" | "container.build"
+        | "container.deploy" | "ci.release" | "suite.url_sync" => "cut",
+        id if id.starts_with("deploy.") => "cut",
+        _ => "lane",
+    }
+}
+
+fn annotate_choice_board(steps: &mut [LaunchStep], detected: &config::Detected) {
+    let suggest_deployment = detected.wrangler
+        || detected.vercel
+        || detected.netlify
+        || detected.fly
+        || detected.railway
+        || detected.marketing_site
+        || detected.selfhost;
+    let suggest_sign = detected.tauri || detected.signet_toml || detected.mobile;
+    let suggest_payments = detected.polar
+        || detected.stripe
+        || detected.gumroad
+        || detected.lemon
+        || detected.paddle;
+    let suggest_env = steps.iter().any(|s| s.id == "env.sprint");
+
+    for step in steps.iter_mut() {
+        let lane = choice_lane(&step.id);
+        step.lane = Some(lane.into());
+        step.optional = lane != "prep";
+        step.suggested = match lane {
+            "deployment" => suggest_deployment,
+            "sign" => suggest_sign,
+            "payments" => suggest_payments,
+            "env" => suggest_env,
+            "targets" => true,
+            _ => false,
+        };
     }
 }
 
@@ -597,6 +656,9 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         ));
     }
 
+    let intent = config::ship_intent_for(project);
+    let public = intent == config::ShipIntent::Public;
+
     if crate::selfhost::plan_eligible(project) {
         steps.push(step_with_view(
             "selfhost.deploy",
@@ -615,65 +677,68 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         ));
     }
 
-    steps.push(step(
-        "flow_dry_run",
-        "Flow dry-run — preview configure → sign → deploy",
-        StepKind::Auto,
-        "Offline plan check before network deploy. Prefer Publish for the full Adaptive path.",
-        None,
-        Some("shipctl flow --dry-run --offline --skip-deploy".into()),
-        Some(vec![
-            "shipctl".into(),
-            "flow".into(),
-            "--project".into(),
-            ".".into(),
-            "--dry-run".into(),
-            "--offline".into(),
-            "--skip-deploy".into(),
-        ]),
-    ));
-
-    let deploy_scopes: Vec<_> = selected
-        .iter()
-        .filter(|s| s.provider.is_some())
-        .cloned()
-        .collect();
-    if deploy_scopes.is_empty() {
+    if public {
         steps.push(step(
-            "deploy",
-            "Deploy — Orbit (network)",
-            StepKind::Deploy,
-            "Run Orbit deploy with studio.json deploy_args. Confirm or check last-run.",
+            "flow_dry_run",
+            "Flow dry-run — preview configure → sign → deploy",
+            StepKind::Auto,
+            "Offline plan check before network deploy. Prefer Publish for the full Adaptive path.",
             None,
-            Some("shipctl deploy / last-run ok, or confirm".into()),
+            Some("shipctl flow --dry-run --offline --skip-deploy".into()),
             Some(vec![
                 "shipctl".into(),
-                "deploy".into(),
+                "flow".into(),
                 "--project".into(),
                 ".".into(),
+                "--dry-run".into(),
+                "--offline".into(),
+                "--skip-deploy".into(),
             ]),
         ));
-    } else {
-        for s in deploy_scopes {
-            let mut run = vec![
-                "shipctl".into(),
-                "deploy".into(),
-                "--project".into(),
-                s.relative.clone(),
-            ];
-            run.extend(s.deploy_args.clone());
+
+        let deploy_scopes: Vec<_> = selected
+            .iter()
+            .filter(|s| s.provider.is_some())
+            .cloned()
+            .collect();
+        if deploy_scopes.is_empty() {
             steps.push(step(
-                &format!("deploy.{}", s.id),
-                &format!("Deploy — {} ({})", s.label, s.provider.as_deref().unwrap_or("orbit")),
+                "deploy",
+                "Deploy — Orbit (network)",
                 StepKind::Deploy,
-                &format!("Orbit deploy in `{}`.", s.relative),
+                "Run Orbit deploy with studio.json deploy_args. Confirm or check last-run.",
                 None,
-                Some("last-run ok, or confirm after deploy".into()),
-                Some(run),
+                Some("shipctl deploy / last-run ok, or confirm".into()),
+                Some(vec![
+                    "shipctl".into(),
+                    "deploy".into(),
+                    "--project".into(),
+                    ".".into(),
+                ]),
             ));
+        } else {
+            for s in deploy_scopes {
+                let mut run = vec![
+                    "shipctl".into(),
+                    "deploy".into(),
+                    "--project".into(),
+                    s.relative.clone(),
+                ];
+                run.extend(s.deploy_args.clone());
+                steps.push(step(
+                    &format!("deploy.{}", s.id),
+                    &format!("Deploy — {} ({})", s.label, s.provider.as_deref().unwrap_or("orbit")),
+                    StepKind::Deploy,
+                    &format!("Orbit deploy in `{}`.", s.relative),
+                    None,
+                    Some("last-run ok, or confirm after deploy".into()),
+                    Some(run),
+                ));
+            }
         }
     }
 
+    annotate_choice_board(&mut steps, &detected);
     Ok(steps)
 }
 
@@ -1502,6 +1567,43 @@ edition = \"2021\"
         assert_eq!(sync.entry_url.as_deref(), Some("https://ship.example"));
         assert!(sync.detail.contains("NEXT_PUBLIC_X_URL"));
         let _ = fs::remove_dir_all(&suite);
+    }
+
+    #[test]
+    fn launch_choice_board_lanes_and_local_omits_orbit() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-launch-choice-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("apps/website")).unwrap();
+        fs::write(dir.join("apps/website/index.html"), "<!doctype html>").unwrap();
+        fs::write(dir.join("wrangler.toml"), "name = \"x\"\n").unwrap();
+        let _ = config::configure(&dir).unwrap();
+        let _ = config::set_ship_intent(&dir, config::ShipIntent::Local).unwrap();
+        let local = load_or_build(&dir).unwrap();
+        assert!(
+            !local.steps.iter().any(|s| s.id == "flow_dry_run" || s.id == "deploy"),
+            "Local omits flow/Orbit deploy"
+        );
+        assert!(local.steps.iter().any(|s| s.id == "selfhost.deploy"));
+        let dep = local
+            .steps
+            .iter()
+            .find(|s| s.id == "oauth.hosts")
+            .expect("hosts");
+        assert_eq!(dep.lane.as_deref(), Some("deployment"));
+        assert!(dep.optional);
+        assert!(dep.suggested);
+        let _ = config::set_ship_intent(&dir, config::ShipIntent::Public).unwrap();
+        let _ = fs::remove_file(config::ship_dir(&dir).join("launch.json"));
+        let public = load_or_build(&dir).unwrap();
+        assert!(public.steps.iter().any(|s| s.id == "flow_dry_run"));
+        assert!(public.steps.iter().any(|s| s.id == "deploy" || s.id.starts_with("deploy.")));
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]

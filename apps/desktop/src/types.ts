@@ -116,6 +116,9 @@ export type LaunchView = {
     verify_hint?: string | null;
     run?: string[] | null;
     desktop_view?: string | null;
+    lane?: string | null;
+    optional?: boolean;
+    suggested?: boolean;
   }>;
   notes?: string[];
 };

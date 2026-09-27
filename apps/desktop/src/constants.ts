@@ -89,7 +89,7 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
   },
   launch: {
     title: "Launch",
-    desc: "Companion stepper — prefer Publish for the full minute path.",
+    desc: "Optional choice board — open Sign / Deployment / Integrations, then Confirm. Prefer Publish for the minute spine.",
   },
   portal: {
     title: "Portal",

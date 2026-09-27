@@ -530,10 +530,10 @@
             <section class="portal-panel" id="launch-panel">
               <div class="ritual-head">
                 <div>
-                  <label>Guided launch</label>
+                  <label>Launch</label>
                   <p class="hint" id="launch-hint">
-                    Companion portals — one gate at a time: Open vendor / Run local → Confirm → Next.
-                    Prefer Publish for the full minute spine.
+                    Optional lanes — open a dashboard, finish there, Confirm → Next. Publish stays the
+                    minute spine.
                   </p>
                 </div>
                 <div class="portal-actions">
@@ -546,10 +546,21 @@
                   <button type="button" id="btn-launch-next" class="primary" disabled>Next</button>
                 </div>
               </div>
+              <details class="launch-prep" id="launch-prep" hidden>
+                <summary id="launch-prep-summary">Prep</summary>
+                <ul class="portal-steps launch-prep-list" id="launch-prep-list"></ul>
+              </details>
+              <div class="launch-lanes" id="launch-lanes" hidden>
+                <h2 class="launch-band-label">Lanes</h2>
+                <div class="int-grid" id="launch-lane-grid"></div>
+              </div>
+              <div class="launch-cut" id="launch-cut" hidden>
+                <h2 class="launch-band-label">Ship cut</h2>
+                <ul class="portal-steps" id="launch-cut-list"></ul>
+              </div>
               <div class="launch-current" id="launch-current">
                 <p class="detail empty-hint">Refresh Launch to build the adaptive plan for this repo.</p>
               </div>
-              <ul class="portal-steps" id="launch-steps"></ul>
             </section>
           </section>
 

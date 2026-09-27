@@ -4839,18 +4839,78 @@ async function publishAction(sub: string[]) {
   }
 }
 
+function launchStepBand(id: string): "prep" | "lane" | "cut" {
+  const key = id.trim();
+  if (key === "doctor" || key === "configure" || key === "intent") return "prep";
+  if (
+    key === "flow_dry_run" ||
+    key === "deploy" ||
+    key === "selfhost.deploy" ||
+    key.startsWith("deploy.") ||
+    key === "listing.packages"
+  ) {
+    return "cut";
+  }
+  return "lane";
+}
+
+function launchLaneGroup(id: string): string {
+  if (id === "oauth.hosts" || id === "deploy.panel") return "deployment";
+  if (id === "sign.panel") return "sign";
+  if (id === "integrations.panel") return "payments";
+  if (id === "env.sprint") return "env";
+  if (id === "scopes") return "targets";
+  if (id === "legal.baseline") return "legal";
+  return id;
+}
+
+function launchLaneMeta(group: string): { title: string; blurb: string; view?: string } {
+  switch (group) {
+    case "deployment":
+      return {
+        title: "Deployment",
+        blurb: "Host login · Put · Open dashboard — pick one primary host.",
+        view: "platforms",
+      };
+    case "sign":
+      return { title: "Sign", blurb: "Self-sign · official certs · store portals.", view: "sign" };
+    case "payments":
+      return {
+        title: "Payments",
+        blurb: "Polar / Stripe / … — Integrations wizards.",
+        view: "integrations",
+      };
+    case "env":
+      return { title: "Env / tokens", blurb: "Put secrets in the terminal — never store values here.", view: "env" };
+    case "targets":
+      return { title: "Targets", blurb: "What ships — Web / API / Desktop scopes.", view: "scopes" };
+    case "legal":
+      return { title: "Legal", blurb: "LICENSE · SECURITY · TRUST baseline.", view: "dashboard" };
+    default:
+      return { title: group, blurb: "Optional launch lane.", view: undefined };
+  }
+}
+
 function applyLaunchView(view: LaunchView | null) {
   lastLaunch = view;
   void lastLaunch;
   const currentEl = document.querySelector<HTMLElement>("#launch-current");
-  const list = document.querySelector<HTMLElement>("#launch-steps");
+  const prepEl = document.querySelector<HTMLElement>("#launch-prep");
+  const prepSummary = document.querySelector<HTMLElement>("#launch-prep-summary");
+  const prepList = document.querySelector<HTMLElement>("#launch-prep-list");
+  const lanesEl = document.querySelector<HTMLElement>("#launch-lanes");
+  const laneGrid = document.querySelector<HTMLElement>("#launch-lane-grid");
+  const cutEl = document.querySelector<HTMLElement>("#launch-cut");
+  const cutList = document.querySelector<HTMLElement>("#launch-cut-list");
   const hint = document.querySelector<HTMLElement>("#launch-hint");
   const openBtn = document.querySelector<HTMLButtonElement>("#btn-launch-open");
-  if (!currentEl || !list) return;
+  if (!currentEl) return;
   if (!view?.steps?.length) {
     currentEl.innerHTML =
       '<p class="detail empty-hint">Refresh Launch to build the adaptive plan for this repo.</p>';
-    list.innerHTML = "";
+    if (prepEl) prepEl.hidden = true;
+    if (lanesEl) lanesEl.hidden = true;
+    if (cutEl) cutEl.hidden = true;
     if (openBtn) openBtn.textContent = "Open / Run";
     return;
   }
@@ -4875,10 +4935,15 @@ function applyLaunchView(view: LaunchView | null) {
                 ? "Run local"
                 : "Open / Run";
   }
+  const laneCount = new Set(
+    (view.steps ?? [])
+      .filter((s) => launchStepBand(s.id ?? "") === "lane")
+      .map((s) => launchLaneGroup(s.id ?? "")),
+  ).size;
   if (hint) {
     hint.textContent = view.finished
-      ? "Launch workflow finished — prefer Publish if you still need the minute spine."
-      : `Step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} · ${view.done_count ?? 0} done — Open Deployment / Login CLI / Run local, then Verify → Confirm.`;
+      ? "Launch finished — prefer Publish if you still need the minute spine."
+      : `Choice board · ${laneCount} lane${laneCount === 1 ? "" : "s"} · step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} — Open a dashboard, then Verify → Confirm.`;
   }
 
   const renderCtas = (
@@ -4939,6 +5004,11 @@ function applyLaunchView(view: LaunchView | null) {
         );
       }
     }
+    if (isCurrent) {
+      parts.push(
+        `<button type="button" class="launch-step-skip" title="Confirm this optional lane and advance">Skip</button>`,
+      );
+    }
     if (!parts.length) {
       parts.push(
         `<button type="button" class="primary" disabled>${
@@ -4949,19 +5019,13 @@ function applyLaunchView(view: LaunchView | null) {
     return `<div class="btns launch-portal-ctas">${parts.join("")}</div>`;
   };
 
-  currentEl.innerHTML = cur
-    ? `<div class="title">${statusKindHtml(cur.status ?? cur.kind)}${escapeHtml(cur.title ?? "")}</div>
-       <p class="detail">${escapeHtml(cur.detail ?? "")}${
-         cur.verify_hint ? ` · verify: ${escapeHtml(cur.verify_hint)}` : ""
-       }</p>
-       ${renderCtas(cur, true)}`
-    : "<p class=\"detail\">No current step</p>";
-
-  list.innerHTML = (view.steps ?? [])
-    .map((s, i) => {
-      const active = i === view.current_index ? " active-step" : "";
-      const kind = (s.kind ?? "").toLowerCase();
-      return `<li class="portal-step${active}" data-launch-idx="${i}">
+  const renderStepRow = (
+    s: NonNullable<LaunchView["steps"]>[number],
+    i: number,
+  ): string => {
+    const active = i === view.current_index ? " active-step" : "";
+    const kind = (s.kind ?? "").toLowerCase();
+    return `<li class="portal-step${active}" data-launch-idx="${i}">
         <div class="meta">
           <div class="title">${statusKindHtml(s.status)}${
             kind
@@ -4972,8 +5036,115 @@ function applyLaunchView(view: LaunchView | null) {
         </div>
         ${renderCtas(s, i === view.current_index)}
       </li>`;
-    })
-    .join("");
+  };
+
+  const steps = view.steps ?? [];
+  const prep = steps
+    .map((s, i) => ({ s, i }))
+    .filter(({ s }) => launchStepBand(s.id ?? "") === "prep");
+  const cut = steps
+    .map((s, i) => ({ s, i }))
+    .filter(({ s }) => launchStepBand(s.id ?? "") === "cut");
+  const laneSteps = steps
+    .map((s, i) => ({ s, i }))
+    .filter(({ s }) => launchStepBand(s.id ?? "") === "lane");
+
+  if (prepEl && prepList && prepSummary) {
+    if (!prep.length) {
+      prepEl.hidden = true;
+      prepList.innerHTML = "";
+    } else {
+      prepEl.hidden = false;
+      const done = prep.filter(({ s }) => (s.status ?? "").toLowerCase() === "done").length;
+      prepSummary.textContent = `Prep · ${done}/${prep.length} ok`;
+      prepList.innerHTML = prep.map(({ s, i }) => renderStepRow(s, i)).join("");
+    }
+  }
+
+  if (lanesEl && laneGrid) {
+    if (!laneSteps.length) {
+      lanesEl.hidden = true;
+      laneGrid.innerHTML = "";
+    } else {
+      lanesEl.hidden = false;
+      const groups = new Map<
+        string,
+        {
+          indices: number[];
+          statuses: string[];
+          views: string[];
+          details: string[];
+          suggested: boolean;
+          optional: boolean;
+        }
+      >();
+      for (const { s, i } of laneSteps) {
+        const g = launchLaneGroup(s.id ?? "");
+        const entry = groups.get(g) ?? {
+          indices: [],
+          statuses: [],
+          views: [],
+          details: [],
+          suggested: false,
+          optional: true,
+        };
+        entry.indices.push(i);
+        entry.statuses.push((s.status ?? "").toLowerCase());
+        if (s.desktop_view) entry.views.push(s.desktop_view);
+        if (s.detail) entry.details.push(s.detail);
+        if (s.suggested) entry.suggested = true;
+        if (s.optional === false) entry.optional = false;
+        groups.set(g, entry);
+      }
+      const curId = cur?.id ?? "";
+      const curGroup = curId ? launchLaneGroup(curId) : "";
+      laneGrid.innerHTML = [...groups.entries()]
+        .map(([group, info]) => {
+          const meta = launchLaneMeta(group);
+          const viewId = info.views[0] ?? meta.view ?? "";
+          const allDone = info.statuses.every((st) => st === "done" || st === "skipped");
+          const isCurrent = info.indices.includes(view.current_index ?? -1) || group === curGroup;
+          const badge = isCurrent
+            ? `<span class="launch-badge">Current</span>`
+            : allDone
+              ? `<span class="launch-badge">Done</span>`
+              : info.suggested
+                ? `<span class="launch-badge">Suggested</span>`
+                : info.optional
+                  ? `<span class="launch-badge">Optional</span>`
+                  : "";
+          const blurb = info.details[0] ?? meta.blurb;
+          return `<button type="button" class="int-card launch-lane-card${
+            isCurrent ? " is-active" : ""
+          }${allDone ? " is-done" : ""}" data-lane="${escapeHtml(group)}" data-view="${escapeHtml(
+            viewId,
+          )}" data-launch-idx="${info.indices[0] ?? 0}">
+            ${badge}
+            <span class="int-card-title">${escapeHtml(meta.title)}</span>
+            <span class="int-card-blurb">${escapeHtml(blurb)}</span>
+          </button>`;
+        })
+        .join("");
+    }
+  }
+
+  if (cutEl && cutList) {
+    if (!cut.length) {
+      cutEl.hidden = true;
+      cutList.innerHTML = "";
+    } else {
+      cutEl.hidden = false;
+      cutList.innerHTML = cut.map(({ s, i }) => renderStepRow(s, i)).join("");
+    }
+  }
+
+  currentEl.innerHTML = cur
+    ? `<div class="title">${statusKindHtml(cur.status ?? cur.kind)}${escapeHtml(cur.title ?? "")}</div>
+       <p class="detail">${escapeHtml(cur.detail ?? "")}${
+         cur.verify_hint ? ` · verify: ${escapeHtml(cur.verify_hint)}` : ""
+       }</p>
+       ${renderCtas(cur, true)}`
+    : "<p class=\"detail\">No current step</p>";
 
   const bindLogin = (root: ParentNode) => {
     root.querySelectorAll<HTMLButtonElement>(".launch-step-login").forEach((btn) => {
@@ -5007,32 +5178,55 @@ function applyLaunchView(view: LaunchView | null) {
       });
     });
   };
-  bindLogin(currentEl);
-  bindLogin(list);
-  bindRelated(currentEl);
-  bindRelated(list);
+  const bindOpenRun = (root: ParentNode) => {
+    root.querySelectorAll<HTMLButtonElement>(".launch-step-open").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const url = btn.getAttribute("data-url");
+        if (url) await openUrl(url);
+      });
+    });
+    root.querySelectorAll<HTMLButtonElement>(".launch-step-run").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        void openLaunchCurrentGate();
+      });
+    });
+    root.querySelectorAll<HTMLButtonElement>(".launch-step-skip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        void launchAction(["confirm"]).then(() => launchAction(["next"]));
+      });
+    });
+  };
 
-  currentEl.querySelectorAll<HTMLButtonElement>(".launch-step-open").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const url = btn.getAttribute("data-url");
-      if (url) await openUrl(url);
-    });
-  });
-  currentEl.querySelectorAll<HTMLButtonElement>(".launch-step-run").forEach((btn) => {
+  bindLogin(currentEl);
+  bindRelated(currentEl);
+  bindOpenRun(currentEl);
+  if (prepList) {
+    bindLogin(prepList);
+    bindRelated(prepList);
+    bindOpenRun(prepList);
+  }
+  if (cutList) {
+    bindLogin(cutList);
+    bindRelated(cutList);
+    bindOpenRun(cutList);
+  }
+  laneGrid?.querySelectorAll<HTMLButtonElement>(".launch-lane-card").forEach((btn) => {
     btn.addEventListener("click", () => {
-      void openLaunchCurrentGate();
-    });
-  });
-  list.querySelectorAll<HTMLButtonElement>(".launch-step-open").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const url = btn.getAttribute("data-url");
-      if (url) await openUrl(url);
-    });
-  });
-  list.querySelectorAll<HTMLButtonElement>(".launch-step-run").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      if (btn.disabled) return;
-      void openLaunchCurrentGate();
+      const viewId = (btn.getAttribute("data-view") || "").trim();
+      if (viewId === "platforms") {
+        openPlatformsCatalog({ preferGroup: "Hosting" });
+      } else if (viewId === "integrations") {
+        setView("integrations");
+        renderIntegrations();
+      } else if (viewId) {
+        setView(viewId);
+      }
+      toast(
+        `${RELATED_VIEW_LABELS[viewId] ?? btn.querySelector(".int-card-title")?.textContent ?? "Lane"} — finish there, then Verify → Confirm`,
+        "info",
+        5000,
+      );
     });
   });
 }

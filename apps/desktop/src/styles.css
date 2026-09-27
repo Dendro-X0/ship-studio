@@ -2352,6 +2352,62 @@ body[data-publish-ui="list"] #publish-stage {
   overflow: auto;
 }
 
+.launch-prep {
+  margin: 0.65rem 0 0.35rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.14);
+  padding: 0.35rem 0.65rem 0.45rem;
+}
+
+.launch-prep > summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  list-style: none;
+}
+
+.launch-prep > summary::-webkit-details-marker {
+  display: none;
+}
+
+.launch-prep-list {
+  max-height: 12rem;
+  margin-top: 0.35rem;
+}
+
+.launch-band-label {
+  margin: 0.85rem 0 0.45rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.launch-lanes .int-card .launch-badge {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.launch-lanes .int-card.is-done {
+  opacity: 0.72;
+}
+
+.launch-cut .portal-steps {
+  max-height: min(28vh, 220px);
+}
+
+.launch-current {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-soft);
+}
+
 .step-band {
   border: 1px solid var(--border-soft);
   border-radius: 10px;
@@ -2581,7 +2637,8 @@ body[data-publish-ui="list"] #publish-stage {
 }
 
 .launch-portal-ctas .primary,
-#launch-steps .btns .primary {
+.launch-prep-list .btns .primary,
+.launch-cut .btns .primary {
   min-height: 2rem;
 }
 

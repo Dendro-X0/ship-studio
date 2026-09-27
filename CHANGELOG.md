@@ -38,6 +38,7 @@
 
 ### Changed
 
+- **Launch choice board (L1–L2)** — Desktop Prep/lanes/Ship-cut UI; shipctl emits `lane` · `optional` · `suggested`; Local intent omits flow/Orbit deploy ([launch-choice-board-design](./specs/frontend/launch-choice-board-design.md))
 - **Self-host detect matrix** — plan only with static/opt-in root; Studio monorepo signal; Dockerfile/Compose alone never opens Self-host ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Self-host Publish Auto** — `selfhost.deploy` on General + Advanced (+ Launch); Continue/Verify runs local health and marks Done without Confirm ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Self-host health checks** — Deploy completes on artifact + local HTTP 200 (`selfhost.check` in last-run); optional `--serve` ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))

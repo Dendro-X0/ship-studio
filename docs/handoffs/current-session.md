@@ -12,7 +12,7 @@
 
 | Item | Spec |
 |------|------|
-| Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) |
+| Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) (L1–L2 shipped — L3+ queued) |
 | Deployment nav | [deployment-nav-design](../../specs/frontend/deployment-nav-design.md) (shipped) |
 | Panel redirects | [launch-panel-redirects-design](../../specs/frontend/launch-panel-redirects-design.md) (shipped) |
 | Studio self-host | [studio-selfhost-guide-design](../../specs/frontend/studio-selfhost-guide-design.md) (Slices 1–5 shipped) |
@@ -33,6 +33,7 @@
 
 | Band | Link |
 |------|------|
+| **Launch choice board L1–L2** | Desktop Bands A/B/C + shipctl `lane`/`optional`/`suggested`; Local omits Orbit cut |
 | **Self-host detect (S5)** | `plan_eligible` · `.ship/selfhost.json` root · Dockerfile-only skips Self-host |
 | **Self-host Publish Auto (S4)** | `selfhost.deploy` on General+Advanced + Launch; Continue/Verify runs checks |
 | **Self-host health (S3)** | Artifact + local GET 200 → last-run `selfhost.check`; no Confirm |
