@@ -746,6 +746,7 @@ fn publish_cut_hint(id: &str) -> &'static str {
         | "listing.polar" => " Open commerce dashboard for SKU/checkout, then Confirm.",
         "container.build" => " Run local `docker build` / compose build, then Confirm.",
         "container.deploy" => " Push image on your machine (docs Open); bridge never pushes.",
+        "selfhost.deploy" => " Run Self-host Deploy (artifact + local health) — done without Confirm.",
         "legal.baseline" => " Add LICENSE + SECURITY.md at repo root, then Confirm.",
         "marketing.deploy" => " Deploy/cut over the public landing URL, then Confirm.",
         "suite.url_sync" => " Paste live URL into sibling env keys, then Confirm.",
@@ -1283,6 +1284,7 @@ mod tests {
         assert!(publish_cut_hint("listing.crates").contains("dry-run"));
         assert!(publish_cut_hint("container.build").contains("docker"));
         assert!(publish_cut_hint("container.deploy").contains("never pushes"));
+        assert!(publish_cut_hint("selfhost.deploy").contains("Self-host"));
         assert!(publish_cut_hint("release.github").contains("gh release list"));
         assert!(publish_cut_hint("sign.self.release").contains("Final-mile"));
         assert_eq!(publish_cut_hint("env.sprint"), "");

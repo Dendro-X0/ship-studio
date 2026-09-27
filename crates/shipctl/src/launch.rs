@@ -597,6 +597,24 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         ));
     }
 
+    if crate::selfhost::resolve_target(project).is_some() {
+        steps.push(step_with_view(
+            "selfhost.deploy",
+            "Self-host — local auto deploy",
+            StepKind::Auto,
+            "Run shipctl selfhost (artifact + loopback health). Done when checks pass — no Confirm. Prefer Publish for the full Adaptive path.",
+            None,
+            Some("shipctl selfhost".into()),
+            Some(vec![
+                "shipctl".into(),
+                "selfhost".into(),
+                "--project".into(),
+                ".".into(),
+            ]),
+            Some("platforms"),
+        ));
+    }
+
     steps.push(step(
         "flow_dry_run",
         "Flow dry-run — preview configure → sign → deploy",
@@ -970,6 +988,18 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, LaunchView)> {
                 !plan.steps.is_empty(),
                 format!("dry-run {} step(s)", plan.steps.len()),
             )
+        }
+        StepKind::Auto if step.id == "selfhost.deploy" => {
+            match crate::selfhost::run(project, crate::selfhost::SelfhostOpts::default()) {
+                Ok(r) if r.ok => (
+                    true,
+                    r.health_url
+                        .map(|u| format!("selfhost.check ok · {u}"))
+                        .unwrap_or_else(|| r.message),
+                ),
+                Ok(r) => (false, r.message),
+                Err(e) => (false, format!("{e:#}")),
+            }
         }
         StepKind::Auto if step.id == "intent" => {
             let path = config::ship_dir(project).join("studio.json");
@@ -1472,6 +1502,32 @@ edition = \"2021\"
         assert_eq!(sync.entry_url.as_deref(), Some("https://ship.example"));
         assert!(sync.detail.contains("NEXT_PUBLIC_X_URL"));
         let _ = fs::remove_dir_all(&suite);
+    }
+
+    #[test]
+    fn launch_selfhost_parity() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-launch-selfhost-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        let web = dir.join("apps/website");
+        fs::create_dir_all(&web).unwrap();
+        fs::write(web.join("index.html"), "<!doctype html>").unwrap();
+        let t = load_or_build(&dir).unwrap();
+        let step = t
+            .steps
+            .iter()
+            .find(|s| s.id == "selfhost.deploy")
+            .expect("selfhost.deploy");
+        assert_eq!(step.kind, StepKind::Auto);
+        assert_eq!(step.desktop_view.as_deref(), Some("platforms"));
+        let run = step.run.as_ref().expect("run");
+        assert_eq!(run[..2], ["shipctl", "selfhost"]);
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]

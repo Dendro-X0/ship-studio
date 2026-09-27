@@ -12,7 +12,7 @@
 
 | Item | Spec |
 |------|------|
-| **Studio self-host Slice 4+** | [studio-selfhost-guide-design](../../specs/frontend/studio-selfhost-guide-design.md) — Publish Auto step (Slices 1–3 shipped) |
+| **Studio self-host Slice 5+** | [studio-selfhost-guide-design](../../specs/frontend/studio-selfhost-guide-design.md) — detect matrix (Slices 1–4 shipped) |
 | Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) |
 | Deployment nav | [deployment-nav-design](../../specs/frontend/deployment-nav-design.md) (shipped) |
 | Panel redirects | [launch-panel-redirects-design](../../specs/frontend/launch-panel-redirects-design.md) (shipped) |
@@ -33,6 +33,7 @@
 
 | Band | Link |
 |------|------|
+| **Self-host Publish Auto (S4)** | `selfhost.deploy` on General+Advanced + Launch; Continue/Verify runs checks |
 | **Self-host health (S3)** | Artifact + local GET 200 → last-run `selfhost.check`; no Confirm |
 | **Self-host stream (S2)** | `shipctl selfhost` + Deployment **Deploy** streams; Harbor `apps/website` |
 | **Self-host catalog (S1)** | Deployment **Self-host** card; Orbit gated on `orbit_configured` |

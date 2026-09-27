@@ -130,7 +130,7 @@ pub fn infer_verify_status(id: &str, kind: &PubKind) -> VerifyStatus {
         }
         PubKind::Oauth => VerifyStatus::HumanAttest,
         PubKind::List => VerifyStatus::HumanAttest,
-        PubKind::Auto if id == "doctor" => VerifyStatus::LocalCli,
+        PubKind::Auto if id == "doctor" || id == "selfhost.deploy" => VerifyStatus::LocalCli,
         PubKind::Sign => VerifyStatus::LocalCli,
         PubKind::Deploy => VerifyStatus::LocalCli,
         PubKind::Check if id == "live_check" => VerifyStatus::LocalCli,
@@ -309,6 +309,7 @@ fn is_general_step(step: &PubStep) -> bool {
         || id == "deploy"
         || id.starts_with("deploy.")
         || id == "sign.self.build"
+        || id == "selfhost.deploy"
 }
 
 fn is_local_intent_step(step: &PubStep, env_required: bool) -> bool {
@@ -1221,6 +1222,24 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
         ));
     }
 
+    if crate::selfhost::resolve_target(project).is_some() {
+        steps.push(step(
+            "selfhost.deploy",
+            "Self-host — local auto deploy",
+            PubKind::Auto,
+            "Run shipctl selfhost (artifact + loopback health). Done when checks pass — no Confirm.",
+            2,
+            None,
+            Some(vec![
+                "shipctl".into(),
+                "selfhost".into(),
+                "--project".into(),
+                ".".into(),
+            ]),
+            Some("platforms"),
+        ));
+    }
+
     steps.push(step(
         "dry_run",
         "Dry-run — configure → sign → deploy plan",
@@ -1693,6 +1712,18 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
                 !plan.steps.is_empty(),
                 format!("dry-run {} step(s)", plan.steps.len()),
             )
+        }
+        PubKind::Auto if step.id == "selfhost.deploy" => {
+            match crate::selfhost::run(project, crate::selfhost::SelfhostOpts::default()) {
+                Ok(r) if r.ok => (
+                    true,
+                    r.health_url
+                        .map(|u| format!("selfhost.check ok · {u}"))
+                        .unwrap_or_else(|| r.message),
+                ),
+                Ok(r) => (false, r.message),
+                Err(e) => (false, format!("{e:#}")),
+            }
         }
         PubKind::Human if step.id == "scopes" => {
             let plan = scopes::plan_for(project);
@@ -2925,6 +2956,55 @@ mod tests {
         assert!(run.iter().any(|a| a.contains("release.yml")));
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "ci.release"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn selfhost_deploy_general_and_advanced() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-selfhost-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        let web = dir.join("apps/website");
+        fs::create_dir_all(&web).unwrap();
+        fs::write(web.join("index.html"), "<!doctype html><title>ok</title>").unwrap();
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(
+            general.steps.iter().any(|s| s.id == "selfhost.deploy"),
+            "General should include selfhost.deploy"
+        );
+        let step = general
+            .steps
+            .iter()
+            .find(|s| s.id == "selfhost.deploy")
+            .unwrap();
+        assert_eq!(step.kind, PubKind::Auto);
+        assert_eq!(step.desktop_view.as_deref(), Some("platforms"));
+        assert_eq!(step.verify_status, VerifyStatus::LocalCli);
+        let run = step.run.as_ref().expect("selfhost run");
+        assert_eq!(run[0], "shipctl");
+        assert_eq!(run[1], "selfhost");
+        let dry = general
+            .steps
+            .iter()
+            .position(|s| s.id == "dry_run")
+            .unwrap();
+        let sh = general
+            .steps
+            .iter()
+            .position(|s| s.id == "selfhost.deploy")
+            .unwrap();
+        assert!(sh < dry, "selfhost before dry_run: {:?}", general.steps.iter().map(|s| &s.id).collect::<Vec<_>>());
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(advanced.steps.iter().any(|s| s.id == "selfhost.deploy"));
+        fs::write(dir.join("Dockerfile"), "FROM alpine\n").unwrap();
+        let both = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(both.steps.iter().any(|s| s.id == "selfhost.deploy"));
+        assert!(both.steps.iter().any(|s| s.id == "container.build"));
         let _ = fs::remove_dir_all(&dir);
     }
 
