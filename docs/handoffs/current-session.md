@@ -1,8 +1,8 @@
 # Current session — Ship Studio
 
-**Updated:** 2026-09-26  
+**Updated:** 2026-09-27  
 **Branch:** `main`  
-**Status:** **S1.1** GIF recording — T1/T3 in hand; next T6 Sign Open + T7 Deploy Open
+**Status:** **S1.1** GIF recording — T1/T3 in hand; next T6 Sign Open + T7 Deploy Open · Self-host S1–S5 shipped
 
 ## Next Atomic Step
 
@@ -12,10 +12,10 @@
 
 | Item | Spec |
 |------|------|
-| **Studio self-host Slice 5+** | [studio-selfhost-guide-design](../../specs/frontend/studio-selfhost-guide-design.md) — detect matrix (Slices 1–4 shipped) |
 | Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) |
 | Deployment nav | [deployment-nav-design](../../specs/frontend/deployment-nav-design.md) (shipped) |
 | Panel redirects | [launch-panel-redirects-design](../../specs/frontend/launch-panel-redirects-design.md) (shipped) |
+| Studio self-host | [studio-selfhost-guide-design](../../specs/frontend/studio-selfhost-guide-design.md) (Slices 1–5 shipped) |
 
 ## PAUSED / CANCELLED
 
@@ -33,6 +33,7 @@
 
 | Band | Link |
 |------|------|
+| **Self-host detect (S5)** | `plan_eligible` · `.ship/selfhost.json` root · Dockerfile-only skips Self-host |
 | **Self-host Publish Auto (S4)** | `selfhost.deploy` on General+Advanced + Launch; Continue/Verify runs checks |
 | **Self-host health (S3)** | Artifact + local GET 200 → last-run `selfhost.check`; no Confirm |
 | **Self-host stream (S2)** | `shipctl selfhost` + Deployment **Deploy** streams; Harbor `apps/website` |

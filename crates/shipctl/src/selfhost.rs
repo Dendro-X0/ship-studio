@@ -1,9 +1,11 @@
 //! Local self-host deploy — Studio-owned lane (stream + last-run + health).
 //! Slice 2: detect static surface, stream phases, write `.ship/last-run.json`.
 //! Slice 3: bind local static server, GET health, auto-complete (no Confirm).
+//! Slice 5: detect matrix — static / Studio monorepo / `.ship/selfhost.json`;
+//!          never plan Self-host solely because a Dockerfile/Compose exists.
 
 use anyhow::{bail, Context, Result};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -37,14 +39,66 @@ pub struct SelfhostOpts {
     pub serve: bool,
 }
 
+#[derive(Debug, Clone, Default, Deserialize)]
+struct SelfhostFile {
+    /// Relative directory containing `index.html` (or the file itself).
+    #[serde(default)]
+    root: Option<String>,
+    /// Reserved: `static` (default). `compose` alone does not steal Dockerfile layouts.
+    #[serde(default)]
+    mode: Option<String>,
+}
+
 fn rel_display(project: &Path, path: &Path) -> String {
     path.strip_prefix(project)
         .map(|p| p.display().to_string().replace('\\', "/"))
         .unwrap_or_else(|_| path.display().to_string().replace('\\', "/"))
 }
 
-/// Prefer documented static roots; never steals Dockerfile layouts for serve.
-pub fn resolve_target(project: &Path) -> Option<SelfhostTarget> {
+fn selfhost_file_path(project: &Path) -> PathBuf {
+    config::ship_dir(project).join("selfhost.json")
+}
+
+fn read_selfhost_file(project: &Path) -> Option<SelfhostFile> {
+    let path = selfhost_file_path(project);
+    if !path.is_file() {
+        return None;
+    }
+    let raw = fs::read_to_string(&path).ok()?;
+    serde_json::from_str(&raw).ok().or_else(|| Some(SelfhostFile::default()))
+}
+
+/// Ship Studio monorepo layout (this repo / forks) — prefer Self-host over Orbit-as-SaaS.
+pub fn is_studio_monorepo(project: &Path) -> bool {
+    project.join("crates/shipctl/Cargo.toml").is_file()
+        && (project.join("apps/desktop").is_dir()
+            || project.join("apps/desktop/src-tauri").is_dir())
+}
+
+fn target_from_root(project: &Path, root_rel: &str, kind: &'static str) -> Option<SelfhostTarget> {
+    let rel = root_rel.trim().trim_start_matches("./").replace('\\', "/");
+    if rel.is_empty() || rel.contains("..") {
+        return None;
+    }
+    let path = project.join(&rel);
+    let dir = if path.is_file() {
+        path.parent()?.to_path_buf()
+    } else if path.is_dir() {
+        path
+    } else {
+        return None;
+    };
+    if !dir.join("index.html").is_file() {
+        return None;
+    }
+    Some(SelfhostTarget {
+        kind,
+        path: dir.clone(),
+        rel: rel_display(project, &dir),
+    })
+}
+
+fn resolve_static_candidates(project: &Path) -> Option<SelfhostTarget> {
     let candidates: &[&str] = &[
         "apps/website/index.html",
         "apps/docs/index.html",
@@ -65,6 +119,34 @@ pub fn resolve_target(project: &Path) -> Option<SelfhostTarget> {
         }
     }
     None
+}
+
+/// Prefer documented static roots / opt-in root; never invent a target from Dockerfile alone.
+pub fn resolve_target(project: &Path) -> Option<SelfhostTarget> {
+    if let Some(file) = read_selfhost_file(project) {
+        let mode = file
+            .mode
+            .as_deref()
+            .unwrap_or("static")
+            .trim()
+            .to_ascii_lowercase();
+        // Explicit compose mode without a static root is not Self-host v1 — container lane owns Compose.
+        if mode == "compose" && file.root.is_none() {
+            return resolve_static_candidates(project);
+        }
+        if let Some(root) = file.root.as_deref() {
+            if let Some(t) = target_from_root(project, root, "static") {
+                return Some(t);
+            }
+        }
+    }
+    resolve_static_candidates(project)
+}
+
+/// Whether Publish/Launch should include `selfhost.deploy`.
+/// Container-only layouts (Dockerfile/Compose, no static/opt-in root) → false.
+pub fn plan_eligible(project: &Path) -> bool {
+    resolve_target(project).is_some()
 }
 
 fn respond_static(mut stream: TcpStream, root: &Path) {
@@ -341,9 +423,59 @@ mod tests {
     }
 
     #[test]
-    fn missing_surface_fails() {
-        let dir = tmp("empty");
-        assert!(run(&dir, SelfhostOpts::default()).is_err());
+    fn plan_skips_dockerfile_only() {
+        let dir = tmp("docker-only");
+        fs::write(dir.join("Dockerfile"), "FROM alpine\n").unwrap();
+        assert!(resolve_target(&dir).is_none());
+        assert!(!plan_eligible(&dir));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn opt_in_root_wins() {
+        let dir = tmp("optin");
+        let site = dir.join("sites/landing");
+        fs::create_dir_all(&site).unwrap();
+        fs::write(site.join("index.html"), "<!doctype html>").unwrap();
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(
+            dir.join(".ship/selfhost.json"),
+            r#"{"root":"sites/landing"}"#,
+        )
+        .unwrap();
+        let t = resolve_target(&dir).expect("opt-in");
+        assert!(t.rel.contains("sites/landing"));
+        assert!(plan_eligible(&dir));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn studio_monorepo_signal() {
+        let dir = tmp("studio");
+        fs::create_dir_all(dir.join("crates/shipctl")).unwrap();
+        fs::write(dir.join("crates/shipctl/Cargo.toml"), "[package]\nname=\"shipctl\"\n").unwrap();
+        fs::create_dir_all(dir.join("apps/desktop")).unwrap();
+        assert!(is_studio_monorepo(&dir));
+        // No static yet → not plan-eligible (needs surface or opt-in root).
+        assert!(!plan_eligible(&dir));
+        let web = dir.join("apps/website");
+        fs::create_dir_all(&web).unwrap();
+        fs::write(web.join("index.html"), "<!doctype html>").unwrap();
+        assert!(plan_eligible(&dir));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn compose_mode_without_root_does_not_steal() {
+        let dir = tmp("compose-mode");
+        fs::write(dir.join("docker-compose.yml"), "services: {}\n").unwrap();
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(
+            dir.join(".ship/selfhost.json"),
+            r#"{"mode":"compose"}"#,
+        )
+        .unwrap();
+        assert!(!plan_eligible(&dir));
         let _ = fs::remove_dir_all(&dir);
     }
 }

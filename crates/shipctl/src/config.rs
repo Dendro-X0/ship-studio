@@ -167,6 +167,12 @@ pub struct Detected {
     pub dockerfile: bool,
     #[serde(default)]
     pub compose: bool,
+    /// Static / opt-in Self-host surface (not Dockerfile-only).
+    #[serde(default)]
+    pub selfhost: bool,
+    /// This repo / fork layout (`crates/shipctl` + `apps/desktop`).
+    #[serde(default)]
+    pub studio_monorepo: bool,
     /// Opt-in extra marketplaces (Steam / itch / Epic).
     #[serde(default)]
     pub steam: bool,
@@ -370,6 +376,8 @@ pub fn probe(project: &Path) -> Detected {
     detect_alt_hosts(project, &mut d);
     detect_ci_release(project, &mut d);
     detect_container(project, &mut d);
+    d.studio_monorepo = crate::selfhost::is_studio_monorepo(project);
+    d.selfhost = crate::selfhost::plan_eligible(project);
     detect_markets(project, &mut d);
     detect_launch_baseline(project, &mut d);
     detect_package_registries(project, &mut d);
@@ -522,6 +530,23 @@ pub fn probe(project: &Path) -> Detected {
                 bits.join(" · ")
             }
         ));
+        if !d.selfhost {
+            d.hints.push(
+                "No Self-host static surface — Dockerfile/Compose alone does not open the Self-host lane."
+                    .into(),
+            );
+        }
+    }
+    if d.selfhost {
+        d.hints.push(
+            "Self-host surface detected — Publish `selfhost.deploy` / Deployment Deploy runs local health (no Confirm)."
+                .into(),
+        );
+    } else if d.studio_monorepo {
+        d.hints.push(
+            "Studio monorepo layout — add apps/website (or `.ship/selfhost.json` root) for Self-host Deploy."
+                .into(),
+        );
     }
     if d.steam || d.itch || d.epic {
         let mut bits = Vec::new();

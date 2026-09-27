@@ -30,6 +30,8 @@ export type Detected = {
   github?: boolean;
   polar?: boolean;
   orbit_configured?: boolean;
+  selfhost?: boolean;
+  studio_monorepo?: boolean;
   fly?: boolean;
   railway?: boolean;
   marketing_site?: boolean;

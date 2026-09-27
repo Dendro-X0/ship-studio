@@ -1222,7 +1222,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
         ));
     }
 
-    if crate::selfhost::resolve_target(project).is_some() {
+    if crate::selfhost::plan_eligible(project) {
         steps.push(step(
             "selfhost.deploy",
             "Self-host — local auto deploy",
@@ -3005,6 +3005,32 @@ mod tests {
         let both = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
         assert!(both.steps.iter().any(|s| s.id == "selfhost.deploy"));
         assert!(both.steps.iter().any(|s| s.id == "container.build"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn dockerfile_only_skips_selfhost_deploy() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-docker-only-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("Dockerfile"), "FROM alpine\n").unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        assert!(advanced.steps.iter().any(|s| s.id == "container.build"));
+        assert!(
+            !advanced.steps.iter().any(|s| s.id == "selfhost.deploy"),
+            "Dockerfile-only must not steal Self-host lane"
+        );
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "selfhost.deploy"));
+        let d = config::probe(&dir);
+        assert!(d.container);
+        assert!(!d.selfhost);
         let _ = fs::remove_dir_all(&dir);
     }
 

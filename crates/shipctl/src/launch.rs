@@ -597,7 +597,7 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         ));
     }
 
-    if crate::selfhost::resolve_target(project).is_some() {
+    if crate::selfhost::plan_eligible(project) {
         steps.push(step_with_view(
             "selfhost.deploy",
             "Self-host — local auto deploy",
