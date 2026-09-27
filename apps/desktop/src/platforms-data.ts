@@ -14,9 +14,9 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
     needsPublic: false,
     steps: [
       "Self-host runs on this machine — no Dendro datacenter, no vendor OAuth for the cut.",
-      "Deploy streams shipctl selfhost in the Output dock (Cancel unlocks if stuck).",
-      "Detects a static root (apps/website · public · dist) and writes .ship/last-run.json.",
-      "Health / serve probes land next — public SaaS cutover still uses the cards below.",
+      "Deploy streams shipctl selfhost: detect → artifact → local GET health.",
+      "Done when health returns 200 — writes .ship/last-run.json; no Confirm→Next.",
+      "Optional long serve: Ritual/terminal `shipctl selfhost --serve`. SaaS cutover uses cards below.",
     ],
   },
   {

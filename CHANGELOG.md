@@ -38,6 +38,7 @@
 
 ### Changed
 
+- **Self-host health checks** — Deploy completes on artifact + local HTTP 200 (`selfhost.check` in last-run); optional `--serve` ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Self-host Deploy stream** — `shipctl selfhost` detects static root, streams phases, writes last-run; Deployment **Deploy** opens Output dock ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Self-host catalog** — Deployment **Self-host** local-auto card (Orbit only when `orbit_configured`) ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Studio self-host (design)** — local-auto lane: stream deploy + non-step checks (disk/CLI verify); Docker cousin, not vendor Confirm; Orbit gated ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))

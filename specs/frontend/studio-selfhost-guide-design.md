@@ -1,6 +1,6 @@
 # Studio self-host — local auto lane (design)
 
-**Status:** Slice 1–2 shipped (catalog + stream Deploy) — health checks queued  
+**Status:** Slice 1–3 shipped (catalog · stream Deploy · non-step health) — Publish Auto step queued  
 **Updated:** 2026-09-26  
 **Parents:** [platforms-catalog-design](./platforms-catalog-design.md) · [container-final-mile-design](../backend/container-final-mile-design.md) · [verify-status-layers-design](../backend/verify-status-layers-design.md) · [SCOPE-OF-SERVICE](../../docs/product/SCOPE-OF-SERVICE.md)  
 **Trigger:** Orbit Hosting card is not a SaaS host; operators want **self-host** as the lane Studio can actually own. Self-host is the easiest **local** feature to automate and the most controllable by Studio.
@@ -103,7 +103,7 @@ Publish progress: mark `selfhost.deploy` **Done** from verify — same honesty a
 | **0 — Spec** | This file + handoff queue | Review |
 | **1 — Catalog honesty** | Self-host card; gate Orbit; Docker-cousin blurb | **Done** (L1 `tsc`) |
 | **2 — Stream Deploy** | Wire Deploy → local command + terminal stream | **Done** — `shipctl selfhost` + Deployment Deploy; L1 tests · Harbor static |
-| **3 — Non-step checks** | Health/artifact/last-run → auto Done | L2 no Confirm; failed check stays pending |
+| **3 — Non-step checks** | Health/artifact/last-run → auto Done | **Done** — bind + GET 200 · `selfhost.check` in last-run |
 | **4 — Publish Auto step** | `selfhost.deploy` Continue path when signals present | L1 plan unit · L2 General/Advanced |
 | **5 — Detect matrix** | Studio monorepo · static preview · optional compose-up without stealing Dockerfile layouts | L2 fixtures |
 | **Later** | Richer probes · MCP watch · parity polish vs container | Separate activation |
@@ -128,4 +128,4 @@ Publish progress: mark `selfhost.deploy` **Done** from verify — same honesty a
 
 ## Activation
 
-Slices 1–2 shipped (`shipctl selfhost` streams; Deployment **Deploy**). Next code band = Slice 3 (non-step health checks) when maintainer activates. S1.1 GIF recording remains the session atomic step until then.
+Slices 1–3 shipped. Next code band = Slice 4 (`selfhost.deploy` Publish Auto) when maintainer activates. S1.1 GIF recording remains the session atomic step until then.

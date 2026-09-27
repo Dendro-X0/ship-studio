@@ -5757,8 +5757,8 @@ window.addEventListener("DOMContentLoaded", () => {
       const result = await run(["selfhost"], { quietToast: true });
       if (!result) return;
       if (result.cancelled) toast("selfhost cancelled", "err");
-      else if (result.ok) toast("Self-host ready — last-run written (health checks next)", "ok", 5000);
-      else toast("Self-host found no static surface — see Output", "err", 5000);
+      else if (result.ok) toast("Self-host check ok — done without Confirm", "ok", 5000);
+      else toast("Self-host check failed — see Output", "err", 5000);
       return;
     }
     await openUrl(wiz.openUrl);

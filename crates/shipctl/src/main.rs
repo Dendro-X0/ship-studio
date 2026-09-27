@@ -182,10 +182,13 @@ enum Commands {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
-    /// Local self-host lane — stream detect/validate; Studio-owned (not Orbit/SaaS).
+    /// Local self-host lane — stream detect/validate/health; Studio-owned (not Orbit/SaaS).
     Selfhost {
         #[arg(long, default_value = ".")]
         project: PathBuf,
+        /// Keep serving after health check until Cancel.
+        #[arg(long, default_value_t = false)]
+        serve: bool,
     },
     /// configure → sign → deploy (or print plan with --dry-run).
     Flow {
@@ -798,8 +801,8 @@ fn main() -> Result<()> {
                 bail!("orbit exited {code}");
             }
         }
-        Commands::Selfhost { project } => {
-            let _ = selfhost::run(&project)?;
+        Commands::Selfhost { project, serve } => {
+            let _ = selfhost::run(&project, selfhost::SelfhostOpts { serve })?;
         }
         Commands::Flow {
             project,
