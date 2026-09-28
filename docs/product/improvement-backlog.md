@@ -1,8 +1,8 @@
 # Ship Studio — improvement backlog
 
-**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 + S1.10–16 + **S1.2c A–F** + **Launch L3** shipped (working tree); next soft dogfood / **S1.1 shelf** / Launch L4  
+**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 + S1.10–16 + S1.2c + **Launch L1–L4** shipped (working tree); next soft dogfood / **S1.1 shelf**  
 **Updated:** 2026-09-28  
-**Cadence:** Soft dogfood · demo shelf · Launch L4 on demand  
+**Cadence:** Soft dogfood · demo shelf · commerce when Polar unlocks  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
@@ -130,11 +130,11 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 ---
 
-## Suggested order (post Launch L3)
+## Suggested order (post Launch L4)
 
 ```text
 Near
-1. Soft dogfood Harbor Desktop — Publish copy · workflow previews · Payments off
+1. Soft dogfood Harbor Desktop — primary host · Payments off · Publish copy
 2. S1.1       Demo shelf commit (maintainer)
 
 Commerce / site (when Polar unlocks — not a release blocker)
@@ -143,8 +143,7 @@ Commerce / site (when Polar unlocks — not a release blocker)
 5. S0.6       Polar env → host deploy dogfood (no Studio-held secrets)
 
 Value depth (activate one band at a time)
-6. Launch L4  primary host memory
-7. S2.4       MCP when a real ship asks
+6. S2.4       MCP when a real ship asks
 ```
 
 Earlier commerce-first order stays valid after Polar unlocks; do not block the week on Pay now.

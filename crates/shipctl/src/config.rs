@@ -62,6 +62,9 @@ pub struct StudioIntent {
     /// Launch L3 — show Payments lane even without Polar/Stripe detect.
     #[serde(default)]
     pub launch_payments: bool,
+    /// Launch L4 — primary Deployment host catalog id (`cloudflare`, `vercel`, …).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub primary_host: Option<String>,
 }
 
 fn default_sign_path() -> String {
@@ -1740,6 +1743,7 @@ pub fn intent_for(project: &Path) -> Result<StudioIntent> {
             .unwrap_or_default(),
         env_required: existing.as_ref().map(|e| e.env_required).unwrap_or(false),
         launch_payments: existing.as_ref().map(|e| e.launch_payments).unwrap_or(false),
+        primary_host: existing.as_ref().and_then(|e| e.primary_host.clone()),
     })
 }
 
@@ -1783,6 +1787,30 @@ pub fn launch_payments_for(project: &Path) -> bool {
         .flatten()
         .map(|s| s.launch_payments)
         .unwrap_or(false)
+}
+
+/// Persist Deployment primary host catalog id into `.ship/studio.json`.
+pub fn set_primary_host(project: &Path, host: Option<&str>) -> Result<StudioIntent> {
+    let mut intent_doc = intent_for(project)?;
+    intent_doc.primary_host = host
+        .map(|h| h.trim().to_ascii_lowercase())
+        .filter(|h| !h.is_empty());
+    let dir = ship_dir(Path::new(&intent_doc.project));
+    fs::create_dir_all(&dir).context("mkdir .ship")?;
+    let path = studio_path(Path::new(&intent_doc.project));
+    fs::write(&path, serde_json::to_string_pretty(&intent_doc)?)
+        .with_context(|| format!("write {}", path.display()))?;
+    Ok(intent_doc)
+}
+
+/// Launch L4 — remembered primary Deployment host (`cloudflare`, `vercel`, …).
+pub fn primary_host_for(project: &Path) -> Option<String> {
+    read_studio(project)
+        .ok()
+        .flatten()
+        .and_then(|s| s.primary_host)
+        .map(|h| h.trim().to_ascii_lowercase())
+        .filter(|h| !h.is_empty())
 }
 
 /// Local intent keeps `env.sprint` when studio says so or markets opts into `env`.

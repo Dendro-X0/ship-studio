@@ -279,14 +279,32 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         })
         .collect();
     if !host_logins.is_empty() {
+        let primary = config::primary_host_for(project);
+        let detail = if let Some(ref host) = primary {
+            let label = match host.as_str() {
+                "cloudflare" => "Cloudflare",
+                "vercel" => "Vercel",
+                "netlify" => "Netlify",
+                "fly" => "Fly",
+                "railway" => "Railway",
+                other => other,
+            };
+            format!(
+                "Open Deployment for {} (primary) — Login CLI / Put / dashboard there, then Verify → Confirm. Detected also: {}.",
+                label,
+                host_logins.join(" · ")
+            )
+        } else {
+            format!(
+                "Open Deployment for {} — pick one primary host, Login CLI / Put / dashboard there, then Verify → Confirm.",
+                host_logins.join(" · ")
+            )
+        };
         steps.push(step_with_view(
             "oauth.hosts",
             "Deployment — host login / Put secrets",
             StepKind::Oauth,
-            &format!(
-                "Open Deployment for {} — Login CLI / Put / dashboard there, then Verify → Confirm.",
-                host_logins.join(" · ")
-            ),
+            &detail,
             None,
             Some("Confirm after host login (or Verify when whoami succeeds)".into()),
             None,
@@ -1098,40 +1116,90 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, LaunchView)> {
             )
         }
         StepKind::Oauth if step.id == "oauth.hosts" || step.id.starts_with("oauth.") => {
-            // Collapsed host gate — any logged-in deploy CLI counts; else Confirm after Deployment.
-            let mut ok_any = false;
-            let mut msgs: Vec<String> = Vec::new();
-            if let Ok((code, text)) = run_capture("wrangler", &["whoami"], project) {
-                let good = code == 0 && !text.to_lowercase().contains("not logged");
-                ok_any |= good;
-                msgs.push(if good {
-                    "wrangler ok".into()
-                } else {
-                    "wrangler not logged in".into()
-                });
-            }
-            if let Ok((code, _)) = run_capture("vercel", &["whoami"], project) {
-                ok_any |= code == 0;
-                msgs.push(if code == 0 {
-                    "vercel ok".into()
-                } else {
-                    "vercel not logged in".into()
-                });
-            }
-            if let Ok((code, _)) = run_capture("netlify", &["status"], project) {
-                ok_any |= code == 0;
-                msgs.push(if code == 0 {
-                    "netlify ok".into()
-                } else {
-                    "netlify not logged in".into()
-                });
-            }
+            // L4 — verify remembered primary host only; else any Tier-A login (legacy).
+            let primary = config::primary_host_for(project);
+            let check_one = |bin: &str, args: &[&str]| -> (bool, String) {
+                match run_capture(bin, args, project) {
+                    Ok((code, text)) => {
+                        let good = code == 0
+                            && !text.to_lowercase().contains("not logged")
+                            && !text.to_lowercase().contains("not authenticated");
+                        (
+                            good,
+                            if good {
+                                format!("{bin} ok")
+                            } else {
+                                format!("{bin} not logged in")
+                            },
+                        )
+                    }
+                    Err(_) => (false, format!("{bin} missing")),
+                }
+            };
+            let (ok, msg) = match primary.as_deref() {
+                Some("cloudflare") => {
+                    let (ok, m) = check_one("wrangler", &["whoami"]);
+                    (ok, format!("primary Cloudflare — {m}"))
+                }
+                Some("vercel") => {
+                    let (ok, m) = check_one("vercel", &["whoami"]);
+                    (ok, format!("primary Vercel — {m}"))
+                }
+                Some("netlify") => {
+                    let (ok, m) = check_one("netlify", &["status"]);
+                    (ok, format!("primary Netlify — {m}"))
+                }
+                Some("fly") => {
+                    let (ok, m) = check_one("fly", &["auth", "whoami"]);
+                    (ok, format!("primary Fly — {m}"))
+                }
+                Some("railway") => {
+                    let (ok, m) = check_one("railway", &["whoami"]);
+                    (ok, format!("primary Railway — {m}"))
+                }
+                Some("selfhost") | Some("orbit") | Some("github-pages") => (
+                    true,
+                    format!(
+                        "primary {} — no OAuth whoami; Confirm after Deployment work",
+                        primary.as_deref().unwrap_or("host")
+                    ),
+                ),
+                Some(other) => (
+                    false,
+                    format!("unknown primary host «{other}» — pick a Deployment card"),
+                ),
+                None => {
+                    // Legacy: any logged-in deploy CLI counts until a primary is chosen.
+                    let mut ok_any = false;
+                    let mut msgs: Vec<String> = Vec::new();
+                    let (w_ok, w_m) = check_one("wrangler", &["whoami"]);
+                    ok_any |= w_ok;
+                    msgs.push(w_m);
+                    let (v_ok, v_m) = check_one("vercel", &["whoami"]);
+                    ok_any |= v_ok;
+                    msgs.push(v_m);
+                    let (n_ok, n_m) = check_one("netlify", &["status"]);
+                    ok_any |= n_ok;
+                    msgs.push(n_m);
+                    (
+                        ok_any,
+                        if ok_any {
+                            format!("host login ok ({})", msgs.join(" · "))
+                        } else {
+                            "Open Deployment → pick a primary host + Login CLI, then Verify / Confirm"
+                                .into()
+                        },
+                    )
+                }
+            };
             (
-                ok_any,
-                if ok_any {
-                    format!("host login ok ({})", msgs.join(" · "))
+                ok,
+                if ok {
+                    msg
+                } else if primary.is_some() {
+                    format!("{msg}. Open Deployment → Login CLI for that host, then Verify / Confirm")
                 } else {
-                    "Open Deployment → Login CLI, then Verify / Confirm".into()
+                    msg
                 },
             )
         }
@@ -1574,6 +1642,40 @@ edition = \"2021\"
         assert_eq!(sync.entry_url.as_deref(), Some("https://ship.example"));
         assert!(sync.detail.contains("NEXT_PUBLIC_X_URL"));
         let _ = fs::remove_dir_all(&suite);
+    }
+
+    #[test]
+    fn launch_primary_host_names_oauth_detail() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-launch-primary-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("wrangler.toml"), "name = \"x\"\n").unwrap();
+        fs::write(dir.join("vercel.json"), "{}\n").unwrap();
+        let _ = config::configure(&dir).unwrap();
+        let _ = config::set_primary_host(&dir, Some("cloudflare")).unwrap();
+        let _ = fs::remove_file(config::ship_dir(&dir).join("launch.json"));
+        let state = load_or_build(&dir).unwrap();
+        let oauth = state
+            .steps
+            .iter()
+            .find(|s| s.id == "oauth.hosts")
+            .expect("oauth.hosts");
+        assert!(
+            oauth.detail.contains("Cloudflare") && oauth.detail.contains("primary"),
+            "detail={}",
+            oauth.detail
+        );
+        assert_eq!(
+            config::primary_host_for(&dir).as_deref(),
+            Some("cloudflare")
+        );
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]

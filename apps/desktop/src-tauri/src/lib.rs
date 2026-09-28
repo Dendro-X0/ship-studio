@@ -586,6 +586,47 @@ fn set_launch_payments(project: String, enabled: bool) -> Result<serde_json::Val
     Ok(studio)
 }
 
+/// Launch L4 — remember Deployment primary host in `.ship/studio.json`.
+#[tauri::command]
+fn set_primary_host(project: String, host_id: String) -> Result<serde_json::Value, String> {
+    let project_path = Path::new(&project);
+    if !project_path.is_dir() {
+        return Err(format!("not a directory: {project}"));
+    }
+    let dir = ship_dir(project_path);
+    fs::create_dir_all(&dir).map_err(|e| format!("mkdir .ship: {e}"))?;
+    let path = dir.join("studio.json");
+
+    let mut studio = if path.is_file() {
+        let raw = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        serde_json::from_str::<serde_json::Value>(&raw).map_err(|e| e.to_string())?
+    } else {
+        serde_json::json!({
+            "schema": "ship-studio/v0",
+            "project": project,
+            "workflow": ["doctor", "configure", "sign (signet)", "deploy (orbit)"],
+            "adapters": { "signet": "signet", "orbit": "orbit" },
+            "offline_bridge": true,
+            "notes": []
+        })
+    };
+
+    let obj = studio
+        .as_object_mut()
+        .ok_or_else(|| "studio.json is not an object".to_string())?;
+    let host = host_id.trim().to_ascii_lowercase();
+    if host.is_empty() {
+        obj.remove("primary_host");
+    } else {
+        obj.insert("primary_host".into(), serde_json::Value::String(host));
+    }
+    obj.insert("project".into(), serde_json::Value::String(project.clone()));
+
+    let pretty = serde_json::to_string_pretty(&studio).map_err(|e| e.to_string())?;
+    fs::write(&path, pretty).map_err(|e| format!("write {}: {e}", path.display()))?;
+    Ok(studio)
+}
+
 #[tauri::command]
 fn write_temp_json(path: String, json: String) -> Result<String, String> {
     let p = PathBuf::from(&path);
@@ -769,6 +810,7 @@ pub fn run() {
             load_ship_state,
             save_ritual_args,
             set_launch_payments,
+            set_primary_host,
             resolve_shipctl_path,
             write_temp_json,
             write_vault_entries_temp,

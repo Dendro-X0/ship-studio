@@ -3037,6 +3037,7 @@ function openPlatformsCatalog(opts?: { preferGroup?: string; selectId?: string }
   }
   const preferredHost = preferredHostingPlatformId(lastDetected);
   if (opts?.selectId) selectedPlatform = opts.selectId;
+  else if (savedPrimaryHost()) selectedPlatform = savedPrimaryHost()!;
   else selectedPlatform = preferredHost ?? "selfhost";
   if (!projectPath()) {
     toast("Bind a project first", "info");
@@ -3044,6 +3045,12 @@ function openPlatformsCatalog(opts?: { preferGroup?: string; selectId?: string }
   }
   setView("platforms");
   selectPlatform(selectedPlatform);
+}
+
+let rememberedPrimaryHost: string | null = null;
+
+function savedPrimaryHost(): string | null {
+  return rememberedPrimaryHost;
 }
 
 function openSignCatalog(opts?: { selectId?: string }) {
@@ -3114,7 +3121,11 @@ function renderPlatforms() {
   if (!host) return;
   const entries = deployCatalogEntries();
   if (!entries.some((e) => e.id === selectedPlatform)) {
-    selectedPlatform = preferredHostingPlatformId(lastDetected) ?? entries[0]?.id ?? "selfhost";
+    selectedPlatform =
+      savedPrimaryHost() ??
+      preferredHostingPlatformId(lastDetected) ??
+      entries[0]?.id ??
+      "selfhost";
   }
   renderProviderCatalogGrid({
     host,
@@ -3138,6 +3149,11 @@ function selectPlatform(id: string) {
     return;
   }
   selectedPlatform = id;
+  rememberedPrimaryHost = id;
+  const project = projectPath();
+  void invoke("set_primary_host", { project, hostId: id }).catch((err) => {
+    console.warn(err);
+  });
   if (activeViewId !== "platforms") setView("platforms");
   else renderPlatforms();
 }
@@ -6998,8 +7014,9 @@ function applyDetected(detected?: Detected) {
     });
   }
   // Soft-select Deployment host card when already on the view (no navigation).
+  // Do not stomp an explicit primary_host from studio.json.
   const preferred = preferredHostingPlatformId(detected);
-  if (preferred && activeViewId === "platforms") {
+  if (preferred && activeViewId === "platforms" && !savedPrimaryHost()) {
     if (selectedPlatform !== preferred) {
       selectedPlatform = preferred;
       renderPlatforms();
@@ -7084,6 +7101,12 @@ function applyStudio(studio: ShipState["studio"]) {
     }
   }
   syncLaunchPaymentsToggle(Boolean(studio?.launch_payments));
+  const host = (studio?.primary_host ?? "").trim().toLowerCase();
+  rememberedPrimaryHost = host || null;
+  if (host) {
+    selectedPlatform = host;
+    if (activeViewId === "platforms") renderPlatforms();
+  }
 }
 
 function syncLaunchPaymentsToggle(on: boolean) {

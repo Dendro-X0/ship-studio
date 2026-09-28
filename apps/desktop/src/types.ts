@@ -226,6 +226,7 @@ export type ShipState = {
     notes?: string[];
     detected?: Detected;
     launch_payments?: boolean;
+    primary_host?: string | null;
   } | null;
   last_run: {
     ok?: boolean;

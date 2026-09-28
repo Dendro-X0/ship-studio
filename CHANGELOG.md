@@ -13,6 +13,7 @@
 
 ### Added
 
+- **Launch primary host (L4)** — Deployment card selection writes `primary_host` to studio.json; Launch `oauth.hosts` Verify checks that host only ([design](./specs/frontend/launch-choice-board-design.md))
 - **Launch Payments opt-in (L3)** — Payments lane off by default; Launch **Payments** toggle writes `launch_payments` to studio.json ([design](./specs/frontend/launch-choice-board-design.md))
 - **Public Publish UX A–F (S1.2c)** — Plain copy (Open this step · checklist · We'll check…); workflow cards preview ~steps/~min; General already quiets More ([design](./specs/frontend/public-publish-ux-design.md))
 - **Targets catalog depth (S1.16)** — Folder · Deploy on cards; auto-detect on bind; dirty **Save changes** cue ([design](./specs/frontend/targets-catalog-parity-design.md))
