@@ -166,10 +166,10 @@
               </button>
             </div>
             <div class="mode-switch intent-switch" role="group" aria-label="Ship intent">
-              <button type="button" id="intent-local" class="intent-btn active" data-intent="local" title="Local cut — no hosted env/deploy/stores">
+              <button type="button" id="intent-local" class="intent-btn active" data-intent="local" title="Local — sign and ship on this machine; hosted env, deploy, and store listings stay off the plan.">
                 Local
               </button>
-              <button type="button" id="intent-public" class="intent-btn" data-intent="public" title="Public final-mile when signals match">
+              <button type="button" id="intent-public" class="intent-btn" data-intent="public" title="Public — hosted deploy and commerce listings appear when this repo has those signals.">
                 Public
               </button>
             </div>
@@ -208,6 +208,7 @@
                 <h2 id="session-name">—</h2>
                 <p class="session-path" id="session-path"></p>
                 <p class="session-kind" id="session-kind"></p>
+                <p class="intent-cue" id="intent-cue" hidden></p>
                 <div class="chips" id="detect-chips" hidden></div>
               </div>
             </section>
@@ -494,6 +495,13 @@
                 <ol class="int-steps" id="sign-wizard-steps"></ol>
                 <div class="hero-cta int-actions">
                   <button type="button" class="primary" id="sign-open">Open dashboard</button>
+                  <button
+                    type="button"
+                    id="sign-confirm-gate"
+                    title="Confirm the matching Publish signing gate when it is current"
+                  >
+                    Confirm gate
+                  </button>
                   <button type="button" id="sign-continue-publish" title="Return to the Publish spine">
                     Continue publishing
                   </button>
@@ -672,6 +680,13 @@
                   <button type="button" id="plat-dashboard" hidden>Open dashboard</button>
                   <button type="button" id="plat-docs" hidden>Learn more</button>
                   <button type="button" id="plat-portal-steps" hidden>Portal steps</button>
+                  <button
+                    type="button"
+                    id="plat-confirm-gate"
+                    title="Confirm Live check / host gate when it is current on Publish"
+                  >
+                    Confirm gate
+                  </button>
                   <button type="button" id="plat-continue-publish" title="Return to the Publish spine">
                     Continue publishing
                   </button>
@@ -693,10 +708,26 @@
               <aside class="int-wizard" id="integrations-wizard" hidden>
                 <h2 id="int-wizard-title">Wizard</h2>
                 <p class="hint" id="int-wizard-blurb"></p>
+                <p class="int-done-cue" id="int-wizard-done" hidden></p>
                 <ol class="int-steps" id="int-wizard-steps"></ol>
                 <div class="hero-cta int-actions">
                   <button type="button" class="primary" id="int-open">Open dashboard</button>
+                  <button
+                    type="button"
+                    id="int-put"
+                    hidden
+                    title="Put the named secret on the detected deploy host — paste only in the terminal"
+                  >
+                    Put key
+                  </button>
                   <button type="button" id="int-portal-steps" hidden>Portal steps</button>
+                  <button
+                    type="button"
+                    id="int-confirm-gate"
+                    title="Confirm the matching Publish listing gate when it is current"
+                  >
+                    Confirm gate
+                  </button>
                   <button type="button" id="int-continue-publish" title="Return to the Publish spine">
                     Continue publishing
                   </button>

@@ -13,6 +13,10 @@
 
 ### Added
 
+- **Resend wizard parity (S1.13)** — **Put RESEND_API_KEY** on detected host; Confirm/Continue prefer `env.sprint` ([design](./specs/frontend/resend-wizard-parity-design.md))
+- **Provider done criteria (S1.12)** — Integrations wizard **Done when…** lines (Verify = human attest) ([design](./specs/frontend/provider-done-criteria-design.md))
+- **Local / Public intent cue (S1.14)** — Dashboard shows one sentence for Local vs Public; topbar toggle titles match
+- **Wizard Confirm gate (S1.11)** — Integrations / Deployment / Sign **Confirm gate** advances the matching Publish step when it is current (else Open Publish) ([design](./specs/frontend/wizard-completion-confirm-design.md))
 - **Integrations → Publish handoff (S1.10)** — **Continue publishing** names/focuses matching `listing.*` (Confirm CTA when current); commerce Publish Related opens Integrations ([design](./specs/frontend/integrations-publish-handoff-design.md))
 - **In-app update check (S0.8)** — Desktop notices newer GitHub Releases; toast **Open download** / Later (snooze); never silent auto-install ([design](./specs/frontend/in-app-update-check-design.md))
 - **Integrations nav (S1.19)** — Ship → single **Integrations** item (Payments/Email catalog on-page); sidebar provider tree removed ([design](./specs/frontend/integrations-nav-design.md))

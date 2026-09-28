@@ -81,12 +81,39 @@ export const INTEGRATION_WIZARDS: IntegrationWizard[] = [
     title: "Resend",
     blurb: "Transactional email API key.",
     openUrl: "https://resend.com/api-keys",
+    openLabel: "Open API keys",
     needsPublic: false,
     steps: [
-      "Open Resend → API keys and create a key.",
-      "Env → Put RESEND_API_KEY on the deploy host (terminal) — do not paste the value into Studio.",
+      "Open Resend → API keys and create a key (Studio never stores it).",
+      "Put RESEND_API_KEY on the deploy host (Cloudflare / Vercel / Netlify) via Put key — paste only in the terminal.",
       "Send a test from the Resend UI. Studio never sends mail.",
-      "Continue publishing when Publish has an email / notify gate — Confirm after the key is live on the host.",
+      "Confirm gate when Publish shows env.sprint (Public) — or Continue publishing to that checkpoint.",
     ],
   },
 ];
+
+/** Operator-facing “done” line — Verify stays human attest (S1.12). */
+export const INTEGRATION_DONE_CRITERIA: Record<string, string> = {
+  polar:
+    "Done when: Polar checkout live · PUBLIC_POLAR_* set outside Studio · Confirm listing.polar (Verify = human attest).",
+  stripe:
+    "Done when: Stripe product/Payment Link live · keys on host outside Studio · Confirm listing.stripe (Verify = human attest).",
+  gumroad:
+    "Done when: Gumroad product/checkout live · Confirm listing.gumroad (Verify = human attest).",
+  lemon:
+    "Done when: Lemon checkout + fulfillment email work · Confirm listing.lemon (Verify = human attest).",
+  paddle:
+    "Done when: Paddle checkout live · keys on host outside Studio · Confirm listing.paddle (Verify = human attest).",
+  resend:
+    "Done when: RESEND_API_KEY on the deploy host · test send on Resend · Confirm env.sprint when current (Verify = human attest).",
+};
+
+/** Publish step to focus / Confirm from an Integrations wizard (S1.10 / S1.13). */
+export const INTEGRATION_PUBLISH_STEP: Record<string, string> = {
+  polar: "listing.polar",
+  stripe: "listing.stripe",
+  gumroad: "listing.gumroad",
+  lemon: "listing.lemon",
+  paddle: "listing.paddle",
+  resend: "env.sprint",
+};

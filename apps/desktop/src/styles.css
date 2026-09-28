@@ -881,6 +881,14 @@ body::before {
   line-height: 1.5;
 }
 
+.int-done-cue {
+  margin: 0.35rem 0 0.55rem;
+  max-width: 36rem;
+  color: color-mix(in srgb, var(--accent-text) 70%, var(--muted));
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .session-path {
   margin: 0.4rem 0 0;
   font-family: var(--mono);

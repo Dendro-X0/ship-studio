@@ -6,12 +6,15 @@
 
 ## Next Atomic Step
 
-**S1.11** Wizard completion Confirm (or **S1.1** shelf commit when maintainer asks). Soft dogfood: Integrations Polar → Continue publishing names `listing.polar`.
+**S1.15** Dirty-tree Publish cue — or **S1.16** Targets S2 if Harbor dogfood asks. Soft dogfood: Resend Put + Confirm gate → env.sprint.
 
 ## Design queue (not coding until activated)
 
 | Item | Spec |
 |------|------|
+| S1.13 Resend parity | [resend-wizard-parity-design](../../specs/frontend/resend-wizard-parity-design.md) (**shipped**) |
+| S1.12 Done criteria | [provider-done-criteria-design](../../specs/frontend/provider-done-criteria-design.md) (**slice 1**) |
+| S1.11 Wizard Confirm | [wizard-completion-confirm-design](../../specs/frontend/wizard-completion-confirm-design.md) (**shipped**) |
 | S1.10 Integrations → Publish | [integrations-publish-handoff-design](../../specs/frontend/integrations-publish-handoff-design.md) (**shipped**) |
 | S0.8 update check | [in-app-update-check-design](../../specs/frontend/in-app-update-check-design.md) (**shipped** L1) |
 | Integrations nav (S1.19) | [integrations-nav-design](../../specs/frontend/integrations-nav-design.md) (**shipped**) |
@@ -37,6 +40,10 @@
 
 | Band | Link |
 |------|------|
+| **S1.13 Resend parity** | [design](../../specs/frontend/resend-wizard-parity-design.md) — Put key · env.sprint Confirm |
+| **S1.12 Done criteria S1** | [design](../../specs/frontend/provider-done-criteria-design.md) — Done when… human attest |
+| **S1.14 Local / Public cue** | Dashboard intent one-liners |
+| **S1.11 Wizard Confirm** | [design](../../specs/frontend/wizard-completion-confirm-design.md) — Confirm gate on catalog wizards |
 | **S1.10 Integrations → Publish** | [design](../../specs/frontend/integrations-publish-handoff-design.md) — Continue publishing → listing focus |
 | **S0.8 in-app update check** | [design](../../specs/frontend/in-app-update-check-design.md) — notice release · Open download |
 | **Integrations nav S1.19** | [design](../../specs/frontend/integrations-nav-design.md) — single Ship Integrations item |

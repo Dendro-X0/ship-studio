@@ -85,10 +85,10 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 |----|------|-------|
 | **S1.19** | **Ship nav shell consistency** | **Done** — Targets + Integrations are single Ship items (Sign/Deployment pattern). Spec: [integrations-nav-design](../../specs/frontend/integrations-nav-design.md) |
 | S1.10 | **Integrations → Publish handoff** | **Done** — Continue publishing names/focuses `listing.*`; commerce Related → Integrations — [design](../../specs/frontend/integrations-publish-handoff-design.md) |
-| S1.11 | **Wizard completion Confirm** | After Open dashboard + paste env, explicit Confirm so `.ship/publish.json` advances |
-| S1.12 | **Provider “done” criteria** | Per Polar/Stripe/…: what Verify checks (URL present vs webhook live) — stay honest · pairs with [verify-status-layers-design](../../specs/backend/verify-status-layers-design.md) |
-| S1.13 | **Resend / email wizard parity** | Same Open → checklist → Confirm pattern as Polar |
-| S1.14 | **Local vs Public intent copy** | Make Local/Public toggle consequences one sentence each on Dashboard |
+| S1.11 | **Wizard completion Confirm** | **Done** — **Confirm gate** on Integrations / Deployment / Sign when matching Publish step is current — [design](../../specs/frontend/wizard-completion-confirm-design.md) |
+| S1.12 | **Provider “done” criteria** | **Slice 1 done** — wizard **Done when…** lines (human attest) — [design](../../specs/frontend/provider-done-criteria-design.md) |
+| S1.13 | **Resend / email wizard parity** | **Done** — Put RESEND_API_KEY · Confirm/Continue → `env.sprint` — [design](../../specs/frontend/resend-wizard-parity-design.md) |
+| S1.14 | **Local vs Public intent copy** | **Done** — Dashboard `#intent-cue` + topbar titles (one sentence each) |
 | S1.15 | **Dirty-tree Publish cue** | Dirty-on-main warnings: optional soft gate before release steps |
 | S1.16 | **Targets catalog depth** | Slice 2–3 — Open folder / jump Deployment · auto-detect on bind · dirty Save cue — [targets-catalog-parity-design](../../specs/frontend/targets-catalog-parity-design.md) |
 | S1.17 | **Multi-project portfolio cue** | Recents / suite-oriented “next repo to ship” for 30+ OSS indies — stay local, no cloud hub |
@@ -130,24 +130,22 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 ---
 
-## Suggested order (post S1.10 · working tree)
+## Suggested order (post S1.13 · working tree)
 
 ```text
-Near (maintainer / dogfood)
-1. S1.1       Commit demo shelf (T1–T7 already on /demo) when ready
-2. Soft dogfood S1.10 — Polar Continue publishing → listing.polar
-3. S1.11      Wizard completion Confirm (explicit after Open)
-4. S1.16      Targets S2/S3 only if Harbor dogfood asks
+Near (honesty / Targets)
+1. Soft dogfood S1.11–13 — Confirm gate · Resend Put · Done when lines
+2. S1.15      Dirty-tree Publish cue
+3. S1.16      Targets S2/S3 only if Harbor dogfood asks
 
 Commerce / site (when Polar unlocks — not a release blocker)
-5. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL
-6. S0.1–S0.2  Live buy/refund when payment_ready
-7. S0.6       Polar env → host deploy dogfood (no Studio-held secrets)
+4. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL
+5. S0.1–S0.2  Live buy/refund when payment_ready
+6. S0.6       Polar env → host deploy dogfood (no Studio-held secrets)
 
 Value depth (activate one band at a time)
-8. S1.12–13   Provider done criteria · Resend parity
-9. S1.2c D–F  Public Publish UX remaining slices
-10. S2.4       MCP ship_* wrappers when a real agent ship needs them
+7. S1.2c D–F  Public Publish UX remaining slices
+8. S2.4       MCP ship_* wrappers when a real agent ship needs them
 ```
 
 Earlier commerce-first order stays valid after Polar unlocks; do not block the week on Pay now.

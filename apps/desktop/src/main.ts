@@ -23,7 +23,7 @@ import {
   integrationIconHtml,
   providerIconHtml,
 } from "./icons";
-import { INTEGRATION_WIZARDS } from "./integrations-data";
+import { INTEGRATION_WIZARDS, INTEGRATION_DONE_CRITERIA, INTEGRATION_PUBLISH_STEP } from "./integrations-data";
 import { PLATFORM_GROUPS, PLATFORM_WIZARDS, SIGN_GROUPS, hostingCatalogEntries, signingCatalogEntries } from "./platforms-data";
 import {
   paintProviderWizard,
@@ -105,6 +105,7 @@ function applyShipIntent(intent: ShipIntent, opts?: { rebuild?: boolean }) {
   document.querySelectorAll<HTMLButtonElement>(".intent-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.intent === intent);
   });
+  syncIntentCue();
   syncNowQuick();
   if (activeViewId === "platforms") {
     renderPlatforms();
@@ -131,6 +132,22 @@ function applyShipIntent(intent: ShipIntent, opts?: { rebuild?: boolean }) {
       await refreshSessionNow();
     })();
   }
+}
+
+/** S1.14 — one-sentence Local / Public consequences on Dashboard. */
+function syncIntentCue() {
+  const el = document.querySelector<HTMLElement>("#intent-cue");
+  if (!el) return;
+  if (!projectPath()) {
+    el.hidden = true;
+    el.textContent = "";
+    return;
+  }
+  el.hidden = false;
+  el.textContent =
+    shipIntent() === "local"
+      ? "Local — sign and ship on this machine; hosted env, deploy, and store listings stay off the plan."
+      : "Public — hosted deploy and commerce listings appear when this repo has those signals.";
 }
 
 function applyStudioMode(mode: StudioMode, opts?: { rebuild?: boolean }) {
@@ -391,6 +408,7 @@ function setProjectUi(on: boolean) {
   syncDeployToggle();
   syncPublishGateButtons();
   syncPublishRelated();
+  syncIntentCue();
   syncBackToPublish();
 }
 
@@ -2855,15 +2873,44 @@ function selectIntegration(id: string) {
 
 function paintIntegrationWizard() {
   const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration) ?? null;
+  const putName = selectedIntegration === "resend" ? "RESEND_API_KEY" : null;
+  const putHost = putName ? preferredEnvPutHost() : null;
   paintProviderWizard({
     entry: wiz,
     panel: document.querySelector<HTMLElement>("#integrations-wizard"),
     titleEl: document.querySelector("#int-wizard-title"),
     blurbEl: document.querySelector("#int-wizard-blurb"),
     stepsEl: document.querySelector("#int-wizard-steps"),
+    openBtn: document.querySelector<HTMLButtonElement>("#int-open"),
     secondaryBtn: document.querySelector<HTMLButtonElement>("#int-portal-steps"),
     secondaryVisible: Boolean(wiz?.provider && isPortalProvider(wiz.provider)),
+    putBtn: document.querySelector<HTMLButtonElement>("#int-put"),
+    putVisible: Boolean(putName),
   });
+  const putBtn = document.querySelector<HTMLButtonElement>("#int-put");
+  if (putBtn && putName) {
+    putBtn.textContent = putHost ? `Put ${putName}` : "Put key (need host)";
+    putBtn.title = putHost
+      ? `Put ${putName} on ${putHost} — paste only in the terminal`
+      : "Detect Cloudflare, Vercel, or Netlify first — Put targets the deploy host";
+    putBtn.disabled = !putHost || !projectPath();
+  }
+  const doneEl = document.querySelector<HTMLElement>("#int-wizard-done");
+  if (doneEl) {
+    const cue = wiz ? INTEGRATION_DONE_CRITERIA[wiz.id] : "";
+    doneEl.hidden = !cue;
+    doneEl.textContent = cue || "";
+  }
+}
+
+/** Tier A host for Integrations Env Put (Resend key lives on the deploy host). */
+function preferredEnvPutHost(detected?: Detected | null): string | null {
+  const d = detected ?? lastDetected ?? null;
+  if (!d) return null;
+  if (d.wrangler) return "cloudflare";
+  if (d.vercel) return "vercel";
+  if (d.netlify) return "netlify";
+  return null;
 }
 
 function preferredHostingPlatformId(detected?: Detected | null): string | null {
@@ -5524,15 +5571,6 @@ async function refreshPublish() {
   }
 }
 
-/** Commerce wizard → Publish listing step id (Resend has no listing.*). */
-const INTEGRATION_LISTING_STEP: Record<string, string> = {
-  polar: "listing.polar",
-  stripe: "listing.stripe",
-  gumroad: "listing.gumroad",
-  lemon: "listing.lemon",
-  paddle: "listing.paddle",
-};
-
 function focusPublishStepIndex(index: number) {
   if (!lastPublish?.steps?.length) return;
   const i = Math.max(0, Math.min(index, lastPublish.steps.length - 1));
@@ -5630,6 +5668,89 @@ async function continuePublishingHandoff(opts: {
     "ok",
     7000,
   );
+}
+
+/**
+ * S1.11 — Confirm the matching Publish gate from a catalog wizard (human intent only).
+ * Refuses when the preferred step is missing or not current.
+ */
+async function confirmWizardPublishGate(opts: {
+  preferredStepId?: string | null;
+  preferFromView?: (view: PublishView) => string | null;
+  missingHint: string;
+  handoffMissingHint: string;
+  handoffGenericHint: string;
+}): Promise<void> {
+  if (!projectPath()) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  const result = await run(publishArgs(), {
+    step: "paste",
+    quietHeader: true,
+    quietToast: true,
+  });
+  if (!result?.ok || !result.stdout) {
+    toast(result?.cancelled ? "Publish cancelled" : "Could not load publish plan", "err");
+    return;
+  }
+  let view: PublishView;
+  try {
+    view = JSON.parse(result.stdout) as PublishView;
+  } catch {
+    toast("Publish output was not JSON", "err");
+    return;
+  }
+  // Refresh plan state without yanking the operator off the wizard yet.
+  applyPublishView(view, { reveal: false });
+
+  const preferred = (
+    opts.preferredStepId ??
+    opts.preferFromView?.(view) ??
+    ""
+  ).trim();
+  if (!preferred) {
+    toast(opts.missingHint, "info", 6500);
+    return;
+  }
+  const steps = view.steps ?? [];
+  const idx = steps.findIndex((s) => (s.id ?? "") === preferred);
+  if (idx < 0) {
+    toast(opts.missingHint, "info", 6500);
+    return;
+  }
+  const step = steps[idx];
+  const title =
+    (step.title ?? preferred).replace(/\s*—\s*.*$/, "").trim() || preferred;
+  const status = (step.status ?? "").toLowerCase();
+  const isCurrent =
+    (view.current_index ?? -1) === idx || (view.current?.id ?? "") === preferred;
+
+  if (status === "done" || status === "skipped") {
+    toast(`«${title}» already confirmed — Continue publishing for the next gate`, "ok", 5000);
+    return;
+  }
+  if (!isCurrent) {
+    toast(`«${title}» isn’t the current Publish gate yet`, "info", 8000, [
+      {
+        id: "open-publish",
+        label: "Open Publish",
+        icon: "open",
+        run: () => {
+          void continuePublishingHandoff({
+            preferredStepId: preferred,
+            missingHint: opts.handoffMissingHint,
+            genericHint: opts.handoffGenericHint,
+          });
+        },
+      },
+    ]);
+    return;
+  }
+
+  setView("publish");
+  focusPublishStepIndex(idx);
+  await publishAction(["confirm"]);
 }
 
 function preferredDeployPublishStep(view: PublishView | null): string | null {
@@ -7136,13 +7257,47 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     void openPortalProvider(wiz.provider);
   });
+  document.querySelector("#int-put")?.addEventListener("click", () => {
+    if (selectedIntegration !== "resend") {
+      toast("Put key is for Resend — use Portal / Env for other secrets", "info");
+      return;
+    }
+    if (!projectPath()) {
+      toast("Bind a project first", "info");
+      return;
+    }
+    const host = preferredEnvPutHost();
+    if (!host) {
+      toast("Put needs a Cloudflare, Vercel, or Netlify host in this repo", "info");
+      return;
+    }
+    void openEnvPutTerminal(host, "RESEND_API_KEY");
+  });
+  document.querySelector("#int-confirm-gate")?.addEventListener("click", () => {
+    const stepId = INTEGRATION_PUBLISH_STEP[selectedIntegration] ?? null;
+    void confirmWizardPublishGate({
+      preferredStepId: stepId,
+      missingHint: stepId
+        ? selectedIntegration === "resend"
+          ? "No env.sprint yet — switch to Public intent so env gates appear on Publish."
+          : "No matching listing step yet — use Advanced + Public with that provider detected."
+        : "No Publish gate mapped for this wizard — Continue publishing.",
+      handoffMissingHint:
+        selectedIntegration === "resend"
+          ? "No env.sprint yet — Public intent required. Publish is open."
+          : "No matching listing step yet — use Advanced + Public with that provider detected. Publish is open.",
+      handoffGenericHint: "Back on Publish — Confirm the current gate when ready",
+    });
+  });
   document.querySelector("#int-continue-publish")?.addEventListener("click", () => {
-    const listing = INTEGRATION_LISTING_STEP[selectedIntegration] ?? null;
+    const stepId = INTEGRATION_PUBLISH_STEP[selectedIntegration] ?? null;
     void continuePublishingHandoff({
-      preferredStepId: listing,
+      preferredStepId: stepId,
       missingHint:
-        "No matching listing step yet — use Advanced + Public with that provider detected. Publish is open.",
-      genericHint: "Back on Publish — Confirm env / notify gates when ready",
+        selectedIntegration === "resend"
+          ? "No env.sprint yet — Public intent required. Publish is open."
+          : "No matching listing step yet — use Advanced + Public with that provider detected. Publish is open.",
+      genericHint: "Back on Publish — Confirm the current gate when ready",
     });
   });
   document.querySelector("#plat-open")?.addEventListener("click", async () => {
@@ -7296,6 +7451,14 @@ window.addEventListener("DOMContentLoaded", () => {
     await openUrl(wiz.openUrl);
     toast(`Opened ${wiz.title} — finish on the vendor site`, "ok", 4500);
   });
+  document.querySelector("#sign-confirm-gate")?.addEventListener("click", () => {
+    void confirmWizardPublishGate({
+      preferFromView: preferredSignPublishStep,
+      missingHint: "No signing Publish gate yet — Open Publish to see the current checkpoint.",
+      handoffMissingHint: "Back on Publish — Confirm the signing gate when it is current",
+      handoffGenericHint: "Back on Publish — Confirm the signing gate when ready",
+    });
+  });
   document.querySelector("#sign-continue-publish")?.addEventListener("click", () => {
     void continuePublishingHandoff({
       preferFromView: preferredSignPublishStep,
@@ -7331,6 +7494,14 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
     void openPortalProvider(wiz.provider);
+  });
+  document.querySelector("#plat-confirm-gate")?.addEventListener("click", () => {
+    void confirmWizardPublishGate({
+      preferFromView: preferredDeployPublishStep,
+      missingHint: "No Live check / host gate yet — Open Publish to see the current checkpoint.",
+      handoffMissingHint: "Back on Publish — Confirm Live check or the host gate when it is current",
+      handoffGenericHint: "Back on Publish — Confirm Live check or the host gate when ready",
+    });
   });
   document.querySelector("#plat-continue-publish")?.addEventListener("click", () => {
     void continuePublishingHandoff({

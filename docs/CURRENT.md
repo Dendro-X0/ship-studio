@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3 (+ working-tree Desktop UX)  
 **Updated:** 2026-09-27  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Overhaul **O0–O5 done** · Hosted ops **H1–H5 done**. Working tree: Targets + Integrations single Ship nav · S0.8 update check. **Next:** S1.1 shelf commit (maintainer).
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Working tree: S1.11–14 + Resend Put. **Next:** S1.15 dirty-tree cue / S1.16 Targets S2.
 
 ## Truth pointers
 
