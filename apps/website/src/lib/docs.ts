@@ -29,7 +29,7 @@ export const DOC_PAGES: DocPage[] = [
   {
     slug: "human-gates",
     title: "Human gates",
-    description: "Paste, graduate, deploy — still on the operator.",
+    description: "Open → Confirm honesty — gates you attest, not unfinished bugs.",
     entryId: "product/operator-next",
   },
   {

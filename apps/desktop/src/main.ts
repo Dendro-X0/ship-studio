@@ -4390,6 +4390,9 @@ function classifyOverall(pulse: ProjectPulse): {
   }
 
   if (deployOk) {
+    const dirtyNote = pulse.git?.dirty
+      ? ` · ${pulse.git.dirty_count ?? "?"} uncommitted — not “all shipped”`
+      : "";
     return {
       state: "deployed",
       badge: "Deployed",
@@ -4398,9 +4401,9 @@ function classifyOverall(pulse: ProjectPulse): {
           ? "Already live (Orbit)"
           : "Already deployed",
       detail:
-        hostedDeployUrls(pulse.deploy)[0] ||
-        pulse.deploy?.detail ||
-        "Prior successful hosted deploy — redeploy only if you intend to.",
+        (hostedDeployUrls(pulse.deploy)[0] ||
+          pulse.deploy?.detail ||
+          "Prior successful hosted deploy — redeploy only if you intend to.") + dirtyNote,
     };
   }
   if (selfhostOk) {
@@ -4441,8 +4444,8 @@ function classifyOverall(pulse: ProjectPulse): {
   return {
     state: "ready",
     badge: "Ready",
-    title: "Ready to ship",
-    detail: "Start the publish portal when you are.",
+    title: "Ready to start",
+    detail: "Open a workflow or Start publishing — nothing here claims the cut is done.",
   };
 }
 
@@ -4464,23 +4467,32 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
   const midWizard =
     (pub?.present && !pub.finished) || (launch?.present && !launch.finished);
 
-  if (signet && orbit) {
+  // Tools — always name Signet / Orbit so General Dashboard is honest.
+  if (wantsSignet && !signet) {
     items.push({
       id: "tools",
-      state: "done",
-      icon: "✓",
-      title: "Tools ready",
-      detail: "Signet + Orbit on PATH",
+      state: "blocked",
+      icon: "!",
+      title: "Signet missing",
+      detail: "Install Signet for local desktop cuts",
     });
-  } else if (wantsSignet && signet) {
+  } else if (signet && orbit) {
     items.push({
       id: "tools",
       state: "done",
       icon: "✓",
-      title: "Signet ready",
+      title: "Signet ok · Orbit ok",
+      detail: "Both on PATH",
+    });
+  } else if (signet && !orbit) {
+    items.push({
+      id: "tools",
+      state: localIntent ? "done" : "warn",
+      icon: localIntent ? "✓" : "!",
+      title: localIntent ? "Signet ok · Orbit optional" : "Signet ok · Orbit missing",
       detail: localIntent
         ? "Orbit optional for Local cuts"
-        : "Orbit optional until you host a Public deploy",
+        : "Orbit not on PATH — needed for Public Orbit host deploys",
     });
   } else if (!wantsSignet && linked) {
     items.push({
@@ -4490,13 +4502,23 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
       title: "Worker tooling OK",
       detail: "Prior live deploy evidence — Orbit optional for this stack",
     });
-  } else if (wantsSignet && !signet) {
+  } else if (!signet && !orbit) {
     items.push({
       id: "tools",
-      state: "blocked",
-      icon: "!",
-      title: "Signet missing",
-      detail: "Install Signet for local desktop cuts",
+      state: "idle",
+      icon: "·",
+      title: "No Signet / Orbit on PATH",
+      detail: localIntent
+        ? "Fine for docs-only / Local without desktop cut"
+        : "Install tools before Signet release or Orbit deploy",
+    });
+  } else if (orbit && !signet) {
+    items.push({
+      id: "tools",
+      state: "done",
+      icon: "✓",
+      title: "Orbit ok · Signet not required",
+      detail: "Orbit on PATH",
     });
   }
 
@@ -4533,7 +4555,7 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
       state: "done",
       icon: "✓",
       title: "Publish pass finished",
-      detail: "Live check confirmed for this pass",
+      detail: "This pass marked finished — not a claim that every surface shipped",
     });
   } else if (!midWizard) {
     const dep = pulse.deploy;
@@ -4558,7 +4580,7 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
     }
   }
 
-  return items.slice(0, 3);
+  return items.slice(0, 4);
 }
 
 function applyStatusBar(pulse: ProjectPulse | null) {
@@ -4595,8 +4617,19 @@ function applyStatusBar(pulse: ProjectPulse | null) {
 function applyPulseHealth(pulse: ProjectPulse) {
   const signetOk = !!pulse.tools?.signet_found;
   const orbitOk = !!pulse.tools?.orbit_found;
-  setPill("pill-signet", signetOk ? "ok" : "bad", signetOk ? "Found" : "Missing");
-  setPill("pill-orbit", orbitOk ? "ok" : "bad", orbitOk ? "Found" : "Missing");
+  const localIntent = shipIntent() === "local";
+  const wantsSignet = (pulse.kind ?? "").toLowerCase().includes("desktop")
+    || (pulse.kind ?? "").toLowerCase().includes("tauri");
+  setPill(
+    "pill-signet",
+    signetOk ? "ok" : wantsSignet ? "bad" : "muted",
+    signetOk ? "Found" : "Missing",
+  );
+  setPill(
+    "pill-orbit",
+    orbitOk ? "ok" : localIntent ? "muted" : "bad",
+    orbitOk ? "Found" : "Missing",
+  );
   const metaSignet = document.querySelector("#meta-signet");
   const metaOrbit = document.querySelector("#meta-orbit");
   if (metaSignet) {
@@ -7076,7 +7109,7 @@ function applyLastRun(last: ShipState["last_run"]) {
   }
   const ok = !!last.ok;
   if (!lastPulse) {
-    setPill("pill-deploy", ok ? "ok" : "bad", ok ? "Shipped" : "Failed");
+    setPill("pill-deploy", ok ? "ok" : "bad", ok ? "Last run ok" : "Failed");
     const meta = document.querySelector("#meta-deploy");
     const steps = (last.steps ?? [])
       .map((s) => `${s.id ?? "?"}${s.ok === false ? "✗" : "✓"}`)

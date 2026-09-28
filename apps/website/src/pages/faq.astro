@@ -1,0 +1,85 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import {
+  checkoutConfigured,
+  downloadUrl,
+  polarCheckoutUrl,
+  priceLabel,
+} from "../lib/commerce";
+
+const buyHref = checkoutConfigured() ? polarCheckoutUrl() : "/pricing";
+const price = priceLabel();
+---
+
+<BaseLayout
+  title="FAQ — Ship Studio"
+  description="SmartScreen, brand disambiguation, why Solo pricing, and when Signet is required. Honest answers — no fake one-click claims."
+  path="/faq"
+>
+  <section class="section intent-page">
+    <p class="intent-kicker">Cafe · FAQ</p>
+    <h1>Common questions.</h1>
+    <p class="lead">
+      Short answers for strangers comparing this hub to CI checklists, other “Ship Studio”
+      names, and OS trust prompts. Deeper product boundary:
+      <a href="/intent">Intent</a> ·
+      <a href="/honesty">Honesty</a>.
+    </p>
+
+    <div class="intent-contrast" role="list">
+      <div class="intent-contrast-row" role="listitem" id="smartscreen">
+        <h2 class="intent-contrast-label">Does Ship Studio silence SmartScreen?</h2>
+        <p class="intent-contrast-body">
+          <strong>No.</strong> We never claim to suppress Windows SmartScreen or grant
+          “verified publisher” status. Desktop cuts use <strong>Signet</strong> locally;
+          graduate / notarize / store submit stay on you and official tooling. See
+          <a href="/honesty">human gates</a>.
+        </p>
+      </div>
+
+      <div class="intent-contrast-row" role="listitem" id="other-ship-studio">
+        <h2 class="intent-contrast-label">Is this the same as ship.studio?</h2>
+        <p class="intent-contrast-body">
+          <strong>No.</strong> This repo is the <strong>local</strong> shipping hub (CLI · TUI ·
+          Desktop) for sign → release → deploy. It is <strong>not</strong> the unrelated agentic
+          product at <code>ship.studio</code>. If you landed here from that brand, check the
+          other site’s own docs — our scope is offline-first final-mile sequencing.
+        </p>
+      </div>
+
+      <div class="intent-contrast-row" role="listitem" id="why-solo">
+        <h2 class="intent-contrast-label">Why pay {price} if the source is open?</h2>
+        <p class="intent-contrast-body">
+          The publish sequence itself is not paywalled — you can clone and build for free.
+          <strong>Solo</strong> pays for packaged Desktop/CLI builds, a local license file,
+          Polar-hosted checkout/invoices/refunds, and not assembling the toolchain yourself.
+          Details on <a href="/pricing">Pricing</a>.
+        </p>
+      </div>
+
+      <div class="intent-contrast-row" role="listitem" id="signet">
+        <h2 class="intent-contrast-label">Is Signet required?</h2>
+        <p class="intent-contrast-body">
+          <strong>For desktop / Signet release cuts — yes</strong> (Signet on PATH or
+          <code>SIGNET_PATH</code>). For <strong>Local</strong> docs-only or hosted-web work
+          without a desktop cut, Signet may be optional; Orbit matters when you use Orbit-hosted
+          deploy. Dashboard health tiles show Found/Missing honestly — missing Signet hard-blocks
+          only when the project layout needs a desktop cut.
+        </p>
+      </div>
+    </div>
+
+    <p class="note">
+      Still stuck? <a href="/docs">Docs</a> ·
+      <a href="/docs/human-gates">Human gates catalog</a> ·
+      <a href="/legal/refunds">Refunds</a>.
+    </p>
+
+    <div class="intent-cta">
+      <a class="btn btn-primary" href={buyHref}>Pricing</a>
+      <a class="btn" href="/demo">Watch demo</a>
+      <a class="btn" href="/docs">Docs</a>
+      <a class="btn" href={downloadUrl()}>Download</a>
+    </div>
+  </section>
+</BaseLayout>

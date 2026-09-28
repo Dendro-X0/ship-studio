@@ -1,10 +1,10 @@
-# Operator next — manual gates only
+# Operator next — human gates (product)
 
-**Updated:** 2026-09-25  
+**Updated:** 2026-09-28  
 **Repo:** https://github.com/Dendro-X0/ship-studio  
 **Local path:** `E:/Web Projects/ship-studio`
 
-Human gates **are the product** — Client must choreograph them (Put / Login CLI / exact deep link / Confirm), not dump operators into vendor encyclopedias. Catalog: [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md) · Overhaul: [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md).
+**Product framing:** Human gates **are the product**, not unfinished bugs. Ship Studio choreographs **Put / Login CLI / exact deep link / Confirm** so operators finish on official platforms — it does not dump you into vendor encyclopedias or fake auto-green. Website pitch: `/honesty`. Catalog: [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md) · Overhaul: [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md).
 
 Desktop Platforms · Portal · Integrations (what works, objectives, known gaps): [PLATFORMS-AND-PORTAL.md](./PLATFORMS-AND-PORTAL.md).
 
@@ -83,7 +83,9 @@ Real repo example: `assess-api` surfaces **db.provision** (D1) + **listing.polar
 
 Same open → verify → confirm → next pattern; state in `.ship/launch.json`. Prefer **Publish** for the full minute-oriented path. Launch also sequences Polar / Gumroad / Lemon / Stripe / Paddle listings, Steam / itch / Epic listing + submit, Play / App Store / Microsoft Store listing + submit (Tauri skips Play), alt-host dashboards (`host.*`), and mobile BaaS provision when detected.
 
-## Remaining human work
+## Human gates by lane
+
+These steps stay on you **by design** — Studio opens the right door and waits for Confirm. This table is the product surface, not a defect backlog.
 
 | Step | You do |
 |------|--------|

@@ -700,6 +700,61 @@ img {
   font-family: var(--font-mono);
 }
 
+.intent-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+}
+
+.intent-page h2 {
+  margin-top: 2.25rem;
+}
+
+.intent-contrast {
+  display: grid;
+  gap: 1.25rem;
+  margin: 0.75rem 0 0;
+}
+
+.intent-contrast-row {
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.intent-contrast-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.intent-contrast-label {
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+h2.intent-contrast-label {
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.intent-contrast-body {
+  margin: 0;
+  color: var(--muted);
+  max-width: 42rem;
+}
+
+.intent-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 2rem;
+}
+
 @media (max-width: 640px) {
   .nav-links {
     display: none;

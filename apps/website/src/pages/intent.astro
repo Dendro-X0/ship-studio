@@ -1,0 +1,75 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { checkoutConfigured, downloadUrl, polarCheckoutUrl } from "../lib/commerce";
+
+const buyHref = checkoutConfigured() ? polarCheckoutUrl() : "/pricing";
+---
+
+<BaseLayout
+  title="What Ship Studio is for — intent"
+  description="Multi-surface final-mile shipping (sign → release → deploy) vs CI-only green checks and checklist theater. Local portal — vendors stay authority."
+  path="/intent"
+>
+  <section class="section intent-page">
+    <p class="intent-kicker">Intent</p>
+    <h1>Multi-surface final-mile — not CI theater.</h1>
+    <p class="lead">
+      Ship Studio is a <strong>local portal and guide</strong> for the last mile of a cut:
+      <strong>sign → release → deploy</strong> (and adjacent human gates). It sequences work
+      across CLI, TUI, and Desktop. It does not replace Cloudflare, Polar, Apple, or your CI.
+    </p>
+
+    <h2>Who it’s for</h2>
+    <ul class="list-clean">
+      <li>Indie / multi-repo operators shipping <strong>Web + desktop + optional stores/commerce</strong></li>
+      <li>People who can own vendor accounts but should not drown in encyclopedias</li>
+      <li>Agent-assisted teams that keep <strong>keys under human control</strong></li>
+    </ul>
+
+    <h2>What it is not</h2>
+    <div class="intent-contrast" role="list">
+      <div class="intent-contrast-row" role="listitem">
+        <p class="intent-contrast-label">CI-only “ship on green”</p>
+        <p class="intent-contrast-body">
+          Green pipelines prove build health. They do not Open vendor doors, Put secrets on the
+          host, or Confirm listing/submit honesty. Studio sits <em>after</em> CI — the final mile.
+        </p>
+      </div>
+      <div class="intent-contrast-row" role="listitem">
+        <p class="intent-contrast-label">Endless checklist apps</p>
+        <p class="intent-contrast-body">
+          Another static todo list is not Adaptive Publish. Studio builds a plan from your repo,
+          Continues automatable gates, and stops at human gates you must attest.
+        </p>
+      </div>
+      <div class="intent-contrast-row" role="listitem">
+        <p class="intent-contrast-label">Belonging / “shipping community” theater</p>
+        <p class="intent-contrast-body">
+          No identity product. Value is practical release utility: order, Open, Confirm — not a
+          feed or badge wall.
+        </p>
+      </div>
+    </div>
+
+    <h2>How honesty works</h2>
+    <ul class="list-clean">
+      <li><strong>Open</strong> the official portal or <strong>Login CLI</strong> when auth is required</li>
+      <li><strong>Confirm</strong> after you finish — Studio does not finish OAuth or store review for you</li>
+      <li><strong>Never writes deploy secrets</strong> · never auto-publishes to npm/crates/stores</li>
+    </ul>
+
+    <p class="note">
+      See also the
+      <a href="/docs/scope">scope of service</a>
+      and
+      <a href="/honesty">why human gates are the product</a>.
+    </p>
+
+    <div class="intent-cta">
+      <a class="btn btn-primary" href="/demo">Watch demo</a>
+      <a class="btn" href="/docs">Docs</a>
+      <a class="btn" href={buyHref}>Pricing</a>
+      <a class="btn" href={downloadUrl()}>Download</a>
+    </div>
+  </section>
+</BaseLayout>

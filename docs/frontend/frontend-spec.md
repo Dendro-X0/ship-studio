@@ -78,10 +78,11 @@ Command palette filters **views + actions** by title/keywords. Enter runs action
 ## Pages
 
 ### Dashboard
-Purpose: **which repo**, **local status** (git / ship / deploy), **the next human action**.  
-Layout: session → **status checklist bar** (deployed / pending submission / …) → Now CTA → health tiles.  
+Purpose: **which repo**, **honest local status** (Signet / Orbit / git / deploy / step N/M), **the next human action**.  
+Layout: session → **status checklist bar** → Now CTA → **health tiles** (General + Advanced).  
 Empty: bind a folder + recents. Bound: `shipctl pulse` fills status bar + Now from git + `.ship` + deploy signals.  
-DO NOT: numbered robotic workflow · ignore mid-launch/publish state · call vendor HTTPS for status.
+Honesty: never “all shipped” from last-run alone; Orbit missing is a soft cue (hard-block only when Signet required and absent).  
+DO NOT: numbered robotic workflow · ignore mid-launch/publish state · call vendor HTTPS for status · hide tool truth behind Advanced.
 
 ### Assist / Scopes / Env / Sign / Publish
 Purpose: **Publish** is the live minute wizard (spine). Assist is a read-only checklist overview with **Start publish**. Scopes / Env / Sign / Portal / Ritual are detail panels — opened via **Related** from the current publish step (`desktop_view`), with **Back to Publish** in the topbar while a pass is mid-flight.  

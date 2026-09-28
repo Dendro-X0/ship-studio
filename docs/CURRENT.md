@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3  
 **Updated:** 2026-09-28  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · S1.3 never-say shipped. **Next:** idle / optional GIF polish / S1.2 dashboard honesty.
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · S1.6 `/faq`. **Next:** idle / optional GIF · commerce when Polar · push when GitHub reachable.
 
 ## Truth pointers
 

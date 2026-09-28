@@ -40,6 +40,21 @@ Until `PUBLIC_POLAR_CHECKOUT_URL` is set, Buy stays disabled with a setup note.
 Public copy must not claim: one-click deploy · silencing SmartScreen · replacing Cloudflare/Polar/Apple · Studio-held deploy secrets · auto-publish to stores.  
 Canon: [never-say-block-design](../../specs/frontend/never-say-block-design.md).
 
+## Intent (S1.4)
+
+`/intent` — multi-surface final-mile vs CI-only / checklist theater.  
+Canon: [one-intent-page-design](../../specs/frontend/one-intent-page-design.md).
+
+## Honesty (S1.5)
+
+`/honesty` — human gates are the product (Open → Confirm), not unfinished bugs.  
+Canon: [operator-next-product-design](../../specs/frontend/operator-next-product-design.md) · docs: `/docs/human-gates`.
+
+## FAQ (S1.6)
+
+`/faq` — SmartScreen · vs ship.studio · why Solo · Signet required.  
+Canon: [cafe-faq-design](../../specs/frontend/cafe-faq-design.md).
+
 ## Feature demo (W3)
 
 `/demo` serves live Harbor GIFs from `public/demo/v0.2.1/` (**T1–T7**).  

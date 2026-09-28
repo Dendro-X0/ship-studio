@@ -6,6 +6,10 @@
 
 - **Deployment soft-open** — Opening Deployment (nav / Launch related) no longer writes `primary_host`; only explicit card click or chip/`selectId` persists ([dogfood](./docs/handoffs/evidence-harbor-desktop-dogfood.md))
 - **Never-say block (S1.3)** — Ban table for site + READMEs; `/demo` T7 caption drops “One click” deploy claim ([design](./specs/frontend/never-say-block-design.md))
+- **Dashboard honesty (S1.2)** — Health tiles in General; Signet/Orbit/dirty/step N/M; no “Shipped” / fake all-done ([design](./specs/frontend/dashboard-honesty-design.md))
+- **One intent page (S1.4)** — `/intent` positions multi-surface final-mile vs CI-only / checklist theater ([design](./specs/frontend/one-intent-page-design.md))
+- **Human gates as product (S1.5)** — `/honesty` markets Open→Confirm as honesty, not unfinished bugs ([design](./specs/frontend/operator-next-product-design.md))
+- **Cafe / FAQ stub (S1.6)** — `/faq` answers SmartScreen, brand collision, Solo price, Signet required ([design](./specs/frontend/cafe-faq-design.md))
 - **Stale host Results after remote delete** — **Clear evidence** removes `.ship/last-run.json` and hides Cancel/Results; **Cancel on dashboard** still opens the vendor ([design](./specs/backend/host-deploy-evidence-clear-design.md))
 - **Cancel on dashboard** — shown only after Studio has deploy evidence for that host (successful last-run / live URLs); hidden for a fresh Cloudflare/Vercel/Netlify card
 - **Serving never ends after GIF / Open live** — Cancel serve in Output dock + status bar; cancel invokes Rust directly (Tools `#btn-cancel` no longer required); Esc stops serve

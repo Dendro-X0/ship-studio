@@ -1,8 +1,8 @@
 # Ship Studio — improvement backlog
 
-**Status:** Living idea list — overhaul O0–O5 **closed**; through Desktop dogfood + **S1.3 never-say** shipped; next idle / optional GIF polish / **S1.2** dashboard honesty  
+**Status:** Living idea list — through **S1.6 FAQ**; Near site trust arc closed; next optional GIF / commerce when Polar  
 **Updated:** 2026-09-28  
-**Cadence:** Optional demo polish · activate S1.2 · commerce when Polar unlocks  
+**Cadence:** Local commits OK · push when GitHub 443 restored · commerce when Polar unlocks  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
@@ -58,7 +58,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | **S1.2n** | **Hosted deploy ops ($29 bar)** | Stream CLI deploy · results · dashboard · troubleshoot · MCP playbook — [design](../../specs/backend/hosted-deploy-ops-value-bar-design.md) · **H1–H5 shipped** |
 | S1.1 | **Demo shelf = multi-target tedium** | **Done** — T1–T7 live on `/demo` (`v0.2.1`, 720×420, mirrored) — [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) · [demo-subject-design](../../specs/frontend/demo-subject-design.md) |
 | S1.0a | **Desktop nav freeze** | Hot-path + silent spawn + paint-before-shipctl + output mirror truncate shipped in **v0.2.1** |
-| S1.2 | **Dashboard honesty polish** | Surface Signet ok / Orbit missing, dirty git, step N/M without fake “all shipped” |
+| S1.2 | **Dashboard honesty polish** | **Slice 1 done** — General health tiles · Signet/Orbit/dirty/step N/M · no “Shipped” — [design](../../specs/frontend/dashboard-honesty-design.md) |
 | S1.2a | **Publish progress clarity** | Done · required · optional/later bands + summary strip — [publish-progress-clarity-design](../../specs/frontend/publish-progress-clarity-design.md) · **shipped Desktop** |
 | S1.2b | **Workflow stage cards + pager** | Dashboard presets → linear Publish stages — [workflow-stages-design](../../specs/frontend/workflow-stages-design.md) · **Desktop slice 1 wired** (L2 dogfood pending) |
 | S1.2c | **Public Publish UX ($29 bar)** | **Done A–F** — single primary · rail · inline Scopes · copy · workflow preview · General nav — [design](../../specs/frontend/public-publish-ux-design.md) |
@@ -72,9 +72,9 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S1.2e | **Publish journey clarity** | One green verb · paced Continue (~2s) · scrubber — [publish-journey-clarity-design](../../specs/frontend/publish-journey-clarity-design.md) · **Desktop slices 1–3** |
 | S1.2d | **Status probe (Sign · Deploy)** | Inspection bay: icons · badges · suggestions · CTAs — [status-probe-ux-design](../../specs/frontend/status-probe-ux-design.md) · **Desktop slice 2** |
 | S1.3 | **Never-say block on site + README** | **Done** — ban table + audit; T7 `/demo` caption fixed — [design](../../specs/frontend/never-say-block-design.md) |
-| S1.4 | **One intent page** | “Multi-surface final-mile vs CI-only / checklist” — SEO without belonging theater |
-| S1.5 | **OPERATOR-NEXT as product feature** | Market human gates as honesty, not unfinished bugs |
-| S1.6 | **Cafe / FAQ stub** | SmartScreen? vs other Ship Studio? Why $29? Signet required? |
+| S1.4 | **One intent page** | **Done** — `/intent` final-mile vs CI-only / checklist · nav + home link — [design](../../specs/frontend/one-intent-page-design.md) |
+| S1.5 | **OPERATOR-NEXT as product feature** | **Done** — `/honesty` + docs reframe; gates ≠ backlog — [design](../../specs/frontend/operator-next-product-design.md) |
+| S1.6 | **Cafe / FAQ stub** | **Done** — `/faq` SmartScreen · brand · Solo price · Signet — [design](../../specs/frontend/cafe-faq-design.md) |
 | S1.7 | **Offline badge meaning** | Done — topbar Offline title + PRODUCT/SCOPE status layers ([verify-status-layers-design](../../specs/backend/verify-status-layers-design.md)) |
 
 ---
@@ -130,20 +130,19 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 ---
 
-## Suggested order (post S1.3)
+## Suggested order (post S1.6)
 
 ```text
 Near
 1. Optional   Recompress/spot-check demo GIFs if weight/noise bothers
-2. S1.2       Dashboard honesty polish (Signet/Orbit/dirty/step N/M)
 
 Commerce / site (when Polar unlocks — not a release blocker)
-3. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL
-4. S0.1–S0.2  Live buy/refund when payment_ready
-5. S0.6       Polar env → host deploy dogfood (no Studio-held secrets)
+2. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL
+3. S0.1–S0.2  Live buy/refund when payment_ready
+4. S0.6       Polar env → host deploy dogfood (no Studio-held secrets)
 
 Value depth (activate one band at a time)
-6. S2.4       MCP when a real ship asks
+5. S2.4       MCP when a real ship asks
 ```
 
 Earlier commerce-first order stays valid after Polar unlocks; do not block the week on Pay now.

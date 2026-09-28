@@ -1,0 +1,80 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { checkoutConfigured, downloadUrl, polarCheckoutUrl } from "../lib/commerce";
+
+const buyHref = checkoutConfigured() ? polarCheckoutUrl() : "/pricing";
+---
+
+<BaseLayout
+  title="Human gates are the product — Ship Studio"
+  description="Open → Confirm honesty is intentional. Ship Studio choreographs human gates; it does not fake OAuth, store review, or deploy success."
+  path="/honesty"
+>
+  <section class="section intent-page">
+    <p class="intent-kicker">Honesty</p>
+    <h1>Human gates are the product.</h1>
+    <p class="lead">
+      When Ship Studio stops and asks you to <strong>Open</strong> a vendor UI and
+      <strong>Confirm</strong>, that is not an unfinished bug. That is the honesty layer —
+      the part competitors skip with fake “all shipped” greens.
+    </p>
+
+    <h2>What you still do (on purpose)</h2>
+    <ul class="list-clean">
+      <li><strong>Put</strong> tokens and connection strings on the official host — Studio never writes deploy secrets</li>
+      <li><strong>Login CLI</strong> / Sign in (web) when the vendor requires your account</li>
+      <li><strong>Confirm</strong> after you finish irreversible work (listing, submit, live deploy)</li>
+    </ul>
+
+    <h2>How Verify stays honest</h2>
+    <div class="intent-contrast" role="list">
+      <div class="intent-contrast-row" role="listitem">
+        <p class="intent-contrast-label">Disk</p>
+        <p class="intent-contrast-body">
+          Project files and <code>.ship</code> metadata (scopes saved, TRUST.md present) — no secret values.
+        </p>
+      </div>
+      <div class="intent-contrast-row" role="listitem">
+        <p class="intent-contrast-label">Local CLI</p>
+        <p class="intent-contrast-body">
+          Signet, doctor, and deploy pulse on your machine — tools you already trust.
+        </p>
+      </div>
+      <div class="intent-contrast-row" role="listitem">
+        <p class="intent-contrast-label">Official CLI probe</p>
+        <p class="intent-contrast-body">
+          Your authenticated <code>gh</code> / <code>wrangler whoami</code> — Studio does not phone home with your keys.
+        </p>
+      </div>
+      <div class="intent-contrast-row" role="listitem">
+        <p class="intent-contrast-label">Human attest</p>
+        <p class="intent-contrast-body">
+          No automatic green for Polar paste, store listing, or store review — Open, finish there, Confirm.
+        </p>
+      </div>
+    </div>
+
+    <h2>What we refuse</h2>
+    <ul class="list-clean">
+      <li>Pretending OAuth or store review finished because a spinner stopped</li>
+      <li>Holding API tokens so Studio can “just deploy”</li>
+      <li>Calling human gates “remaining work” in the marketing sense — they are the finishable cut</li>
+    </ul>
+
+    <p class="note">
+      Operator catalog (commands · lanes):
+      <a href="/docs/human-gates">Human gates docs</a>
+      · product boundary:
+      <a href="/intent">Intent</a>
+      · claims we ban:
+      <a href="/docs/scope">Scope of service</a>.
+    </p>
+
+    <div class="intent-cta">
+      <a class="btn btn-primary" href="/docs/human-gates">Read human gates</a>
+      <a class="btn" href="/demo">Watch demo</a>
+      <a class="btn" href={buyHref}>Pricing</a>
+      <a class="btn" href={downloadUrl()}>Download</a>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,22 +1,20 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-28  
-**Branch:** `main`  
-**Status:** **S1.3 never-say closed** — ban table + `/demo` T7 caption fix · site/READMEs audited
+**Branch:** `main` (local; origin push blocked by network)  
+**Status:** **S1.6 Cafe/FAQ** — `/faq` (SmartScreen · brand · Solo price · Signet)
 
 ## Next Atomic Step
 
-**Idle for coding** — optional GIF recompress/spot-check, or activate **S1.2** dashboard honesty (or commerce when Polar unlocks / S2.4 when a real ship asks).
+**Idle for Near site bands** — optional GIF polish, or commerce when Polar unlocks / S2.4 when a real ship asks. Local commit when ready; push when GitHub 443 restored.
 
 ## Design queue (not coding until activated)
 
 | Item | Spec |
 |------|------|
-| S1.2 Dashboard honesty | Backlog — Signet/Orbit/dirty/step N/M without fake “all shipped” |
-| S1.1 Demo shelf | [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) (**T1–T7 live** — optional recompress/spot-check) |
-| Never-say block | [never-say-block-design](../../specs/frontend/never-say-block-design.md) (**S1.3 shipped**) |
-| Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) (**L1–L4 shipped**) |
-| Public Publish UX | [public-publish-ux-design](../../specs/frontend/public-publish-ux-design.md) (**A–F shipped**) |
+| S1.6 Cafe / FAQ | [cafe-faq-design](../../specs/frontend/cafe-faq-design.md) (**shipped**) |
+| S1.5 Human gates product | [operator-next-product-design](../../specs/frontend/operator-next-product-design.md) (**shipped**) |
+| S1.4 One intent page | [one-intent-page-design](../../specs/frontend/one-intent-page-design.md) (**shipped**) |
 
 ## PAUSED / CANCELLED
 
@@ -29,19 +27,19 @@
 | k8s controllers | Out of scope |
 | Drive-by Desktop reliability | Work only via design slices |
 | Reliability Later | Non-Windows · **CDP** · vault |
+| **GitHub push** | Network block — commit local only until restored |
 
 ## Last closed
 
 | Band | Link |
 |------|------|
-| **S1.3 Never-say block** | [never-say-block-design](../../specs/frontend/never-say-block-design.md) |
-| **Desktop UI dogfood** | [evidence-harbor-desktop-dogfood](./evidence-harbor-desktop-dogfood.md) |
-| **S1.1 Demo shelf (agent)** | T1–T7 on `/demo` · SCRIPT honesty sync |
-| **Harbor CLI dogfood L3–L4** | [evidence-harbor-launch-l3-l4](./evidence-harbor-launch-l3-l4.md) |
+| **S1.6 Cafe / FAQ** | [cafe-faq-design](../../specs/frontend/cafe-faq-design.md) · `/faq` |
+| **S1.5 OPERATOR-NEXT product** | [operator-next-product-design](../../specs/frontend/operator-next-product-design.md) · `/honesty` |
+| **S1.4 One intent page** | [one-intent-page-design](../../specs/frontend/one-intent-page-design.md) · `/intent` |
 
 ## Boot allowlist
 
 1. This file  
-2. [never-say-block-design](../../specs/frontend/never-say-block-design.md)  
-3. `apps/website` + root `README.md`  
+2. [cafe-faq-design](../../specs/frontend/cafe-faq-design.md)  
+3. `apps/website/src/pages/faq.astro`  
 4. [improvement-backlog](../product/improvement-backlog.md)  

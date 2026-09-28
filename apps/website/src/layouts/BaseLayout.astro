@@ -40,6 +40,9 @@ const canonical = new URL(path, Astro.site);
         </a>
         <nav class="nav-links" aria-label="Primary">
           <a href="/pricing" aria-current={path === "/pricing" ? "page" : undefined}>Pricing</a>
+          <a href="/intent" aria-current={path === "/intent" ? "page" : undefined}>Intent</a>
+          <a href="/honesty" aria-current={path === "/honesty" ? "page" : undefined}>Honesty</a>
+          <a href="/faq" aria-current={path === "/faq" ? "page" : undefined}>FAQ</a>
           <a href="/docs" aria-current={path.startsWith("/docs") ? "page" : undefined}>Docs</a>
           <a href="/demo" aria-current={path === "/demo" ? "page" : undefined}>Demo</a>
           <a href="/account" aria-current={path === "/account" ? "page" : undefined}>Account</a>
@@ -54,6 +57,7 @@ const canonical = new URL(path, Astro.site);
         <span>© {new Date().getFullYear()} Ship Studio · local shipping hub</span>
         <nav aria-label="Legal">
           <a href="/license">License</a>
+          <a href="/faq">FAQ</a>
           <a href="/legal/terms">Terms</a>
           <a href="/legal/privacy">Privacy</a>
           <a href="/legal/refunds">Refunds</a>
