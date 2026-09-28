@@ -1,12 +1,12 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-28  
-**Branch:** `main`  
-**Status:** **Launch L4 + S1.2c** in working tree · last push `b5c74f1`
+**Branch:** `main` (`f2c08f1`)  
+**Status:** Launch L1–L4 + S1.2c on main · Harbor CLI dogfood L3–L4 **pass**
 
 ## Next Atomic Step
 
-Soft dogfood Harbor Desktop (primary host persist · Payments off · Publish copy) — or **S1.1 shelf** (maintainer). No coding band until activated.
+**Desktop UI dogfood** (Publish copy · workflow previews · Payments toggle · primary host reload) — or **S1.1 shelf** (maintainer). No coding band until activated.
 
 ## Design queue (not coding until activated)
 
@@ -33,14 +33,15 @@ Soft dogfood Harbor Desktop (primary host persist · Payments off · Publish cop
 
 | Band | Link |
 |------|------|
-| **Launch L4 primary host** | [design](../../specs/frontend/launch-choice-board-design.md) — `primary_host` · Verify that host |
-| **Launch L3 Payments opt-in** | `launch_payments` · UI toggle |
+| **Harbor CLI dogfood L3–L4** | [evidence-harbor-launch-l3-l4](./evidence-harbor-launch-l3-l4.md) |
+| **Launch L4 primary host** | [design](../../specs/frontend/launch-choice-board-design.md) |
+| **Launch L3 Payments opt-in** | `launch_payments` |
 | **S1.2c Public Publish UX A–F** | [design](../../specs/frontend/public-publish-ux-design.md) |
-| **Harbor soft dogfood (CLI)** | [evidence-harbor-s115-s116](./evidence-harbor-s115-s116.md) |
+| **Harbor soft dogfood S1.15–16** | [evidence-harbor-s115-s116](./evidence-harbor-s115-s116.md) |
 
 ## Boot allowlist
 
 1. This file  
 2. [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md)  
 3. `fixtures/harbor` + `scripts/harbor-reset`  
-4. [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md)  
+4. [evidence-harbor-launch-l3-l4](./evidence-harbor-launch-l3-l4.md)  
