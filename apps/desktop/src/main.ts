@@ -22,16 +22,12 @@ import {
 import {
   integrationIconHtml,
   providerIconHtml,
-  SCOPE_KIND_ORDER,
-  scopeIconHtml,
 } from "./icons";
 import { INTEGRATION_WIZARDS } from "./integrations-data";
 import { PLATFORM_GROUPS, PLATFORM_WIZARDS, SIGN_GROUPS, hostingCatalogEntries, signingCatalogEntries } from "./platforms-data";
 import {
-  highlightProviderSidebar,
   paintProviderWizard,
   renderProviderCatalogGrid,
-  renderProviderSidebarTree,
 } from "./provider-catalog";
 import type {
   AssistPlan,
@@ -45,6 +41,7 @@ import type {
   LaunchView,
   PortalPlan,
   ProjectPulse,
+  ProviderWizard,
   PublishView,
   ScopePlan,
   SecretsPlan,
@@ -55,6 +52,12 @@ import type {
   StudioMode,
   ToastKind,
 } from "./types";
+import {
+  fetchUpdateCheck,
+  loadSnoozedTag,
+  openLatestRelease,
+  snoozeUpdateTag,
+} from "./update-check";
 import {
   escapeHtml,
   joinArgs,
@@ -67,6 +70,7 @@ import {
 let lastLaunch: LaunchView | null = null;
 let lastPublish: PublishView | null = null;
 let lastPulse: ProjectPulse | null = null;
+let lastRunState: ShipState["last_run"] = null;
 let lastDetected: Detected | undefined;
 let lastHuman: HumanSprint | null = null;
 let lastPortal: PortalPlan | null = null;
@@ -169,6 +173,9 @@ const deployArgsEl = () => document.querySelector<HTMLInputElement>("#deploy-arg
 let running = false;
 let lastBusyToastAt = 0;
 let busyWatchdog: number | null = null;
+let runTickTimer: number | null = null;
+let runStartedAt = 0;
+let runBaseLabel = "Ready";
 let streamBuf = "";
 
 function projectPath(): string {
@@ -177,6 +184,40 @@ function projectPath(): string {
 
 function offline(): boolean {
   return offlineEl()?.checked ?? true;
+}
+
+/** S0.8 — notice newer GitHub Release; never auto-install. */
+async function runUpdateCheck(opts?: { quiet?: boolean }): Promise<void> {
+  const quiet = Boolean(opts?.quiet);
+  const result = await fetchUpdateCheck({ offline: offline() });
+  if (result.kind === "offline") {
+    if (!quiet) toast("Offline — turn off Offline to check for updates", "info");
+    return;
+  }
+  if (result.kind === "error") {
+    if (!quiet) toast(`Update check failed — ${result.detail}`, "err", 5000);
+    return;
+  }
+  if (result.kind === "current") {
+    if (!quiet) toast(`Up to date · ${result.local}`, "ok");
+    return;
+  }
+  if (quiet && loadSnoozedTag() === result.remote) return;
+  toast(`Update available · ${result.remote} (you have ${result.local})`, "info", 12000, [
+    {
+      id: "open-release",
+      label: "Open download",
+      icon: "open",
+      run: () => {
+        void openLatestRelease();
+      },
+    },
+    {
+      id: "later",
+      label: "Later",
+      run: () => snoozeUpdateTag(result.remote),
+    },
+  ]);
 }
 
 function includeDeploy(): boolean {
@@ -190,49 +231,124 @@ function clearBusyWatchdog() {
   }
 }
 
+function clearRunTick() {
+  if (runTickTimer !== null) {
+    window.clearInterval(runTickTimer);
+    runTickTimer = null;
+  }
+}
+
+function paintRunStateLabel(text: string) {
+  for (const el of [
+    stateEl(),
+    document.querySelector<HTMLElement>("#run-state-bar"),
+  ]) {
+    if (!el) continue;
+    const label = el.querySelector<HTMLElement>(".run-state-label");
+    if (label) label.textContent = text;
+    else el.textContent = text;
+  }
+}
+
+/** Update busy chrome mid-run (e.g. Self-host check → Serving) without unlocking UI. */
+function noteRunPhase(label: string, opts?: { resetElapsed?: boolean }) {
+  if (!running) return;
+  runBaseLabel = label;
+  if (opts?.resetElapsed !== false) runStartedAt = Date.now();
+  paintRunStateLabel(label);
+}
+
+function paintOutputCancelButtons() {
+  const dock = document.querySelector<HTMLButtonElement>("#btn-output-cancel");
+  const bar = document.querySelector<HTMLButtonElement>("#btn-statusbar-cancel");
+  const show = running || selfhostServing;
+  const label = selfhostServing ? "Cancel serve" : "Cancel";
+  for (const btn of [dock, bar]) {
+    if (!btn) continue;
+    btn.hidden = !show;
+    btn.disabled = !show;
+    btn.textContent = label;
+  }
+}
+
 function setBusy(busy: boolean, label = "Ready", failed = false) {
   running = busy;
+  runBaseLabel = label;
   const className = busy ? "busy" : failed ? "failed" : "ready";
   for (const el of [
     stateEl(),
     document.querySelector<HTMLElement>("#run-state-bar"),
   ]) {
     if (!el) continue;
-    el.textContent = label;
+    const labelEl = el.querySelector<HTMLElement>(".run-state-label");
+    if (labelEl) labelEl.textContent = label;
+    else el.textContent = label;
     el.className =
       el.id === "run-state-bar" ? `${className} statusbar-run` : className;
     if (el.id === "run-state-bar") {
       el.hidden = !busy && !failed && label === "Ready";
     }
   }
+  const dock = document.querySelector<HTMLElement>("#output-dock");
+  if (dock) dock.dataset.running = busy ? "1" : "";
+  document.documentElement.dataset.shipRunning = busy ? "1" : "";
   // Always re-sync disabled state — Cancel / Clear / errors must unlock Refresh.
   setProjectUi(Boolean(projectPath()));
   syncNowQuick();
   clearBusyWatchdog();
+  clearRunTick();
   if (busy) {
+    runStartedAt = Date.now();
+    runTickTimer = window.setInterval(() => {
+      if (!running) return;
+      const sec = Math.floor((Date.now() - runStartedAt) / 1000);
+      const base = runBaseLabel.replace(/\s*[·•]\s*\d+s\s*$/i, "").trim() || "Running…";
+      paintRunStateLabel(`${base.replace(/…$/, "")} · ${sec}s`);
+    }, 1000);
     busyWatchdog = window.setTimeout(() => {
       if (!running) return;
-      toast("Still running — use Cancel to unlock Publish if stuck", "info", 6000);
+      toast("Still running — Cancel serve (dock) or Esc to stop", "info", 7000);
       const cancel = document.querySelector<HTMLButtonElement>("#btn-cancel");
       if (cancel) cancel.disabled = false;
+      paintOutputCancelButtons();
     }, 90_000);
+  }
+  paintOutputCancelButtons();
+  if (activeViewId === "platforms") {
+    const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform) ?? null;
+    paintPlatCancelButtons(
+      wiz,
+      !(document.querySelector<HTMLElement>("#plat-results")?.hidden ?? true),
+    );
   }
 }
 
 function forceUnlockUi(reason = "Unlocked") {
   clearBusyWatchdog();
+  clearRunTick();
   running = false;
+  selfhostServing = false;
+  pendingSelfhostOpenLive = false;
+  document.documentElement.dataset.shipRunning = "";
+  const dock = document.querySelector<HTMLElement>("#output-dock");
+  if (dock) dock.dataset.running = "";
   for (const el of [
     stateEl(),
     document.querySelector<HTMLElement>("#run-state-bar"),
   ]) {
     if (!el) continue;
-    el.textContent = reason;
+    const labelEl = el.querySelector<HTMLElement>(".run-state-label");
+    if (labelEl) labelEl.textContent = reason;
+    else el.textContent = reason;
     el.className = el.id === "run-state-bar" ? "ready statusbar-run" : "ready";
     if (el.id === "run-state-bar") el.hidden = true;
   }
   setProjectUi(Boolean(projectPath()));
   syncNowQuick();
+  paintOutputCancelButtons();
+  if (activeViewId === "platforms") {
+    paintPlatformWizard();
+  }
 }
 
 function setProjectUi(on: boolean) {
@@ -576,7 +692,7 @@ function stageGuideline(step: {
       return `${layerPrefix}Needs a live URL or deploy evidence. If this is a desktop-only cut, switch intent to Local (Live check is omitted).`;
     }
     if (kind === "oauth") {
-      return `${layerPrefix}Sign in opens Login CLI in a terminal — Verify when login succeeds, then Confirm.`;
+      return `${layerPrefix}Sign in (web) opens the vendor dashboard; Login CLI only when you need local CLI credentials. Verify when done, then Confirm.`;
     }
     return `${layerPrefix}Open portal if you need the vendor UI, then Confirm.`;
   }
@@ -631,23 +747,58 @@ function isScopesStep(step: { id?: string; desktop_view?: string | null } | null
   return id === "scopes" || view === "scopes";
 }
 
+function scopeKindIcon(kind: string): string {
+  const k = kind.toLowerCase();
+  // Small 20×20 glyphs — match desktop nav weight, not emoji.
+  if (k === "desktop") {
+    return `<svg class="scope-card-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 5.5h16A1.5 1.5 0 0 1 21.5 7v8A1.5 1.5 0 0 1 20 16.5H4A1.5 1.5 0 0 1 2.5 15V7A1.5 1.5 0 0 1 4 5.5zm0 11h16V18H4zm6.5 1.5h3v1.5h-3z"/></svg>`;
+  }
+  if (k === "web" || k === "docs") {
+    return `<svg class="scope-card-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5a9.5 9.5 0 1 0 0 19 9.5 9.5 0 0 0 0-19zm0 1.6c1.6 0 3.1.5 4.3 1.4H7.7A7.8 7.8 0 0 1 12 4.1zm-5.6 3h11.2c.4.7.7 1.5.9 2.4H5.5c.2-.9.5-1.7.9-2.4zM4.7 12c0-.5 0-1 .1-1.5h14.4c.1.5.1 1 .1 1.5s0 1-.1 1.5H4.8c-.1-.5-.1-1-.1-1.5zm.8 4.5h13c-.2.9-.5 1.7-.9 2.4H6.4c-.4-.7-.7-1.5-.9-2.4zM7.7 19.5h8.6A7.8 7.8 0 0 1 12 20.9a7.8 7.8 0 0 1-4.3-1.4z"/></svg>`;
+  }
+  if (k === "api") {
+    return `<svg class="scope-card-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.2 7.2 4.5 12l3.7 4.8 1.5-1.2L7.2 12l2.5-3.6zm7.6 0-1.5 1.2L16.8 12l-2.5 3.6 1.5 1.2L19.5 12zM10.4 16.2l3.2-8.4h1.7l-3.2 8.4z"/></svg>`;
+  }
+  if (k === "mobile") {
+    return `<svg class="scope-card-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 2.5h8A1.5 1.5 0 0 1 17.5 4v16a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 20V4A1.5 1.5 0 0 1 8 2.5zm0 2v12h8V4.5zm4 14.2a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>`;
+  }
+  if (k === "container") {
+    return `<svg class="scope-card-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.5 7.2 12 3.5l8.5 3.7v9.6L12 20.5l-8.5-3.7zm1.6 1.5v6.8L12 18.7l6.9-3.2V8.7L12 5.5z"/></svg>`;
+  }
+  return `<svg class="scope-card-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6.5h16v2H4zm0 4.5h16v2H4zm0 4.5h10v2H4z"/></svg>`;
+}
+
 function scopesGridHtml(plan: ScopePlan | null): string {
   const scopes = plan?.scopes ?? [];
   const active = new Set(plan?.active ?? []);
   if (!scopes.length) {
-    return `<p class="detail empty-hint">No scopes detected — press Detect.</p>`;
+    return `<p class="detail empty-hint">No targets detected — press Detect.</p>`;
   }
   return scopes
     .map((s) => {
       const id = s.id ?? "";
+      const kind = (s.kind ?? "root").toLowerCase();
       const on = active.has(id) ? "checked" : "";
-      return `<label class="scope-card">
+      const chips: string[] = [];
+      if (s.provider) chips.push(s.provider);
+      for (const sig of s.signals ?? []) {
+        if (chips.length >= 3) break;
+        const t = String(sig).trim();
+        if (!t || chips.includes(t)) continue;
+        chips.push(t);
+      }
+      const chipHtml = chips.length
+        ? `<div class="scope-card-chips">${chips
+            .map((c) => `<span class="scope-chip">${escapeHtml(c)}</span>`)
+            .join("")}</div>`
+        : "";
+      return `<label class="scope-card" data-kind="${escapeHtml(kind)}">
             <input type="checkbox" data-scope-id="${escapeHtml(id)}" ${on} />
-            <div>
+            <span class="scope-card-icon" aria-hidden="true">${scopeKindIcon(kind)}</span>
+            <div class="scope-card-body">
               <strong>${escapeHtml(s.label ?? id)}</strong>
-              <span>${escapeHtml(s.kind ?? "")} · ${escapeHtml(s.relative ?? ".")}${
-                s.provider ? ` · ${escapeHtml(s.provider)}` : ""
-              }</span>
+              <span class="scope-card-meta">${escapeHtml(kind)} · ${escapeHtml(s.relative ?? ".")}</span>
+              ${chipHtml}
             </div>
           </label>`;
     })
@@ -695,14 +846,36 @@ function syncStageInlineScopes(view: PublishView, focusIndex: number) {
   }
 }
 
+function isLoopbackDeployUrl(u: string): boolean {
+  const l = u.toLowerCase();
+  return (
+    l.includes("127.0.0.1") ||
+    l.includes("localhost") ||
+    l.includes("[::1]") ||
+    l.startsWith("file:")
+  );
+}
+
+function hostedDeployUrls(dep: { urls?: string[] | null } | null | undefined): string[] {
+  return (dep?.urls ?? []).filter((u) => !isLoopbackDeployUrl(u));
+}
+
+/** Local-auto self-host health — distinct from cloud / Orbit live. */
+function isSelfhostLocalEvidence(pulse: ProjectPulse | null | undefined): boolean {
+  return pulse?.deploy?.signal === "selfhost_ok";
+}
+
+/** Hosted deploy evidence only (never self-host loopback). */
 function deployEvidenceFromPulse(pulse: ProjectPulse | null | undefined): boolean {
   const dep = pulse?.deploy;
-  return (
-    dep?.last_run_ok === true ||
-    dep?.signal === "last_run_ok" ||
-    dep?.signal === "orbit_deployed" ||
-    (dep?.urls?.length ?? 0) > 0
-  );
+  if (!dep || dep.signal === "selfhost_ok") return false;
+  if (dep.signal === "orbit_deployed") return true;
+  if (dep.signal === "last_run_ok") {
+    const urls = dep.urls ?? [];
+    if (urls.length > 0 && urls.every(isLoopbackDeployUrl)) return false;
+    return true;
+  }
+  return hostedDeployUrls(dep).length > 0;
 }
 
 function shortStageLabel(raw: string): string {
@@ -839,14 +1012,13 @@ function renderPublishStage(view: PublishView | null) {
   }
   if (guide) {
     if (view.finished) {
-      const live =
-        lastPulse?.deploy?.last_run_ok === true ||
-        lastPulse?.deploy?.signal === "last_run_ok" ||
-        lastPulse?.deploy?.signal === "orbit_deployed" ||
-        (lastPulse?.deploy?.urls?.length ?? 0) > 0;
+      const live = deployEvidenceFromPulse(lastPulse);
+      const selfhost = isSelfhostLocalEvidence(lastPulse);
       guide.textContent = live
         ? "This pass’s required gates are done. Open the live URL when you want to smoke it again."
-        : "Required gates for this pass are done. Deploy may still show no signal — that means no hosted URL yet (use Local for desktop-only cuts).";
+        : selfhost
+          ? "Required gates for this pass are done. Self-host local check is ok — that is not a cloud host. Choose host when you want Public SaaS."
+          : "Required gates for this pass are done. Deploy may still show no signal — that means no hosted URL yet (use Local for desktop-only cuts).";
     } else {
       guide.textContent = focus ? stageGuideline(focus) : "";
     }
@@ -1621,6 +1793,20 @@ function appendStream(line: StreamLine) {
     out.scrollTop = out.scrollHeight;
   }
   syncOutputMirror();
+
+  // Self-host: setup ends at health check; remaining busy is intentional serve.
+  if (selfhostServing && /serving until Cancel/i.test(line.text)) {
+    noteRunPhase("Serving", { resetElapsed: true });
+    void refreshShipState().then(() => paintDeployResultsBay());
+  } else if (selfhostServing && /selfhost · check ok/i.test(line.text)) {
+    noteRunPhase("Check ok", { resetElapsed: false });
+    const m = line.text.match(/https?:\/\/127\.0\.0\.1:\d+\/?/);
+    if (pendingSelfhostOpenLive && m?.[0]) {
+      pendingSelfhostOpenLive = false;
+      void openUrl(m[0]).then(() => toast("Opened live URL", "ok", 3500));
+    }
+    void refreshShipState().then(() => paintDeployResultsBay());
+  }
 }
 
 type StatusProbeState = "checking" | "ok" | "missing" | "guide";
@@ -1784,34 +1970,35 @@ function buildSignDeployProbeRows(
   }
 
   const dep = pulse?.deploy;
-  const deployOk =
-    dep?.last_run_ok === true ||
-    dep?.signal === "last_run_ok" ||
-    dep?.signal === "orbit_deployed" ||
-    (dep?.urls?.length ?? 0) > 0;
+  const deployOk = deployEvidenceFromPulse(pulse);
+  const selfhostOk = isSelfhostLocalEvidence(pulse);
   const linked =
     dep?.signal === "vercel_linked" || dep?.signal === "orbit_configured";
   const deployActions: Array<{ id: string; label: string }> = [
     { id: "choose-host", label: "Choose host" },
   ];
-  if (!deployOk && !linked) {
+  if (!deployOk && !linked && !selfhostOk) {
     deployActions.push({ id: "intent-local", label: "Use Local" });
   }
   rows.push({
     id: "deploy",
     label: "Deploy",
-    state: deployOk ? "ok" : linked ? "guide" : "missing",
-    badge: deployOk ? "Ready" : linked ? "Linked" : "No signal",
+    state: deployOk ? "ok" : selfhostOk || linked ? "guide" : "missing",
+    badge: deployOk ? "Ready" : selfhostOk ? "Self-host" : linked ? "Linked" : "No signal",
     detail: deployOk
-      ? dep?.urls?.[0] || dep?.detail || "Prior deploy evidence found"
-      : linked
-        ? dep?.detail || "Host linked — deploy when releasing"
-        : dep?.detail || "No Orbit / last-run / host link yet",
+      ? hostedDeployUrls(dep)[0] || dep?.detail || "Prior hosted deploy evidence found"
+      : selfhostOk
+        ? dep?.urls?.[0] || dep?.detail || "Local self-host check ok"
+        : linked
+          ? dep?.detail || "Host linked — deploy when releasing"
+          : dep?.detail || "No Orbit / last-run / host link yet",
     suggestion: deployOk
-      ? "Prior evidence found — redeploy when you cut again"
-      : linked
-        ? "Configured locally — run deploy on release"
-        : "No hosted URL yet — pick a host, or Use Local for desktop-only",
+      ? "Prior hosted evidence found — redeploy when you cut again"
+      : selfhostOk
+        ? "Self-host is local-auto only — distinct from cloud. Choose host for Cloudflare / Vercel / …"
+        : linked
+          ? "Configured locally — run deploy on release"
+          : "No hosted URL yet — pick a host, or Use Local for desktop-only",
     actions: deployActions,
   });
   return rows;
@@ -1969,8 +2156,6 @@ function afterPaint(fn: () => void) {
 
 const NAV_SECTION_DEFAULTS: Record<string, boolean> = {
   ship: true,
-  targets: true,
-  integrations: true,
   more: true,
   run: true,
 };
@@ -1978,11 +2163,11 @@ const NAV_SECTION_DEFAULTS: Record<string, boolean> = {
 const VIEW_TO_NAV_SECTION: Record<string, string> = {
   dashboard: "ship",
   publish: "ship",
+  scopes: "ship",
   sign: "ship",
   env: "ship",
-  scopes: "targets",
   platforms: "ship",
-  integrations: "integrations",
+  integrations: "ship",
   assist: "more",
   launch: "more",
   portal: "more",
@@ -2067,7 +2252,6 @@ function setView(id: string) {
   if (id === "integrations") renderIntegrations();
   if (id === "platforms") renderPlatforms();
   if (id === "sign") renderSignCatalog();
-  if (id === "integrations" || prev === "integrations") highlightSidebarIntegration();
   if (id === "sign" && projectPath()) {
     afterPaint(() => {
       void refreshStatusProbes({ views: ["sign"], animate: true });
@@ -2079,16 +2263,6 @@ function setView(id: string) {
     });
   }
 }
-
-function highlightSidebarIntegration() {
-  highlightProviderSidebar(
-    "#sidebar-integrations",
-    "data-side-int",
-    selectedIntegration,
-    activeViewId === "integrations",
-  );
-}
-
 
 function commandItems(): CmdItem[] {
   return [
@@ -2124,8 +2298,8 @@ function commandItems(): CmdItem[] {
     },
     {
       id: "nav-scopes",
-      title: "Go to Scopes",
-      keywords: "web api desktop directory",
+      title: "Go to Targets",
+      keywords: "targets scopes web api desktop directory",
       group: "Navigate",
       run: () => setView("scopes"),
     },
@@ -2198,6 +2372,15 @@ function commandItems(): CmdItem[] {
       keywords: "console log",
       group: "Navigate",
       run: () => setView("output"),
+    },
+    {
+      id: "act-update-check",
+      title: "Check for updates",
+      keywords: "update release github download version",
+      group: "Run",
+      run: () => {
+        void runUpdateCheck();
+      },
     },
     {
       id: "act-output-preview",
@@ -2667,10 +2850,7 @@ function selectIntegration(id: string) {
   }
   selectedIntegration = id;
   if (activeViewId !== "integrations") setView("integrations");
-  else {
-    renderIntegrations();
-    highlightSidebarIntegration();
-  }
+  else renderIntegrations();
 }
 
 function paintIntegrationWizard() {
@@ -2814,11 +2994,625 @@ function selectPlatform(id: string) {
   else renderPlatforms();
 }
 
+
+function hostedResultUrls(): string[] {
+  const fromPulse = hostedDeployUrls(lastPulse?.deploy);
+  if (fromPulse.length) return fromPulse;
+  return (lastRunState?.urls ?? []).filter((u) => !isLoopbackDeployUrl(u));
+}
+
+/** Which host wrote `.ship/last-run.json` — never share Live URL across cards. */
+function lastRunHostProvider(): string | null {
+  const tagged = (lastRunState?.host_provider ?? "").trim().toLowerCase();
+  if (tagged) return tagged;
+  const steps = lastRunState?.steps ?? [];
+  if (steps.some((s) => (s.id ?? "").startsWith("selfhost"))) return "selfhost";
+  const blob = `${lastRunState?.message ?? ""}\n${steps.map((s) => s.detail ?? "").join("\n")}`.toLowerCase();
+  if (blob.includes("selfhost")) return "selfhost";
+  if (blob.includes("cloudflare") || blob.includes("wrangler") || blob.includes("pages.dev")) {
+    return "cloudflare";
+  }
+  if (blob.includes("vercel")) return "vercel";
+  if (blob.includes("netlify")) return "netlify";
+  if (blob.includes("orbit") || (steps.some((s) => s.id === "deploy") && blob.includes("orbit"))) {
+    return "orbit";
+  }
+  return null;
+}
+
+function resultsBayMatchesCard(wiz: ProviderWizard | null): boolean {
+  if (!wiz) return false;
+  const hp = lastRunHostProvider();
+  if (!hp) return false;
+  if (wiz.id === "selfhost") return hp === "selfhost";
+  if (wiz.id === "orbit") return hp === "orbit";
+  const id = (wiz.provider ?? wiz.id).toLowerCase();
+  return hp === id || hp === wiz.id;
+}
+
+function defaultHostProjectName(): string {
+  const p = projectPath();
+  if (!p) return "harbor";
+  const base = p.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || "project";
+  return base.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "project";
+}
+
+/** Best-effort Pages/site name from last hostdeploy run or remembered dialog. */
+function lastHostProjectName(): string {
+  if (lastHostDeployName.trim()) return lastHostDeployName.trim();
+  const blob = `${lastRunState?.message ?? ""}\n${(lastRunState?.steps ?? [])
+    .map((s) => s.detail ?? "")
+    .join("\n")}`;
+  const m =
+    /--project-name[=\s]+([a-z0-9][a-z0-9_-]*)/i.exec(blob) ||
+    /pages project create\s+([a-z0-9][a-z0-9_-]*)/i.exec(blob) ||
+    /project-name[=:\s]+([a-z0-9][a-z0-9_-]*)/i.exec(blob);
+  if (m?.[1]) return m[1].toLowerCase();
+  return defaultHostProjectName();
+}
+
+/**
+ * Open dashboard URL that lands on the list/project the operator needs —
+ * not the vendor marketing home.
+ */
+function hostDashboardUrl(wiz: ProviderWizard | null | undefined): string {
+  if (!wiz?.openUrl) return "";
+  const id = wiz.id;
+  const name = lastHostProjectName();
+  const enc = encodeURIComponent(name);
+  if (id === "cloudflare") {
+    // Prefer project deep-link when this card's last deploy succeeded; else Workers & Pages list.
+    if (
+      name &&
+      lastRunHostProvider() === "cloudflare" &&
+      lastRunState?.ok === true
+    ) {
+      return `https://dash.cloudflare.com/?to=/:account/pages/view/${enc}`;
+    }
+    return "https://dash.cloudflare.com/?to=/:account/workers-and-pages";
+  }
+  if (id === "vercel") {
+    return "https://vercel.com/dashboard";
+  }
+  if (id === "netlify") {
+    if (name && lastRunHostProvider() === "netlify" && lastRunState?.ok === true) {
+      return `https://app.netlify.com/projects/${enc}`;
+    }
+    return "https://app.netlify.com/projects";
+  }
+  if (id === "fly") return "https://fly.io/dashboard";
+  if (id === "railway") return "https://railway.com/dashboard";
+  if (id === "github-pages") return "https://github.com/settings/pages";
+  return wiz.openUrl;
+}
+
+async function openHostDashboard(wiz: ProviderWizard): Promise<void> {
+  const url = hostDashboardUrl(wiz);
+  if (!url) {
+    toast("No dashboard URL for this host", "info");
+    return;
+  }
+  await openUrl(url);
+  const where =
+    wiz.id === "cloudflare"
+      ? lastRunHostProvider() === "cloudflare"
+        ? `Cloudflare Pages · ${lastHostProjectName()}`
+        : "Cloudflare Workers & Pages"
+      : wiz.id === "netlify"
+        ? "Netlify projects"
+        : wiz.id === "vercel"
+          ? "Vercel dashboard"
+          : wiz.title;
+  toast(`Opened ${where}`, "ok", 4500);
+}
+
+/** True while `shipctl selfhost --serve` is the active Desktop command. */
+let selfhostServing = false;
+/** Open live asked for serve — open loopback when health ok streams. */
+let pendingSelfhostOpenLive = false;
+let lastHostDeployName = "";
+let pendingHostDeployWiz: ProviderWizard | null = null;
+
+function isCloudHostedUrl(u: string): boolean {
+  const l = u.toLowerCase();
+  return (
+    l.includes(".pages.dev") ||
+    l.includes(".workers.dev") ||
+    l.includes("vercel.app") ||
+    l.includes("netlify.app") ||
+    l.includes("netlify.com")
+  );
+}
+
+function cancelSelfhostServe(): void {
+  pendingSelfhostOpenLive = false;
+  selfhostServing = false;
+  // Do not rely on #btn-cancel.click() — disabled Tools buttons swallow programmatic clicks.
+  void (async () => {
+    try {
+      const killed = await invoke<boolean>("cancel_shipctl");
+      appendStream({
+        stream: "meta",
+        text: killed ? "cancel signal sent" : "nothing to cancel — unlocking UI",
+      });
+    } catch (err) {
+      appendStream({ stream: "stderr", text: String(err) });
+    } finally {
+      forceUnlockUi("Cancelled");
+      toast("Self-host serve stopped", "ok", 3500);
+    }
+  })();
+}
+
+async function startSelfhostServe(opts?: { openLive?: boolean }): Promise<void> {
+  if (!projectPath()) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  if (opts?.openLive) pendingSelfhostOpenLive = true;
+  if (selfhostServing || running) {
+    if (opts?.openLive) {
+      const fromBtn = document
+        .querySelector<HTMLButtonElement>("#plat-open-live")
+        ?.dataset.url?.trim();
+      const fromRun = (lastRunState?.urls ?? [])
+        .map((u) => String(u ?? ""))
+        .find((u) => /^https?:\/\/127\.0\.0\.1/i.test(u));
+      const url = fromBtn || fromRun || "";
+      if (url) {
+        pendingSelfhostOpenLive = false;
+        await openUrl(url);
+        toast("Opened live URL", "ok", 3500);
+        return;
+      }
+      toast("Serve still starting — try Open live again in a moment", "info", 4000);
+    } else {
+      toast("Self-host already busy — Cancel serve first", "info", 4000);
+    }
+    return;
+  }
+  selfhostResultsDismissed = false;
+  applyOutputDock(true);
+  selfhostServing = true;
+  paintPlatformWizard();
+  toast(
+    opts?.openLive
+      ? "Serving locally — Cancel serve or Esc when the GIF / demo is done"
+      : "Self-host serving until Cancel serve (or Esc)",
+    "ok",
+    7000,
+    [
+      {
+        id: "cancel-serve",
+        label: "Cancel serve",
+        icon: "continue",
+        run: () => cancelSelfhostServe(),
+      },
+    ],
+  );
+  const result = await run(["selfhost", "--serve"], {
+    quietToast: true,
+    busyLabel: "Checking…",
+  });
+  pendingSelfhostOpenLive = false;
+  selfhostServing = false;
+  paintPlatformWizard();
+  if (!result) return;
+  if (result.cancelled) toast("Self-host serve cancelled", "ok", 4000);
+  else if (result.ok) toast("Self-host serve ended", "ok", 4000);
+  else toast("Self-host serve failed — see Output", "err", 5000);
+}
+
+/** Hide stale Self-host Results until the next Deploy. */
+let selfhostResultsDismissed = false;
+/** Cleared cloud last-run for this provider id until next Deploy. */
+let cloudEvidenceClearedProvider: string | null = null;
+
+function hostProviderKey(wiz: ProviderWizard | null): string {
+  if (!wiz) return "";
+  return (wiz.provider ?? wiz.id).toLowerCase();
+}
+
+function hasSelfhostDeployEvidence(): boolean {
+  if (selfhostResultsDismissed) return false;
+  if (lastRunHostProvider() === "selfhost") return true;
+  if (isSelfhostLocalEvidence(lastPulse)) return true;
+  const steps = lastRunState?.steps ?? [];
+  return steps.some((s) => (s.id ?? "").startsWith("selfhost"));
+}
+
+/** Prior cloud deploy for this card — gates Cancel on dashboard / Clear evidence. */
+function hasCloudHostDeployEvidence(wiz: ProviderWizard | null): boolean {
+  if (!wiz || wiz.id === "selfhost") return false;
+  if (cloudEvidenceClearedProvider === hostProviderKey(wiz)) return false;
+  if (!resultsBayMatchesCard(wiz)) return false;
+  if (lastRunState?.ok === true) return true;
+  const urls = (lastRunState?.urls ?? []).filter((u) => !isLoopbackDeployUrl(String(u)));
+  if (urls.length > 0) return true;
+  return (
+    deployEvidenceFromPulse(lastPulse) && hostedDeployUrls(lastPulse?.deploy).length > 0
+  );
+}
+
+/** Drop local last-run after the operator deleted the cloud project. */
+async function clearHostDeployEvidence(wiz: ProviderWizard): Promise<void> {
+  const project = projectPath();
+  if (!project) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  cloudEvidenceClearedProvider = hostProviderKey(wiz);
+  const sep = project.includes("\\") ? "\\" : "/";
+  const lastPath = `${project.replace(/[\\/]+$/, "")}${sep}.ship${sep}last-run.json`;
+  try {
+    if (resultsBayMatchesCard(wiz)) {
+      await invoke("delete_path", { path: lastPath });
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+  lastRunState = null;
+  await refreshShipState();
+  await refreshSessionNow();
+  paintDeployResultsBay();
+  paintPlatformWizard();
+  toast("Studio evidence cleared — Deploy again when the project exists", "ok", 5000);
+}
+
+async function resetSelfhostSession(): Promise<void> {
+  if (running || selfhostServing) {
+    cancelSelfhostServe();
+    await new Promise((r) => window.setTimeout(r, 400));
+  }
+  selfhostServing = false;
+  selfhostResultsDismissed = true;
+  paintDeployResultsBay();
+  paintPlatformWizard();
+  await refreshShipState();
+  await refreshSessionNow();
+  toast("Self-host cleared — Deploy again for a fresh run", "ok", 4500);
+}
+
+/** Self-host: kill local serve / Start over. Cloud: Clear evidence or open dashboard. */
+function runPlatCancelDeploy(wiz: ProviderWizard, opts?: { mode?: "clear" | "dashboard" }): void {
+  if (wiz.id === "selfhost") {
+    if (selfhostServing || running) {
+      cancelSelfhostServe();
+      toast("Cancelling Self-host serve…", "ok", 3500);
+      return;
+    }
+    if (hasSelfhostDeployEvidence()) {
+      void resetSelfhostSession();
+      return;
+    }
+    toast("Deploy Self-host first, then Cancel serve or Start over", "info", 5000);
+    return;
+  }
+  if (isHostedCliDeployCard(wiz.id) || wiz.id === "fly" || wiz.id === "railway" || wiz.id === "github-pages") {
+    if (!hasCloudHostDeployEvidence(wiz) && opts?.mode !== "clear") {
+      toast("Deploy this host first — cancel/clear appears after a successful run", "info", 5500);
+      return;
+    }
+    const mode = opts?.mode ?? "clear";
+    if (mode === "clear") {
+      void clearHostDeployEvidence(wiz);
+      return;
+    }
+    void openHostDashboard(wiz);
+    toast(
+      `Delete on ${wiz.title} dashboard, then Clear evidence here to sync Studio`,
+      "info",
+      8000,
+      [
+        {
+          id: "clear-evidence",
+          label: "Clear evidence",
+          icon: "continue",
+          run: () => void clearHostDeployEvidence(wiz),
+        },
+      ],
+    );
+    return;
+  }
+  toast("No cancel action for this card", "info");
+}
+
+function paintPlatCancelButtons(wiz: ProviderWizard | null, resultsVisible: boolean) {
+  const main = document.querySelector<HTMLButtonElement>("#plat-cancel-deploy");
+  const bay = document.querySelector<HTMLButtonElement>("#plat-cancel-deploy-bay");
+  const cloud =
+    Boolean(wiz) &&
+    (isHostedCliDeployCard(wiz!.id) ||
+      wiz!.id === "fly" ||
+      wiz!.id === "railway" ||
+      wiz!.id === "github-pages");
+  const self = wiz?.id === "selfhost";
+  const selfActive = self && (selfhostServing || running);
+  const selfStartOver = self && !selfActive && hasSelfhostDeployEvidence();
+  const cloudEvidence = cloud && hasCloudHostDeployEvidence(wiz);
+
+  if (main) {
+    if (selfActive) {
+      main.hidden = false;
+      main.disabled = false;
+      main.textContent = "Cancel serve";
+      main.title = "Stop the local selfhost process";
+    } else if (selfStartOver) {
+      main.hidden = false;
+      main.disabled = false;
+      main.textContent = "Start over";
+      main.title = "Clear this Self-host result and Deploy again";
+    } else if (cloudEvidence) {
+      main.hidden = false;
+      main.disabled = false;
+      main.textContent = "Clear evidence";
+      main.title =
+        "Remove local last-run after you deleted the cloud project — Studio does not poll the vendor";
+    } else {
+      main.hidden = true;
+      main.disabled = true;
+    }
+  }
+
+  if (bay) {
+    if (selfActive) {
+      bay.hidden = false;
+      bay.textContent = "Cancel serve";
+    } else if (selfStartOver) {
+      bay.hidden = false;
+      bay.textContent = "Start over";
+    } else if (cloudEvidence && resultsVisible) {
+      bay.hidden = false;
+      bay.textContent = "Cancel on dashboard";
+    } else {
+      bay.hidden = true;
+    }
+  }
+}
+
+/** H3 — Deployment aside: phases · live URL · Open live / Open dashboard. */
+function paintDeployResultsBay() {
+  const bay = document.querySelector<HTMLElement>("#plat-results");
+  if (!bay) return;
+  const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform) ?? null;
+  const statusEl = document.querySelector<HTMLElement>("#plat-results-status");
+  const phasesEl = document.querySelector<HTMLElement>("#plat-results-phases");
+  const urlEl = document.querySelector<HTMLElement>("#plat-results-url");
+  const urlLabelEl = document.querySelector<HTMLElement>("#plat-results-url-label");
+  const kickerEl = document.querySelector<HTMLElement>("#plat-results-kicker");
+  const liveBtn = document.querySelector<HTMLButtonElement>("#plat-open-live");
+  const dashBtn = document.querySelector<HTMLButtonElement>("#plat-results-dashboard");
+
+  const match = resultsBayMatchesCard(wiz);
+  const selfhost = isSelfhostLocalEvidence(lastPulse) && wiz?.id === "selfhost";
+  const hostedOk = deployEvidenceFromPulse(lastPulse) && match && wiz?.id !== "selfhost";
+  const detail = match
+    ? (lastPulse?.deploy?.detail ?? lastRunState?.message ?? "")
+    : "";
+  // Hard isolate: Self-host = loopback only; cloud cards never show loopback; never cross *.pages.dev onto Self-host.
+  const urls = !match
+    ? []
+    : wiz?.id === "selfhost"
+      ? (lastPulse?.deploy?.urls ?? lastRunState?.urls ?? [])
+          .filter((u) => isLoopbackDeployUrl(u) && !isCloudHostedUrl(u))
+          .slice(0, 1)
+      : hostedResultUrls().filter((u) => !isLoopbackDeployUrl(u));
+  const allSteps = match ? (lastRunState?.steps ?? []) : [];
+  const hostSteps = allSteps.filter((s) => (s.id ?? "").startsWith("host."));
+  const selfhostSteps = allSteps.filter((s) => (s.id ?? "").startsWith("selfhost"));
+  const steps =
+    wiz?.id === "selfhost"
+      ? selfhostSteps
+      : hostSteps.length
+        ? hostSteps
+        : allSteps.filter((s) => s.id === "deploy");
+
+  // Prefer card-relevant evidence only (never cross-host Live URL).
+  let show = false;
+  if (wiz?.group === "Hosting" && match) {
+    if (wiz.id === "selfhost") {
+      if (selfhostResultsDismissed) {
+        show = selfhostServing;
+      } else {
+        show =
+          selfhost ||
+          selfhostSteps.length > 0 ||
+          Boolean(urls.length) ||
+          selfhostServing;
+      }
+    } else if (
+      wiz.id === "cloudflare" ||
+      wiz.id === "vercel" ||
+      wiz.id === "netlify"
+    ) {
+      if (cloudEvidenceClearedProvider === hostProviderKey(wiz)) {
+        show = false;
+      } else {
+        show =
+          hostedOk ||
+          hostSteps.length > 0 ||
+          urls.length > 0 ||
+          (lastRunState?.ok === false &&
+            /hostdeploy|wrangler|vercel|netlify/i.test(lastRunState.message ?? ""));
+      }
+    } else {
+      show = hostedOk || urls.length > 0;
+    }
+  }
+  // Self-host Cancel surface even before last-run match when serve is active.
+  if (!show && wiz?.id === "selfhost" && selfhostServing) {
+    show = true;
+  }
+  bay.hidden = !show;
+  if (!show) {
+    bay.dataset.serving = "";
+    paintPlatCancelButtons(wiz, false);
+    // Fall through only for cancel paint; hide rest of bay content below via early return.
+    return;
+  }
+  bay.dataset.serving = wiz?.id === "selfhost" && selfhostServing ? "1" : "";
+  paintPlatCancelButtons(wiz, true);
+  if (kickerEl) {
+    kickerEl.textContent =
+      wiz?.id === "selfhost"
+        ? "Last self-host (local)"
+        : wiz?.id === "cloudflare"
+          ? "Last Cloudflare deploy"
+          : wiz?.id === "vercel"
+            ? "Last Vercel deploy"
+            : wiz?.id === "netlify"
+              ? "Last Netlify deploy"
+              : "Last deploy";
+  }
+
+  let status = "No deploy evidence for this host yet.";
+  if (wiz?.id === "selfhost" && selfhostServing) {
+    status = "Self-host serving on this machine — Cancel serve to stop.";
+  } else if (hostedOk) {
+    status = detail || "Cloud host evidence — Confirm Live check on Publish when ready.";
+  } else if (selfhost) {
+    status = detail || "Self-host local check ok — loopback only (not a cloud host).";
+  } else if (lastRunState && lastRunState.ok === false && match) {
+    status = lastRunState.message || "Last deploy run failed — see Output / Troubleshoot next.";
+  } else if (lastRunState?.ok && match) {
+    status = detail || lastRunState.message || "Last deploy succeeded.";
+  } else if (detail) {
+    status = detail;
+  }
+  if (statusEl) statusEl.textContent = status;
+
+  if (phasesEl) {
+    if (steps.length) {
+      phasesEl.innerHTML = steps
+        .map((s) => {
+          const ok = s.ok !== false;
+          const mark = ok ? "✓" : "✗";
+          const cls = ok ? "is-ok" : "is-fail";
+          const id = escapeHtml(s.id ?? "step");
+          const d = escapeHtml(s.detail ?? "");
+          return `<li class="${cls}"><span>${mark}</span> ${id}${d ? ` — ${d}` : ""}</li>`;
+        })
+        .join("");
+      phasesEl.hidden = false;
+    } else {
+      phasesEl.innerHTML = "";
+      phasesEl.hidden = true;
+    }
+  }
+
+  const primaryUrl = urls[0] ?? "";
+  if (urlLabelEl) {
+    if (primaryUrl && wiz?.id === "selfhost") {
+      urlLabelEl.hidden = false;
+      urlLabelEl.textContent = "Local loopback URL (Self-host — not Cloudflare)";
+    } else if (primaryUrl && wiz?.id === "cloudflare") {
+      urlLabelEl.hidden = false;
+      urlLabelEl.textContent = "Cloudflare Pages / Workers URL (not Self-host)";
+    } else if (primaryUrl && (wiz?.id === "vercel" || wiz?.id === "netlify")) {
+      urlLabelEl.hidden = false;
+      urlLabelEl.textContent = `${wiz.title} production URL (not Self-host)`;
+    } else {
+      urlLabelEl.hidden = true;
+      urlLabelEl.textContent = "";
+    }
+  }
+  if (urlEl) {
+    if (primaryUrl) {
+      urlEl.hidden = false;
+      urlEl.textContent = primaryUrl;
+    } else {
+      urlEl.hidden = true;
+      urlEl.textContent = "";
+    }
+  }
+  if (liveBtn) {
+    liveBtn.hidden = !primaryUrl;
+    liveBtn.dataset.url = primaryUrl;
+  }
+  if (dashBtn) {
+    const dash = hostDashboardUrl(wiz);
+    const showDash =
+      Boolean(dash) &&
+      (wiz?.id === "cloudflare" ||
+        wiz?.id === "vercel" ||
+        wiz?.id === "netlify" ||
+        wiz?.id === "orbit" ||
+        wiz?.id === "fly" ||
+        wiz?.id === "railway" ||
+        wiz?.id === "github-pages");
+    dashBtn.hidden = !showDash;
+    dashBtn.dataset.url = dash;
+  }
+  paintPlatCancelButtons(wiz, true);
+
+  const troubleBtn = document.querySelector<HTMLButtonElement>("#plat-troubleshoot");
+  const retryBtn = document.querySelector<HTMLButtonElement>("#plat-retry-deploy");
+  const hintEl = document.querySelector<HTMLElement>("#plat-results-hint");
+  const failed =
+    lastRunState?.ok === false ||
+    /auth required|exited|failed|detect/i.test(detail);
+  if (
+    troubleBtn &&
+    hintEl &&
+    wiz &&
+    failed &&
+    !selfhostServing &&
+    (wiz.id === "cloudflare" || wiz.id === "vercel" || wiz.id === "netlify" || wiz.id === "selfhost")
+  ) {
+    const recovery = classifyHostDeployFailure(
+      `${detail}\n${lastRunState?.message ?? ""}`,
+      wiz.provider ?? wiz.id,
+    );
+    troubleBtn.hidden = false;
+    troubleBtn.textContent = recovery.label;
+    troubleBtn.dataset.action = recovery.action;
+    troubleBtn.dataset.kind = recovery.kind;
+    hintEl.hidden = false;
+    hintEl.textContent =
+      wiz.id === "cloudflare" || wiz.id === "vercel" || wiz.id === "netlify"
+        ? `${recovery.hint} Stop/delete on the vendor dashboard — Studio is portal-only for cloud cancels.`
+        : recovery.hint;
+    // Secondary: Retry after human creates project / fixes auth on dashboard.
+    if (retryBtn) {
+      const showRetry =
+        recovery.kind === "account" ||
+        recovery.kind === "network" ||
+        recovery.kind === "unknown" ||
+        recovery.kind === "build" ||
+        recovery.action === "retry_deploy";
+      retryBtn.hidden = !showRetry || wiz.id === "selfhost";
+    }
+  } else if (troubleBtn && hintEl) {
+    troubleBtn.hidden = true;
+    troubleBtn.dataset.action = "";
+    if (wiz?.id === "selfhost" && selfhostServing) {
+      hintEl.hidden = false;
+      hintEl.textContent =
+        "Serving locally — Cancel serve stops the process. Deploy itself is a fast check (no long wait).";
+    } else if (wiz?.id === "selfhost" && hasSelfhostDeployEvidence()) {
+      hintEl.hidden = false;
+      hintEl.textContent =
+        "Last check finished. Open live starts a local serve; Deploy alone does not keep the server up.";
+    } else {
+      hintEl.hidden = true;
+      hintEl.textContent = "";
+    }
+    if (retryBtn) retryBtn.hidden = true;
+  } else if (retryBtn) {
+    retryBtn.hidden = true;
+  }
+}
+
 function paintPlatformWizard() {
   const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform) ?? null;
   const showLocal =
     wiz?.group === "Hosting" && wiz.id !== "selfhost" && shipIntent() === "public";
   const showPut = Boolean(wiz?.provider && providerHasEnvPut(wiz.provider));
+  const cliDeploy =
+    wiz?.id === "selfhost" ||
+    wiz?.id === "cloudflare" ||
+    wiz?.id === "vercel" ||
+    wiz?.id === "netlify";
   paintProviderWizard({
     entry: wiz,
     panel: document.querySelector<HTMLElement>("#platforms-wizard"),
@@ -2830,10 +3624,37 @@ function paintPlatformWizard() {
     secondaryVisible: Boolean(wiz?.provider && isPortalProvider(wiz.provider)),
     docsBtn: document.querySelector<HTMLButtonElement>("#plat-docs"),
     putBtn: document.querySelector<HTMLButtonElement>("#plat-put"),
-    putVisible: showPut,
+    // Deploy stays primary; Put remains available without stealing primary.
+    putVisible: showPut && !cliDeploy,
   });
+  const putBtn = document.querySelector<HTMLButtonElement>("#plat-put");
+  const openBtn = document.querySelector<HTMLButtonElement>("#plat-open");
+  const dashBtn = document.querySelector<HTMLButtonElement>("#plat-dashboard");
+  if (putBtn) {
+    putBtn.hidden = !showPut;
+    putBtn.classList.toggle("primary", showPut && !cliDeploy);
+  }
+  if (openBtn) {
+    openBtn.classList.toggle("primary", cliDeploy || !showPut);
+  }
+  if (dashBtn) {
+    dashBtn.hidden = !(
+      wiz?.id === "cloudflare" ||
+      wiz?.id === "vercel" ||
+      wiz?.id === "netlify" ||
+      wiz?.id === "fly" ||
+      wiz?.id === "railway" ||
+      wiz?.id === "github-pages"
+    );
+  }
+  const cancelServeBtn = document.querySelector<HTMLButtonElement>("#plat-cancel-deploy");
+  if (cancelServeBtn) {
+    // Visibility set in paintPlatCancelButtons
+  }
   const localBtn = document.querySelector<HTMLButtonElement>("#plat-use-local");
   if (localBtn) localBtn.hidden = !showLocal;
+  paintDeployResultsBay();
+  paintPlatCancelButtons(wiz, !(document.querySelector<HTMLElement>("#plat-results")?.hidden ?? true));
 }
 
 function routeDetectChip(label: string) {
@@ -2885,6 +3706,315 @@ function routeDetectChip(label: string) {
       setView("portal");
       void loadPortal(false);
   }
+}
+
+
+type HostFailClass =
+  | "auth"
+  | "missing_cli"
+  | "build"
+  | "network"
+  | "account"
+  | "detect"
+  | "unknown";
+
+type HostRecovery = {
+  kind: HostFailClass;
+  action: "login_cli" | "install_cli" | "preview_log" | "retry_deploy" | "open_dashboard";
+  label: string;
+  hint: string;
+};
+
+/** H4 — mirror shipctl hostdeploy::classify_host_failure (one primary recovery). */
+function classifyHostDeployFailure(text: string, provider = "cloudflare"): HostRecovery {
+  const l = text.toLowerCase();
+  const cli =
+    provider === "vercel" ? "vercel" : provider === "netlify" ? "netlify" : "wrangler";
+  const install =
+    provider === "vercel"
+      ? "npm i -g vercel"
+      : provider === "netlify"
+        ? "npm i -g netlify-cli"
+        : "npm i -g wrangler";
+
+  if (
+    l.includes("not on path") ||
+    ((l.includes("not found") || l.includes("cannot find") || l.includes("no such file")) &&
+      (l.includes("wrangler") || l.includes("vercel") || l.includes("netlify"))) ||
+    l.includes("is not recognized") ||
+    l.includes("program not found")
+  ) {
+    return {
+      kind: "missing_cli",
+      action: "install_cli",
+      label: "Preview log",
+      hint: `Install the CLI on PATH (${install}), then retry Deploy.`,
+    };
+  }
+  if (
+    l.includes("no wrangler.toml") ||
+    l.includes("no static index") ||
+    l.includes("no vercel.json") ||
+    l.includes("detect failed") ||
+    /hostdeploy (cloudflare|vercel|netlify): no /.test(l)
+  ) {
+    return {
+      kind: "detect",
+      action: "open_dashboard",
+      label: "Open dashboard",
+      hint: "No deployable surface detected — add host config or a static index, or Open dashboard.",
+    };
+  }
+  if (
+    /not logged in|please log in|login required|wrangler login|vercel login|netlify login|authentication error|unauthorized|missing credentials|auth required|re-authenticate|no existing credentials|not authenticated/.test(
+      l,
+    )
+  ) {
+    return {
+      kind: "auth",
+      action: "login_cli",
+      label: "Login CLI",
+      hint: `Sign in with Login CLI (${cli} login) or Sign in (web). Studio never creates API tokens.`,
+    };
+  }
+  if (
+    /econnrefused|etimedout|enotfound|network error|network request failed|could not resolve|getaddrinfo|tls handshake|connection reset|timed out/.test(
+      l,
+    )
+  ) {
+    return {
+      kind: "network",
+      action: "retry_deploy",
+      label: "Retry Deploy",
+      hint: "Network error — check connectivity, then retry Deploy.",
+    };
+  }
+  if (
+    /permission denied|access denied|forbidden|status code 403|http 403|wrong account|not a member|insufficient permission|does not exist|project not found|couldn't find project|could not find project|no such project|pages project create|project doesn't exist/.test(
+      l,
+    ) ||
+    (l.includes("project") && l.includes("not found") && !l.includes("module not found"))
+  ) {
+    const hint =
+      provider === "vercel"
+        ? "Host project missing or wrong account — Open dashboard to create/select the project, then Retry Deploy."
+        : provider === "netlify"
+          ? "Host project missing or wrong account — Open dashboard (or `netlify sites:create`), then Retry Deploy."
+          : "Pages/Workers still blocked after create attempt — Open dashboard to confirm account/name, then Retry Deploy.";
+    return {
+      kind: "account",
+      action: "open_dashboard",
+      label: "Open dashboard",
+      hint,
+    };
+  }
+  if (
+    /build failed|compile error|syntax error|typescript error|failed to compile|error ts|module not found|cannot find module|npm err/.test(
+      l,
+    )
+  ) {
+    return {
+      kind: "build",
+      action: "preview_log",
+      label: "Preview log",
+      hint: "Build failed — open Output, fix the project, then retry Deploy.",
+    };
+  }
+  // Tag from last-run message: [...kind]
+  const tag = /\[(auth|missing_cli|build|network|account|detect|unknown)\]/.exec(l);
+  if (tag?.[1] === "auth") {
+    return classifyHostDeployFailure("auth required wrangler login", provider);
+  }
+  if (tag?.[1] === "missing_cli") {
+    return classifyHostDeployFailure("wrangler not on PATH", provider);
+  }
+  if (tag?.[1] === "network") {
+    return classifyHostDeployFailure("getaddrinfo ENOTFOUND", provider);
+  }
+  if (tag?.[1] === "build") {
+    return classifyHostDeployFailure("build failed module not found", provider);
+  }
+  if (tag?.[1] === "account") {
+    return classifyHostDeployFailure("HTTP 403 Forbidden insufficient permission", provider);
+  }
+  if (tag?.[1] === "detect") {
+    return classifyHostDeployFailure("hostdeploy cloudflare: no wrangler.toml", provider);
+  }
+  return {
+    kind: "unknown",
+    action: "preview_log",
+    label: "Preview log",
+    hint: "Deploy failed — see Output, then Open dashboard or Retry Deploy.",
+  };
+}
+
+function runHostRecoveryAction(
+  recovery: HostRecovery,
+  wiz: ProviderWizard,
+): void {
+  const provider = wiz.provider ?? wiz.id;
+  switch (recovery.action) {
+    case "login_cli":
+      void openPortalLoginTerminal(provider);
+      break;
+    case "open_dashboard":
+      void openHostDashboard(wiz);
+      break;
+    case "retry_deploy":
+      void runHostedCliDeploy(wiz, {
+        name: lastHostDeployName || defaultHostProjectName(),
+        skipConfirm: true,
+      });
+      break;
+    case "install_cli":
+    case "preview_log":
+    default:
+      openOutputPreview();
+      break;
+  }
+}
+
+function isHostedCliDeployCard(id: string): boolean {
+  return id === "cloudflare" || id === "vercel" || id === "netlify";
+}
+
+function closeHostDeployDialog() {
+  const dlg = document.querySelector<HTMLElement>("#host-deploy-dialog");
+  if (dlg) dlg.hidden = true;
+  pendingHostDeployWiz = null;
+}
+
+function openHostDeployDialog(wiz: ProviderWizard) {
+  pendingHostDeployWiz = wiz;
+  const dlg = document.querySelector<HTMLElement>("#host-deploy-dialog");
+  const titleEl = document.querySelector("#host-deploy-dialog-title");
+  const blurbEl = document.querySelector("#host-deploy-dialog-blurb");
+  const nameInput = document.querySelector<HTMLInputElement>("#host-deploy-name");
+  const metaEl = document.querySelector("#host-deploy-meta");
+  if (!dlg || !nameInput) {
+    void runHostedCliDeploy(wiz, { skipConfirm: true });
+    return;
+  }
+  if (titleEl) titleEl.textContent = `Deploy · ${wiz.title}`;
+  if (blurbEl) {
+    blurbEl.textContent =
+      wiz.id === "cloudflare"
+        ? "Confirm the Pages/Workers project name. Studio streams wrangler on this machine — Login CLI once if needed."
+        : wiz.id === "vercel"
+          ? "Confirm deploy. Vercel uses the linked project or creates from this folder name (`vercel --prod --yes`)."
+          : "Confirm deploy. Netlify streams `netlify deploy --prod` for this publish directory.";
+  }
+  const remembered =
+    lastHostDeployName ||
+    (typeof localStorage !== "undefined"
+      ? localStorage.getItem(`ship.hostdeploy.name.${wiz.id}`) || ""
+      : "");
+  nameInput.value = remembered || defaultHostProjectName();
+  nameInput.readOnly = wiz.id !== "cloudflare";
+  if (metaEl) {
+    metaEl.textContent =
+      wiz.id === "cloudflare"
+        ? "Lane: Cloudflare Pages (or Workers if wrangler.toml) · create-if-missing · then deploy"
+        : wiz.id === "vercel"
+          ? "Lane: Vercel production · name shown for reference (CLI link wins when present)"
+          : "Lane: Netlify production · name shown for reference";
+  }
+  dlg.hidden = false;
+  nameInput.focus();
+  nameInput.select();
+}
+
+/** Opens confirm dialog for hosted CLI Deploy (Self-host stays one-click). */
+function promptHostedCliDeploy(wiz: ProviderWizard): void {
+  openHostDeployDialog(wiz);
+}
+
+async function runHostedCliDeploy(
+  wiz: ProviderWizard,
+  opts?: { name?: string; skipConfirm?: boolean },
+): Promise<void> {
+  if (!opts?.skipConfirm && !opts?.name) {
+    promptHostedCliDeploy(wiz);
+    return;
+  }
+  const provider = wiz.provider ?? wiz.id;
+  const title = wiz.title;
+  const name = (opts?.name ?? (lastHostDeployName || defaultHostProjectName())).trim();
+  if (name) {
+    lastHostDeployName = name;
+    try {
+      localStorage.setItem(`ship.hostdeploy.name.${wiz.id}`, name);
+    } catch {
+      /* ignore quota */
+    }
+  }
+  applyOutputDock(true);
+  cloudEvidenceClearedProvider = null;
+  toast(`${title} Deploy — streaming CLI in Output`, "ok", 3500);
+  const args = ["hostdeploy", "--provider", provider];
+  if (name && wiz.id === "cloudflare") {
+    args.push("--name", name);
+  }
+  const result = await run(args, {
+    quietToast: true,
+  });
+  if (!result) return;
+  await refreshShipState();
+  await refreshSessionNow();
+  void refreshStatusProbes({ views: ["publish", "sign"], animate: false });
+  const errText = `${result.stderr}\n${result.stdout}`;
+  if (result.cancelled) {
+    toast("hostdeploy cancelled", "err");
+    return;
+  }
+  if (result.ok) {
+    toast(
+      `${title} deploy ok — Open dashboard to see the project; Confirm Live check on Publish`,
+      "ok",
+      6500,
+      [
+        {
+          id: "dash",
+          label: "Open dashboard",
+          icon: "open",
+          run: () => {
+            void openHostDashboard(wiz);
+          },
+        },
+      ],
+    );
+    return;
+  }
+  const recovery = classifyHostDeployFailure(errText, provider);
+  const toastActions: ToastAction[] = [
+    {
+      id: "primary",
+      label: recovery.label,
+      icon: recovery.action === "login_cli" || recovery.action === "retry_deploy" ? "continue" : "open",
+      run: () => runHostRecoveryAction(recovery, wiz),
+    },
+  ];
+  // Flexible manual path: Open dashboard first, then Retry without re-reading the log.
+  if (recovery.action === "open_dashboard" || recovery.kind === "account") {
+    toastActions.push({
+      id: "retry",
+      label: "Retry Deploy",
+      icon: "continue",
+      run: () => {
+        void runHostedCliDeploy(wiz, { name, skipConfirm: true });
+      },
+    });
+  } else if (recovery.action === "preview_log") {
+    toastActions.push({
+      id: "dash",
+      label: "Open dashboard",
+      icon: "open",
+      run: () => {
+        void openHostDashboard(wiz);
+      },
+    });
+  }
+  toast(`${title}: ${recovery.hint}`, "err", 11000, toastActions);
 }
 
 function polishCtaLabel(raw: string): string {
@@ -3036,11 +4166,8 @@ function classifyOverall(pulse: ProjectPulse): {
   const wantsSignet = (pulse.kind ?? "").toLowerCase().includes("desktop")
     || (pulse.kind ?? "").toLowerCase().includes("tauri");
   const signet = !!pulse.tools?.signet_found;
-  const deployOk =
-    pulse.deploy?.last_run_ok === true ||
-    pulse.deploy?.signal === "last_run_ok" ||
-    pulse.deploy?.signal === "orbit_deployed" ||
-    (pulse.deploy?.urls?.length ?? 0) > 0;
+  const deployOk = deployEvidenceFromPulse(pulse);
+  const selfhostOk = isSelfhostLocalEvidence(pulse);
   const linked =
     pulse.deploy?.signal === "vercel_linked" ||
     pulse.deploy?.signal === "orbit_configured";
@@ -3102,9 +4229,20 @@ function classifyOverall(pulse: ProjectPulse): {
           ? "Already live (Orbit)"
           : "Already deployed",
       detail:
+        hostedDeployUrls(pulse.deploy)[0] ||
+        pulse.deploy?.detail ||
+        "Prior successful hosted deploy — redeploy only if you intend to.",
+    };
+  }
+  if (selfhostOk) {
+    return {
+      state: "ready",
+      badge: "Self-host",
+      title: "Local self-host ready",
+      detail:
         pulse.deploy?.urls?.[0] ||
         pulse.deploy?.detail ||
-        "Prior successful deploy — redeploy only if you intend to.",
+        "Self-host local check ok — not a cloud host.",
     };
   }
   if (linked) {
@@ -3148,7 +4286,7 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
     pulse.deploy?.signal === "last_run_ok" ||
     pulse.deploy?.signal === "vercel_linked" ||
     pulse.deploy?.signal === "orbit_configured" ||
-    (pulse.deploy?.urls?.length ?? 0) > 0;
+    hostedDeployUrls(pulse.deploy).length > 0;
   const wantsSignet = (pulse.kind ?? "").toLowerCase().includes("desktop")
     || (pulse.kind ?? "").toLowerCase().includes("tauri");
   const localIntent = shipIntent() === "local";
@@ -3230,18 +4368,23 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
     });
   } else if (!midWizard) {
     const dep = pulse.deploy;
-    const live =
-      dep?.last_run_ok === true ||
-      dep?.signal === "last_run_ok" ||
-      dep?.signal === "orbit_deployed" ||
-      (dep?.urls?.length ?? 0) > 0;
+    const live = deployEvidenceFromPulse(pulse);
+    const selfhost = isSelfhostLocalEvidence(pulse);
     if (live) {
       items.push({
         id: "deploy",
         state: "done",
         icon: "✓",
-        title: "Prior deploy evidence",
-        detail: dep?.urls?.[0] || dep?.detail || "Last shipctl run succeeded",
+        title: "Prior hosted deploy",
+        detail: hostedDeployUrls(dep)[0] || dep?.detail || "Last shipctl hosted run succeeded",
+      });
+    } else if (selfhost) {
+      items.push({
+        id: "deploy",
+        state: "idle",
+        icon: "·",
+        title: "Self-host local only",
+        detail: dep?.urls?.[0] || dep?.detail || "Not a cloud host",
       });
     }
   }
@@ -3327,13 +4470,10 @@ function applyPulseHealth(pulse: ProjectPulse) {
 
   const dep = pulse.deploy;
   const signal = dep?.signal ?? "unknown";
-  if (
-    dep?.last_run_ok === true ||
-    signal === "last_run_ok" ||
-    signal === "orbit_deployed" ||
-    (dep?.urls?.length ?? 0) > 0
-  ) {
+  if (deployEvidenceFromPulse(pulse)) {
     setPill("pill-deploy", "ok", "Live");
+  } else if (signal === "selfhost_ok") {
+    setPill("pill-deploy", "muted", "Self-host");
   } else if (signal === "vercel_linked" || signal === "orbit_configured") {
     setPill("pill-deploy", "ok", "Linked");
   } else if (signal === "wrangler_local") {
@@ -3484,6 +4624,7 @@ function applyPulse(pulse: ProjectPulse | null) {
   applyStatusBar(pulse);
   applyPulseNow(pulse);
   syncProjectIdentity();
+  paintDeployResultsBay();
 }
 
 async function refreshSessionNow() {
@@ -3740,7 +4881,6 @@ let lastScopes: ScopePlan | null = null;
 function applyScopes(plan: ScopePlan | null) {
   lastScopes = plan;
   fillScopeGrids(plan);
-  renderSidebarTargets();
   syncStageScopesPrimary();
 }
 
@@ -3761,12 +4901,12 @@ async function detectScopes(opts?: { quiet?: boolean }) {
   if (!projectPath()) return;
   const plan = (await loadJsonCmd(["scopes", "--project", projectPath()], {
     user: !opts?.quiet,
-    label: "Scopes",
+    label: "Targets",
   })) as ScopePlan | null;
   applyScopes(plan);
   // Fail path: loadJsonCmd already toasted when user-initiated.
   if (!opts?.quiet && plan) {
-    toast(plan.scopes?.length ? "Scopes detected" : "No scopes found", "ok");
+    toast(plan.scopes?.length ? "Targets detected" : "No targets found", "ok");
   }
 }
 
@@ -3780,8 +4920,8 @@ async function saveScopes(opts?: { silentToast?: boolean }): Promise<boolean> {
     (root ?? document).querySelectorAll<HTMLInputElement>("[data-scope-id]:checked"),
   ).map((el) => el.dataset.scopeId ?? "");
   if (!ids.length) {
-    show("Select at least one scope.");
-    toast("Select at least one scope", "err");
+    show("Select at least one target.");
+    toast("Select at least one target", "err");
     return false;
   }
   const result = await run(
@@ -3802,102 +4942,12 @@ async function saveScopes(opts?: { silentToast?: boolean }): Promise<boolean> {
       toast("Saved — Confirm & continue", "ok");
     } else if (publishMidFlight()) {
       setView("publish");
-      toast("Scopes saved — Confirm on Publish", "ok");
+      toast("Targets saved — Confirm on Publish", "ok");
     } else {
-      toast("Scopes saved", "ok");
+      toast("Targets saved", "ok");
     }
   }
   return true;
-}
-
-function renderSidebarTargets() {
-  const host = document.querySelector<HTMLElement>("#sidebar-targets");
-  if (!host) return;
-  const scopes = lastScopes?.scopes ?? [];
-  if (!projectPath() || !scopes.length) {
-    host.innerHTML = `<p class="nav-tree-empty">${projectPath() ? "No app or API targets detected." : "Bind a repo to list apps and APIs."}</p>`;
-    return;
-  }
-  const active = new Set(lastScopes?.active ?? []);
-  const kinds = [...new Set(scopes.map((s) => (s.kind ?? "root").toLowerCase()))].sort(
-    (a, b) => SCOPE_KIND_ORDER.indexOf(a) - SCOPE_KIND_ORDER.indexOf(b),
-  );
-  host.innerHTML = kinds
-    .map((kind) => {
-      const rows = scopes
-        .filter((s) => (s.kind ?? "root").toLowerCase() === kind)
-        .map((s) => {
-          const id = s.id ?? "";
-          const on = active.has(id);
-          const path = s.relative && s.relative !== "." ? s.relative : s.label ?? id;
-          return `<button type="button" class="nav-target${on ? " is-on" : ""}" data-target="${escapeHtml(id)}" aria-pressed="${on ? "true" : "false"}">
-            <span class="nav-target-mark" aria-hidden="true">${on ? "●" : "○"}</span>
-            ${scopeIconHtml(s)}
-            <span class="nav-target-text">
-              <span class="nav-target-name">${escapeHtml(s.label ?? id)}</span>
-              <span class="nav-target-path">${escapeHtml(path)}</span>
-            </span>
-          </button>`;
-        })
-        .join("");
-      return `<p class="nav-kind">${escapeHtml(kind)}</p>${rows}`;
-    })
-    .join("");
-  host.querySelectorAll<HTMLButtonElement>("[data-target]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-target");
-      if (id) void toggleSidebarTarget(id);
-    });
-  });
-}
-
-async function toggleSidebarTarget(id: string) {
-  const scopes = lastScopes?.scopes ?? [];
-  const active = new Set(lastScopes?.active ?? []);
-  if (active.has(id)) {
-    if (active.size <= 1) {
-      toast("Keep at least one deploy target", "info");
-      return;
-    }
-    active.delete(id);
-  } else {
-    active.add(id);
-  }
-  const ids = scopes.map((s) => s.id ?? "").filter((sid) => active.has(sid));
-  const result = await run(
-    ["scopes", "--project", projectPath(), "set", "--ids", ids.join(",")],
-    { quietHeader: true },
-  );
-  if (result?.stdout) {
-    try {
-      applyScopes(JSON.parse(result.stdout) as ScopePlan);
-    } catch {
-      /* ignore */
-    }
-  }
-  if (result?.ok) toast("Deploy targets updated", "ok");
-}
-
-function renderSidebarIntegrations() {
-  const host = document.querySelector<HTMLElement>("#sidebar-integrations");
-  if (!host) return;
-  renderProviderSidebarTree({
-    host,
-    entries: INTEGRATION_WIZARDS,
-    groups: ["Payments", "Email"],
-    selectedId: selectedIntegration,
-    activeView: activeViewId === "integrations",
-    iconHtml: integrationIconHtml,
-    dataAttr: "data-side-int",
-    onSelect: (id) => {
-      if (!projectPath()) {
-        toast("Bind a project first", "info");
-        return;
-      }
-      setView("integrations");
-      selectIntegration(id);
-    },
-  });
 }
 
 async function openEnvPutTerminal(provider: string, name: string) {
@@ -4098,17 +5148,25 @@ function applyPortalPlan(plan: PortalPlan | null) {
       const openDisabled = url ? "" : "disabled";
       const kind = (s.kind ?? "").toLowerCase();
       const isEnv = kind === "env";
+      const isOauth = kind === "oauth";
       const canPut = isEnv && providerHasEnvPut(s.provider);
-      const canLogin = kind === "oauth" || (s.cli && s.cli.length > 0);
-      const openLabel = isEnv ? "Open dashboard" : "Open";
+      const canLogin = isOauth || (s.cli && s.cli.length > 0);
+      const openLabel = isEnv
+        ? "Open dashboard"
+        : isOauth
+          ? "Sign in (web)"
+          : "Open";
       const docsLabel = isEnv ? "Learn more" : "Docs";
       const putBtn = canPut
         ? `<button type="button" class="portal-put primary" data-provider="${escapeHtml(
             s.provider ?? "",
           )}">Put</button>`
         : "";
+      // Web Open is primary for OAuth when a dashboard/login URL exists; Login CLI is secondary.
+      const openIsPrimary = Boolean(url) && !canPut && (isOauth || !canLogin);
+      const loginIsPrimary = Boolean(canLogin && isOauth && !url);
       const openBtn = `<button type="button" class="portal-open${
-        canPut || (kind === "oauth" && canLogin) ? "" : " primary"
+        openIsPrimary ? " primary" : ""
       }" data-url="${escapeHtml(
         url,
       )}" ${openDisabled} title="${escapeHtml(url || "No settings URL for this step")}">${openLabel}</button>`;
@@ -4118,11 +5176,13 @@ function applyPortalPlan(plan: PortalPlan | null) {
           )}" title="${escapeHtml(docs)}">${docsLabel}</button>`
         : "";
       const loginBtn = canLogin
-        ? `<button type="button" class="portal-login${kind === "oauth" ? " primary" : ""}" data-provider="${escapeHtml(
+        ? `<button type="button" class="portal-login${
+            loginIsPrimary ? " primary" : ""
+          }" data-provider="${escapeHtml(
             s.provider ?? "",
           )}">Login CLI</button>`
         : "";
-      // O1: env Put primary → Open dashboard → Learn more (no coach).
+      // Env: Put → Open dashboard → Learn more. OAuth: Sign in (web) → Docs → Login CLI.
       const btns = isEnv
         ? `${putBtn}${openBtn}${docsBtn}${loginBtn}`
         : `${openBtn}${docsBtn}${loginBtn}`;
@@ -4462,6 +5522,143 @@ async function refreshPublish() {
     /* shown in output */
     toast("Publish output was not JSON", "err");
   }
+}
+
+/** Commerce wizard → Publish listing step id (Resend has no listing.*). */
+const INTEGRATION_LISTING_STEP: Record<string, string> = {
+  polar: "listing.polar",
+  stripe: "listing.stripe",
+  gumroad: "listing.gumroad",
+  lemon: "listing.lemon",
+  paddle: "listing.paddle",
+};
+
+function focusPublishStepIndex(index: number) {
+  if (!lastPublish?.steps?.length) return;
+  const i = Math.max(0, Math.min(index, lastPublish.steps.length - 1));
+  stageFocusIndex = i;
+  if (publishUiMode() === "stages") renderPublishStage(lastPublish);
+  afterPaint(() => {
+    document
+      .querySelectorAll("#publish-steps .portal-step.is-handoff")
+      .forEach((el) => el.classList.remove("is-handoff"));
+    const li = document.querySelector<HTMLElement>(
+      `#publish-steps [data-step-index="${i}"]`,
+    );
+    if (li) {
+      li.classList.add("is-handoff");
+      li.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  });
+}
+
+/**
+ * S1.10 — Continue publishing from a catalog wizard: open Publish, name/focus the
+ * matching gate when present (no auto-Confirm).
+ */
+async function continuePublishingHandoff(opts: {
+  preferredStepId?: string | null;
+  preferFromView?: (view: PublishView) => string | null;
+  missingHint: string;
+  genericHint: string;
+}): Promise<void> {
+  if (!projectPath()) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  setView("publish");
+  const result = await run(publishArgs(), {
+    step: "paste",
+    quietHeader: true,
+    quietToast: true,
+  });
+  if (!result?.ok || !result.stdout) {
+    toast(result?.cancelled ? "Publish cancelled" : "Could not load publish plan", "err");
+    return;
+  }
+  let view: PublishView;
+  try {
+    view = JSON.parse(result.stdout) as PublishView;
+  } catch {
+    toast("Publish output was not JSON", "err");
+    return;
+  }
+  applyPublishView(view, { reveal: true });
+
+  const preferred = (
+    opts.preferredStepId ??
+    opts.preferFromView?.(view) ??
+    ""
+  ).trim();
+  if (!preferred) {
+    toast(opts.genericHint, "ok", 5000);
+    return;
+  }
+  const steps = view.steps ?? [];
+  const idx = steps.findIndex((s) => (s.id ?? "") === preferred);
+  if (idx < 0) {
+    toast(opts.missingHint, "info", 6500);
+    return;
+  }
+  focusPublishStepIndex(idx);
+  const step = steps[idx];
+  const title =
+    (step.title ?? preferred).replace(/\s*—\s*.*$/, "").trim() || preferred;
+  const status = (step.status ?? "").toLowerCase();
+  const isCurrent =
+    (view.current_index ?? -1) === idx || (view.current?.id ?? "") === preferred;
+
+  if (status === "done" || status === "skipped") {
+    toast(`«${title}» already done — continue Publish`, "ok", 4500);
+    return;
+  }
+  if (isCurrent) {
+    toast(`Confirm «${title}» when the vendor side is ready`, "ok", 9000, [
+      {
+        id: "confirm",
+        label: "Confirm",
+        icon: "confirm",
+        run: () => {
+          void publishAction(["confirm"]);
+        },
+      },
+    ]);
+    return;
+  }
+  toast(
+    `Publish includes «${title}» — Continue until that gate, then Confirm`,
+    "ok",
+    7000,
+  );
+}
+
+function preferredDeployPublishStep(view: PublishView | null): string | null {
+  const steps = view?.steps ?? [];
+  for (const id of ["live_check", "deploy.hosts", "oauth.hosts"]) {
+    const hit = steps.find((s) => (s.id ?? "") === id);
+    if (hit && !["done", "skipped"].includes((hit.status ?? "").toLowerCase())) {
+      return id;
+    }
+  }
+  const deploy = steps.find((s) => (s.id ?? "").startsWith("deploy."));
+  return deploy?.id ?? null;
+}
+
+function preferredSignPublishStep(view: PublishView | null): string | null {
+  const steps = view?.steps ?? [];
+  const byView = steps.find(
+    (s) =>
+      (s.desktop_view ?? "").trim() === "sign" &&
+      !["done", "skipped"].includes((s.status ?? "").toLowerCase()),
+  );
+  if (byView?.id) return byView.id;
+  for (const id of ["ship.desktop_cut", "signet.release", "sign.graduate"]) {
+    const hit = steps.find((s) => (s.id ?? "") === id);
+    if (hit && !["done", "skipped"].includes((hit.status ?? "").toLowerCase())) {
+      return id;
+    }
+  }
+  return null;
 }
 
 let publishWatchTimer: number | null = null;
@@ -5502,6 +6699,8 @@ function applyDoctor(report: DoctorReport) {
 }
 
 function applyLastRun(last: ShipState["last_run"]) {
+  lastRunState = last;
+  paintDeployResultsBay();
   // Deploy card is driven by pulse; keep this for refreshShipState compatibility.
   if (!document.querySelector("#pill-deploy")) return;
   if (!last) {
@@ -5567,7 +6766,13 @@ function parseDoctor(stdout: string): DoctorReport | null {
 
 async function run(
   args: string[],
-  opts?: { step?: string; quietHeader?: boolean; silent?: boolean; quietToast?: boolean },
+  opts?: {
+    step?: string;
+    quietHeader?: boolean;
+    silent?: boolean;
+    quietToast?: boolean;
+    busyLabel?: string;
+  },
 ): Promise<CmdResult | undefined> {
   const project = projectPath();
   if (!project) {
@@ -5584,7 +6789,7 @@ async function run(
     return;
   }
   if (opts?.step) setStep(opts.step, "active");
-  setBusy(true, "Running…");
+  setBusy(true, opts?.busyLabel ?? "Running…");
   if (!opts?.silent) {
     streamBuf = opts?.quietHeader ? "" : `shipctl ${args[0]}\n`;
     show(streamBuf);
@@ -5613,6 +6818,7 @@ async function run(
         args[0] === "assist" ||
         args[0] === "status" ||
         args[0] === "selfhost" ||
+        args[0] === "hostdeploy" ||
         args[0] === "flow")
     ) {
       const pretty = prettyMaybe(result.stdout);
@@ -5806,10 +7012,15 @@ window.addEventListener("DOMContentLoaded", () => {
   void refreshShipctlPath();
   wireNavSections();
   setView("dashboard");
-  renderSidebarTargets();
-  renderSidebarIntegrations();
   setTitle(null);
   wireWindowChrome();
+  document.querySelector("#btn-update-check")?.addEventListener("click", () => {
+    void runUpdateCheck();
+  });
+  // Quiet boot notice — only toasts when a newer release exists (S0.8).
+  window.setTimeout(() => {
+    void runUpdateCheck({ quiet: true });
+  }, 4000);
 
   document.querySelectorAll<HTMLButtonElement>(".nav-item[data-nav]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -5926,13 +7137,13 @@ window.addEventListener("DOMContentLoaded", () => {
     void openPortalProvider(wiz.provider);
   });
   document.querySelector("#int-continue-publish")?.addEventListener("click", () => {
-    if (!projectPath()) {
-      toast("Bind a project first", "info");
-      return;
-    }
-    setView("publish");
-    toast("Back on Publish — Confirm the listing / gate when ready", "ok", 4500);
-    void refreshPublish();
+    const listing = INTEGRATION_LISTING_STEP[selectedIntegration] ?? null;
+    void continuePublishingHandoff({
+      preferredStepId: listing,
+      missingHint:
+        "No matching listing step yet — use Advanced + Public with that provider detected. Publish is open.",
+      genericHint: "Back on Publish — Confirm env / notify gates when ready",
+    });
   });
   document.querySelector("#plat-open")?.addEventListener("click", async () => {
     const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
@@ -5946,25 +7157,131 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
     if (wiz.id === "selfhost") {
+      selfhostResultsDismissed = false;
       applyOutputDock(true);
-      toast("Self-host Deploy — streaming in Output", "ok", 3500);
-      const result = await run(["selfhost"], { quietToast: true });
+      paintPlatformWizard();
+      const result = await run(["selfhost"], {
+        quietToast: true,
+        busyLabel: "Checking…",
+      });
+      await refreshShipState();
+      await refreshSessionNow();
+      paintPlatformWizard();
       if (!result) return;
-      if (result.cancelled) toast("selfhost cancelled", "err");
-      else if (result.ok) toast("Self-host check ok — done without Confirm", "ok", 5000);
-      else toast("Self-host check failed — see Output", "err", 5000);
+      if (result.cancelled) toast("Self-host check cancelled", "ok", 4000);
+      else if (result.ok) {
+        toast("Self-host check ok — Open live to keep serving on loopback", "ok", 5500, [
+          {
+            id: "open-live",
+            label: "Open live",
+            icon: "continue",
+            run: () => void startSelfhostServe({ openLive: true }),
+          },
+        ]);
+      } else toast("Self-host check failed — see Output", "err", 5000);
       return;
     }
-    await openUrl(wiz.openUrl);
+    if (isHostedCliDeployCard(wiz.id)) {
+      await runHostedCliDeploy(wiz);
+      return;
+    }
+    await openHostDashboard(wiz);
     if (wiz.deployArgs) {
       const dep = deployArgsEl();
       if (dep && !dep.disabled) {
         dep.value = wiz.deployArgs;
-        toast(`Opened ${wiz.title} — Ritual deploy_args set to «${wiz.deployArgs}»`, "ok", 5000);
+        toast(`Ritual deploy_args set to «${wiz.deployArgs}»`, "ok", 4500);
         return;
       }
     }
-    toast(`Opened ${wiz.title}`, "ok");
+  });
+  document.querySelector("#plat-dashboard")?.addEventListener("click", async () => {
+    const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
+    if (!wiz?.openUrl) return;
+    if (!projectPath()) {
+      toast("Bind a project first", "info");
+      return;
+    }
+    await openHostDashboard(wiz);
+  });
+  document.querySelector("#plat-open-live")?.addEventListener("click", async () => {
+    const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform);
+    if (wiz?.id === "selfhost") {
+      await startSelfhostServe({ openLive: true });
+      return;
+    }
+    const btn = document.querySelector<HTMLButtonElement>("#plat-open-live");
+    const url = btn?.dataset.url?.trim();
+    if (!url) {
+      toast("No live URL in last deploy evidence yet", "info");
+      return;
+    }
+    await openUrl(url);
+    toast("Opened live URL", "ok", 3500);
+  });
+  document.querySelector("#plat-results-dashboard")?.addEventListener("click", async () => {
+    const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform);
+    if (!wiz) {
+      toast("No host selected", "info");
+      return;
+    }
+    await openHostDashboard(wiz);
+  });
+  document.querySelector("#plat-troubleshoot")?.addEventListener("click", () => {
+    const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform);
+    if (!wiz) return;
+    const recovery = classifyHostDeployFailure(
+      `${lastPulse?.deploy?.detail ?? ""}\n${lastRunState?.message ?? ""}`,
+      wiz.provider ?? wiz.id,
+    );
+    runHostRecoveryAction(recovery, wiz);
+  });
+  document.querySelector("#plat-cancel-deploy")?.addEventListener("click", () => {
+    const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform);
+    if (!wiz) return;
+    runPlatCancelDeploy(wiz, {
+      mode: wiz.id === "selfhost" ? undefined : "clear",
+    });
+  });
+  document.querySelector("#plat-cancel-deploy-bay")?.addEventListener("click", () => {
+    const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform);
+    if (!wiz) return;
+    runPlatCancelDeploy(wiz, {
+      mode: wiz.id === "selfhost" ? undefined : "dashboard",
+    });
+  });
+  document.querySelector("#plat-retry-deploy")?.addEventListener("click", () => {
+    const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform);
+    if (!wiz || !isHostedCliDeployCard(wiz.id)) {
+      toast("Retry Deploy is for Cloudflare / Vercel / Netlify", "info");
+      return;
+    }
+    void runHostedCliDeploy(wiz, {
+      name: lastHostDeployName || defaultHostProjectName(),
+      skipConfirm: true,
+    });
+  });
+  document.querySelectorAll("[data-host-deploy-close]").forEach((el) => {
+    el.addEventListener("click", () => closeHostDeployDialog());
+  });
+  document.querySelector("#host-deploy-confirm")?.addEventListener("click", () => {
+    const wiz = pendingHostDeployWiz;
+    const nameInput = document.querySelector<HTMLInputElement>("#host-deploy-name");
+    if (!wiz) {
+      closeHostDeployDialog();
+      return;
+    }
+    const name = (nameInput?.value ?? "").trim() || defaultHostProjectName();
+    closeHostDeployDialog();
+    void runHostedCliDeploy(wiz, { name, skipConfirm: true });
+  });
+  document.querySelector("#host-deploy-name")?.addEventListener("keydown", (ev) => {
+    if ((ev as KeyboardEvent).key === "Enter") {
+      document.querySelector<HTMLButtonElement>("#host-deploy-confirm")?.click();
+    }
+    if ((ev as KeyboardEvent).key === "Escape") {
+      closeHostDeployDialog();
+    }
   });
   document.querySelector("#sign-open")?.addEventListener("click", async () => {
     const wiz = signCatalogEntries().find((w) => w.id === selectedSignLane);
@@ -5980,13 +7297,11 @@ window.addEventListener("DOMContentLoaded", () => {
     toast(`Opened ${wiz.title} — finish on the vendor site`, "ok", 4500);
   });
   document.querySelector("#sign-continue-publish")?.addEventListener("click", () => {
-    if (!projectPath()) {
-      toast("Bind a project first", "info");
-      return;
-    }
-    setView("publish");
-    toast("Back on Publish — Confirm the signing gate when ready", "ok", 4500);
-    void refreshPublish();
+    void continuePublishingHandoff({
+      preferFromView: preferredSignPublishStep,
+      missingHint: "Back on Publish — Confirm the signing gate when it is current",
+      genericHint: "Back on Publish — Confirm the signing gate when ready",
+    });
   });
   document.querySelector("#plat-put")?.addEventListener("click", () => {
     const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
@@ -6018,13 +7333,11 @@ window.addEventListener("DOMContentLoaded", () => {
     void openPortalProvider(wiz.provider);
   });
   document.querySelector("#plat-continue-publish")?.addEventListener("click", () => {
-    if (!projectPath()) {
-      toast("Bind a project first", "info");
-      return;
-    }
-    setView("publish");
-    toast("Back on Publish — Confirm Live check or the host gate when ready", "ok", 4500);
-    void refreshPublish();
+    void continuePublishingHandoff({
+      preferFromView: preferredDeployPublishStep,
+      missingHint: "Back on Publish — Confirm Live check or the host gate when it is current",
+      genericHint: "Back on Publish — Confirm Live check or the host gate when ready",
+    });
   });
   document.querySelector("#plat-use-local")?.addEventListener("click", () => {
     applyShipIntent("local", { rebuild: true });
@@ -6048,9 +7361,9 @@ window.addEventListener("DOMContentLoaded", () => {
         closeOutputPreview();
         return;
       }
-      if (running) {
+      if (running || selfhostServing) {
         ev.preventDefault();
-        void invoke<boolean>("cancel_shipctl");
+        cancelSelfhostServe();
       }
       return;
     }
@@ -6253,6 +7566,12 @@ window.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#btn-output-dock-hide")?.addEventListener("click", () => {
     applyOutputDock(false);
   });
+  document.querySelector("#btn-output-cancel")?.addEventListener("click", () => {
+    cancelSelfhostServe();
+  });
+  document.querySelector("#btn-statusbar-cancel")?.addEventListener("click", () => {
+    cancelSelfhostServe();
+  });
   document
     .querySelector("[data-output-preview-close]")
     ?.addEventListener("click", () => closeOutputPreview());
@@ -6314,6 +7633,8 @@ window.addEventListener("DOMContentLoaded", () => {
       appendStream({ stream: "stderr", text: String(err) });
     } finally {
       // Band #25: always unlock Refresh even if Rust pid was already cleared.
+      selfhostServing = false;
+      paintPlatformWizard();
       forceUnlockUi("Cancelled");
       toast("Unlocked — you can Refresh Publish again", "ok");
     }

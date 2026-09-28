@@ -834,7 +834,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             3,
             Some("https://polar.sh/dashboard".into()),
             None,
-            Some("portal"),
+            Some("integrations"),
         ));
     }
 
@@ -847,7 +847,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             3,
             Some("https://app.gumroad.com/".into()),
             None,
-            Some("portal"),
+            Some("integrations"),
         ));
     }
 
@@ -860,7 +860,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             3,
             Some("https://app.lemonsqueezy.com/".into()),
             None,
-            Some("portal"),
+            Some("integrations"),
         ));
     }
 
@@ -873,7 +873,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             3,
             Some("https://dashboard.stripe.com/".into()),
             None,
-            Some("portal"),
+            Some("integrations"),
         ));
     }
 
@@ -886,7 +886,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             3,
             Some("https://vendors.paddle.com/".into()),
             None,
-            Some("portal"),
+            Some("integrations"),
         ));
     }
 
@@ -3426,7 +3426,7 @@ mod tests {
             .iter()
             .find(|s| s.id == "listing.gumroad")
             .unwrap();
-        assert_eq!(gum.desktop_view.as_deref(), Some("portal"));
+        assert_eq!(gum.desktop_view.as_deref(), Some("integrations"));
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "sign.graduate"));
         assert!(!general.steps.iter().any(|s| s.id == "listing.gumroad"));

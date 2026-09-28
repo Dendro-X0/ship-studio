@@ -244,7 +244,8 @@ fn open_shipctl_terminal(
 }
 
 /// Run shipctl with extra env (used for SHIP_VAULT_PASSPHRASE; values not logged).
-#[tauri::command]
+/// `async` attribute: must not block the UI thread (`selfhost --serve` waits until Cancel).
+#[tauri::command(async)]
 fn run_shipctl_env(
     app: AppHandle,
     active: State<'_, ActiveRun>,
@@ -370,7 +371,8 @@ fn cancel_shipctl(app: AppHandle, active: State<'_, ActiveRun>) -> Result<bool, 
     Ok(true)
 }
 
-#[tauri::command]
+/// Off main thread — sync `wait()` would freeze the window for long-lived commands.
+#[tauri::command(async)]
 fn run_shipctl(
     app: AppHandle,
     active: State<'_, ActiveRun>,

@@ -6,6 +6,7 @@ mod config;
 mod envx;
 mod flow;
 mod guide;
+mod hostdeploy;
 mod human;
 mod launch;
 mod mcp;
@@ -189,6 +190,17 @@ enum Commands {
         /// Keep serving after health check until Cancel.
         #[arg(long, default_value_t = false)]
         serve: bool,
+    },
+    /// Hosted CLI deploy (Cloudflare / Vercel / Netlify) — streams; writes hosted last-run.
+    Hostdeploy {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+        /// Provider: cloudflare | vercel | netlify.
+        #[arg(long, default_value = "cloudflare")]
+        provider: String,
+        /// Override Pages / site project name (default: folder name).
+        #[arg(long)]
+        name: Option<String>,
     },
     /// configure → sign → deploy (or print plan with --dry-run).
     Flow {
@@ -795,6 +807,7 @@ fn main() -> Result<()> {
                         format!("shipctl deploy exited {code}")
                     },
                     urls,
+                    host_provider: Some("orbit".into()),
                 },
             );
             if code != 0 {
@@ -803,6 +816,13 @@ fn main() -> Result<()> {
         }
         Commands::Selfhost { project, serve } => {
             let _ = selfhost::run(&project, selfhost::SelfhostOpts { serve })?;
+        }
+        Commands::Hostdeploy {
+            project,
+            provider,
+            name,
+        } => {
+            let _ = hostdeploy::run(&project, &provider, name.as_deref())?;
         }
         Commands::Flow {
             project,

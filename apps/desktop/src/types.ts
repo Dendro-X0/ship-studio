@@ -230,6 +230,8 @@ export type ShipState = {
     ok?: boolean;
     finished?: boolean;
     message?: string;
+    urls?: string[];
+    host_provider?: string | null;
     steps?: Array<{ id?: string; ok?: boolean; exit_code?: number; detail?: string }>;
     finished_at?: string;
   } | null;

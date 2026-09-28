@@ -2,8 +2,32 @@
 
 ## Unreleased
 
+### Fixed
+
+- **Stale host Results after remote delete** — **Clear evidence** removes `.ship/last-run.json` and hides Cancel/Results; **Cancel on dashboard** still opens the vendor ([design](./specs/backend/host-deploy-evidence-clear-design.md))
+- **Cancel on dashboard** — shown only after Studio has deploy evidence for that host (successful last-run / live URLs); hidden for a fresh Cloudflare/Vercel/Netlify card
+- **Serving never ends after GIF / Open live** — Cancel serve in Output dock + status bar; cancel invokes Rust directly (Tools `#btn-cancel` no longer required); Esc stops serve
+- **Self-host Deploy never “finishes”** — Deploy is a one-shot check again (~0.1s on Harbor); **Open live** starts `--serve`. The 200s “stuck” timer was the old serve hold, not slow scripts ([design](./specs/backend/selfhost-deploy-finish-fast-design.md))
+- **Self-host Deploy feels “stuck” after check** — busy label flips **Checking… → Serving** when health succeeds (elapsed timer resets); long RUNNING was the intentional serve hold, not slow setup
+- **Self-host Deploy freeze** — `run_shipctl` / `run_shipctl_env` no longer block the Tauri main thread during `selfhost --serve` (was **Not Responding**; Cancel could not run) ([investigation](./specs/backend/selfhost-serve-ui-freeze-investigation.md))
+
 ### Added
 
+- **Integrations → Publish handoff (S1.10)** — **Continue publishing** names/focuses matching `listing.*` (Confirm CTA when current); commerce Publish Related opens Integrations ([design](./specs/frontend/integrations-publish-handoff-design.md))
+- **In-app update check (S0.8)** — Desktop notices newer GitHub Releases; toast **Open download** / Later (snooze); never silent auto-install ([design](./specs/frontend/in-app-update-check-design.md))
+- **Integrations nav (S1.19)** — Ship → single **Integrations** item (Payments/Email catalog on-page); sidebar provider tree removed ([design](./specs/frontend/integrations-nav-design.md))
+- **Targets catalog parity** — Scopes page chrome → **Targets**; catalog cards with kind icons, path, provider/signal chips, selected tint; single Ship **Targets** nav item (Sign/Deployment pattern) ([design](./specs/frontend/targets-catalog-parity-design.md))
+- **Demo shelf T6/T7** — `/demo` includes Sign Open + Cloudflare Deploy (Results live URL + Open dashboard); compress recipe for ScreenToGif masters (`_raw/` gitignored) ([SCRIPT](./docs/assets/demo/v0.2.1/SCRIPT.md))
+- **Self-host Start over** — After a finished local run, **Start over** clears Results (replaces a disabled Cancel serve); **Cancel serve** only while serving
+- **Deployment Cancel button** — Self-host: **Cancel serve** (enabled while serving/running). Cloud hosts: **Cancel on dashboard** opens the vendor deep link (Studio does not undeploy SaaS)
+- **Deploy wait animation** — Output dock shows indeterminate rail + spinner + elapsed seconds while `shipctl` runs (selfhost/hostdeploy); Self-host Results pulses while serving
+- **Host dashboard deep links** — Open dashboard → Workers & Pages / Vercel projects / Netlify projects (Cloudflare Pages project view after a successful Deploy); Sign opens certificates / Partner products — not vendor home ([design](./specs/frontend/host-deploy-confirm-design.md))
+- **Self-host Cancel serve** — Deploy runs `selfhost --serve`; **Cancel serve** on Results/wizard anytime. Cloud cancel stays on vendor dashboard (portal only). Results labels distinguish loopback vs `*.pages.dev` ([design](./specs/frontend/host-deploy-confirm-design.md))
+- **Host deploy confirm + Results isolation** — Deploy opens a confirm dialog (editable Cloudflare project name); Results bay only shows evidence for the selected host (`last_run.host_provider`) ([design](./specs/frontend/host-deploy-confirm-design.md))
+- **Cloudflare Pages create-if-missing** — Deploy auto-runs `wrangler pages project create` then retries when the project is absent (no dashboard-first trip) ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md))
+- **Hosted Troubleshoot — missing project** — wrangler “Pages project does not exist” → `[account]`; toast/Results offer **Open dashboard** + **Retry Deploy** ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md) H4)
+- **Demo shelf v0.2.1 (T1–T5)** — `/demo` points at live Harbor GIFs; T6 Sign Open · T7 Deploy Open remain operator-record ([SCRIPT](./docs/assets/demo/v0.2.1/SCRIPT.md))
+- **Hosted deploy ops H1–H5** — Deployment **Deploy** streams `shipctl hostdeploy` (Cloudflare · Vercel · Netlify); **Results bay** + **Troubleshoot** taxonomy; MCP `ship_hostdeploy` + agent playbook (no secret custody) ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md))
 - **Vendor handoff coach — CANCELLED** — in-app coach subtracted after failed product test; Portal Open/Docs restored; host setup stays CLI/agent — [design](./specs/backend/vendor-handoff-coach-design.md)
 - **Desktop reliability slice 4** — Advanced Online Deploy / Flow (with deploy) open `open_shipctl_terminal`; dry-run/doctor stay headless; soft-fail covers auth/login prompts ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
 - **Desktop reliability slice 3** — user-initiated Env / Assist / Scopes loads toast `cmdFailDetail` + Preview on fail; bind/pulse stay silent ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
@@ -32,11 +56,15 @@
 
 ### Fixed
 
+- **Hosting OAuth web entry** — Portal Cloudflare/Vercel/… OAuth steps now **Sign in (web)** (dashboard/login URL); Login CLI secondary for local CLI creds ([design](./specs/backend/hosting-oauth-web-entry-design.md))
+- **Self-host ≠ hosted Deploy** — `selfhost` last-run / loopback URLs no longer mark Deploy **Ready** / Live / “Already deployed”; pulse signal `selfhost_ok` + Desktop **Self-host** badge ([investigation](./specs/backend/selfhost-vs-hosted-deploy-probe-investigation.md))
 - **Launch auth assist** — oauth / GitHub gates expose **Login CLI** (official CLI in a terminal); Run local uses interactive TTY; `signet identity` Open creates when missing — not “auth elsewhere then return” ([launch-auth-assist-investigation](./specs/backend/launch-auth-assist-investigation.md))
 - **Verify / Watch honesty** — successful local Verify no longer auto-marks Human/OAuth/deploy gates Done (Confirm still required). Fixes MCP `ship_publish_watch` silently advancing Scopes when active scopes exist
 - **Continue toast honesty** — no more `publish · done` when Continue only pauses at a human gate; copy says paused / Confirm next
 
 ### Changed
+
+- **$29 value bar** — hosted deploy ops activated: stream process · live URL · Open dashboard on result · troubleshoot ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md)); H1 Cloudflare CLI Deploy next — not CDP token form-fill
 
 - **Launch choice board (L1–L2)** — Desktop Prep/lanes/Ship-cut UI; shipctl emits `lane` · `optional` · `suggested`; Local intent omits flow/Orbit deploy ([launch-choice-board-design](./specs/frontend/launch-choice-board-design.md))
 - **Self-host detect matrix** — plan only with static/opt-in root; Studio monorepo signal; Dockerfile/Compose alone never opens Self-host ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))

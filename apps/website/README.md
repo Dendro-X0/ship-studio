@@ -37,11 +37,13 @@ Until `PUBLIC_POLAR_CHECKOUT_URL` is set, Buy stays disabled with a setup note.
 
 ## Feature demo (W3)
 
-`/demo` serves the silent GIF shelf from `public/demo/v0.1.0/`.  
-Script + captions: `docs/assets/demo/v0.1.0/SCRIPT.md`.
+`/demo` serves live Harbor GIFs from `public/demo/v0.2.1/` (T1–T5).  
+Script + captions: `docs/assets/demo/v0.2.1/SCRIPT.md` (T6 Sign Open · T7 Deploy Open = operator-next).
+
+Legacy stylized set remains under `public/demo/v0.1.0/`:
 
 ```bash
-python scripts/generate-demo-gifs.py   # regenerate stylized GIFs → docs + public
+python scripts/generate-demo-gifs.py   # regenerate stylized GIFs → docs + public (v0.1.0 only)
 ```
 
 ## License + refund dogfood (W4)

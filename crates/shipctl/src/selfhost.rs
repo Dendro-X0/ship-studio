@@ -270,6 +270,7 @@ fn write_run(
             ],
             message,
             urls,
+            host_provider: Some("selfhost".into()),
         },
     )?;
     Ok(())

@@ -291,6 +291,9 @@ pub struct LastRun {
     /// Known live URLs from Orbit summaries / operator confirm (no secrets).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub urls: Vec<String>,
+    /// Which host wrote this run: selfhost | cloudflare | vercel | netlify.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub host_provider: Option<String>,
 }
 
 pub fn ship_dir(project: &Path) -> PathBuf {

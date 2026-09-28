@@ -235,10 +235,10 @@ static CLOUDFLARE: ProviderCatalog = ProviderCatalog {
     token_url: "https://dash.cloudflare.com/profile/api-tokens",
     create_url: "https://dash.cloudflare.com/profile/api-tokens",
     docs_url: "https://developers.cloudflare.com/fundamentals/api/get-started/create-token/",
-    oauth_hint: "Prefer Wrangler OAuth — no long-lived token value to store. Browser opens Cloudflare; authorize Wrangler.",
+    oauth_hint: "Open the Cloudflare dashboard in your browser when already signed in (Google/GitHub). Use Login CLI only when you need wrangler credentials on this machine.",
     env_hint: "Create or copy each secret on Cloudflare, then Put here in the terminal — never paste into Studio.",
     secret_shown_once: true,
-    once_hint: "Cloudflare API Tokens show the secret ONLY once at Create/Roll. If you already created a token and lost the value: open ⋯ on that row → Roll (new value shown once), or Create Token again and copy immediately. Existing tokens cannot be Viewed. Prefer wrangler login instead of API tokens when possible.",
+    once_hint: "Cloudflare API Tokens show the secret ONLY once at Create/Roll. If you already created a token and lost the value: open ⋯ on that row → Roll (new value shown once), or Create Token again and copy immediately. Existing tokens cannot be Viewed. Prefer dashboard or wrangler login instead of long-lived tokens when possible.",
     emit_token_page: true,
 };
 
@@ -249,7 +249,7 @@ static VERCEL: ProviderCatalog = ProviderCatalog {
     token_url: "https://vercel.com/account/settings/tokens",
     create_url: "https://vercel.com/account/settings/tokens",
     docs_url: "https://vercel.com/docs/cli",
-    oauth_hint: "Prefer Vercel CLI login. Browser opens Vercel; complete sign-in, then return here.",
+    oauth_hint: "Open Vercel sign-in in your browser when already signed in (Google/GitHub). Use Login CLI only when you need the Vercel CLI on this machine.",
     env_hint: "Create or copy each env var on Vercel, then Put here in the terminal — never paste into Studio.",
     secret_shown_once: true,
     once_hint: "Vercel access tokens are shown once at creation. If lost, create a new token and revoke the old one.",
@@ -263,7 +263,7 @@ static NETLIFY: ProviderCatalog = ProviderCatalog {
     token_url: "https://app.netlify.com/user/applications#personal-access-tokens",
     create_url: "https://app.netlify.com/user/applications#personal-access-tokens",
     docs_url: "https://docs.netlify.com/api-and-cli-guides/cli-guides/get-started-with-cli/",
-    oauth_hint: "Prefer Netlify CLI login. Browser opens Netlify; authorize CLI, then return here.",
+    oauth_hint: "Open Netlify in your browser when already signed in. Use Login CLI only when you need the Netlify CLI on this machine.",
     env_hint: "Create or copy each env var on Netlify, then Put here in the terminal — never paste into Studio.",
     secret_shown_once: true,
     once_hint: "Netlify personal access tokens are shown once. If lost, generate a new token.",
@@ -277,7 +277,7 @@ static GITHUB: ProviderCatalog = ProviderCatalog {
     token_url: "https://github.com/settings/tokens",
     create_url: "https://github.com/settings/tokens/new",
     docs_url: "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token",
-    oauth_hint: "Prefer gh auth login. Or create a PAT — value shown once; copy immediately.",
+    oauth_hint: "Open GitHub sign-in in your browser when already signed in. Use Login CLI (`gh auth login`) when you need the GitHub CLI on this machine.",
     env_hint: "For CI/API: create a PAT at the tokens page, then set GITHUB_TOKEN in the deploy target (never commit it).",
     secret_shown_once: true,
     once_hint: "GitHub PATs are shown once at creation. If you lost the value: generate a new token (classic or fine-grained) and update GITHUB_TOKEN everywhere it was used. There is no View for an old PAT.",
@@ -421,7 +421,7 @@ static FLY: ProviderCatalog = ProviderCatalog {
     token_url: "https://fly.io/dashboard",
     create_url: "https://fly.io/dashboard",
     docs_url: "https://fly.io/docs/hands-on/launch-app/",
-    oauth_hint: "Prefer `fly auth login` — browser OAuth. Deploy tokens: `fly tokens create deploy` (not the short-lived auth token).",
+    oauth_hint: "Open Fly sign-in in your browser when already signed in. Use Login CLI (`fly auth login`) when you need flyctl on this machine.",
     env_hint: "App secrets: `fly secrets set NAME=value` (values never readable again). Or set secrets in the Fly dashboard.",
     secret_shown_once: true,
     once_hint: "Prefer scoped tokens via `fly tokens create` — see Fly access-tokens docs. Do not reuse short-lived `fly auth token` for CI.",
@@ -435,7 +435,7 @@ static RAILWAY: ProviderCatalog = ProviderCatalog {
     token_url: "https://railway.com/account/tokens",
     create_url: "https://railway.com/account/tokens",
     docs_url: "https://docs.railway.com/cli/login",
-    oauth_hint: "Prefer `railway login` (browser or --browserless). For CI: RAILWAY_API_TOKEN (account) or RAILWAY_TOKEN (project) — set only one.",
+    oauth_hint: "Open Railway sign-in in your browser when already signed in. Use Login CLI when you need the Railway CLI on this machine.",
     env_hint: "Service Variables tab on Railway (or `railway variables`). Never put values in .ship/.",
     secret_shown_once: true,
     once_hint: "Account/workspace tokens: Account Settings → Tokens (RAILWAY_API_TOKEN). Project tokens: project settings (RAILWAY_TOKEN). Do not set both env vars.",
@@ -771,6 +771,19 @@ fn env_entry_url(id: ProviderId, cat: &ProviderCatalog) -> &'static str {
     }
 }
 
+/// Browser sign-in / dashboard for CLI-capable hosts (≠ token_page, ≠ env Open).
+fn oauth_web_url(id: ProviderId) -> Option<&'static str> {
+    match id {
+        ProviderId::Cloudflare => Some("https://dash.cloudflare.com/?to=/:account/workers-and-pages"),
+        ProviderId::Vercel => Some("https://vercel.com/login"),
+        ProviderId::Netlify => Some("https://app.netlify.com"),
+        ProviderId::Github => Some("https://github.com/login"),
+        ProviderId::Fly => Some("https://fly.io/app/sign-in"),
+        ProviderId::Railway => Some("https://railway.app/login"),
+        _ => None,
+    }
+}
+
 /// Tutorial URL for the Docs button (kind-aware).
 fn step_docs_url(id: ProviderId, kind: &str, cat: &ProviderCatalog) -> Option<&'static str> {
     match kind {
@@ -1010,8 +1023,8 @@ pub fn plan_for_providers(project: &Path, providers: &[ProviderId]) -> Result<Po
                 format!("{pid}.oauth"),
                 pid.clone(),
                 "oauth",
-                format!("{} CLI OAuth", cat.label),
-                None,
+                format!("{} sign-in", cat.label),
+                oauth_web_url(*id).map(|u| u.to_string()),
                 Some(cat.oauth_cli.iter().map(|s| (*s).to_string()).collect()),
                 cat.oauth_hint.into(),
                 step_docs_url(*id, "oauth", cat),
@@ -1075,7 +1088,7 @@ pub fn plan_for_providers(project: &Path, providers: &[ProviderId]) -> Result<Po
 
     let notes = vec![
         "Portal navigates you to entry points — OAuth and env values stay manual.".into(),
-        "Many API tokens are shown ONLY once (Create/Roll). Prefer CLI OAuth when available.".into(),
+        "Many API tokens are shown ONLY once (Create/Roll). Prefer browser sign-in when already logged in; Login CLI when you need local CLI credentials.".into(),
         "shipctl does not store secrets or call vendor HTTPS APIs.".into(),
         "Use --open to launch pages; --login to start CLI OAuth.".into(),
         "After auth: shipctl human --put  or  shipctl flow.".into(),
@@ -1284,11 +1297,37 @@ mod tests {
             Some("https://dash.cloudflare.com/?to=/:account/workers-and-pages")
         );
         assert_ne!(token.entry_url, env.entry_url);
+        let oauth = plan
+            .steps
+            .iter()
+            .find(|s| s.kind == "oauth")
+            .expect("oauth");
+        assert_eq!(
+            oauth.entry_url.as_deref(),
+            Some("https://dash.cloudflare.com/?to=/:account/workers-and-pages")
+        );
+        assert_ne!(oauth.entry_url, token.entry_url);
+        // Sign-in (web) and env Open both land on Workers & Pages — intentional list entry.
+        assert_eq!(oauth.entry_url, env.entry_url);
         assert_eq!(
             env.docs_url.as_deref(),
             Some("https://developers.cloudflare.com/workers/configuration/secrets/")
         );
         assert_eq!(token.docs_url.as_deref(), Some(CLOUDFLARE.docs_url));
+    }
+
+    #[test]
+    fn vercel_oauth_has_web_sign_in_entry() {
+        let dir = tempfile_dir();
+        let plan = plan_for(&dir, Some(ProviderId::Vercel)).unwrap();
+        let oauth = plan
+            .steps
+            .iter()
+            .find(|s| s.id == "vercel.oauth")
+            .expect("vercel.oauth");
+        assert_eq!(oauth.entry_url.as_deref(), Some("https://vercel.com/login"));
+        assert!(oauth.cli.as_ref().is_some_and(|c| c == &["vercel", "login"]));
+        assert!(oauth.title.to_lowercase().contains("sign-in"));
     }
 
     #[test]

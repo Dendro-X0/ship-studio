@@ -67,6 +67,10 @@
                 <span class="nav-ico" aria-hidden="true">◆</span>
                 Publish
               </button>
+              <button type="button" class="nav-item" data-nav="scopes" title="Apps and APIs to publish">
+                <span class="nav-ico" aria-hidden="true">▤</span>
+                Targets
+              </button>
               <button type="button" class="nav-item" data-nav="sign">
                 <span class="nav-ico" aria-hidden="true">✦</span>
                 Sign
@@ -75,33 +79,13 @@
                 <span class="nav-ico" aria-hidden="true">⬡</span>
                 Deployment
               </button>
+              <button type="button" class="nav-item" data-nav="integrations" title="Payments and email wizards">
+                <span class="nav-ico" aria-hidden="true">⧉</span>
+                Integrations
+              </button>
               <button type="button" class="nav-item" data-nav="env">
                 <span class="nav-ico" aria-hidden="true">⌘</span>
                 Env / tokens
-              </button>
-            </div>
-          </details>
-
-          <details class="nav-section" data-nav-section="targets" open>
-            <summary class="nav-section-sum">Targets</summary>
-            <div class="nav-section-body">
-              <div class="nav-tree" id="sidebar-targets">
-                <p class="nav-tree-empty">Bind a repo to list apps and APIs.</p>
-              </div>
-              <button type="button" class="nav-item nav-sub" data-nav="scopes">
-                <span class="nav-ico" aria-hidden="true">▤</span>
-                Manage scopes
-              </button>
-            </div>
-          </details>
-
-          <details class="nav-section" data-nav-section="integrations" open>
-            <summary class="nav-section-sum">Integrations</summary>
-            <div class="nav-section-body">
-              <div class="nav-tree" id="sidebar-integrations"></div>
-              <button type="button" class="nav-item nav-sub" data-nav="integrations">
-                <span class="nav-ico" aria-hidden="true">⧉</span>
-                All wizards
               </button>
             </div>
           </details>
@@ -404,7 +388,7 @@
                       </div>
                     </div>
                     <div class="scope-grid stage-scope-grid" id="stage-scope-grid">
-                      <p class="detail empty-hint">Detect scopes for this repo.</p>
+                      <p class="detail empty-hint">Detect targets for this repo.</p>
                     </div>
                   </div>
                   <div class="stage-pager">
@@ -442,13 +426,14 @@
             </section>
           </section>
 
-          <section class="view" data-view="scopes" aria-label="Scopes" hidden>
+          <section class="view" data-view="scopes" aria-label="Targets" hidden>
             <section class="portal-panel">
               <div class="ritual-head">
                 <div>
-                  <label>Deploy scopes</label>
+                  <label>Targets</label>
                   <p class="hint">
-                    Optional detail panel — on Publish Stages, scopes edit inline on the checkpoint. Save there, or here, then Confirm.
+                    Active publish surfaces in this repo. Toggle what you ship; Save, then Confirm on
+                    Publish. Stages can edit the same selection inline.
                   </p>
                 </div>
                 <div class="portal-actions">
@@ -457,7 +442,7 @@
                 </div>
               </div>
               <div class="scope-grid" id="scope-grid">
-                <p class="detail empty-hint">Open a project, then Detect scopes.</p>
+                <p class="detail empty-hint">Open a project, then Detect targets.</p>
               </div>
             </section>
           </section>
@@ -652,8 +637,9 @@
                 <div>
                   <label>Deployment</label>
                   <p class="hint">
-                    Pick a host. Self-host streams a local Deploy. Vendor cards: Put / Login CLI /
-                    Open dashboard — Studio does not deploy SaaS for you. Official signing is under Sign.
+                    Pick a host. Self-host, Cloudflare, Vercel, and Netlify Deploy stream a local CLI.
+                    Cards also offer Put / Login CLI / Open dashboard. Studio does not hold secrets
+                    or fill Create Token for you. Official signing is under Sign.
                   </p>
                 </div>
               </div>
@@ -664,9 +650,26 @@
                 <h2 id="plat-wizard-title">Host</h2>
                 <p class="hint" id="plat-wizard-blurb"></p>
                 <ol class="int-steps" id="plat-wizard-steps"></ol>
+                <div class="plat-results" id="plat-results" hidden>
+                  <p class="plat-results-kicker" id="plat-results-kicker">Last deploy</p>
+                  <p class="plat-results-status" id="plat-results-status"></p>
+                  <ul class="plat-results-phases" id="plat-results-phases"></ul>
+                  <p class="plat-results-url-label" id="plat-results-url-label" hidden></p>
+                  <p class="plat-results-url" id="plat-results-url" hidden></p>
+                  <div class="hero-cta int-actions plat-results-actions">
+                    <button type="button" id="plat-open-live" hidden>Open live</button>
+                    <button type="button" id="plat-results-dashboard" hidden>Open dashboard</button>
+                    <button type="button" class="primary" id="plat-troubleshoot" hidden>Troubleshoot</button>
+                    <button type="button" id="plat-retry-deploy" hidden>Retry Deploy</button>
+                    <button type="button" class="danger" id="plat-cancel-deploy-bay" hidden>Cancel</button>
+                  </div>
+                  <p class="plat-results-hint" id="plat-results-hint" hidden></p>
+                </div>
                 <div class="hero-cta int-actions">
                   <button type="button" class="primary" id="plat-put" hidden>Put secrets</button>
                   <button type="button" id="plat-open">Open dashboard</button>
+                  <button type="button" class="danger" id="plat-cancel-deploy" hidden>Cancel</button>
+                  <button type="button" id="plat-dashboard" hidden>Open dashboard</button>
                   <button type="button" id="plat-docs" hidden>Learn more</button>
                   <button type="button" id="plat-portal-steps" hidden>Portal steps</button>
                   <button type="button" id="plat-continue-publish" title="Return to the Publish spine">
@@ -760,6 +763,9 @@
               <button type="button" id="btn-flow-dry" disabled>Flow dry-run</button>
               <button type="button" id="btn-flow" disabled>Run flow</button>
               <button type="button" id="btn-status" disabled>Status</button>
+              <button type="button" id="btn-update-check" title="Notice newer GitHub Releases — never auto-install">
+                Check updates
+              </button>
               <button type="button" id="btn-cancel" class="danger" disabled>Cancel</button>
               <button type="button" id="btn-copy" disabled>Copy output</button>
               <button type="button" id="btn-clear" disabled>Clear output</button>
@@ -778,9 +784,19 @@
         </main>
 
         <section class="output-dock" id="output-dock" hidden aria-label="Output">
+          <div class="output-run-rail" id="output-run-rail" aria-hidden="true"></div>
           <div class="output-head">
             <span>Output</span>
             <div class="output-head-actions">
+              <button
+                type="button"
+                id="btn-output-cancel"
+                class="danger output-cancel-btn"
+                hidden
+                title="Stop the running shipctl process (Self-host serve / Deploy)"
+              >
+                Cancel serve
+              </button>
               <button
                 type="button"
                 id="btn-output-preview"
@@ -797,7 +813,10 @@
               >
                 Hide
               </button>
-              <span id="run-state" class="ready">Ready</span>
+              <span id="run-state" class="ready" role="status" aria-live="polite">
+                <span class="run-state-spinner" aria-hidden="true"></span>
+                <span class="run-state-label">Ready</span>
+              </span>
             </div>
           </div>
           <pre id="output">Open a folder to bind a project — or press Ctrl+K.</pre>
@@ -834,7 +853,19 @@
               </svg>
               Dock
             </button>
-            <span id="run-state-bar" class="ready statusbar-run" hidden>Ready</span>
+            <button
+              type="button"
+              id="btn-statusbar-cancel"
+              class="danger output-cancel-btn"
+              hidden
+              title="Stop the running shipctl process"
+            >
+              Cancel
+            </button>
+            <span id="run-state-bar" class="ready statusbar-run" hidden role="status">
+              <span class="run-state-spinner" aria-hidden="true"></span>
+              <span class="run-state-label">Ready</span>
+            </span>
             <span class="keys">Esc · Ctrl+K · Ctrl+D · Ctrl+S · Ctrl+Enter · Preview</span>
           </div>
         </footer>
@@ -893,6 +924,42 @@
         </div>
         <pre id="output-preview-body" class="output-preview-body" tabindex="0"></pre>
         <p class="output-preview-foot">Esc closes · Ctrl+F search · Enter next match · live stream mirrors the dock</p>
+      </div>
+    </div>
+
+    <div class="host-deploy-dialog" id="host-deploy-dialog" hidden>
+      <div class="host-deploy-dialog-backdrop" data-host-deploy-close></div>
+      <div
+        class="host-deploy-dialog-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="host-deploy-dialog-title"
+      >
+        <header class="host-deploy-dialog-head">
+          <div>
+            <p class="host-deploy-dialog-kicker">Confirm deploy</p>
+            <h2 id="host-deploy-dialog-title">Deploy</h2>
+          </div>
+          <button type="button" class="ghost" data-host-deploy-close>Cancel</button>
+        </header>
+        <p class="hint" id="host-deploy-dialog-blurb">
+          Review the name and lane, then Deploy streams your local CLI.
+        </p>
+        <label class="host-deploy-field">
+          <span>Project / site name</span>
+          <input
+            id="host-deploy-name"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Project or site name"
+          />
+        </label>
+        <p class="host-deploy-meta" id="host-deploy-meta"></p>
+        <div class="hero-cta int-actions host-deploy-dialog-actions">
+          <button type="button" data-host-deploy-close>Cancel</button>
+          <button type="button" class="primary" id="host-deploy-confirm">Deploy</button>
+        </div>
       </div>
     </div>
 

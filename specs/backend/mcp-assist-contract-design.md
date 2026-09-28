@@ -1,7 +1,7 @@
 # MCP assist contract — design
 
-**Status:** O3 done — contract + gap list for S2.4  
-**Updated:** 2026-09-25  
+**Status:** O3 done — contract + gap list for S2.4; H5 hosted playbook + `ship_hostdeploy`  
+**Updated:** 2026-09-27  
 **Parent:** [ship-studio-overhaul-design.md](./ship-studio-overhaul-design.md)  
 **Surfaces:** [surfaces-cli-tui-desktop.md](./surfaces-cli-tui-desktop.md) · `shipctl mcp` (`crates/shipctl/src/mcp.rs`)  
 **Gates:** [human-gate-catalog-design.md](./human-gate-catalog-design.md)
@@ -28,7 +28,7 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 4. **`ship_vault`** — Optional encrypted export; if `value` is passed in tool args, agents must not echo it into chat/logs. Prefer Client Put + vault export from Desktop.  
 5. **Publish mutations** — `ship_publish` / `ship_launch` are **status** today; open/verify/confirm/next remain CLI or Desktop (gap below).  
 6. **`ship_publish_watch` `auto_confirm`** — Only confirms when local Verify ok; never live npm/cargo/`gh release create` / docker push.  
-7. **`ship_deploy` / `ship_flow`** — Network; may prompt. Prefer Advanced Desktop N-class terminal, or warn operator that headless MCP may soft-fail on auth.  
+7. **`ship_deploy` / `ship_flow` / `ship_hostdeploy`** — Network; may prompt. Prefer Desktop Deployment **Deploy** (or Advanced N-class terminal). Headless MCP may soft-fail on auth — tell human Login CLI / Sign in (web). `ship_deploy` = Orbit only; hosted Tier A = `ship_hostdeploy`.  
 8. **Docs URLs** — Agents may surface `docs_url` as Learn more; primary next act follows [human-gate catalog](./human-gate-catalog-design.md) (Put / Login / Confirm).
 
 ## Tool inventory (audit 2026-09-25)
@@ -48,7 +48,8 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 | `ship_publish` / `ship_launch` | J | Yes (read) | Status only — mutations via CLI/Desktop |
 | `ship_publish_watch` | J | Yes | Local Verify poll; optional auto_confirm |
 | `ship_flow_dry_run` | J | Yes | Plan print |
-| `ship_flow` / `ship_sign` / `ship_deploy` | N / J | Caution | Deploy/sign may need TTY; deploy refuses offline |
+| `ship_flow` / `ship_sign` / `ship_deploy` | N / J | Caution | Deploy/sign may need TTY; deploy refuses offline; Orbit only |
+| `ship_hostdeploy` | N | Caution | Hosted CLI (CF/Vercel/Netlify); prefer Desktop Deploy; no secret custody |
 | `ship_human` | T when put | Caution | `put` needs interactive TTY |
 | `ship_vault` | L+custody risk | Caution | Passphrase/values — don’t log |
 
@@ -57,10 +58,23 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 ```text
 1. ship_pulse / ship_publish → what’s required next
 2. If secret_put → tell human: Desktop Portal Put (or terminal shipctl env --put)
-3. If oauth_login → tell human: Desktop Login CLI / shipctl portal --login
+3. If oauth_login → tell human: Desktop Login CLI / Sign in (web) / shipctl portal
 4. Open dashboard URLs via ship_portal open=true only as secondary
 5. After human finishes → ship_publish_watch (or CLI verify) → Confirm on Desktop/CLI
 6. Never say “I stored your API token” or “OAuth is done” without Verify/Confirm evidence
+```
+
+## Agent playbook (hosted deploy — Path B)
+
+See [hosted-deploy-ops-value-bar H5](./hosted-deploy-ops-value-bar-design.md). Short form:
+
+```text
+1. ship_portal → Sign in (web) / Login CLI (human)
+2. Prefer Desktop Deployment Deploy for TTY auth
+3. ship_hostdeploy { project, provider } when CLI session exists
+4. ship_pulse / ship_status → hosted urls; classify [auth] → human Login CLI
+5. Never Create Token form-fill; never paste secrets into tool args
+6. Publish Live check remains human Confirm
 ```
 
 ## Gaps (S2.4 backlog)
@@ -71,7 +85,7 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 | **G2** No `ship_env_put` that only *launches* put (non-interactive spawn recipe) | Agents can’t start Desktop/TTY Put without telling the human | Document + optional “spawn terminal” meta (platform-specific) — not headless stdin |
 | **G3** `ship_human` put in MCP sessions without TTY | Silent hang / fail | Tool description + bail when non-TTY |
 | **G4** `ship_vault` value-in-args | Temptation to paste secrets into agent context | Soften schema docs; prefer Desktop export |
-| **G5** Deploy/flow from MCP vs Desktop N-class | Auth prompts headless | Tool descriptions: prefer Desktop Deploy terminal when Advanced |
+| **G5** Deploy/flow/hostdeploy from MCP vs Desktop | Auth prompts headless | Prefer Desktop Deploy; `ship_hostdeploy` hint on fail (**H5 shipped**) |
 | **G6** CDP / live Desktop MCP dogfood | Can’t prove agent↔Desktop loop | Reliability Later / CDP attach |
 
 ## Proof (O3)

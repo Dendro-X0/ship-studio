@@ -1,22 +1,26 @@
 # Ship Studio — improvement backlog
 
-**Status:** Living idea list — overhaul O0–O5 **closed**; next activate from suggested order  
-**Updated:** 2026-09-25  
-**Cadence:** Post-overhaul — S1.1 demo GIFs · S0.8 update check · S2.4 MCP when needed  
+**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 **shipped**; next **S1.1 shelf commit** (maintainer) then S1.10–13 / S1.16 on demand  
+**Updated:** 2026-09-27  
+**Cadence:** Demo shelf commit · Integrations minute-loop · Targets S2 when dogfood asks  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
 ```text
-Value bar:  Client honesty on human gates + multi-repo final-mile order + honest Verify
-            (portal/guide — not vendor replacement; Put/Login not Docs; utility > starter kits)
-Not:        Hype · encyclopedia dumps · chatbot-substitutable checklists · fake auto-publish · coach theater
-Price:      $29 one-time (Polar) — paid delta = finishable gates for account-holders without DevOps fluency
+Value bar:  Finishable host cut — stream process · show deployed URL · open provider
+            dashboard on the result · troubleshoot failures ($29) — plus multi-repo
+            final-mile order + honest Verify (portal/guide; Put/Login not Docs)
+Not:        Hype · encyclopedia dumps · CDP Create-Token form-fill · fake auto-publish ·
+            coach theater · Studio-held secrets
+Price:      $29 one-time (Polar) — paid delta = account-holders ship without DevOps fluency
 Role:       DUAL TRUNK (2026-09-25) — long-term offering + client portfolio face
             Depth shelf: Obscur · Vectis · Hobby gifts stay separate
             Intent: strategy-research-lab/strategies/ship-studio-dual-trunk.md
 ```
 
 Every candidate should still answer: Does it reduce missed gates for multi-surface ships? Does it stay inside scope (no vendor replacement, no dangerous live publish)? Would a stranger with many OSS repos — or a founder who owns vendor accounts but not DevOps fluency — feel this was worth $29 — or only a pasted README?
+
+**Active $29 band:** [hosted-deploy-ops-value-bar-design](../../specs/backend/hosted-deploy-ops-value-bar-design.md) (**H1–H5 shipped** — closed).
 
 ---
 
@@ -43,7 +47,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S0.5 | **Brand disambiguation** | Done (`28f696e`) |
 | S0.6 | **Polar env wizard → deploy** | Checklist already in Desktop Integrations; one dogfood that `PUBLIC_POLAR_*` lands on website deploy without Studio writing secrets |
 | S0.7 | **Windows installer** | Done — NSIS on [v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1) |
-| S0.8 | **In-app update check** | Next after demo GIFs — notice newer GitHub Releases; no silent force-install; human Confirm to open download |
+| S0.8 | **In-app update check** | **Done** — notice newer GitHub Releases; Confirm **Open download**; no silent install — [design](../../specs/frontend/in-app-update-check-design.md) |
 
 ---
 
@@ -51,7 +55,8 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 | ID | Idea | Notes |
 |----|------|-------|
-| S1.1 | **Demo shelf = multi-target tedium** | GIF/script on **v0.2.3** — bind **`fixtures/harbor`** (Desktop+Docs), `scripts/harbor-reset` — [demo-subject-design](../../specs/frontend/demo-subject-design.md) · [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) |
+| **S1.2n** | **Hosted deploy ops ($29 bar)** | Stream CLI deploy · results · dashboard · troubleshoot · MCP playbook — [design](../../specs/backend/hosted-deploy-ops-value-bar-design.md) · **H1–H5 shipped** |
+| S1.1 | **Demo shelf = multi-target tedium** | Live Harbor GIFs on **v0.2.1** — T1–T5 on `/demo` · **T6/T7 operator-next** — [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) · [demo-subject-design](../../specs/frontend/demo-subject-design.md) |
 | S1.0a | **Desktop nav freeze** | Hot-path + silent spawn + paint-before-shipctl + output mirror truncate shipped in **v0.2.1** |
 | S1.2 | **Dashboard honesty polish** | Surface Signet ok / Orbit missing, dirty git, step N/M without fake “all shipped” |
 | S1.2a | **Publish progress clarity** | Done · required · optional/later bands + summary strip — [publish-progress-clarity-design](../../specs/frontend/publish-progress-clarity-design.md) · **shipped Desktop** |
@@ -78,12 +83,14 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 | ID | Idea | Notes |
 |----|------|-------|
-| S1.10 | **Integrations → Publish handoff** | From Polar wizard, clear “Continue publishing” with next plan step — less sidebar archaeology |
+| **S1.19** | **Ship nav shell consistency** | **Done** — Targets + Integrations are single Ship items (Sign/Deployment pattern). Spec: [integrations-nav-design](../../specs/frontend/integrations-nav-design.md) |
+| S1.10 | **Integrations → Publish handoff** | **Done** — Continue publishing names/focuses `listing.*`; commerce Related → Integrations — [design](../../specs/frontend/integrations-publish-handoff-design.md) |
 | S1.11 | **Wizard completion Confirm** | After Open dashboard + paste env, explicit Confirm so `.ship/publish.json` advances |
 | S1.12 | **Provider “done” criteria** | Per Polar/Stripe/…: what Verify checks (URL present vs webhook live) — stay honest · pairs with [verify-status-layers-design](../../specs/backend/verify-status-layers-design.md) |
 | S1.13 | **Resend / email wizard parity** | Same Open → checklist → Confirm pattern as Polar |
 | S1.14 | **Local vs Public intent copy** | Make Local/Public toggle consequences one sentence each on Dashboard |
 | S1.15 | **Dirty-tree Publish cue** | Dirty-on-main warnings: optional soft gate before release steps |
+| S1.16 | **Targets catalog depth** | Slice 2–3 — Open folder / jump Deployment · auto-detect on bind · dirty Save cue — [targets-catalog-parity-design](../../specs/frontend/targets-catalog-parity-design.md) |
 | S1.17 | **Multi-project portfolio cue** | Recents / suite-oriented “next repo to ship” for 30+ OSS indies — stay local, no cloud hub |
 | S1.18 | **Web3 / chain release lanes** | Only when a real ship asks — detect + Open official explorers/wallets; no custody or auto-broadcast |
 
@@ -123,16 +130,39 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 ---
 
-## Suggested order (post v0.2.3)
+## Suggested order (post S1.10 · working tree)
 
 ```text
-1. S1.1       Live silent demo GIFs on v0.2.3 (Continue + progress bands)
-2. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL → v0.2.3
-3. S0.8       In-app update check (GitHub Releases notice · Confirm open)
-4. S0.1–S0.2  Live buy/refund only when Polar payment_ready (not a release blocker)
+Near (maintainer / dogfood)
+1. S1.1       Commit demo shelf (T1–T7 already on /demo) when ready
+2. Soft dogfood S1.10 — Polar Continue publishing → listing.polar
+3. S1.11      Wizard completion Confirm (explicit after Open)
+4. S1.16      Targets S2/S3 only if Harbor dogfood asks
+
+Commerce / site (when Polar unlocks — not a release blocker)
+5. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL
+6. S0.1–S0.2  Live buy/refund when payment_ready
+7. S0.6       Polar env → host deploy dogfood (no Studio-held secrets)
+
+Value depth (activate one band at a time)
+8. S1.12–13   Provider done criteria · Resend parity
+9. S1.2c D–F  Public Publish UX remaining slices
+10. S2.4       MCP ship_* wrappers when a real agent ship needs them
 ```
 
-Earlier default order (commerce-first) stays valid after Polar unlocks; do not block the week on Pay now.
+Earlier commerce-first order stays valid after Polar unlocks; do not block the week on Pay now.
+
+---
+
+## Roadmap bands (2026-09-27 snapshot)
+
+| Band | Theme | In | Out |
+|------|--------|----|-----|
+| **A — Shell** | One panel per Ship concern | Targets + Integrations single nav · keep More/Run collapsed by default for Public | Per-provider sidebar trees as primary nav |
+| **B — Finishable cut** | $29 hosted ops honesty | H1–H5 done · evidence clear · self-host Deploy≠serve | Fake one-click deploy · Studio OAuth success theater |
+| **C — Catalog depth** | Pick lane → Open → Put → Confirm | Targets cards · Platforms Tier A–C · Payments/Email wizards | Endless logos before Polar E2E proof |
+| **D — Expand lanes** | New surfaces only on demand | Steam/itch (done) · Stripe/Paddle detect · Tier D hosts · mobile listing Open | Store API upload · k8s · custody · auto-broadcast |
+| **E — Agent / MCP** | Assist without lying | Contract + hostdeploy playbook | AI agent that “finishes” OAuth |
 ---
 
 ## Related

@@ -122,6 +122,7 @@ pub fn execute(project: &Path, plan: &FlowPlan) -> Result<()> {
             steps: results.clone(),
             message: format!("completed steps: {}", ids.join(" → ")),
             urls: crate::pulse::latest_live_urls(project),
+            host_provider: None,
         },
     )?;
     Ok(())
@@ -146,6 +147,7 @@ fn write_failure(
             steps: results,
             message: message.into(),
             urls: vec![],
+            host_provider: None,
         },
     )
 }

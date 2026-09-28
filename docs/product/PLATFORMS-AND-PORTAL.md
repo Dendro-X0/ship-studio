@@ -43,7 +43,7 @@ Detail + slices: [hosting-portal-parity-design](../../specs/backend/hosting-port
 | **Hosting** | Orbit · Cloudflare · Vercel · Netlify · GitHub Pages · Fly · Railway | Open dashboard · Docs (when set) · optional Portal steps (when `provider` is a portal id) · Continue publishing · Use Local |
 | **Official signing** | Apple · Microsoft · Google Play | Open vendor · checklist · Continue publishing |
 
-- Shared chrome with Integrations: `provider-catalog.ts` (grid · sidebar · wizard aside).
+- Shared chrome with Integrations: `provider-catalog.ts` (grid · wizard aside).
 - Probe CTAs: **Choose host** / **Choose platform** open this catalog (Hosting vs Official signing preference).
 - Orbit has **no** Portal provider id — Open dashboard / Ritual deploy only (avoids `unknown provider 'orbit'`).
 - Fly / Railway: Portal Login CLI (`fly auth login` / `railway login`) + kind-aware Docs (secrets / variables).

@@ -1,7 +1,7 @@
 # Demo subject — Harbor (lightweight)
 
-**Status:** Implement  
-**Updated:** 2026-09-24  
+**Status:** T1–T5 live · T6/T7 operator-next  
+**Updated:** 2026-09-27  
 **Parent:** [docs/assets/demo/v0.2.1/SCRIPT.md](../../docs/assets/demo/v0.2.1/SCRIPT.md)
 
 ## Problem

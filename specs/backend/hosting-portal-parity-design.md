@@ -28,7 +28,7 @@ NOT:      Studio-held secrets · vendor HTTPS · one-click deploy · full cloud 
 
 1. Bridge never calls vendor HTTPS with secrets.
 2. Open = settings / console UI; Docs = official tutorial; Login CLI = interactive terminal only.
-3. Prefer CLI OAuth over long-lived tokens when the vendor documents it.
+3. Prefer **browser sign-in** when the operator is already logged into the vendor in their browser; **Login CLI** when they need local CLI credentials (`wrangler` / `vercel` / …). Long-lived tokens remain last resort.
 4. Duplicate `entry_url` across steps for one provider is a bug (see Cloudflare env split).
 5. Desktop actions map to `shipctl portal` / detect / Publish — no parallel secret state.
 

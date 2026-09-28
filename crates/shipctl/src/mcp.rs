@@ -140,6 +140,7 @@ fn tools() -> Vec<Value> {
             "Run orbit with studio.json deploy_args (or override args)",
             false,
         ),
+        tool_hostdeploy(),
         tool("ship_status", "Read .ship/last-run.json", false),
         tool(
             "ship_pulse",
@@ -228,6 +229,28 @@ fn tool_portal() -> Value {
                     "description": "Open token pages in the system browser"
                 }
             }
+        }
+    })
+}
+
+fn tool_hostdeploy() -> Value {
+    json!({
+        "name": "ship_hostdeploy",
+        "description": "Stream local vendor CLI deploy (wrangler/vercel/netlify) via shipctl hostdeploy. Writes hosted last-run URLs. Prefer Desktop Deployment Deploy when auth prompts may appear. Never stores secrets; does not fill Create Token. On auth fail tell human: Login CLI or Sign in (web).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "project": { "type": "string", "description": "Absolute project path" },
+                "provider": {
+                    "type": "string",
+                    "description": "cloudflare | vercel | netlify (default cloudflare)"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Optional Pages/site project name override"
+                }
+            },
+            "required": ["project"]
         }
     })
 }
@@ -506,6 +529,30 @@ fn call_tool(params: Value) -> Result<Value> {
             let code = adapters::run_orbit(&project, &deploy_args)?;
             json!({ "ok": code == 0, "exit_code": code, "args": deploy_args })
         }
+        "ship_hostdeploy" => {
+            if offline {
+                anyhow::bail!("ship_hostdeploy refuses offline");
+            }
+            let provider = args
+                .get("provider")
+                .and_then(|p| p.as_str())
+                .unwrap_or("cloudflare");
+            let name = args.get("name").and_then(|n| n.as_str());
+            // Prefer Desktop Deploy when TTY auth may appear; still runnable for agents.
+            match crate::hostdeploy::run(&project, provider, name) {
+                Ok(report) => serde_json::to_value(report)?,
+                Err(err) => {
+                    let last = config::read_last_run(&project).unwrap_or(json!({}));
+                    json!({
+                        "ok": false,
+                        "provider": provider,
+                        "error": err.to_string(),
+                        "last_run": last,
+                        "hint": "Classify failure from last_run.message ([auth]/missing_cli]/…). Auth → human Login CLI / Sign in (web). Prefer Desktop Deployment Deploy for interactive prompts."
+                    })
+                }
+            }
+        }
         "ship_status" => config::read_last_run(&project)?,
         "ship_pulse" => serde_json::to_value(pulse::for_project(&project)?)?,
         other => anyhow::bail!("unknown tool: {other}"),
@@ -538,4 +585,20 @@ fn err(id: Value, message: String) -> Value {
         "id": id,
         "error": { "code": -32000, "message": message }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tools_include_ship_hostdeploy() {
+        let tools = tools();
+        let names: Vec<_> = tools
+            .iter()
+            .filter_map(|t| t.get("name").and_then(|n| n.as_str()))
+            .collect();
+        assert!(names.contains(&"ship_hostdeploy"), "{names:?}");
+        assert!(names.contains(&"ship_pulse"));
+    }
 }

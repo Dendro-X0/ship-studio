@@ -76,8 +76,8 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
     desc: "Minute spine — Open/Run → Confirm → Next; Related opens detail panels.",
   },
   scopes: {
-    title: "Scopes",
-    desc: "Detail panel — Web / API / Desktop / Mobile / Container directories for the current publish step.",
+    title: "Targets",
+    desc: "Active publish surfaces in this repo — Web / API / Desktop / Mobile / Container / Docs.",
   },
   env: {
     title: "ENV & tokens",
@@ -118,7 +118,7 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
 };
 
 export const RELATED_VIEW_LABELS: Record<string, string> = {
-  scopes: "Open Scopes",
+  scopes: "Open Targets",
   env: "Open Env",
   sign: "Open Sign",
   portal: "Open Portal",

@@ -460,12 +460,43 @@ pub fn latest_live_urls(project: &Path) -> Vec<String> {
     urls
 }
 
-/// True when local evidence shows a successful prior live deploy (not mere wrangler dev state).
+fn is_loopback_url(u: &str) -> bool {
+    let l = u.to_ascii_lowercase();
+    l.contains("127.0.0.1")
+        || l.contains("localhost")
+        || l.contains("[::1]")
+        || l.starts_with("file:")
+}
+
+fn last_run_is_selfhost(v: &serde_json::Value) -> bool {
+    if let Some(arr) = v.get("steps").and_then(|x| x.as_array()) {
+        if arr.iter().any(|s| {
+            let id = s.get("id").and_then(|x| x.as_str()).unwrap_or("");
+            id == "selfhost"
+                || id == "selfhost.check"
+                || id.starts_with("selfhost.")
+                || id == "selfhost.deploy"
+        }) {
+            return true;
+        }
+    }
+    v.get("message")
+        .and_then(|m| m.as_str())
+        .map(|m| {
+            let l = m.to_ascii_lowercase();
+            l.contains("self-host") || l.contains("selfhost")
+        })
+        .unwrap_or(false)
+}
+
+/// True when local evidence shows a successful prior **hosted** deploy
+/// (Orbit / remote last-run). Self-host loopback and wrangler-dev are not live.
 pub fn deploy_is_live(deploy: &DeployPulse) -> bool {
-    matches!(
-        deploy.signal.as_str(),
-        "orbit_deployed" | "last_run_ok"
-    ) || !deploy.urls.is_empty()
+    if deploy.signal == "selfhost_ok" {
+        return false;
+    }
+    let has_hosted_url = deploy.urls.iter().any(|u| !is_loopback_url(u));
+    matches!(deploy.signal.as_str(), "orbit_deployed" | "last_run_ok") || has_hosted_url
 }
 
 /// Public inspect for publish skip / verify (same as internal pulse).
@@ -489,30 +520,44 @@ fn deploy_pulse(project: &Path) -> DeployPulse {
 
     if let Ok(v) = config::read_last_run(project) {
         last_run_ok = v.get("ok").and_then(|x| x.as_bool());
+        let selfhost_run = last_run_is_selfhost(&v);
         push_url(&mut urls, v.get("url").and_then(|x| x.as_str()));
         if let Some(arr) = v.get("urls").and_then(|x| x.as_array()) {
             for item in arr {
                 push_url(&mut urls, item.as_str());
             }
         }
-        if let Some(msg) = v.get("message").and_then(|x| x.as_str()) {
-            if signal == "unknown" {
-                detail = msg.to_string();
+        if selfhost_run {
+            // Local-auto health only — never promote to hosted last_run_ok / live.
+            if signal != "orbit_deployed" {
+                signal = "selfhost_ok".into();
+                detail = if let Some(u) = urls.iter().find(|u| is_loopback_url(u)) {
+                    format!("Self-host local check ok · {u} — not a hosted deploy")
+                } else {
+                    "Self-host local check ok — not a hosted deploy.".into()
+                };
             }
-        }
-        if let Some(arr) = v.get("steps").and_then(|x| x.as_array()) {
-            for s in arr {
-                let id = s.get("id").and_then(|x| x.as_str()).unwrap_or("");
-                let ok = s.get("ok").and_then(|x| x.as_bool()).unwrap_or(false);
-                if id.contains("deploy") && ok && signal != "orbit_deployed" {
-                    signal = "last_run_ok".into();
-                    detail = "Last shipctl deploy step succeeded.".into();
+        } else {
+            if let Some(msg) = v.get("message").and_then(|x| x.as_str()) {
+                if signal == "unknown" {
+                    detail = msg.to_string();
                 }
             }
-        }
-        if last_run_ok == Some(true) && signal == "unknown" {
-            signal = "last_run_ok".into();
-            detail = "Last shipctl run succeeded.".into();
+            if let Some(arr) = v.get("steps").and_then(|x| x.as_array()) {
+                for s in arr {
+                    let id = s.get("id").and_then(|x| x.as_str()).unwrap_or("");
+                    let ok = s.get("ok").and_then(|x| x.as_bool()).unwrap_or(false);
+                    // `selfhost.deploy` contains "deploy" — excluded via selfhost_run branch.
+                    if id.contains("deploy") && ok && signal != "orbit_deployed" {
+                        signal = "last_run_ok".into();
+                        detail = "Last shipctl deploy step succeeded.".into();
+                    }
+                }
+            }
+            if last_run_ok == Some(true) && signal == "unknown" {
+                signal = "last_run_ok".into();
+                detail = "Last shipctl run succeeded.".into();
+            }
         }
     }
 
@@ -1408,6 +1453,41 @@ mod tests {
         fs::create_dir_all(dir.join(".wrangler/state")).unwrap();
         let deploy = deploy_pulse(&dir);
         assert_eq!(deploy.signal, "wrangler_local");
+        assert!(!deploy_is_live(&deploy));
+    }
+
+    #[test]
+    fn selfhost_last_run_is_not_hosted_live() {
+        let dir = tmp();
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(
+            dir.join(".ship/last-run.json"),
+            r#"{
+              "ok": true,
+              "message": "Self-host local check ok",
+              "urls": ["http://127.0.0.1:52699/"],
+              "steps": [
+                {"id": "selfhost", "ok": true},
+                {"id": "selfhost.check", "ok": true}
+              ]
+            }"#,
+        )
+        .unwrap();
+        let deploy = deploy_pulse(&dir);
+        assert_eq!(deploy.signal, "selfhost_ok");
+        assert!(!deploy_is_live(&deploy));
+        assert!(deploy.urls.iter().any(|u| u.contains("127.0.0.1")));
+    }
+
+    #[test]
+    fn loopback_only_urls_are_not_live() {
+        let deploy = DeployPulse {
+            signal: "unknown".into(),
+            detail: "loopback only".into(),
+            urls: vec!["http://127.0.0.1:9/".into()],
+            last_run_ok: Some(true),
+        };
         assert!(!deploy_is_live(&deploy));
     }
 
