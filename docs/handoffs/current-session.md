@@ -1,12 +1,12 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-28  
-**Branch:** `main`  
-**Status:** **S1.16 Targets S1–S3 shipped** (working tree with S1.15) · S1.1 shelf commit parked
+**Branch:** `main` (`f24b938`)  
+**Status:** **S1.15–16 shipped** · Harbor soft dogfood **CLI L2 pass** · Desktop UI L2 operator-owned
 
 ## Next Atomic Step
 
-Soft dogfood Harbor (dirty Confirm · Targets Folder/Deploy · dirty Save) — or **S1.1 shelf commit** (maintainer). No coding band until activated.
+**Desktop UI dogfood** on Harbor (Folder · Deploy · dirty Save · dirty Confirm toast) — or activate **S1.1 shelf** / **S1.2c D** / **Launch L3**.
 
 ## Design queue (not coding until activated)
 
@@ -41,6 +41,7 @@ Soft dogfood Harbor (dirty Confirm · Targets Folder/Deploy · dirty Save) — o
 
 | Band | Link |
 |------|------|
+| **Harbor soft dogfood (CLI)** | [evidence-harbor-s115-s116](./evidence-harbor-s115-s116.md) |
 | **S1.16 Targets Slice 3** | [design](../../specs/frontend/targets-catalog-parity-design.md) — auto-detect on bind · dirty Save cue |
 | **S1.16 Targets Slice 2** | Folder · Deploy on cards |
 | **S1.15 Dirty-tree Publish cue** | [design](../../specs/frontend/dirty-tree-publish-cue-design.md) — soft Confirm warn · Publish strip cue |
@@ -71,4 +72,4 @@ Soft dogfood Harbor (dirty Confirm · Targets Folder/Deploy · dirty Save) — o
 2. [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) (T6/T7)  
 3. `fixtures/harbor` + `scripts/harbor-reset`  
 4. [demo-subject-design](../../specs/frontend/demo-subject-design.md)  
-5. [hosted-deploy-ops-value-bar-design](../../specs/backend/hosted-deploy-ops-value-bar-design.md) (closed)  
+5. [evidence-harbor-s115-s116](./evidence-harbor-s115-s116.md)  

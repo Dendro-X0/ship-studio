@@ -62,6 +62,7 @@ NOT:   Per-target Deploy Run · new shipctl fields
 | L2 | Folder opens the target path; Deploy opens Deployment on matching host |
 | L2 | Bind fills Targets without Detect; toggle shows dirty Save cue |
 | L2 | Publish Stages scopes inline still toggles/saves |
+| L2 (CLI 2026-09-28) | Harbor scopes detect/set · folder paths exist · nested parent git ignored — [evidence](../../docs/handoffs/evidence-harbor-s115-s116.md) |
 
 ## Sidebar
 

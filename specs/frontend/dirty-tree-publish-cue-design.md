@@ -30,6 +30,7 @@ Pulse already surfaces dirty on Dashboard checklist — this adds Publish Confir
 |-------|--------|
 | L1 | `tsc` |
 | L2 | Dirty Harbor repo · Confirm on live_check/deploy → toast · Confirm anyway advances |
+| L2 (CLI 2026-09-28) | Temp Harbor `.git` dirty → `pulse.dirty=true`; nested parent ignore restored after cleanup — [evidence](../../docs/handoffs/evidence-harbor-s115-s116.md) |
 
 ## Shipped
 
