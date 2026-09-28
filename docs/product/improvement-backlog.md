@@ -1,8 +1,8 @@
 # Ship Studio — improvement backlog
 
-**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 + S1.10–15 + Targets S2 **shipped**; next **S1.1 shelf commit** (maintainer) then Targets S3 on demand  
+**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 + S1.10–16 + **S1.2c A–F** + **Launch L3** shipped (working tree); next soft dogfood / **S1.1 shelf** / Launch L4  
 **Updated:** 2026-09-28  
-**Cadence:** Demo shelf commit · Integrations minute-loop · Targets S3 when dogfood asks  
+**Cadence:** Soft dogfood · demo shelf · Launch L4 on demand  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
@@ -61,7 +61,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S1.2 | **Dashboard honesty polish** | Surface Signet ok / Orbit missing, dirty git, step N/M without fake “all shipped” |
 | S1.2a | **Publish progress clarity** | Done · required · optional/later bands + summary strip — [publish-progress-clarity-design](../../specs/frontend/publish-progress-clarity-design.md) · **shipped Desktop** |
 | S1.2b | **Workflow stage cards + pager** | Dashboard presets → linear Publish stages — [workflow-stages-design](../../specs/frontend/workflow-stages-design.md) · **Desktop slice 1 wired** (L2 dogfood pending) |
-| S1.2c | **Public Publish UX ($29 bar)** | Single primary · rail diet · inline Scopes · copy pass — [public-publish-ux-design](../../specs/frontend/public-publish-ux-design.md) · **A+B+C Desktop** (D/E/F pending) |
+| S1.2c | **Public Publish UX ($29 bar)** | **Done A–F** — single primary · rail · inline Scopes · copy · workflow preview · General nav — [design](../../specs/frontend/public-publish-ux-design.md) |
 | S1.2j | **Hosting portal parity** | Tier A–E · Fly/Railway · Pages≠PAT · detect→highlight — [design](../../specs/backend/hosting-portal-parity-design.md) · **slices 0–4 done** |
 | S1.2i | **Platforms · Portal product doc** | Functionality · objectives · known gaps — [PLATFORMS-AND-PORTAL](./PLATFORMS-AND-PORTAL.md) · **docs shipped** |
 | S1.2k | **Desktop reliability (TTY · toasts)** | Env Put · unified opener · soft taxonomy · user load honesty · Ritual N-class — [design](../../specs/backend/desktop-reliability-design.md) · **slices 0–4 done**; Later parked |
@@ -130,11 +130,11 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 ---
 
-## Suggested order (post S1.16)
+## Suggested order (post Launch L3)
 
 ```text
 Near
-1. Soft dogfood Harbor — dirty Confirm · Targets Folder/Deploy · dirty Save
+1. Soft dogfood Harbor Desktop — Publish copy · workflow previews · Payments off
 2. S1.1       Demo shelf commit (maintainer)
 
 Commerce / site (when Polar unlocks — not a release blocker)
@@ -143,8 +143,8 @@ Commerce / site (when Polar unlocks — not a release blocker)
 5. S0.6       Polar env → host deploy dogfood (no Studio-held secrets)
 
 Value depth (activate one band at a time)
-6. S1.2c D–F  Public Publish UX remaining slices
-7. Launch L3+ / S2.4 MCP when a real ship asks
+6. Launch L4  primary host memory
+7. S2.4       MCP when a real ship asks
 ```
 
 Earlier commerce-first order stays valid after Polar unlocks; do not block the week on Pay now.

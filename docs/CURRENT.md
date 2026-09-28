@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3 (+ working-tree Desktop UX)  
 **Updated:** 2026-09-28  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Working tree: S1.11–16. **Next:** soft dogfood / S1.1 shelf commit.
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Working tree: S1.2c A–F · Launch L3. **Next:** soft dogfood / S1.1 shelf / Launch L4.
 
 ## Truth pointers
 

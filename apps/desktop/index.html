@@ -158,7 +158,7 @@
               Back to Publish
             </button>
             <div class="mode-switch" role="group" aria-label="Studio mode">
-              <button type="button" id="mode-general" class="mode-btn active" data-mode="general" title="Minimal publish spine">
+              <button type="button" id="mode-general" class="mode-btn active" data-mode="general" title="Shorter publish checklist">
                 General
               </button>
               <button type="button" id="mode-advanced" class="mode-btn" data-mode="advanced" title="Full configuration path">
@@ -337,12 +337,12 @@
                   <button type="button" id="btn-publish-verify" class="stages-hide" disabled>Verify</button>
                   <label
                     class="toggle watch-toggle"
-                    title="Poll Verify every 15s (disk / local CLI / official CLI probe). Never vendor HTTPS with secrets; Confirm still required for honesty gates."
+                    title="Poll Verify every 15s (files on disk / local tools / official CLI). Never vendor HTTPS with secrets; Confirm still required for honesty gates."
                   >
                     <input type="checkbox" id="opt-publish-watch" />
                     Watch
                   </label>
-                  <button type="button" id="btn-publish-continue" class="primary stages-hide" disabled title="Advance Auto gates (stops at Human/Open)">
+                  <button type="button" id="btn-publish-continue" class="primary stages-hide" disabled title="Continue automatic checks (stops when you need to act)">
                     Continue
                   </button>
                   <button type="button" id="btn-publish-confirm" class="gate-secondary stages-hide" disabled>Confirm</button>
@@ -528,10 +528,17 @@
                   <label>Launch</label>
                   <p class="hint" id="launch-hint">
                     Optional lanes — open a dashboard, finish there, Confirm → Next. Publish stays the
-                    minute spine.
+                    main checklist.
                   </p>
                 </div>
                 <div class="portal-actions">
+                  <label
+                    class="toggle watch-toggle"
+                    title="Show the Payments lane on Launch (writes launch_payments to .ship/studio.json). Off by default."
+                  >
+                    <input type="checkbox" id="opt-launch-payments" />
+                    Payments
+                  </label>
                   <button type="button" id="btn-launch" class="primary" disabled title="Refresh launch plan">
                     Refresh
                   </button>

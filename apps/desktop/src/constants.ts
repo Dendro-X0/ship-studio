@@ -69,11 +69,11 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
   },
   assist: {
     title: "Assist",
-    desc: "Checklist overview — Start publishing for the live spine.",
+    desc: "Checklist overview — Start publishing for the live workflow.",
   },
   publish: {
     title: "Publish",
-    desc: "Minute spine — Open/Run → Confirm → Next; Related opens detail panels.",
+    desc: "Your publish checklist — Open/Run → Confirm → Next; Related opens detail panels.",
   },
   scopes: {
     title: "Targets",
@@ -89,7 +89,7 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
   },
   launch: {
     title: "Launch",
-    desc: "Optional choice board — open Sign / Deployment / Integrations, then Confirm. Prefer Publish for the minute spine.",
+    desc: "Optional choice board — open Sign / Deployment / Integrations, then Confirm. Prefer Publish for the checklist.",
   },
   portal: {
     title: "Portal",

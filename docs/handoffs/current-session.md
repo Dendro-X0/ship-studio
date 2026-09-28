@@ -1,75 +1,49 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-28  
-**Branch:** `main` (`f24b938`)  
-**Status:** **S1.15–16 shipped** · Harbor soft dogfood **CLI L2 pass** · Desktop UI L2 operator-owned
+**Branch:** `main`  
+**Status:** **S1.2c A–F + Launch L3** in working tree · S1.15–16 on `8668eca`
 
 ## Next Atomic Step
 
-**Desktop UI dogfood** on Harbor (Folder · Deploy · dirty Save · dirty Confirm toast) — or activate **S1.1 shelf** / **S1.2c D** / **Launch L3**.
+Soft dogfood Harbor Desktop (Publish copy · workflow previews · Launch Payments off) — or **S1.1 shelf** / **Launch L4**.
 
 ## Design queue (not coding until activated)
 
 | Item | Spec |
 |------|------|
+| Public Publish UX | [public-publish-ux-design](../../specs/frontend/public-publish-ux-design.md) (**A–F shipped**) |
+| Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) (**L1–L3 shipped** — L4 queued) |
 | Targets catalog parity | [targets-catalog-parity-design](../../specs/frontend/targets-catalog-parity-design.md) (**Slice 1–3 shipped**) |
 | S1.15 Dirty-tree cue | [dirty-tree-publish-cue-design](../../specs/frontend/dirty-tree-publish-cue-design.md) (**shipped**) |
-| S1.13 Resend parity | [resend-wizard-parity-design](../../specs/frontend/resend-wizard-parity-design.md) (**shipped**) |
-| S1.12 Done criteria | [provider-done-criteria-design](../../specs/frontend/provider-done-criteria-design.md) (**slice 1**) |
-| S1.11 Wizard Confirm | [wizard-completion-confirm-design](../../specs/frontend/wizard-completion-confirm-design.md) (**shipped**) |
-| S1.10 Integrations → Publish | [integrations-publish-handoff-design](../../specs/frontend/integrations-publish-handoff-design.md) (**shipped**) |
-| S0.8 update check | [in-app-update-check-design](../../specs/frontend/in-app-update-check-design.md) (**shipped** L1) |
-| Integrations nav (S1.19) | [integrations-nav-design](../../specs/frontend/integrations-nav-design.md) (**shipped**) |
-| Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) (L1–L2 shipped — L3+ queued) |
-| Deployment nav | [deployment-nav-design](../../specs/frontend/deployment-nav-design.md) (shipped) |
-| Panel redirects | [launch-panel-redirects-design](../../specs/frontend/launch-panel-redirects-design.md) (shipped) |
-| Studio self-host | [studio-selfhost-guide-design](../../specs/frontend/studio-selfhost-guide-design.md) (Slices 1–5 shipped) |
+| S1.1 Demo shelf | [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) (maintainer commit) |
 
 ## PAUSED / CANCELLED
 
 | Band | Rule |
 |------|------|
-| **Vendor handoff coach** | **CANCELLED** — [design](../../specs/backend/vendor-handoff-coach-design.md) |
+| **Vendor handoff coach** | **CANCELLED** |
 | Polar paid checkout E2E | Deferred |
 | aperio Advanced L4 | Parked |
 | Mobile store API upload | Deferred |
 | k8s controllers | Out of scope |
 | Drive-by Desktop reliability | Work only via design slices |
-| Reliability Later | Non-Windows · **CDP** · vault — separate activation (no Create Token form-fill) |
+| Reliability Later | Non-Windows · **CDP** · vault |
 
 ## Last closed
 
 | Band | Link |
 |------|------|
+| **Launch L3 Payments opt-in** | [design](../../specs/frontend/launch-choice-board-design.md) — `launch_payments` · UI toggle |
+| **S1.2c Public Publish UX A–F** | [design](../../specs/frontend/public-publish-ux-design.md) |
 | **Harbor soft dogfood (CLI)** | [evidence-harbor-s115-s116](./evidence-harbor-s115-s116.md) |
-| **S1.16 Targets Slice 3** | [design](../../specs/frontend/targets-catalog-parity-design.md) — auto-detect on bind · dirty Save cue |
-| **S1.16 Targets Slice 2** | Folder · Deploy on cards |
-| **S1.15 Dirty-tree Publish cue** | [design](../../specs/frontend/dirty-tree-publish-cue-design.md) — soft Confirm warn · Publish strip cue |
-| **S1.13 Resend parity** | [design](../../specs/frontend/resend-wizard-parity-design.md) — Put key · env.sprint Confirm |
-| **S1.12 Done criteria S1** | [design](../../specs/frontend/provider-done-criteria-design.md) — Done when… human attest |
-| **S1.14 Local / Public cue** | Dashboard intent one-liners |
-| **S1.11 Wizard Confirm** | [design](../../specs/frontend/wizard-completion-confirm-design.md) — Confirm gate on catalog wizards |
-| **S1.10 Integrations → Publish** | [design](../../specs/frontend/integrations-publish-handoff-design.md) — Continue publishing → listing focus |
-| **S0.8 in-app update check** | [design](../../specs/frontend/in-app-update-check-design.md) — notice release · Open download |
-| **Integrations nav S1.19** | [design](../../specs/frontend/integrations-nav-design.md) — single Ship Integrations item |
-| **Targets catalog parity S1** | [design](../../specs/frontend/targets-catalog-parity-design.md) — Targets chrome · catalog cards · Ship nav |
-| **Self-host Deploy finish-fast** | [design](../../specs/backend/selfhost-deploy-finish-fast-design.md) — Deploy = one-shot; Open live = serve |
-| **Self-host serve UI freeze** | [investigation](../../specs/backend/selfhost-serve-ui-freeze-investigation.md) · `#[tauri::command(async)]` on `run_shipctl` |
-| **S1.1 shelf cutover (agent)** | `/demo` → `v0.2.1` T1–T5; SCRIPT honesty vs H1–H5 Deploy; Harbor reset + scopes L1 |
-| **Hosted deploy ops H1–H5** | [hosted-deploy-ops-value-bar-design](../../specs/backend/hosted-deploy-ops-value-bar-design.md) — CLI Deploy · Results · Troubleshoot · MCP `ship_hostdeploy` |
-| **Hosting OAuth web entry** | [hosting-oauth-web-entry-design](../../specs/backend/hosting-oauth-web-entry-design.md) |
-| **Self-host ≠ hosted Deploy** | [selfhost-vs-hosted-deploy-probe-investigation](../../specs/backend/selfhost-vs-hosted-deploy-probe-investigation.md) |
-| **Launch choice board L1–L2** | Desktop Bands A/B/C + shipctl `lane`/`optional`/`suggested` |
-| **Self-host S1–S5** | Catalog · stream · health · Publish Auto · detect |
-| **Overhaul O5** | [evidence-harbor-client-honesty](./evidence-harbor-client-honesty.md) |
-| **Overhaul O4** | [5350637](https://github.com/Dendro-X0/ship-studio/commit/5350637) |
-| **Overhaul O3** | [7470dfd](https://github.com/Dendro-X0/ship-studio/commit/7470dfd) |
-| **Overhaul O0–O2** | [b383a99](https://github.com/Dendro-X0/ship-studio/commit/b383a99) |
+| **S1.16 Targets** | [design](../../specs/frontend/targets-catalog-parity-design.md) |
+| **S1.15 Dirty-tree Publish cue** | [design](../../specs/frontend/dirty-tree-publish-cue-design.md) |
 
 ## Boot allowlist
 
 1. This file  
-2. [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) (T6/T7)  
+2. [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md)  
 3. `fixtures/harbor` + `scripts/harbor-reset`  
-4. [demo-subject-design](../../specs/frontend/demo-subject-design.md)  
-5. [evidence-harbor-s115-s116](./evidence-harbor-s115-s116.md)  
+4. [public-publish-ux-design](../../specs/frontend/public-publish-ux-design.md)  
+5. [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md)  

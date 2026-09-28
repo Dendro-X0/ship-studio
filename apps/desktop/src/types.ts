@@ -225,6 +225,7 @@ export type ShipState = {
     deploy_args?: string[];
     notes?: string[];
     detected?: Detected;
+    launch_payments?: boolean;
   } | null;
   last_run: {
     ok?: boolean;

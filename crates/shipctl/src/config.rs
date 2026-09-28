@@ -59,6 +59,9 @@ pub struct StudioIntent {
     /// When true, Local intent still keeps `env.sprint`.
     #[serde(default)]
     pub env_required: bool,
+    /// Launch L3 — show Payments lane even without Polar/Stripe detect.
+    #[serde(default)]
+    pub launch_payments: bool,
 }
 
 fn default_sign_path() -> String {
@@ -1736,6 +1739,7 @@ pub fn intent_for(project: &Path) -> Result<StudioIntent> {
             .map(|e| e.ship_intent)
             .unwrap_or_default(),
         env_required: existing.as_ref().map(|e| e.env_required).unwrap_or(false),
+        launch_payments: existing.as_ref().map(|e| e.launch_payments).unwrap_or(false),
     })
 }
 
@@ -1758,6 +1762,27 @@ pub fn set_ship_intent(project: &Path, intent: ShipIntent) -> Result<StudioInten
     fs::write(&path, serde_json::to_string_pretty(&intent_doc)?)
         .with_context(|| format!("write {}", path.display()))?;
     Ok(intent_doc)
+}
+
+/// Persist Launch Payments lane opt-in into `.ship/studio.json`.
+pub fn set_launch_payments(project: &Path, on: bool) -> Result<StudioIntent> {
+    let mut intent_doc = intent_for(project)?;
+    intent_doc.launch_payments = on;
+    let dir = ship_dir(Path::new(&intent_doc.project));
+    fs::create_dir_all(&dir).context("mkdir .ship")?;
+    let path = studio_path(Path::new(&intent_doc.project));
+    fs::write(&path, serde_json::to_string_pretty(&intent_doc)?)
+        .with_context(|| format!("write {}", path.display()))?;
+    Ok(intent_doc)
+}
+
+/// Whether Launch should include the Payments / Integrations lane.
+pub fn launch_payments_for(project: &Path) -> bool {
+    read_studio(project)
+        .ok()
+        .flatten()
+        .map(|s| s.launch_payments)
+        .unwrap_or(false)
 }
 
 /// Local intent keeps `env.sprint` when studio says so or markets opts into `env`.

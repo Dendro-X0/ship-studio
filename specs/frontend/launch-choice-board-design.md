@@ -1,7 +1,7 @@
 # Launch choice board — design
 
-**Status:** L1–L2 shipped — L3+ queued  
-**Updated:** 2026-09-27  
+**Status:** L1–L3 shipped (L1 tsc · L3 unit test) — L4 queued  
+**Updated:** 2026-09-28  
 **Parents:** [launch-panel-redirects-design](./launch-panel-redirects-design.md) · [deployment-nav-design](./deployment-nav-design.md) · [platforms-catalog-design](./platforms-catalog-design.md)  
 **Surfaces:** Desktop Launch · Sign · Deployment · Integrations · Env · Scopes
 
@@ -101,7 +101,7 @@ Launch never asks “login Cloudflare *and* Vercel *and* Netlify.”
 | **L0** | This design + handoff queue | Spec only |
 | **L1** | Launch view chrome: Band A/B/C layout (Desktop); keep shipctl step ids, regroup in UI | **Done** — Prep collapsed · lane cards · Ship cut |
 | **L2** | shipctl: emit `lane` + `optional` + `suggested` on steps; drop flow/deploy from Launch when Local | **Done** — annotate + Local omits Orbit cut |
-| **L3** | Payments lane opt-in (studio.json / UI toggle); Integrations hidden until on | Harbor no Payments card by default |
+| **L3** | Payments lane opt-in (studio.json / UI toggle); Integrations hidden until on | **Done** — `launch_payments` · Launch **Payments** checkbox · Harbor no card by default |
 | **L4** | Deployment “primary host” remembered; oauth.hosts verify that host only | Verify uses chosen provider |
 
 ## Non-goals
@@ -119,4 +119,4 @@ Launch never asks “login Cloudflare *and* Vercel *and* Netlify.”
 
 ## Decision for maintainer
 
-Adopt **choice board** (Bands A/B/C) as the Launch north star. **L1–L2 shipped**. Next = **L3** (Payments opt-in) when activated.
+Adopt **choice board** (Bands A/B/C) as the Launch north star. **L1–L3 shipped**. Next = **L4** (primary host memory) when activated.

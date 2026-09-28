@@ -480,7 +480,8 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         || detected.lemon
         || detected.stripe
         || detected.paddle;
-    if needs_integrations {
+    let payments_opt_in = config::launch_payments_for(project);
+    if needs_integrations || payments_opt_in {
         let mut bits = Vec::new();
         if detected.polar {
             bits.push("Polar");
@@ -497,14 +498,20 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         if detected.paddle {
             bits.push("Paddle");
         }
+        let detail = if bits.is_empty() {
+            "Payments lane opted in — Open Integrations for checkout providers. Confirm when listings are updated (or skip if N/A)."
+                .into()
+        } else {
+            format!(
+                "Open Integrations for {} — only when this app sells. Confirm when listings are updated.",
+                bits.join(" · ")
+            )
+        };
         steps.push(step_with_view(
             "integrations.panel",
             "Integrations — payments / checkout",
             StepKind::List,
-            &format!(
-                "Open Integrations for {} — only when this app sells. Confirm when listings are updated.",
-                bits.join(" · ")
-            ),
+            &detail,
             None,
             Some("confirm after Integrations work (or skip if N/A)".into()),
             None,
@@ -1567,6 +1574,34 @@ edition = \"2021\"
         assert_eq!(sync.entry_url.as_deref(), Some("https://ship.example"));
         assert!(sync.detail.contains("NEXT_PUBLIC_X_URL"));
         let _ = fs::remove_dir_all(&suite);
+    }
+
+    #[test]
+    fn launch_payments_opt_in_without_detect() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-launch-pay-opt-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("wrangler.toml"), "name = \"x\"\n").unwrap();
+        let _ = config::configure(&dir).unwrap();
+        let off = load_or_build(&dir).unwrap();
+        assert!(
+            !off.steps.iter().any(|s| s.id == "integrations.panel"),
+            "Harbor-like: no Payments without detect or opt-in"
+        );
+        let _ = config::set_launch_payments(&dir, true).unwrap();
+        let _ = fs::remove_file(config::ship_dir(&dir).join("launch.json"));
+        let on = load_or_build(&dir).unwrap();
+        assert!(
+            on.steps.iter().any(|s| s.id == "integrations.panel"),
+            "opt-in → Payments lane"
+        );
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]

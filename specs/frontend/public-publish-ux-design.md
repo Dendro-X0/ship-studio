@@ -1,9 +1,9 @@
 # Public Publish UX — reliability for a $29 stranger
 
-**Status:** Design → implement — **slices A+C shipped** (single primary · inline Scopes); B/D/E/F pending  
+**Status:** Slices **A–F shipped** (L1 tsc) — Desktop UI dogfood for D/E remaining  
 **Parent:** PRODUCT portal/guide · workflow-stages · progress clarity · verify status layers  
 **Evidence:** Desktop dogfood screenshots 2026-09-24 (Advanced Public stage rail · General Sign-and-deploy · Scopes detail)  
-**Updated:** 2026-09-24
+**Updated:** 2026-09-28
 
 ## Verdict
 
@@ -64,9 +64,9 @@ Detail panels remain for deep edits; **happy path does not leave Publish**.
 | Current | Public copy |
 |---------|-------------|
 | Minute spine | Your publish checklist |
-| Auto gates / status probe | We’ll check local files & tools |
+| Auto gates / status probe | We'll check local files & tools |
 | Needs Open | Open this step |
-| PENDING · human · Opens Open Scopes | Action needed — choose what you’re shipping |
+| PENDING · human · Opens Open Scopes | Action needed — choose what you're shipping |
 | ship-studio.json / Signet build in chip titles | Configure · Build & sign (detail on expand) |
 
 ### 5. Mode / intent invisible consequences
@@ -105,9 +105,9 @@ Configure (Auto · local `studio.json`) was offered **Open Ritual** + “officia
 | **A — Single primary** | Stages mode: demote toolbar; card owns Open / Continue / Confirm | **Done** — toolbar keeps Refresh · Watch; `.stages-hide` for the rest |
 | **B — Rail diet** | Required-only chips + “+N later” | **Done** — ≤6 required chips + `+N later` → List ([gif-ready-polish](./gif-ready-polish-design.md)) |
 | **C — Inline Scopes** | Embed scopes detect/save on checkpoint; Confirm on card | **Done** — `#stage-inline-scopes`; Confirm & continue saves then Confirms |
-| **D — Copy pass** | Replace minute-spine / Needs Open / probe copy | Partial (Publish hint) |
-| **E — Workflow preview** | Card shows ~steps · ~min before reset | Pending |
-| **F — General nav quiet** | Collapse Integrations / More | Pending |
+| **D — Copy pass** | Replace minute-spine / Needs Open / probe copy | **Done** — Open this step · checklist · We'll check… · local files & tools |
+| **E — Workflow preview** | Card shows ~steps · ~min before reset | **Done** — `.workflow-card-preview` from presets |
+| **F — General nav quiet** | Collapse Integrations / More | **Done** — single Integrations (S1.19); `.nav-advanced` hidden in General |
 
 Non-goals this pass: redesign sidebar brand, light theme, agent chat, replacing Adaptive engine.
 
@@ -126,4 +126,4 @@ Improve **instrument clarity**, not “add an agent.” Agents amplify a clear s
 
 ## Next atomic step
 
-Maintainer picks slice **A+B** (chrome only, no Adaptive change) or **A+C** (Scopes inline — higher value, more work). Then implement from this spec; update handoff.
+Soft dogfood Harbor on Desktop for D/E copy + workflow previews — or activate Launch L3 / S1.1 shelf.

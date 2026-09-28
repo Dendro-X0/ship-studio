@@ -441,10 +441,10 @@ function syncPublishGateButtons() {
   if (continueBtn) {
     continueBtn.disabled = !on || running || finished || (!pending && !done);
     continueBtn.classList.add("primary");
-    continueBtn.textContent = humanGate ? "Needs Open" : "Continue";
+    continueBtn.textContent = humanGate ? "Open this step" : "Continue";
     continueBtn.title = humanGate
-      ? "Human gate — use Open / Run, then Confirm"
-      : "Advance Auto gates (stops at Human/Open)";
+      ? "Open this step first, then Confirm"
+      : "Continue automatic checks (stops when you need to act)";
   }
   confirmBtn.classList.toggle("primary", false);
   nextBtn.classList.toggle("primary", false);
@@ -579,31 +579,42 @@ type WorkflowId = "sign_only" | "sign_deploy" | "publish_platform" | "deploy_onl
 
 const WORKFLOW_PRESETS: Record<
   WorkflowId,
-  { mode: StudioMode; intent: ShipIntent; label: string; toast: string }
+  {
+    mode: StudioMode;
+    intent: ShipIntent;
+    label: string;
+    toast: string;
+    /** S1.2c E — preview before reset (approx; ±2 steps ok). */
+    preview: string;
+  }
 > = {
   sign_only: {
     mode: "general",
     intent: "local",
     label: "Sign only",
     toast: "Sign only — Local · General. One checkpoint at a time on Publish.",
+    preview: "About 6 steps · ~15 min · no hosted deploy",
   },
   sign_deploy: {
     mode: "general",
     intent: "public",
     label: "Sign and deploy",
     toast: "Sign and deploy — Public · General. Hosted final-mile when detected.",
+    preview: "About 8 steps · ~20 min · hosted final-mile when detected",
   },
   publish_platform: {
     mode: "advanced",
     intent: "public",
     label: "Publish to platforms",
     toast: "Publish to platforms — Advanced · Public. Listings and store gates included.",
+    preview: "About 15 steps · ~45 min · listings and stores",
   },
   deploy_only: {
     mode: "general",
     intent: "public",
     label: "Deploy focus",
     toast: "Deploy focus — Public · General. Confirm still required at deploy gates.",
+    preview: "About 7 steps · ~18 min · Confirm still required at deploy",
   },
 };
 
@@ -657,6 +668,15 @@ function syncWorkflowCards() {
   document.querySelectorAll<HTMLButtonElement>(".workflow-card").forEach((btn) => {
     const id = btn.dataset.workflow;
     btn.setAttribute("aria-current", id && id === active ? "true" : "false");
+    if (isWorkflowId(id)) {
+      let preview = btn.querySelector<HTMLElement>(".workflow-card-preview");
+      if (!preview) {
+        preview = document.createElement("span");
+        preview.className = "workflow-card-preview";
+        btn.appendChild(preview);
+      }
+      preview.textContent = WORKFLOW_PRESETS[id].preview;
+    }
   });
   const pick = document.querySelector<HTMLElement>("#workflow-pick");
   if (pick) {
@@ -671,13 +691,13 @@ function syncWorkflowCards() {
 function verifyStatusLabel(raw?: string | null): string {
   switch ((raw ?? "").toLowerCase()) {
     case "disk":
-      return "Disk";
+      return "files on disk";
     case "local_cli":
-      return "Local CLI";
+      return "local tools";
     case "operator_cli":
-      return "Official CLI probe";
+      return "official CLI";
     case "human_attest":
-      return "Human attest";
+      return "your confirmation";
     default:
       return "";
   }
@@ -692,7 +712,7 @@ function stageGuideline(step: {
 }): string {
   const status = (step.status ?? "").toLowerCase();
   const layer = verifyStatusLabel(step.verify_status);
-  const layerPrefix = layer ? `Status · ${layer}. ` : "";
+  const layerPrefix = layer ? `We'll check ${layer}. ` : "";
   if (status === "done" || status === "skipped") {
     return `${layerPrefix}This checkpoint is done. Press Continue to advance.`;
   }
@@ -2004,7 +2024,7 @@ function renderStatusProbe(
       <div class="status-probe-head-main">
         <span class="status-probe-spinner" aria-hidden="true"></span>
         <div>
-          <span class="status-probe-kicker">Inspection</span>
+          <span class="status-probe-kicker">Local check</span>
           <span class="status-probe-title">${headLabel}</span>
         </div>
       </div>
@@ -4181,7 +4201,7 @@ function setNowCtaState(state: string) {
       hint.textContent = (() => {
         const summary = publishProgressSummary(lastPublish);
         return summary
-          ? `${summary}. Continue Auto gates; Open/Confirm for required human work.`
+          ? `${summary}. Continue automatic checks; Open/Confirm for steps you finish.`
           : `Pick up the current step${minsNote}. Confirm when the vendor UI is done.`;
       })();
       break;
@@ -4343,7 +4363,7 @@ function classifyOverall(pulse: ProjectPulse): {
       badge: "In progress",
       title: pub?.current_title || launch?.current_title || "Wizard in flight",
       detail: pub?.present
-        ? `Publish ${idx} — Continue advances Auto gates`
+        ? `Publish ${idx} — Continue runs automatic checks`
         : `Launch ${idx}`,
     };
   }
@@ -5703,13 +5723,13 @@ function applyPublishView(view: PublishView | null, opts?: { reveal?: boolean })
             : "Public";
     hint.textContent = view.finished
       ? "Publish workflow finished — required gates for this pass are done."
-      : `${modeLabel} · ${intentLabel} — Continue Auto gates; Open/Confirm for human work. Verify = ${
-          verifyStatusLabel(cur?.verify_status) || "status probe"
+      : `${modeLabel} · ${intentLabel} — Continue automatic checks; Open/Confirm for steps you finish. Verify checks ${
+          verifyStatusLabel(cur?.verify_status) || "local files & tools"
         } (no secrets).`;
   }
   if (mins) {
     mins.hidden = false;
-    mins.textContent = `~${view.minutes_remaining ?? 0} min remaining · ${view.minutes_total ?? 0} min total`;
+    mins.textContent = `~${view.minutes_remaining ?? 0} min left · ${view.minutes_total ?? 0} min total`;
   }
   if (progress) {
     const summary = publishProgressSummary(view);
@@ -6462,7 +6482,7 @@ function applyLaunchView(view: LaunchView | null) {
   ).size;
   if (hint) {
     hint.textContent = view.finished
-      ? "Launch finished — prefer Publish if you still need the minute spine."
+      ? "Launch finished — prefer Publish for the remaining checklist."
       : `Choice board · ${laneCount} lane${laneCount === 1 ? "" : "s"} · step ${(view.current_index ?? 0) + 1}/${view.total ?? 0} — Open a dashboard, then Verify → Confirm.`;
   }
 
@@ -7063,6 +7083,12 @@ function applyStudio(studio: ShipState["studio"]) {
       notes.innerHTML = studio.notes.map((n) => `<li>${escapeHtml(n)}</li>`).join("");
     }
   }
+  syncLaunchPaymentsToggle(Boolean(studio?.launch_payments));
+}
+
+function syncLaunchPaymentsToggle(on: boolean) {
+  const el = document.querySelector<HTMLInputElement>("#opt-launch-payments");
+  if (el) el.checked = on;
 }
 
 async function refreshShipState() {
@@ -8070,6 +8096,27 @@ async function runWizard() {
   });
   document.querySelector("#btn-launch")?.addEventListener("click", () => {
     void refreshLaunch();
+  });
+  document.querySelector("#opt-launch-payments")?.addEventListener("change", () => {
+    const el = document.querySelector<HTMLInputElement>("#opt-launch-payments");
+    const project = projectPath();
+    if (!el || !project) return;
+    void (async () => {
+      try {
+        await invoke("set_launch_payments", { project, enabled: el.checked });
+        // Rebuild Launch so Payments lane appears/disappears.
+        await run(["launch", "--project", project, "reset"], { quietHeader: true, quietToast: true });
+        await refreshLaunch();
+        toast(
+          el.checked ? "Payments lane on — Refresh shows Integrations" : "Payments lane off",
+          "ok",
+          3500,
+        );
+      } catch (err) {
+        el.checked = !el.checked;
+        toast(String(err), "err");
+      }
+    })();
   });
   document.querySelector("#btn-publish")?.addEventListener("click", () => {
     void refreshPublish();
