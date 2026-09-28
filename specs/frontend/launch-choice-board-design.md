@@ -102,7 +102,7 @@ Launch never asks “login Cloudflare *and* Vercel *and* Netlify.”
 | **L1** | Launch view chrome: Band A/B/C layout (Desktop); keep shipctl step ids, regroup in UI | **Done** — Prep collapsed · lane cards · Ship cut |
 | **L2** | shipctl: emit `lane` + `optional` + `suggested` on steps; drop flow/deploy from Launch when Local | **Done** — annotate + Local omits Orbit cut |
 | **L3** | Payments lane opt-in (studio.json / UI toggle); Integrations hidden until on | **Done** — `launch_payments` · Launch **Payments** checkbox · Harbor no card by default |
-| **L4** | Deployment “primary host” remembered; oauth.hosts verify that host only | **Done** — `primary_host` in studio.json · selectPlatform persists · Verify checks that provider |
+| **L4** | Deployment “primary host” remembered; oauth.hosts verify that host only | **Done** — `primary_host` in studio.json · card/`selectId` persists · soft-open highlights only · Verify checks that provider · [Desktop dogfood](../../docs/handoffs/evidence-harbor-desktop-dogfood.md) |
 
 ## Non-goals
 
@@ -119,4 +119,4 @@ Launch never asks “login Cloudflare *and* Vercel *and* Netlify.”
 
 ## Decision for maintainer
 
-Adopt **choice board** (Bands A/B/C) as the Launch north star. **L1–L4 shipped**. Next = soft dogfood / S1.1 shelf.
+Adopt **choice board** (Bands A/B/C) as the Launch north star. **L1–L4 shipped** · Desktop dogfood pass. Next = idle / optional GIF polish / activate next band.

@@ -3043,8 +3043,13 @@ function openPlatformsCatalog(opts?: { preferGroup?: string; selectId?: string }
     toast("Bind a project first", "info");
     return;
   }
-  setView("platforms");
-  selectPlatform(selectedPlatform);
+  // Explicit pick (chip / Targets Deploy / command) persists primary_host.
+  // Nav / soft-open only highlights — Detect suggests; human chooses (Launch L4).
+  if (opts?.selectId) {
+    selectPlatform(selectedPlatform);
+  } else {
+    setView("platforms");
+  }
 }
 
 let rememberedPrimaryHost: string | null = null;

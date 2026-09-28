@@ -1,8 +1,8 @@
 # Ship Studio — improvement backlog
 
-**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 + S1.10–16 + S1.2c + Launch L1–L4 + **S1.1 shelf** shipped; next Desktop dogfood / commerce when Polar unlocks  
+**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 + S1.10–16 + S1.2c + Launch L1–L4 + S1.1 shelf + **Desktop dogfood** shipped; next idle / optional GIF polish / activate next band  
 **Updated:** 2026-09-28  
-**Cadence:** Soft dogfood Desktop · commerce when Polar unlocks  
+**Cadence:** Optional demo polish · commerce when Polar unlocks · activate one value band at a time  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
@@ -130,12 +130,12 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 ---
 
-## Suggested order (post S1.1)
+## Suggested order (post Desktop dogfood)
 
 ```text
 Near
-1. Soft dogfood Harbor Desktop — Publish copy · Payments · primary host
-2. Optional   Recompress/spot-check demo GIFs if weight/noise bothers
+1. Optional   Recompress/spot-check demo GIFs if weight/noise bothers
+2. Activate   S1.2 dashboard honesty · S1.3 never-say · or other open Near band
 
 Commerce / site (when Polar unlocks — not a release blocker)
 3. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL

@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- **Deployment soft-open** — Opening Deployment (nav / Launch related) no longer writes `primary_host`; only explicit card click or chip/`selectId` persists ([dogfood](./docs/handoffs/evidence-harbor-desktop-dogfood.md))
 - **Stale host Results after remote delete** — **Clear evidence** removes `.ship/last-run.json` and hides Cancel/Results; **Cancel on dashboard** still opens the vendor ([design](./specs/backend/host-deploy-evidence-clear-design.md))
 - **Cancel on dashboard** — shown only after Studio has deploy evidence for that host (successful last-run / live URLs); hidden for a fresh Cloudflare/Vercel/Netlify card
 - **Serving never ends after GIF / Open live** — Cancel serve in Output dock + status bar; cancel invokes Rust directly (Tools `#btn-cancel` no longer required); Esc stops serve

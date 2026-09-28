@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3  
 **Updated:** 2026-09-28  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · S1.1 demo shelf T1–T7 live. **Next:** Desktop dogfood / Polar commerce.
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Desktop dogfood pass (Publish · Payments · primary host). **Next:** idle / optional GIF polish / activate next band.
 
 ## Truth pointers
 

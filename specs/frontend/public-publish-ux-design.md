@@ -1,8 +1,8 @@
 # Public Publish UX — reliability for a $29 stranger
 
-**Status:** Slices **A–F shipped** (L1 tsc) — Desktop UI dogfood for D/E remaining  
+**Status:** Slices **A–F shipped** (L1 tsc · Desktop dogfood pass)  
 **Parent:** PRODUCT portal/guide · workflow-stages · progress clarity · verify status layers  
-**Evidence:** Desktop dogfood screenshots 2026-09-24 (Advanced Public stage rail · General Sign-and-deploy · Scopes detail)  
+**Evidence:** Desktop dogfood screenshots 2026-09-24 · [Harbor Desktop CDP 2026-09-28](../../docs/handoffs/evidence-harbor-desktop-dogfood.md)  
 **Updated:** 2026-09-28
 
 ## Verdict

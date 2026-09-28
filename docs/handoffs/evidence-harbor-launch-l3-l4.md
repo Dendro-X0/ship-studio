@@ -21,15 +21,10 @@
 | Scopes | `desktop.desktop` · `docs.website` |
 | Cleanup | `harbor-reset`; temp `_dogfood-l4-tmp` removed |
 
-## Desktop UI (operator — remaining)
+## Desktop UI
 
-| Check | How |
-|-------|-----|
-| Publish copy | Bind Harbor → Publish hints say checklist / Open this step / We'll check… |
-| Workflow previews | Dashboard cards show About N steps · ~min |
-| Payments toggle | Launch **Payments** off → on rebuilds lane |
-| Primary host | Deployment pick Cloudflare → reload → still selected; Launch Verify names that host |
+Closed in [evidence-harbor-desktop-dogfood](./evidence-harbor-desktop-dogfood.md) (CDP L2 pass).
 
 ## Verdict
 
-**CLI L2 pass** for Launch L3–L4 on rebuilt release shipctl. **Desktop UI L2** still operator-owned.
+**CLI L2 pass** for Launch L3–L4 on rebuilt release shipctl. **Desktop UI L2** → see desktop dogfood evidence.
