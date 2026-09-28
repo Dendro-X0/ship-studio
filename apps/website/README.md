@@ -35,6 +35,11 @@ Polar success/cancel URLs should hit `/checkout/success` and `/checkout/cancel`.
 
 Until `PUBLIC_POLAR_CHECKOUT_URL` is set, Buy stays disabled with a setup note.
 
+## Never-say (S1.3)
+
+Public copy must not claim: one-click deploy · silencing SmartScreen · replacing Cloudflare/Polar/Apple · Studio-held deploy secrets · auto-publish to stores.  
+Canon: [never-say-block-design](../../specs/frontend/never-say-block-design.md).
+
 ## Feature demo (W3)
 
 `/demo` serves live Harbor GIFs from `public/demo/v0.2.1/` (**T1–T7**).  

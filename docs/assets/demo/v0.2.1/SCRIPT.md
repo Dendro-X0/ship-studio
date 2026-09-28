@@ -116,8 +116,8 @@ If still >3 MB: shorten the clip, hide Output dock, avoid full-screen browser (c
 | T4 | `04-output-preview.gif` | | Statusbar **Preview** | Inspect local output when you need it. |
 | T5 | `05-midflight.gif` | | Mid-flight → Sign or Deployment → **← Back** | Mid-flight state survives. |
 | **T6** | `06-sign-open.gif` | `sign-open…` | Ship → **Sign** → Open one official portal → cut before paying | Studio opens the store / cert site — you finish there. |
-| **T7** | `07-deploy-open.gif` | `Cloud-hosted…` | Cloudflare **Deploy** → Results live URL → **Open dashboard** (≤12 s mid-clip) | One click: Deploy streams wrangler, then Results show the live URL and Open dashboard. |
-| *(extra)* | `08-selfhost.gif` | `selfhost…` | Optional local check — **not** on `/demo` shelf (Part 1 stays Open-only for deploy) | — |
+| **T7** | `07-deploy-open.gif` | `Cloud-hosted…` | Cloudflare **Deploy** → Results live URL → **Open dashboard** (≤12 s mid-clip) | Deploy streams wrangler on this machine; Results show the live URL — Open dashboard to finish on Cloudflare. |
+| *(extra)* | `08-selfhost.gif` | `selfhost…` | Optional local check — **not** on `/demo` shelf | — |
 
 ### T1 shot list (done / re-export)
 

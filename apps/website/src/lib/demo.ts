@@ -52,7 +52,7 @@ export const DEMO_STAGES: DemoStage[] = [
     id: "deploy-open",
     title: "Deployment · Deploy",
     caption:
-      "One click: Deploy streams wrangler, then Results show the live URL and Open dashboard.",
+      "Deploy streams wrangler on this machine; Results show the live URL — Open dashboard to finish on Cloudflare.",
     src: `/demo/${DEMO_VERSION}/07-deploy-open.gif`,
   },
 ];

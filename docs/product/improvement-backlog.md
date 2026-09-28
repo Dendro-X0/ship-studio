@@ -1,8 +1,8 @@
 # Ship Studio — improvement backlog
 
-**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 + S1.10–16 + S1.2c + Launch L1–L4 + S1.1 shelf + **Desktop dogfood** shipped; next idle / optional GIF polish / activate next band  
+**Status:** Living idea list — overhaul O0–O5 **closed**; through Desktop dogfood + **S1.3 never-say** shipped; next idle / optional GIF polish / **S1.2** dashboard honesty  
 **Updated:** 2026-09-28  
-**Cadence:** Optional demo polish · commerce when Polar unlocks · activate one value band at a time  
+**Cadence:** Optional demo polish · activate S1.2 · commerce when Polar unlocks  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
@@ -71,7 +71,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S1.2f | **Platforms catalog** | Hosting + Official signing picker (shared with Integrations chrome) — [platforms-catalog-design](../../specs/frontend/platforms-catalog-design.md) · **Desktop slice 1** |
 | S1.2e | **Publish journey clarity** | One green verb · paced Continue (~2s) · scrubber — [publish-journey-clarity-design](../../specs/frontend/publish-journey-clarity-design.md) · **Desktop slices 1–3** |
 | S1.2d | **Status probe (Sign · Deploy)** | Inspection bay: icons · badges · suggestions · CTAs — [status-probe-ux-design](../../specs/frontend/status-probe-ux-design.md) · **Desktop slice 2** |
-| S1.3 | **Never-say block on site + README** | No “one-click deploy” · no “we silence SmartScreen” · no “replaces Cloudflare/Polar” · Studio does not write secrets |
+| S1.3 | **Never-say block on site + README** | **Done** — ban table + audit; T7 `/demo` caption fixed — [design](../../specs/frontend/never-say-block-design.md) |
 | S1.4 | **One intent page** | “Multi-surface final-mile vs CI-only / checklist” — SEO without belonging theater |
 | S1.5 | **OPERATOR-NEXT as product feature** | Market human gates as honesty, not unfinished bugs |
 | S1.6 | **Cafe / FAQ stub** | SmartScreen? vs other Ship Studio? Why $29? Signet required? |
@@ -130,12 +130,12 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 ---
 
-## Suggested order (post Desktop dogfood)
+## Suggested order (post S1.3)
 
 ```text
 Near
 1. Optional   Recompress/spot-check demo GIFs if weight/noise bothers
-2. Activate   S1.2 dashboard honesty · S1.3 never-say · or other open Near band
+2. S1.2       Dashboard honesty polish (Signet/Orbit/dirty/step N/M)
 
 Commerce / site (when Polar unlocks — not a release blocker)
 3. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL

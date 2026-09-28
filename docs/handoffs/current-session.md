@@ -2,20 +2,21 @@
 
 **Updated:** 2026-09-28  
 **Branch:** `main`  
-**Status:** **Desktop UI dogfood closed** — Publish copy · Payments · primary host (CDP L2) · soft-open no longer invents `primary_host`
+**Status:** **S1.3 never-say closed** — ban table + `/demo` T7 caption fix · site/READMEs audited
 
 ## Next Atomic Step
 
-**Idle for coding** — optional GIF recompress/spot-check, or activate next band (S1.2 dashboard honesty / S1.3 never-say / commerce when Polar unlocks / S2.4 when a real ship asks).
+**Idle for coding** — optional GIF recompress/spot-check, or activate **S1.2** dashboard honesty (or commerce when Polar unlocks / S2.4 when a real ship asks).
 
 ## Design queue (not coding until activated)
 
 | Item | Spec |
 |------|------|
+| S1.2 Dashboard honesty | Backlog — Signet/Orbit/dirty/step N/M without fake “all shipped” |
 | S1.1 Demo shelf | [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) (**T1–T7 live** — optional recompress/spot-check) |
-| Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) (**L1–L4 shipped** · Desktop dogfood pass) |
+| Never-say block | [never-say-block-design](../../specs/frontend/never-say-block-design.md) (**S1.3 shipped**) |
+| Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) (**L1–L4 shipped**) |
 | Public Publish UX | [public-publish-ux-design](../../specs/frontend/public-publish-ux-design.md) (**A–F shipped**) |
-| Targets catalog parity | [targets-catalog-parity-design](../../specs/frontend/targets-catalog-parity-design.md) (**Slice 1–3 shipped**) |
 
 ## PAUSED / CANCELLED
 
@@ -33,15 +34,14 @@
 
 | Band | Link |
 |------|------|
+| **S1.3 Never-say block** | [never-say-block-design](../../specs/frontend/never-say-block-design.md) |
 | **Desktop UI dogfood** | [evidence-harbor-desktop-dogfood](./evidence-harbor-desktop-dogfood.md) |
-| **S1.1 Demo shelf (agent)** | T1–T7 on `/demo` · SCRIPT honesty sync · website README |
+| **S1.1 Demo shelf (agent)** | T1–T7 on `/demo` · SCRIPT honesty sync |
 | **Harbor CLI dogfood L3–L4** | [evidence-harbor-launch-l3-l4](./evidence-harbor-launch-l3-l4.md) |
-| **Launch L4 primary host** | [design](../../specs/frontend/launch-choice-board-design.md) |
-| **S1.2c Public Publish UX A–F** | [design](../../specs/frontend/public-publish-ux-design.md) |
 
 ## Boot allowlist
 
 1. This file  
-2. [evidence-harbor-desktop-dogfood](./evidence-harbor-desktop-dogfood.md)  
-3. `fixtures/harbor` + `scripts/harbor-reset`  
-4. [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md)  
+2. [never-say-block-design](../../specs/frontend/never-say-block-design.md)  
+3. `apps/website` + root `README.md`  
+4. [improvement-backlog](../product/improvement-backlog.md)  
