@@ -70,6 +70,8 @@ import {
 let lastLaunch: LaunchView | null = null;
 let lastPublish: PublishView | null = null;
 let lastPulse: ProjectPulse | null = null;
+/** S1.15 — skip dirty Confirm toast until tree cleans or project rebinds. */
+let dirtyConfirmArmed = false;
 let lastRunState: ShipState["last_run"] = null;
 let lastDetected: Detected | undefined;
 let lastHuman: HumanSprint | null = null;
@@ -796,6 +798,7 @@ function scopesGridHtml(plan: ScopePlan | null): string {
     .map((s) => {
       const id = s.id ?? "";
       const kind = (s.kind ?? "root").toLowerCase();
+      const relative = s.relative ?? ".";
       const on = active.has(id) ? "checked" : "";
       const chips: string[] = [];
       if (s.provider) chips.push(s.provider);
@@ -810,25 +813,103 @@ function scopesGridHtml(plan: ScopePlan | null): string {
             .map((c) => `<span class="scope-chip">${escapeHtml(c)}</span>`)
             .join("")}</div>`
         : "";
-      return `<label class="scope-card" data-kind="${escapeHtml(kind)}">
-            <input type="checkbox" data-scope-id="${escapeHtml(id)}" ${on} />
-            <span class="scope-card-icon" aria-hidden="true">${scopeKindIcon(kind)}</span>
-            <div class="scope-card-body">
-              <strong>${escapeHtml(s.label ?? id)}</strong>
-              <span class="scope-card-meta">${escapeHtml(kind)} · ${escapeHtml(s.relative ?? ".")}</span>
-              ${chipHtml}
+      const provider = (s.provider ?? "").trim();
+      return `<div class="scope-card" data-kind="${escapeHtml(kind)}" data-scope-id="${escapeHtml(id)}">
+            <label class="scope-card-select">
+              <input type="checkbox" data-scope-id="${escapeHtml(id)}" ${on} />
+              <span class="scope-card-icon" aria-hidden="true">${scopeKindIcon(kind)}</span>
+              <div class="scope-card-body">
+                <strong>${escapeHtml(s.label ?? id)}</strong>
+                <span class="scope-card-meta">${escapeHtml(kind)} · ${escapeHtml(relative)}</span>
+                ${chipHtml}
+              </div>
+            </label>
+            <div class="scope-card-actions">
+              <button type="button" class="ghost scope-open-folder" data-relative="${escapeHtml(relative)}" title="Open this target folder">Folder</button>
+              <button type="button" class="ghost scope-open-deploy" data-provider="${escapeHtml(provider)}" title="Open Deployment for this target">Deploy</button>
             </div>
-          </label>`;
+          </div>`;
     })
     .join("");
+}
+
+function scopeAbsolutePath(relative: string | undefined): string | null {
+  const project = projectPath();
+  if (!project) return null;
+  const rel = (relative ?? ".").replace(/\\/g, "/").replace(/^\/+/, "");
+  if (!rel || rel === ".") return project;
+  const sep = project.includes("\\") ? "\\" : "/";
+  return `${project.replace(/[\\/]+$/, "")}${sep}${rel.split("/").join(sep)}`;
+}
+
+function platformIdForScopeProvider(provider: string | null | undefined): string {
+  const p = (provider ?? "").trim().toLowerCase().replace(/_/g, "-");
+  if (
+    p === "cloudflare" ||
+    p === "vercel" ||
+    p === "netlify" ||
+    p === "fly" ||
+    p === "railway" ||
+    p === "orbit" ||
+    p === "selfhost"
+  ) {
+    return p;
+  }
+  if (p === "github-pages" || p === "github" || p === "pages") return "github-pages";
+  return preferredHostingPlatformId(lastDetected) ?? "selfhost";
+}
+
+async function openScopeFolder(relative: string | undefined) {
+  const abs = scopeAbsolutePath(relative);
+  if (!abs) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  try {
+    await openPath(abs);
+    toast(`Opened ${relative && relative !== "." ? relative : "project"}`, "ok", 2500);
+  } catch (err) {
+    toast(String(err), "err");
+  }
+}
+
+function openScopeDeployment(provider: string | null | undefined) {
+  openPlatformsCatalog({
+    preferGroup: "Hosting",
+    selectId: platformIdForScopeProvider(provider),
+  });
+}
+
+function wireScopeGridActions(root: ParentNode | null) {
+  if (!root) return;
+  root.querySelectorAll<HTMLButtonElement>(".scope-open-folder").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      void openScopeFolder(btn.dataset.relative);
+    });
+  });
+  root.querySelectorAll<HTMLButtonElement>(".scope-open-deploy").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      openScopeDeployment(btn.dataset.provider);
+    });
+  });
 }
 
 function fillScopeGrids(plan: ScopePlan | null) {
   const html = scopesGridHtml(plan);
   const main = document.querySelector("#scope-grid");
   const stage = document.querySelector("#stage-scope-grid");
-  if (main) main.innerHTML = html;
-  if (stage) stage.innerHTML = html;
+  if (main) {
+    main.innerHTML = html;
+    wireScopeGridActions(main);
+  }
+  if (stage) {
+    stage.innerHTML = html;
+    wireScopeGridActions(stage);
+  }
 }
 
 function stageScopesRoot(): HTMLElement | null {
@@ -4657,6 +4738,76 @@ async function showGitStatus() {
   }
 }
 
+/** S1.15 — quiet Publish strip when pulse reports a dirty tree. */
+function syncPublishDirtyCue() {
+  const el = document.querySelector<HTMLElement>("#publish-dirty-cue");
+  if (!el) return;
+  const git = lastPulse?.git;
+  if (!projectPath() || !git?.is_repo || !git.dirty) {
+    el.hidden = true;
+    el.textContent = "";
+    return;
+  }
+  const n = git.dirty_count ?? "?";
+  el.hidden = false;
+  el.textContent = `${n} uncommitted — Confirm on release/deploy only if you intend this tree`;
+}
+
+function isDirtySensitivePublishStep(step: {
+  id?: string;
+  kind?: string;
+} | null | undefined): boolean {
+  if (!step) return false;
+  const id = (step.id ?? "").toLowerCase();
+  const kind = (step.kind ?? "").toLowerCase();
+  if (kind === "deploy" || kind === "list") return true;
+  if (id === "live_check" || id === "ship.desktop_cut") return true;
+  if (
+    id.startsWith("deploy.") ||
+    id.startsWith("listing.") ||
+    id.startsWith("submit.")
+  ) {
+    return true;
+  }
+  return id.includes("release") || id.includes("desktop_cut");
+}
+
+/** Soft gate: dirty tree + release/deploy/listing Confirm → warn once, then arm. */
+async function publishConfirmWithDirtySoftGate() {
+  const git = lastPulse?.git;
+  const dirty = Boolean(git?.is_repo && git.dirty);
+  const sensitive = isDirtySensitivePublishStep(lastPublish?.current);
+  if (dirty && sensitive && !dirtyConfirmArmed) {
+    const n = git?.dirty_count ?? "?";
+    toast(
+      `${n} uncommitted change(s) — Confirm only if this dirty tree is intentional`,
+      "info",
+      10_000,
+      [
+        {
+          id: "confirm-anyway",
+          label: "Confirm anyway",
+          icon: "confirm",
+          run: () => {
+            dirtyConfirmArmed = true;
+            void publishAction(["confirm"]);
+          },
+        },
+        {
+          id: "git-status",
+          label: "Git status",
+          icon: "open",
+          run: () => {
+            void showGitStatus();
+          },
+        },
+      ],
+    );
+    return;
+  }
+  await publishAction(["confirm"]);
+}
+
 function applyPulse(pulse: ProjectPulse | null) {
   lastPulse = pulse;
   if (!pulse) {
@@ -4672,6 +4823,8 @@ function applyPulse(pulse: ProjectPulse | null) {
   applyPulseNow(pulse);
   syncProjectIdentity();
   paintDeployResultsBay();
+  syncPublishDirtyCue();
+  if (!pulse.git?.dirty) dirtyConfirmArmed = false;
 }
 
 async function refreshSessionNow() {
@@ -4925,10 +5078,57 @@ function applyAssist(plan: AssistPlan | null) {
 
 let lastScopes: ScopePlan | null = null;
 
+function selectedScopeIdsFromDom(): string[] {
+  const inline = stageScopesRoot();
+  const useStage = Boolean(inline && !inline.hidden);
+  const root = useStage
+    ? document.querySelector("#stage-scope-grid")
+    : document.querySelector("#scope-grid");
+  return Array.from(
+    (root ?? document).querySelectorAll<HTMLInputElement>("[data-scope-id]:checked"),
+  )
+    .map((el) => el.dataset.scopeId ?? "")
+    .filter(Boolean)
+    .sort();
+}
+
+function savedScopeIds(): string[] {
+  return [...(lastScopes?.active ?? [])].filter(Boolean).sort();
+}
+
+function scopesSelectionIsDirty(): boolean {
+  if (!lastScopes?.scopes?.length) return false;
+  const a = selectedScopeIdsFromDom();
+  const b = savedScopeIds();
+  if (a.length !== b.length) return true;
+  return a.some((id, i) => id !== b[i]);
+}
+
+/** S1.16 S3 — Save button + cue when selection ≠ persisted active. */
+function syncScopesDirtyCue() {
+  const dirty = scopesSelectionIsDirty();
+  for (const id of ["#btn-scopes-save", "#btn-stage-scopes-save"]) {
+    const btn = document.querySelector<HTMLButtonElement>(id);
+    if (!btn) continue;
+    btn.classList.toggle("is-dirty", dirty);
+    btn.textContent = dirty ? "Save changes" : "Save selection";
+    if (dirty) btn.title = "Selection differs from last Save";
+    else btn.removeAttribute("title");
+  }
+  const cue = document.querySelector<HTMLElement>("#scopes-dirty-cue");
+  if (cue) {
+    cue.hidden = !dirty;
+    cue.textContent = dirty
+      ? "Selection changed — Save before Confirm on Publish"
+      : "";
+  }
+}
+
 function applyScopes(plan: ScopePlan | null) {
   lastScopes = plan;
   fillScopeGrids(plan);
   syncStageScopesPrimary();
+  syncScopesDirtyCue();
 }
 
 /** Enable Confirm & continue when inline Scopes has an active selection. */
@@ -4994,6 +5194,7 @@ async function saveScopes(opts?: { silentToast?: boolean }): Promise<boolean> {
       toast("Targets saved", "ok");
     }
   }
+  syncScopesDirtyCue();
   return true;
 }
 
@@ -5516,6 +5717,7 @@ function applyPublishView(view: PublishView | null, opts?: { reveal?: boolean })
     progress.textContent = summary;
     progress.dataset.finished = view.finished ? "1" : "0";
   }
+  syncPublishDirtyCue();
   const curRelated = (cur?.desktop_view ?? "").trim();
   const curNav = curRelated && RELATED_VIEW_LABELS[curRelated];
   if (curNav) {
@@ -5657,7 +5859,7 @@ async function continuePublishingHandoff(opts: {
         label: "Confirm",
         icon: "confirm",
         run: () => {
-          void publishAction(["confirm"]);
+          void publishConfirmWithDirtySoftGate();
         },
       },
     ]);
@@ -5750,7 +5952,7 @@ async function confirmWizardPublishGate(opts: {
 
   setView("publish");
   focusPublishStepIndex(idx);
-  await publishAction(["confirm"]);
+  await publishConfirmWithDirtySoftGate();
 }
 
 function preferredDeployPublishStep(view: PublishView | null): string | null {
@@ -7081,6 +7283,7 @@ async function bindProject(path: string, autoDoctor = true) {
   if (input) input.value = path;
   lastPublish = null;
   lastPulse = null;
+  dirtyConfirmArmed = false;
   lastDetected = undefined;
   saveRecent(path);
   await setTitle(path);
@@ -7092,8 +7295,8 @@ async function bindProject(path: string, autoDoctor = true) {
   await refreshShipState();
   // Serial only — parallel loadJsonCmd races the global running lock and drops pulse.
   await refreshSessionNow();
-  const scopes = (await loadJsonCmd(["scopes", "--project", path])) as ScopePlan | null;
-  applyScopes(scopes);
+  // S1.16 S3 — quiet detect so Targets cards fill without a manual Detect click.
+  await detectScopes({ quiet: true });
   if (autoDoctor) {
     await run(["doctor", "--project", path], { step: "doctor", quietHeader: true });
     await refreshSessionNow();
@@ -7631,15 +7834,18 @@ window.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#btn-stage-scopes-save")?.addEventListener("click", () => {
     void saveScopes();
   });
-  document.querySelector("#stage-scope-grid")?.addEventListener("change", (ev) => {
+  const onScopeCheckboxChange = (ev: Event) => {
     if (!(ev.target as HTMLElement).matches("[data-scope-id]")) return;
+    syncScopesDirtyCue();
     // Live enable Confirm when at least one box checked (before Save).
     const primaryBtn = document.querySelector<HTMLButtonElement>("#btn-stage-primary");
     if (!primaryBtn || primaryBtn.dataset.stageAction !== "confirm") return;
     const n = document.querySelectorAll("#stage-scope-grid [data-scope-id]:checked").length;
     primaryBtn.disabled = running || n === 0;
     primaryBtn.title = n > 0 ? "Save selection is applied on Confirm" : "Select at least one scope";
-  });
+  };
+  document.querySelector("#scope-grid")?.addEventListener("change", onScopeCheckboxChange);
+  document.querySelector("#stage-scope-grid")?.addEventListener("change", onScopeCheckboxChange);
   document.querySelector("#btn-env")?.addEventListener("click", async () => {
     const plan = (await loadJsonCmd(["env", "--project", projectPath()], {
       user: true,
@@ -8036,7 +8242,7 @@ async function runWizard() {
     void publishContinuePaced();
   });
   document.querySelector("#btn-publish-confirm")?.addEventListener("click", () => {
-    void publishAction(["confirm"]);
+    void publishConfirmWithDirtySoftGate();
   });
   document.querySelector("#btn-publish-next")?.addEventListener("click", () => {
     void publishAction(["next"]);

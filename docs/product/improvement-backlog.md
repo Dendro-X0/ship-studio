@@ -1,8 +1,8 @@
 # Ship Studio — improvement backlog
 
-**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 **shipped**; next **S1.1 shelf commit** (maintainer) then S1.10–13 / S1.16 on demand  
-**Updated:** 2026-09-27  
-**Cadence:** Demo shelf commit · Integrations minute-loop · Targets S2 when dogfood asks  
+**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 + S1.10–15 + Targets S2 **shipped**; next **S1.1 shelf commit** (maintainer) then Targets S3 on demand  
+**Updated:** 2026-09-28  
+**Cadence:** Demo shelf commit · Integrations minute-loop · Targets S3 when dogfood asks  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
@@ -89,8 +89,8 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S1.12 | **Provider “done” criteria** | **Slice 1 done** — wizard **Done when…** lines (human attest) — [design](../../specs/frontend/provider-done-criteria-design.md) |
 | S1.13 | **Resend / email wizard parity** | **Done** — Put RESEND_API_KEY · Confirm/Continue → `env.sprint` — [design](../../specs/frontend/resend-wizard-parity-design.md) |
 | S1.14 | **Local vs Public intent copy** | **Done** — Dashboard `#intent-cue` + topbar titles (one sentence each) |
-| S1.15 | **Dirty-tree Publish cue** | Dirty-on-main warnings: optional soft gate before release steps |
-| S1.16 | **Targets catalog depth** | Slice 2–3 — Open folder / jump Deployment · auto-detect on bind · dirty Save cue — [targets-catalog-parity-design](../../specs/frontend/targets-catalog-parity-design.md) |
+| S1.15 | **Dirty-tree Publish cue** | **Done** — soft Confirm warn on deploy/listing/release · Publish strip cue — [design](../../specs/frontend/dirty-tree-publish-cue-design.md) |
+| S1.16 | **Targets catalog depth** | **Done** — Folder · Deploy · auto-detect on bind · dirty Save cue — [design](../../specs/frontend/targets-catalog-parity-design.md) |
 | S1.17 | **Multi-project portfolio cue** | Recents / suite-oriented “next repo to ship” for 30+ OSS indies — stay local, no cloud hub |
 | S1.18 | **Web3 / chain release lanes** | Only when a real ship asks — detect + Open official explorers/wallets; no custody or auto-broadcast |
 
@@ -130,22 +130,21 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 ---
 
-## Suggested order (post S1.13 · working tree)
+## Suggested order (post S1.16)
 
 ```text
-Near (honesty / Targets)
-1. Soft dogfood S1.11–13 — Confirm gate · Resend Put · Done when lines
-2. S1.15      Dirty-tree Publish cue
-3. S1.16      Targets S2/S3 only if Harbor dogfood asks
+Near
+1. Soft dogfood Harbor — dirty Confirm · Targets Folder/Deploy · dirty Save
+2. S1.1       Demo shelf commit (maintainer)
 
 Commerce / site (when Polar unlocks — not a release blocker)
-4. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL
-5. S0.1–S0.2  Live buy/refund when payment_ready
-6. S0.6       Polar env → host deploy dogfood (no Studio-held secrets)
+3. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL
+4. S0.1–S0.2  Live buy/refund when payment_ready
+5. S0.6       Polar env → host deploy dogfood (no Studio-held secrets)
 
 Value depth (activate one band at a time)
-7. S1.2c D–F  Public Publish UX remaining slices
-8. S2.4       MCP ship_* wrappers when a real agent ship needs them
+6. S1.2c D–F  Public Publish UX remaining slices
+7. Launch L3+ / S2.4 MCP when a real ship asks
 ```
 
 Earlier commerce-first order stays valid after Polar unlocks; do not block the week on Pay now.

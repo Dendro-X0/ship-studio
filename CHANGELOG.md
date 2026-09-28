@@ -13,6 +13,8 @@
 
 ### Added
 
+- **Targets catalog depth (S1.16)** — Folder · Deploy on cards; auto-detect on bind; dirty **Save changes** cue ([design](./specs/frontend/targets-catalog-parity-design.md))
+- **Dirty-tree Publish cue (S1.15)** — Publish strip when dirty; Confirm soft-warns on deploy/listing/release (**Confirm anyway** arms) ([design](./specs/frontend/dirty-tree-publish-cue-design.md))
 - **Resend wizard parity (S1.13)** — **Put RESEND_API_KEY** on detected host; Confirm/Continue prefer `env.sprint` ([design](./specs/frontend/resend-wizard-parity-design.md))
 - **Provider done criteria (S1.12)** — Integrations wizard **Done when…** lines (Verify = human attest) ([design](./specs/frontend/provider-done-criteria-design.md))
 - **Local / Public intent cue (S1.14)** — Dashboard shows one sentence for Local vs Public; topbar toggle titles match

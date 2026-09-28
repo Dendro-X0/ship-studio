@@ -1,24 +1,25 @@
 # Current session — Ship Studio
 
-**Updated:** 2026-09-27  
+**Updated:** 2026-09-28  
 **Branch:** `main`  
-**Status:** **Targets catalog parity Slice 1 shipped** · S1.1 shelf commit parked
+**Status:** **S1.16 Targets S1–S3 shipped** (working tree with S1.15) · S1.1 shelf commit parked
 
 ## Next Atomic Step
 
-**S1.15** Dirty-tree Publish cue — or **S1.16** Targets S2 if Harbor dogfood asks. Soft dogfood: Resend Put + Confirm gate → env.sprint.
+Soft dogfood Harbor (dirty Confirm · Targets Folder/Deploy · dirty Save) — or **S1.1 shelf commit** (maintainer). No coding band until activated.
 
 ## Design queue (not coding until activated)
 
 | Item | Spec |
 |------|------|
+| Targets catalog parity | [targets-catalog-parity-design](../../specs/frontend/targets-catalog-parity-design.md) (**Slice 1–3 shipped**) |
+| S1.15 Dirty-tree cue | [dirty-tree-publish-cue-design](../../specs/frontend/dirty-tree-publish-cue-design.md) (**shipped**) |
 | S1.13 Resend parity | [resend-wizard-parity-design](../../specs/frontend/resend-wizard-parity-design.md) (**shipped**) |
 | S1.12 Done criteria | [provider-done-criteria-design](../../specs/frontend/provider-done-criteria-design.md) (**slice 1**) |
 | S1.11 Wizard Confirm | [wizard-completion-confirm-design](../../specs/frontend/wizard-completion-confirm-design.md) (**shipped**) |
 | S1.10 Integrations → Publish | [integrations-publish-handoff-design](../../specs/frontend/integrations-publish-handoff-design.md) (**shipped**) |
 | S0.8 update check | [in-app-update-check-design](../../specs/frontend/in-app-update-check-design.md) (**shipped** L1) |
 | Integrations nav (S1.19) | [integrations-nav-design](../../specs/frontend/integrations-nav-design.md) (**shipped**) |
-| Targets catalog parity | [targets-catalog-parity-design](../../specs/frontend/targets-catalog-parity-design.md) (**Slice 1 shipped** — S2/S3 queued) |
 | Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) (L1–L2 shipped — L3+ queued) |
 | Deployment nav | [deployment-nav-design](../../specs/frontend/deployment-nav-design.md) (shipped) |
 | Panel redirects | [launch-panel-redirects-design](../../specs/frontend/launch-panel-redirects-design.md) (shipped) |
@@ -40,6 +41,9 @@
 
 | Band | Link |
 |------|------|
+| **S1.16 Targets Slice 3** | [design](../../specs/frontend/targets-catalog-parity-design.md) — auto-detect on bind · dirty Save cue |
+| **S1.16 Targets Slice 2** | Folder · Deploy on cards |
+| **S1.15 Dirty-tree Publish cue** | [design](../../specs/frontend/dirty-tree-publish-cue-design.md) — soft Confirm warn · Publish strip cue |
 | **S1.13 Resend parity** | [design](../../specs/frontend/resend-wizard-parity-design.md) — Put key · env.sprint Confirm |
 | **S1.12 Done criteria S1** | [design](../../specs/frontend/provider-done-criteria-design.md) — Done when… human attest |
 | **S1.14 Local / Public cue** | Dashboard intent one-liners |
