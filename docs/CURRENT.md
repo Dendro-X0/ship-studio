@@ -1,8 +1,8 @@
 # CURRENT — Ship Studio
 
-**Version:** 0.2.3 (+ working-tree Desktop UX)  
+**Version:** 0.2.3  
 **Updated:** 2026-09-28  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Working tree: Launch L4. **Next:** soft dogfood / S1.1 shelf.
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · S1.1 demo shelf T1–T7 live. **Next:** Desktop dogfood / Polar commerce.
 
 ## Truth pointers
 

@@ -10,7 +10,7 @@
 
 Prove **useful mid-flight shipping**, not “how to install software.” Everyone can install an app; the GIF shelf must show bind → detect → Continue/Open/Confirm in under a minute of watching.
 
-**Honesty for Sign / Deploy clips:** Part 1 GIFs show **Open** only (official portal / dashboard). Product also has streamed local CLI **Deploy** (`shipctl hostdeploy` — H1–H5); **do not record Deploy / wrangler / vercel / netlify in-frame** for this shelf. No paid notarization, store upload, or multi-host tour. One host + one official portal each is enough.
+**Honesty for Sign / Deploy clips:** T6 is **Open** only (official portal — no paid certs). T7 may show **one** streamed host **Deploy** → Results live URL → Open dashboard (H1–H5). No multi-host tour, notarization, store upload, or install/setup footage.
 
 ## Project choice
 
@@ -148,17 +148,19 @@ Prep    Harbor bound · Advanced · Local · Sign panel ready (Check status opti
 
 **Do not show:** certificate purchase, notarization wait, App Store Connect submit, Partner Center paywall, live `signet release` upload.
 
-### T7 — Deployment Open (one provider only)
+### T7 — Deployment Deploy + Open dashboard (one provider)
 
 ```text
-Prep    Harbor bound · switch intent to Public for this clip only · Deployment panel
+Prep    Harbor bound · intent Public for this clip · Deployment · Cloudflare (or Orbit) selected
 0–2s    Sidebar → Deployment
-2–5s    Select ONE card (prefer Cloudflare or Orbit — whatever is Suggested)
-5–9s    Open dashboard (or Login CLI if you want auth assist — not both hosts)
-9–11s   ← Back — cut. Never click Deploy / ship / wrangler / vercel / netlify in-frame.
+2–5s    ONE host card selected
+5–10s   Deploy → stream briefly → Results live URL visible
+10–12s  Open dashboard (or hold Results) — cut. No second host.
 ```
 
-**Do not show:** multi-host tour, live deploy logs / Results bay “live URL”, production URL claim, Docs/Learn more as the hero click. (CLI Deploy exists in-product; Part 1 shelf stays Open-only.)
+**Do not show:** multi-host tour, Docs/Learn more as the hero click, claiming every host is one-click.
+
+Part 1 still never shows install / setup. T6 stays Open-only (no paid certs).
 
 ### Operator checklist — T6 / T7 only
 
@@ -166,9 +168,9 @@ Prep    Harbor bound · switch intent to Public for this clip only · Deployment
 1. scripts/harbor-reset (or wipe fixtures/harbor/.ship)
 2. Desktop bind Harbor · Advanced · Local; window ~960×560; Output dock hidden
 3. T6: Sign → Open ONE official portal → cut before paywall → optional ← Back
-4. T7: intent Public briefly · Deployment → ONE host → Open dashboard → ← Back (no Deploy)
+4. T7: intent Public · Deployment → ONE host → Deploy → Results URL → Open dashboard (≤12s)
 5. Export 720×420 ≤3 MB → docs/assets/demo/v0.2.1/06-sign-open.gif + 07-deploy-open.gif
-6. Mirror apps/website/public/demo/v0.2.1/ · add two rows in apps/website/src/lib/demo.ts
+6. Mirror apps/website/public/demo/v0.2.1/ · rows already in apps/website/src/lib/demo.ts
 ```
 
 ### Drop to site
@@ -186,9 +188,11 @@ Prep    Harbor bound · switch intent to Public for this clip only · Deployment
 
 - [x] **No install / setup** footage in any clip  
 - [x] T1 alone proves usefulness: folder → detected layout + clear next action  
-- [x] T3 = publish check / Confirm — **no** paid signing, **no** live provider deploy  
-- [x] T6 / T7 = Open clips compressed onto shelf (720×420 · ≤3 MB)  
-- [x] Final GIF size **720×420**, preferably **≤3 MB**  
+- [x] T3 = publish check / Confirm — **no** paid signing in that clip  
+- [x] T6 = Sign Open only (no cert purchase)  
+- [x] T7 = one-host Deploy → Results URL → Open dashboard (H1–H5 honesty)  
+- [x] Final GIF size **720×420** (T1–T7 mirrored under `public/demo/v0.2.1/`)  
+- [ ] Optional: recompress any clip still ≫3 MB (`03-confirm-next` ~2.9–3.0 MB)  
 - [ ] Spot-check: no long Serving / Not found / console flash in T6–T7  
-- [x] No claim of one-click deploy / auto OAuth / live publish (Part 1 Open-only)  
+- [x] No claim of auto OAuth / silent publish  
 - [x] Fixture path only — no aperio secrets on screen  

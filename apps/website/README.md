@@ -37,8 +37,8 @@ Until `PUBLIC_POLAR_CHECKOUT_URL` is set, Buy stays disabled with a setup note.
 
 ## Feature demo (W3)
 
-`/demo` serves live Harbor GIFs from `public/demo/v0.2.1/` (T1–T5).  
-Script + captions: `docs/assets/demo/v0.2.1/SCRIPT.md` (T6 Sign Open · T7 Deploy Open = operator-next).
+`/demo` serves live Harbor GIFs from `public/demo/v0.2.1/` (**T1–T7**).  
+Script + captions: `docs/assets/demo/v0.2.1/SCRIPT.md`.
 
 Legacy stylized set remains under `public/demo/v0.1.0/`:
 

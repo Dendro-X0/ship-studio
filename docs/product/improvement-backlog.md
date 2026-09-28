@@ -1,8 +1,8 @@
 # Ship Studio — improvement backlog
 
-**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 + S1.10–16 + S1.2c + **Launch L1–L4** shipped (working tree); next soft dogfood / **S1.1 shelf**  
+**Status:** Living idea list — overhaul O0–O5 **closed**; S1.19 + S0.8 + S1.10–16 + S1.2c + Launch L1–L4 + **S1.1 shelf** shipped; next Desktop dogfood / commerce when Polar unlocks  
 **Updated:** 2026-09-28  
-**Cadence:** Soft dogfood · demo shelf · commerce when Polar unlocks  
+**Cadence:** Soft dogfood Desktop · commerce when Polar unlocks  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
@@ -56,7 +56,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | ID | Idea | Notes |
 |----|------|-------|
 | **S1.2n** | **Hosted deploy ops ($29 bar)** | Stream CLI deploy · results · dashboard · troubleshoot · MCP playbook — [design](../../specs/backend/hosted-deploy-ops-value-bar-design.md) · **H1–H5 shipped** |
-| S1.1 | **Demo shelf = multi-target tedium** | Live Harbor GIFs on **v0.2.1** — T1–T5 on `/demo` · **T6/T7 operator-next** — [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) · [demo-subject-design](../../specs/frontend/demo-subject-design.md) |
+| S1.1 | **Demo shelf = multi-target tedium** | **Done** — T1–T7 live on `/demo` (`v0.2.1`, 720×420, mirrored) — [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) · [demo-subject-design](../../specs/frontend/demo-subject-design.md) |
 | S1.0a | **Desktop nav freeze** | Hot-path + silent spawn + paint-before-shipctl + output mirror truncate shipped in **v0.2.1** |
 | S1.2 | **Dashboard honesty polish** | Surface Signet ok / Orbit missing, dirty git, step N/M without fake “all shipped” |
 | S1.2a | **Publish progress clarity** | Done · required · optional/later bands + summary strip — [publish-progress-clarity-design](../../specs/frontend/publish-progress-clarity-design.md) · **shipped Desktop** |
@@ -130,12 +130,12 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 
 ---
 
-## Suggested order (post Launch L4)
+## Suggested order (post S1.1)
 
 ```text
 Near
-1. Soft dogfood Harbor Desktop — primary host · Payments off · Publish copy
-2. S1.1       Demo shelf commit (maintainer)
+1. Soft dogfood Harbor Desktop — Publish copy · Payments · primary host
+2. Optional   Recompress/spot-check demo GIFs if weight/noise bothers
 
 Commerce / site (when Polar unlocks — not a release blocker)
 3. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL

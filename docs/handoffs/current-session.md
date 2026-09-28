@@ -1,21 +1,21 @@
 # Current session — Ship Studio
 
 **Updated:** 2026-09-28  
-**Branch:** `main` (`f2c08f1`)  
-**Status:** Launch L1–L4 + S1.2c on main · Harbor CLI dogfood L3–L4 **pass**
+**Branch:** `main`  
+**Status:** **S1.1 shelf closed (agent)** — T1–T7 live · docs synced · optional GIF spot-check/recompress parked
 
 ## Next Atomic Step
 
-**Desktop UI dogfood** (Publish copy · workflow previews · Payments toggle · primary host reload) — or **S1.1 shelf** (maintainer). No coding band until activated.
+**Desktop UI dogfood** (Publish copy · Payments · primary host) — or commerce when Polar unlocks / **S2.4 MCP** when a real ship asks.
 
 ## Design queue (not coding until activated)
 
 | Item | Spec |
 |------|------|
+| S1.1 Demo shelf | [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) (**T1–T7 live** — optional recompress/spot-check) |
 | Launch choice board | [launch-choice-board-design](../../specs/frontend/launch-choice-board-design.md) (**L1–L4 shipped**) |
 | Public Publish UX | [public-publish-ux-design](../../specs/frontend/public-publish-ux-design.md) (**A–F shipped**) |
 | Targets catalog parity | [targets-catalog-parity-design](../../specs/frontend/targets-catalog-parity-design.md) (**Slice 1–3 shipped**) |
-| S1.1 Demo shelf | [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) (maintainer commit) |
 
 ## PAUSED / CANCELLED
 
@@ -33,15 +33,14 @@
 
 | Band | Link |
 |------|------|
+| **S1.1 Demo shelf (agent)** | T1–T7 on `/demo` · SCRIPT honesty sync · website README |
 | **Harbor CLI dogfood L3–L4** | [evidence-harbor-launch-l3-l4](./evidence-harbor-launch-l3-l4.md) |
 | **Launch L4 primary host** | [design](../../specs/frontend/launch-choice-board-design.md) |
-| **Launch L3 Payments opt-in** | `launch_payments` |
 | **S1.2c Public Publish UX A–F** | [design](../../specs/frontend/public-publish-ux-design.md) |
-| **Harbor soft dogfood S1.15–16** | [evidence-harbor-s115-s116](./evidence-harbor-s115-s116.md) |
 
 ## Boot allowlist
 
 1. This file  
 2. [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md)  
 3. `fixtures/harbor` + `scripts/harbor-reset`  
-4. [evidence-harbor-launch-l3-l4](./evidence-harbor-launch-l3-l4.md)  
+4. [demo-subject-design](../../specs/frontend/demo-subject-design.md)  

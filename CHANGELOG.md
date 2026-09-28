@@ -13,6 +13,7 @@
 
 ### Added
 
+- **Demo shelf S1.1** — `/demo` T1–T7 Harbor GIFs (`v0.2.1`, 720×420); SCRIPT honesty sync for T7 Deploy clip ([SCRIPT](./docs/assets/demo/v0.2.1/SCRIPT.md))
 - **Launch primary host (L4)** — Deployment card selection writes `primary_host` to studio.json; Launch `oauth.hosts` Verify checks that host only ([design](./specs/frontend/launch-choice-board-design.md))
 - **Launch Payments opt-in (L3)** — Payments lane off by default; Launch **Payments** toggle writes `launch_payments` to studio.json ([design](./specs/frontend/launch-choice-board-design.md))
 - **Public Publish UX A–F (S1.2c)** — Plain copy (Open this step · checklist · We'll check…); workflow cards preview ~steps/~min; General already quiets More ([design](./specs/frontend/public-publish-ux-design.md))
