@@ -2,7 +2,7 @@
 
 **One front door.** Do not search all of `/docs`.
 
-_Last updated: 2026-09-25_
+_Last updated: 2026-09-28_
 
 ---
 

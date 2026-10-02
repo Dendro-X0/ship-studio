@@ -2,7 +2,7 @@
 
 **Start:** [CURRENT.md](./CURRENT.md) → [handoffs/current-session.md](./handoffs/current-session.md)
 
-_Last updated: 2026-09-25 · **0.2.3** (+ working-tree Platforms / Portal docs)_
+_Last updated: 2026-09-28 · **0.2.3** (Near trust arc S1.2–S1.6 on main)_
 
 ---
 

@@ -1,7 +1,7 @@
 # Platforms · Portal · Integrations — functionality & objectives
 
-**Status:** Working tree (post–v0.2.3 UX arc) — **honest guide**, not finished product  
-**Updated:** 2026-09-25  
+**Status:** Shipped guide surfaces on **v0.2.3** (+ Launch Payments opt-in · primary host) — honest portal, not vendor replacement  
+**Updated:** 2026-09-28  
 **Audience:** Operators + agents continuing Desktop provider UX  
 **Parents:** [PRODUCT.md](./PRODUCT.md) · [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md)  
 **Hosting improvement plan:** [hosting-portal-parity-design](../../specs/backend/hosting-portal-parity-design.md)
@@ -10,11 +10,22 @@
 OBJECTIVE:  One place to pick a host / store / payment / email lane, finish the
             human gate (Put / Login / exact Open), return to Publish → Confirm —
             without Studio holding secrets or pretending to deploy / notarize / charge.
-NOT YET:    CDP dogfood · full provider parity · one-click deploy · Studio-owned OAuth success detection
+SHIPPED:    Platforms catalog · Integrations Payments/Email wizards · Portal Open/Docs/Login CLI ·
+            Launch Payments opt-in · Deployment primary_host · Harbor Desktop dogfood
+NOT YET:    Full host Tier D catalog parity · Studio Solo Polar checkout E2E · Studio-owned OAuth success
 OVERHAUL:   **Done O0–O5** — [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) ·
             [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md) ·
             [Harbor evidence](../handoffs/evidence-harbor-client-honesty.md)
 ```
+
+## Two different “payments” jobs
+
+| Job | Surface | Ready? |
+|-----|---------|--------|
+| **Help the operator set up Polar / Stripe / … for their product** | Desktop **Integrations** → Payments wizard → Open vendor → Put `PUBLIC_*` / host secrets **outside** Studio → Continue publishing → Confirm listing | **Yes** — guide path |
+| **Sell Ship Studio Solo on the official website** | `apps/website` Polar checkout env | **No** — deferred on org `payment_ready` |
+
+Do not conflate them. Integrations is for *their* commerce; website Buy is for *this* product’s license.
 
 ## Why this surface exists
 
@@ -103,7 +114,7 @@ These need a **reliability / product slice**, not drive-by UI edits:
 | Detect → highlight | **Slice 4 done** — Choose host / detect chips select preferred Platforms card (wrangler → Cloudflare) |
 | Quiet Continue / outcome panel | Journey polish still thin after finish |
 | CDP / CodaCtrl dogfood | Tauri needs remote debugging for live MCP client proof |
-| Commerce E2E | Polar paid checkout deferred (`payment_ready`) |
+| Commerce E2E | **Studio Solo** Polar checkout deferred (`payment_ready`) — distinct from Integrations Payments **guide** |
 | Env Put UX | **Overhaul O0–O5 done** — Portal + Platforms Put primary; Harbor proof — [overhaul](../../specs/backend/ship-studio-overhaul-design.md) · [evidence](../handoffs/evidence-harbor-client-honesty.md); coach **CANCELLED** |
 
 Investigation seed: [desktop-silent-failures-investigation](../../specs/backend/desktop-silent-failures-investigation.md) · full band: [desktop-reliability-design](../../specs/backend/desktop-reliability-design.md)
@@ -124,7 +135,7 @@ Dashboard workflow card → Publish checkpoint
 |-------|--------|
 | L1 | `cargo test -p shipctl portal::tests` · desktop `tsc` |
 | L2 | Harbor Local: paced Continue · Platforms Orbit Open (no Portal steps) |
-| L2 | Harbor Public: Cloudflare Portal — Open ≠ Docs; Put primary; Login CLI opens terminal — [evidence](../handoffs/evidence-harbor-client-honesty.md) |
+| L2 | Harbor Desktop dogfood — Publish copy · Payments toggle · primary host — [evidence](../handoffs/evidence-harbor-desktop-dogfood.md) |
 
 ## Related specs (do not fork truth)
 

@@ -2,7 +2,7 @@
 
 **Status:** Living idea list — through **S1.6 FAQ**; Near site trust arc closed; next optional GIF / commerce when Polar  
 **Updated:** 2026-09-28  
-**Cadence:** Local commits OK · push when GitHub 443 restored · commerce when Polar unlocks  
+**Cadence:** Idle Near queue · commerce when Polar unlocks · activate one depth band at a time  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
