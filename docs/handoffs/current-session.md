@@ -2,16 +2,17 @@
 
 **Updated:** 2026-10-04  
 **Branch:** `main`  
-**Status:** **Game butler L3 dogfood done** (recipe + spawn). Live itch push needs your `butler login`.
+**Status:** **Capability audit + website L2 dogfood** — Client sequences full launch; cannot eliminate vendor/CLI kernel. Idle unless you reopen a PAUSED band.
 
 ## Next Atomic Step
 
-**Idle.** Steam/Epic remain Open+Confirm only.
+**Idle.** Optional human: `butler login` for live itch, or reopen **Portal UX** / **Paddle Solo dogfood** if Client zero-curve is the new goal (conflicts with freeze).
 
 | Option | When |
 |--------|------|
-| Live itch push (human) | After `butler login` + real `user/game:channel` page |
-| Steam Open-only depth | Only if a Steam App ID ship asks |
+| Live itch push (human) | After `butler login` + real `user/game:channel` |
+| Bind website primary host | Maintainer picks CF/Vercel/Netlify then Platforms Continue |
+| Reopen Portal UX / Paddle Solo | Explicit maintainer override of PAUSED |
 
 ## Design queue (not coding until activated)
 
@@ -49,6 +50,7 @@
 
 | Band | Link |
 |------|------|
+| **Release capability audit** | Client sequences site+payments; CLI=kernel; MCP=agents; zero-curve Out · L2 `apps/website` selfhost ok, host unbound, Paddle env names present |
 | **Game butler L3 dogfood** | Installed butler v15.31.0 → `~/.local/bin`; fixture `E:/Temp/ship-butler-dogfood`; `--no-spawn` recipe ok; spawn `spawned:true`; assist itch cue present; **no** `butler_creds` yet (push waits on human login) |
 | **Game butler push (CLI + MCP)** | [game-butler-push-design](../../specs/backend/game-butler-push-design.md) · `shipctl butler push` · `ship_butler_push` |
 | **Freeze tag** | `freeze/mcp-agent-2026-10-04` — close-cut + MCP G1–G4 + skill |
