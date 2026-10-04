@@ -77,10 +77,19 @@ python scripts/issue-license.py revoke --order paddle_xxx
 
 Format: `docs/assets/license/FORMAT.md`. Ledger: `.ship-licenses/` (gitignored).
 
-## Build
+## Build · deploy (Netlify)
 
 ```bash
 pnpm website:build
+# Static output: apps/website/dist
 ```
 
-Static output: `apps/website/dist`.
+**Host:** Netlify (`netlify.toml`). Link the monorepo with Base directory `apps/website`, or from that folder:
+
+```bash
+netlify login
+shipctl hostdeploy --project apps/website --provider netlify
+# or: shipctl publish → Deploy (after Login CLI)
+```
+
+Put `PUBLIC_PADDLE_*` on the Netlify site env (not in git) for Solo Buy.

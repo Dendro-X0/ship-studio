@@ -2,16 +2,16 @@
 
 **Updated:** 2026-10-04  
 **Branch:** `main`  
-**Status:** **Client finishability S1+S2 shipped** — detect honesty, catalog diet, unbound `platforms.host` gate.
+**Status:** **S3 Netlify bound** for `apps/website`. Live deploy waits on your `netlify login` + site link.
 
 ## Next Atomic Step
 
-**Idle** (or **S3** — maintainer binds website primary host: CF/Vercel/Netlify marker / Platforms pick).
+**Idle** — human Netlify auth/link, then `shipctl hostdeploy --project apps/website --provider netlify` (after `pnpm website:build`).
 
 | Option | When |
 |--------|------|
-| S3 website host bind | Maintainer picks host for `apps/website` |
-| Live itch push | After `butler login` |
+| Live Netlify deploy | After `netlify login` + link/create site |
+| Put PUBLIC_PADDLE_* on Netlify env | Before Solo Buy on the live site |
 | Paddle Solo dogfood | Stays PAUSED until explicit reopen |
 
 ## Design queue (not coding until activated)
@@ -50,6 +50,7 @@
 
 | Band | Link |
 |------|------|
+| **Website Netlify bind (S3)** | `apps/website/netlify.toml` · detect + Publish deploy · hostdeploy detect ok; live needs login/link |
 | **Client finishability S1–S2** | [client-finishability-design](../../specs/backend/client-finishability-design.md) · PUBLIC_PADDLE + marketing detect · catalog diet · `platforms.host` |
 | **Release capability audit** | Client sequences site+payments; CLI=kernel; MCP=agents; zero-curve Out · L2 `apps/website` selfhost ok, host unbound, Paddle env names present |
 | **Game butler L3 dogfood** | Installed butler v15.31.0 → `~/.local/bin`; fixture `E:/Temp/ship-butler-dogfood`; `--no-spawn` recipe ok; spawn `spawned:true`; assist itch cue present; **no** `butler_creds` yet (push waits on human login) |

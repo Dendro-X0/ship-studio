@@ -1,19 +1,19 @@
 # Client finishability — feasible improvement plan
 
-**Status:** Active · S1+S2 shipped  
+**Status:** S1–S3 shipped (Netlify bind)  
 **Updated:** 2026-10-04  
-**Owner:** `shipctl` detect · secrets · portal · publish  
+**Owner:** `shipctl` detect · secrets · portal · publish · `apps/website`  
 **Parents:** [SCOPE-OF-SERVICE](../../docs/product/SCOPE-OF-SERVICE.md) · [release capability audit](../../docs/handoffs/current-session.md) · [close-cut](./close-cut-design.md)  
 **Trigger:** Maintainer: implement a feasible Client-first plan for website deploy + payments + launch without pretending vendors disappear.
 
 ```text
-HANDOFF ATOMIC STEP: Idle after finishability S1+S2 — S3 host bind is maintainer choice
-ACTIVE BAND / SCOPE:   Finishable Client sequencing (subtraction + detect + unbound gate)
+HANDOFF ATOMIC STEP: Idle — Netlify bound; live deploy needs netlify login + site link
+ACTIVE BAND / SCOPE:   Finishable Client sequencing (S1–S3)
 PAUSED / CANCELLED:    Vendor coach CANCELLED · Portal UX *expansion* PAUSED · Paddle Solo dogfood PAUSED
 FORBIDDEN THIS TASK:   Coach theater · CDP · Desktop Integrations catalog growth · auto-finish OAuth
-CANONICAL OWNER:       crates/shipctl (config · secrets · portal · publish)
-PROOF BEFORE DONE:     L1 cargo test · L2 shipctl secrets/portal/publish on apps/website
-SURFACE:               Kernel first (Client inherits); no Desktop wizard growth
+CANONICAL OWNER:       crates/shipctl + apps/website/netlify.toml
+PROOF BEFORE DONE:     L2 detect netlify · publish deploy.web.root · hostdeploy detect ok
+SURFACE:               Kernel + committed host marker
 ```
 
 ## Goal
@@ -71,32 +71,9 @@ When Public intent and no Tier A host config and no `primary_host`: insert human
 
 ### S3 — Website host bind (maintainer)
 
-Pick host for official site; write marker (`wrangler.toml` Pages / `vercel.json`) or `primary_host` via Platforms. Then H1–H6 hostdeploy path applies. Out of S1 code.
-
-### S4 — Optional Desktop copy only
-
-If S1–S2 leave Desktop labels stale, one-line Publish/Pulse copy — still no Integrations expansion.
-
-## Invariants
-
-1. CLI remains kernel under Client/MCP.  
-2. Bridge never holds secrets or finishes OAuth.  
-3. Subtraction preferred over new UI.  
-4. Coach stays cancelled.
-
-## Acceptance (S1)
-
-- [x] `PUBLIC_PADDLE_*` → `detected.paddle`
-- [x] Bind `apps/website` → `marketing_site`
-- [x] Undetected project secrets/portal do not list all providers
-- [x] Existing opt-in / wrangler / markets tests still pass
-
-## Acceptance (S2)
-
-- [x] Unbound Public/General plan uses `platforms.host` (not blank Orbit `deploy`)
-- [x] `primary_host` without Tier A config → `deploy.host` / hostdeploy
-- [x] Wrangler/Vercel/Netlify still get Orbit `deploy`
+- [x] **Netlify** — `apps/website/netlify.toml` (publish `dist`); detect `netlify` + `marketing_host=netlify`; Publish `deploy.web.root` / hostdeploy path
+- Local `.ship/studio.json` `primary_host=netlify` optional (gitignored)
 
 ## Next
 
-S3 — maintainer picks website host marker · or idle
+Idle — human `netlify login` + hostdeploy / dashboard for live URL · Paddle Solo dogfood still PAUSED

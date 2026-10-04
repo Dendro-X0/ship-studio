@@ -1,0 +1,9 @@
+# Official website — Netlify (Tier A host bind)
+# When linking the monorepo, set Netlify "Base directory" to `apps/website`.
+
+[build]
+  command = "pnpm build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
