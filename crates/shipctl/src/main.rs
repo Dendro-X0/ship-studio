@@ -2,6 +2,7 @@
 
 mod adapters;
 mod assist;
+mod butler;
 mod config;
 mod envx;
 mod flow;

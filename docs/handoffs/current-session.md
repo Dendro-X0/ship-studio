@@ -2,16 +2,16 @@
 
 **Updated:** 2026-10-03  
 **Branch:** `main`  
-**Status:** **Frozen** — close-cut OSS + MCP agent path (G1–G4 + skill). Tag `freeze/mcp-agent-2026-10-04`.
+**Status:** **Game butler slice 1 shipped**. Desktop wizards stay frozen.
 
 ## Next Atomic Step
 
-**Idle** — no coding. Desktop wizards stay frozen. G6 CDP only if Reliability Later is activated.
+**Idle** after butler MCP — dogfood when you have a game build + `butler` on PATH. Steam/Epic remain Open+Confirm only.
 
 | Option | When |
 |--------|------|
-| G6 CDP dogfood | Reliability Later only |
-| New product band | Maintainer charter only |
+| L3 butler spawn dogfood | Maintainer has itch target + build dir |
+| Steam Open-only depth | Only if a Steam App ID ship asks |
 
 ## Design queue (not coding until activated)
 
@@ -49,6 +49,7 @@
 
 | Band | Link |
 |------|------|
+| **Game butler push** | [game-butler-push-design](../../specs/backend/game-butler-push-design.md) · `ship_butler_push` |
 | **Freeze tag** | `freeze/mcp-agent-2026-10-04` — close-cut + MCP G1–G4 + skill |
 | **MCP agent skill** | [`.cursor/skills/ship-mcp-agent`](../../.cursor/skills/ship-mcp-agent/SKILL.md) · prefer ship_* over Desktop wizards |
 | **S2.4 G3–G4 MCP put/vault honesty** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · TTY bail · vault schema |

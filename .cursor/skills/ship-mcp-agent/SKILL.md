@@ -32,6 +32,7 @@ Client stays thin. You assist through **`shipctl mcp`** tools. You do **not** ho
 | Confirm / next | `ship_publish_confirm`, `ship_publish_next` — Confirm only after human finished |
 | Vendor URLs | `ship_portal`, `ship_guide` |
 | Put secret **NAME** | `ship_env_put` `{ provider, name, spawn: true }` — **never** pass `value` |
+| itch butler push | `ship_butler_push` `{ target: "user/game:channel", dir?, spawn: true }` — never holds itch credentials |
 | Hosted deploy | Prefer Desktop Deploy; else `ship_hostdeploy` if CLI session exists |
 
 ## Never

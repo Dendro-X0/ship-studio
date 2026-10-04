@@ -95,7 +95,7 @@ These steps stay on you **by design** — Studio opens the right door and waits 
 | Desktop cut | No Orbit host → Confirm `ship.desktop_cut` on Publish or Launch — Signet release is the deploy |
 | Listing | Polar · Gumroad · Lemon · Stripe · Paddle · npm · crates.io · Hugging Face · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced Publish + Launch) |
 | Steam submit | After listing, Open Steamworks uploading docs (`submit.steam`) and upload depots yourself |
-| itch / Epic submit | After listing, Open butler / Epic publishing docs (`submit.itch` / `submit.epic`) and upload yourself |
+| itch / Epic submit | After listing: itch → `ship_butler_push` (or Open butler docs); Epic → Open publish docs. Confirm when live. Studio never stores store credentials. |
 | Fly / Railway / Render / DO / Heroku / Amplify / Cloud Run / Azure Static | Open dashboard (`host.*`); deploy with their CLI/UI — Studio does not Orbit-deploy them |
 | DB | Provision on Neon/Supabase/D1/Turso console (Publish or Launch `db.provision`); put connection on deploy target |
 | CI | After tag/Signet release, Run `gh run list` from Publish or Launch / confirm GitHub Actions |

@@ -2,6 +2,7 @@
 
 use crate::adapters;
 use crate::assist;
+use crate::butler;
 use crate::config;
 use crate::envx;
 use crate::flow;
@@ -105,6 +106,7 @@ fn tools() -> Vec<Value> {
         tool_publish_next(),
         tool_publish_watch(),
         tool_env_put(),
+        tool_butler_push(),
         tool(
             "ship_scopes",
             "Detect Web/API/Desktop deploy scopes (directories + providers)",
@@ -293,6 +295,32 @@ fn tool_env_put() -> Value {
                 }
             },
             "required": ["project", "provider", "name"]
+        }
+    })
+}
+
+fn tool_butler_push() -> Value {
+    json!({
+        "name": "ship_butler_push",
+        "description": "itch.io butler push: print recipe and/or spawn a visible terminal. Pass target user/game:channel and optional dir. Never holds itch credentials. Prefer spawn:true so the human sees login/errors.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "project": { "type": "string", "description": "Absolute project path" },
+                "target": {
+                    "type": "string",
+                    "description": "itch target user/game or user/game:channel"
+                },
+                "dir": {
+                    "type": "string",
+                    "description": "Build directory to push (default: dist or build if only one exists, else project)"
+                },
+                "spawn": {
+                    "type": "boolean",
+                    "description": "Open an external terminal with butler push (default true)"
+                }
+            },
+            "required": ["project", "target"]
         }
     })
 }
@@ -676,6 +704,18 @@ fn call_tool(params: Value) -> Result<Value> {
                 .unwrap_or(true);
             serde_json::to_value(envx::put_launch(&project, provider, name, spawn)?)?
         }
+        "ship_butler_push" => {
+            let target = args
+                .get("target")
+                .and_then(|t| t.as_str())
+                .context("ship_butler_push requires target (user/game:channel)")?;
+            let dir = args.get("dir").and_then(|d| d.as_str());
+            let spawn = args
+                .get("spawn")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true);
+            serde_json::to_value(butler::push_launch(&project, target, dir, spawn)?)?
+        }
         "ship_sign_paths" => serde_json::to_value(signpath::plan_for(&project))?,
         "ship_assist" => serde_json::to_value(assist::plan_for(&project)?)?,
         "ship_flow_dry_run" => {
@@ -800,6 +840,7 @@ mod tests {
             "ship_publish_confirm",
             "ship_publish_next",
             "ship_env_put",
+            "ship_butler_push",
         ] {
             assert!(names.contains(&n), "{n} missing in {names:?}");
         }

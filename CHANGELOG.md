@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Game butler push** — MCP `ship_butler_push` recipe + optional terminal spawn for itch.io (no credentials; Steam/Epic stay Open+Confirm) ([design](./specs/backend/game-butler-push-design.md))
 - **Freeze** — annotated tag `freeze/mcp-agent-2026-10-04` marks close-cut OSS + MCP agent path (G1–G4 + skill); Desktop wizards stay frozen
 - **MCP agent skill** — `.cursor/skills/ship-mcp-agent` prefers `ship_*` over Desktop wizards; no secret custody ([design](./specs/backend/mcp-agent-guide-design.md))
 - **MCP S2.4 G3–G4** — `ship_human put:true` bails without TTY (use `ship_env_put`); `ship_vault` schema discourages value/passphrase in agent args ([design](./specs/backend/mcp-assist-contract-design.md))

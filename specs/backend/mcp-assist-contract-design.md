@@ -41,6 +41,7 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 | `ship_secrets` | J (+ open) | Yes | Names + put CLI; no values |
 | `ship_env` | J | Yes | Plan only |
 | `ship_env_put` | J (+ spawn) | Yes | NAME only; recipe + optional external TTY; rejects `value` |
+| `ship_butler_push` | J (+ spawn) | Yes | itch target + dir; recipe / terminal; no credentials |
 | `ship_scopes` | J | Yes | Detect scopes |
 | `ship_sign_paths` | J | Yes | Self vs official |
 | `ship_assist` | J | Yes | Checklist |
