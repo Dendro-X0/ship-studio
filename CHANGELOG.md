@@ -4,6 +4,7 @@
 
 ### Added
 
+- **MCP agent skill** — `.cursor/skills/ship-mcp-agent` prefers `ship_*` over Desktop wizards; no secret custody ([design](./specs/backend/mcp-agent-guide-design.md))
 - **MCP S2.4 G3–G4** — `ship_human put:true` bails without TTY (use `ship_env_put`); `ship_vault` schema discourages value/passphrase in agent args ([design](./specs/backend/mcp-assist-contract-design.md))
 - **MCP S2.4 G2** — `ship_env_put` launches (or prints) interactive host Put for a secret NAME; rejects `value`; optional external terminal ([design](./specs/backend/mcp-assist-contract-design.md))
 - **MCP S2.4 G1** — `ship_publish_open` / `ship_publish_verify` / `ship_publish_confirm` / `ship_publish_next` (CLI publish mutations; Confirm remains human attest) ([design](./specs/backend/mcp-assist-contract-design.md))

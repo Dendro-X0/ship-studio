@@ -2,13 +2,11 @@
 
 **Updated:** 2026-10-03  
 **Branch:** `main`  
-**Status:** **S2.4 G1–G4 shipped**. Client stays thin. G6 CDP parked.
+**Status:** **MCP agent path closed** (G1–G4 + `ship-mcp-agent` skill). Client stays thin. G6 CDP parked.
 
 ## Next Atomic Step
 
-**Idle** — named freeze tag optional. No Desktop wizard growth. G5 already hinted on `ship_hostdeploy`.
-
-Canon: [mcp-assist-contract-design](../../specs/backend/mcp-assist-contract-design.md) · [mcp-agent-guide-design](../../specs/backend/mcp-agent-guide-design.md).
+**Idle** — freeze complete for agent guide band. Named git tag optional. No Desktop wizard growth.
 
 | Option | When |
 |--------|------|
@@ -51,6 +49,7 @@ Canon: [mcp-assist-contract-design](../../specs/backend/mcp-assist-contract-desi
 
 | Band | Link |
 |------|------|
+| **MCP agent skill** | [`.cursor/skills/ship-mcp-agent`](../../.cursor/skills/ship-mcp-agent/SKILL.md) · prefer ship_* over Desktop wizards |
 | **S2.4 G3–G4 MCP put/vault honesty** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · TTY bail · vault schema |
 | **S2.4 G2 MCP env put launch** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · `ship_env_put` recipe + spawn |
 | **S2.4 G1 MCP publish mutations** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · `ship_publish_open`/`verify`/`confirm`/`next` |

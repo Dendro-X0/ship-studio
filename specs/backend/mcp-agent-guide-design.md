@@ -1,6 +1,6 @@
 # MCP agent guide — Client thin, agents open + validate
 
-**Status:** Design (active band after close-cut)  
+**Status:** Design — G1–G4 + project skill shipped; Client thin  
 **Updated:** 2026-10-04  
 **Owner:** `shipctl mcp` (`crates/shipctl/src/mcp.rs`)  
 **Parent:** [mcp-assist-contract-design](./mcp-assist-contract-design.md) · [close-cut-design](./close-cut-design.md) · [human-gate-catalog-design](./human-gate-catalog-design.md)
@@ -54,7 +54,7 @@ S2.4 **G1–G4 shipped** — publish mutations · `ship_env_put` · human put TT
 
 ## Skills (Cursor)
 
-A short project skill may tell the agent: use `shipctl mcp` first; official vendor MCP (Paddle docs, etc.) second; never hold `pdl_` / OATs in chat. Skills are prompts, not a fourth Client.
+Project skill: [`.cursor/skills/ship-mcp-agent/SKILL.md`](../../.cursor/skills/ship-mcp-agent/SKILL.md) — prefer `ship_*` over Desktop wizards; never hold keys.
 
 ## Acceptance
 
@@ -63,6 +63,7 @@ A short project skill may tell the agent: use `shipctl mcp` first; official vend
 - [x] Impl slice: G1 wrappers
 - [x] Impl slice: G2 `ship_env_put`
 - [x] Impl slice: G3 human put TTY bail · G4 vault schema soften
+- [x] Cursor project skill `ship-mcp-agent`
 - [ ] L3: agent session uses `ship_publish_verify` then human Confirm (not required to ship G1)
 
 ## Do not
