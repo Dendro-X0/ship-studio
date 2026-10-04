@@ -193,8 +193,13 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
         if detected.epic {
             m.push("Epic");
         }
+        let itch_cue = if detected.itch {
+            " itch: `shipctl butler push --target user/game:channel` (or ship_butler_push)."
+        } else {
+            ""
+        };
         notes.push(format!(
-            "Extra markets ({}) — Advanced listing + submit.* open vendor portals/docs; upload stays Confirm.",
+            "Extra markets ({}) — Advanced listing + submit.* ;{itch_cue} Upload still Confirm.",
             m.join(" · ")
         ));
     }

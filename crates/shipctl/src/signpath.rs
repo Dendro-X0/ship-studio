@@ -168,7 +168,7 @@ pub fn plan_for(project: &Path) -> SignPortal {
             id: "submit.itch".into(),
             kind: "submit".into(),
             title: "Submit — itch.io butler push".into(),
-            detail: "Push builds with butler or the itch dashboard. Studio only opens the official docs.".into(),
+            detail: "Push builds with `shipctl butler push --target user/game:channel` (or ship_butler_push) — visible terminal, no credentials stored.".into(),
             entry_url: Some("https://itch.io/docs/butler/".into()),
             run: None,
         });

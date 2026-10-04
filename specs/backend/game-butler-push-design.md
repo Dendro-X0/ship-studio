@@ -1,6 +1,6 @@
 # Game cut — butler push assist (itch)
 
-**Status:** Slice 1 shipped (`ship_butler_push`)  
+**Status:** Slice 1b shipped (`ship_butler_push` + `shipctl butler push`)  
 **Updated:** 2026-10-04  
 **Owner:** `shipctl` MCP/CLI · Publish `submit.itch`  
 **Parent:** [marketplace-submit-parity-design](./marketplace-submit-parity-design.md) · [mcp-agent-guide-design](./mcp-agent-guide-design.md) · [close-cut-design](./close-cut-design.md)
@@ -8,12 +8,12 @@
 ## Plan alignment
 
 ```text
-HANDOFF ATOMIC STEP: Maintainer reopened development after freeze — game ship path
-ACTIVE BAND / SCOPE:   Game cut · itch butler (CLI/MCP spawn)
+HANDOFF ATOMIC STEP: Idle after butler CLI — L3 dogfood optional
+ACTIVE BAND / SCOPE:   Game cut · itch butler (CLI/MCP spawn) — slice 1b done
 PAUSED / CANCELLED:    Vendor coach · Portal UX expansion · Paddle Solo dogfood · CDP · store API upload
 FORBIDDEN THIS TASK:   Desktop Integrations growth · Steam depot automation · Epic upload API
-CANONICAL OWNER:       crates/shipctl (mcp + optional publish open)
-PROOF BEFORE DONE:     L1 cargo test · L2 tools list includes ship_butler_push
+CANONICAL OWNER:       crates/shipctl (mcp + CLI + publish cues)
+PROOF BEFORE DONE:     L1 cargo test · L2 shipctl butler push --help · tools list includes ship_butler_push
 SURFACE:               CLI / MCP (not Desktop wizards)
 ```
 
@@ -65,6 +65,11 @@ Never accepts passwords/API keys. If `butler` missing → `ok: false` + install 
 - Desktop Integrations card for itch  
 - Storing itch API keys in `.ship/`
 
+### Slice 1b (CLI)
+
+- `shipctl butler push --target user/game:channel [--dir dist] [--no-spawn]`
+- `submit.itch` detail names the CLI/MCP path
+
 ## Acceptance
 
 - [x] `ship_butler_push` in MCP `tools()`
@@ -72,6 +77,7 @@ Never accepts passwords/API keys. If `butler` missing → `ok: false` + install 
 - [x] Missing butler returns install hint, no hang
 - [x] Skill mentions game → butler path
 - [x] No Desktop wizard changes
+- [x] CLI `shipctl butler push`
 
 ## Proof
 

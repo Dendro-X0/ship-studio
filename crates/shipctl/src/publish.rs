@@ -1082,7 +1082,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "submit.itch",
             "Submit — itch.io butler push",
             PubKind::List,
-            "Push the build with butler (or the itch dashboard). Studio only opens the official docs — never runs butler for you. Confirm when the build is live.",
+            "Push the build with butler: `shipctl butler push --target user/game:channel [--dir dist]` (or MCP ship_butler_push). Opens a visible terminal — Studio never stores itch credentials. Docs: itch.io/docs/butler. Confirm when the build is live.",
             3,
             Some("https://itch.io/docs/butler/".into()),
             None,

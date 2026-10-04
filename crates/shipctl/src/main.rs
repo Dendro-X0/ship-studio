@@ -203,6 +203,11 @@ enum Commands {
         #[arg(long)]
         name: Option<String>,
     },
+    /// itch.io butler push — recipe or spawn a visible terminal (never stores credentials).
+    Butler {
+        #[command(subcommand)]
+        action: ButlerCmd,
+    },
     /// configure → sign → deploy (or print plan with --dry-run).
     Flow {
         #[arg(long, default_value = ".")]
@@ -228,6 +233,26 @@ enum Commands {
     },
     /// Stdio MCP server (tools: doctor, configure, portal, sign, deploy, flow, status).
     Mcp,
+}
+
+#[derive(Subcommand, Debug)]
+enum ButlerCmd {
+    /// Print recipe and/or open a terminal for `butler push`.
+    Push {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+        /// itch target: user/game or user/game:channel
+        #[arg(long)]
+        target: String,
+        /// Build directory (default: dist or build if only one exists, else project)
+        #[arg(long)]
+        dir: Option<String>,
+        /// Open an external terminal (default true). Use --no-spawn for recipe JSON only.
+        #[arg(long, default_value_t = true)]
+        spawn: bool,
+        #[arg(long, default_value_t = false)]
+        no_spawn: bool,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -825,6 +850,23 @@ fn main() -> Result<()> {
         } => {
             let _ = hostdeploy::run(&project, &provider, name.as_deref())?;
         }
+        Commands::Butler { action } => match action {
+            ButlerCmd::Push {
+                project,
+                target,
+                dir,
+                spawn,
+                no_spawn,
+            } => {
+                let do_spawn = spawn && !no_spawn;
+                let launch =
+                    butler::push_launch(&project, &target, dir.as_deref(), do_spawn)?;
+                println!("{}", serde_json::to_string_pretty(&launch)?);
+                if !launch.ok {
+                    bail!("{}", launch.hint);
+                }
+            }
+        },
         Commands::Flow {
             project,
             dry_run,

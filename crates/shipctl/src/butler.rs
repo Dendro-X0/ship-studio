@@ -54,7 +54,7 @@ pub fn push_launch(
                 butler_path: None,
                 spawned: false,
                 hint: format!(
-                    "butler not on PATH — install from {BUTLER_DOCS} then re-run ship_butler_push"
+                    "butler not on PATH — install from {BUTLER_DOCS} then re-run `shipctl butler push` or ship_butler_push"
                 ),
                 docs_url: Some(BUTLER_DOCS.into()),
             });

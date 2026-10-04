@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3  
 **Updated:** 2026-10-03  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Freeze tagged · **`ship_butler_push`** for itch game cuts.
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Freeze tagged · **`shipctl butler push` / `ship_butler_push`** for itch game cuts.
 
 ## Truth pointers
 

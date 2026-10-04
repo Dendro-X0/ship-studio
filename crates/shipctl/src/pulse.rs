@@ -1128,9 +1128,15 @@ pub fn for_project(project: &Path) -> Result<ProjectPulse> {
         if detected.epic {
             m.push("Epic");
         }
+        let itch_cue = if detected.itch {
+            " itch: `shipctl butler push --target user/game:channel` (or ship_butler_push)."
+        } else {
+            ""
+        };
         notes.push(format!(
-            "Extra marketplace(s): {} — Advanced listing opens partner dashboards.",
-            m.join(", ")
+            "Extra marketplace(s): {} — Advanced listing opens partner dashboards.{} Upload stays Confirm.",
+            m.join(", "),
+            itch_cue
         ));
     }
     if !detected.license || !detected.security_md {
