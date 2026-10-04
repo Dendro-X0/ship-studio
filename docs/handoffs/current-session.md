@@ -2,15 +2,15 @@
 
 **Updated:** 2026-10-04  
 **Branch:** `main`  
-**Status:** **Host deploy auth gate** — unauthenticated Deploy opens Login CLI, then Retry Deploy.
+**Status:** **Uniform CLI host auth vetting** — select CF/Vercel/Netlify/Fly/Railway → same Login CLI gate as Deploy.
 
 ## Next Atomic Step
 
-**Idle** — restart Desktop; Deploy Netlify without login should open Login CLI first.
+**Idle** — restart Desktop; pick any CLI host card without login → Login CLI opens.
 
 | Option | When |
 |--------|------|
-| Live Netlify deploy | After Login CLI; set site name in confirm |
+| Live Netlify deploy | After auth; set site name in confirm |
 | Put PUBLIC_PADDLE_* on Netlify env | Before Solo Buy on the live site |
 | Paddle Solo dogfood | Stays PAUSED until explicit reopen |
 

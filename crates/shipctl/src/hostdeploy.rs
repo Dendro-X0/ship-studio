@@ -43,15 +43,18 @@ pub struct HostDeployReport {
 }
 
 /// Probe whether the vendor CLI has an interactive login session (no deploy).
+/// Supports Cloudflare / Vercel / Netlify (hostdeploy) and Fly / Railway (portal Login CLI).
 pub fn auth_check(provider: &str) -> Result<HostAuthReport> {
-    let provider = normalize_provider(provider)?;
+    let provider = normalize_auth_provider(provider)?;
     let cli = match provider {
         "cloudflare" => "wrangler",
         "vercel" => "vercel",
         "netlify" => "netlify",
+        "fly" => "fly",
+        "railway" => "railway",
         _ => unreachable!(),
     };
-    let bin = match resolve_cli(cli) {
+    let bin = match resolve_auth_cli(cli) {
         Ok(b) => b,
         Err(err) => {
             return Ok(HostAuthReport {
@@ -102,6 +105,16 @@ fn probe_cli_auth(provider: &str, bin: &Path) -> std::result::Result<(), String>
                 "please login",
             ],
         ),
+        "fly" => (
+            &["auth", "whoami"],
+            &["@", "user", "email", "slug"],
+            &["not logged in", "please log in", "login required", "unauthorized"],
+        ),
+        "railway" => (
+            &["whoami"],
+            &[],
+            &["not logged in", "unauthorized", "no token", "please log in"],
+        ),
         _ => return Err(format!("unsupported provider `{provider}`")),
     };
 
@@ -142,11 +155,13 @@ fn probe_cli_auth(provider: &str, bin: &Path) -> std::result::Result<(), String>
                 let _ = child.kill();
                 let _ = child.wait();
                 return Err(format!(
-                    "{provider} auth probe timed out — run Login CLI (`{} login`)",
+                    "{provider} auth probe timed out — run Login CLI (`{}`)",
                     match provider {
-                        "vercel" => "vercel",
-                        "netlify" => "netlify",
-                        _ => "wrangler",
+                        "vercel" => "vercel login",
+                        "netlify" => "netlify login",
+                        "fly" => "fly auth login",
+                        "railway" => "railway login",
+                        _ => "wrangler login",
                     }
                 ));
             }
@@ -159,33 +174,47 @@ fn probe_cli_auth(provider: &str, bin: &Path) -> std::result::Result<(), String>
     let text = format!("{out}\n{err}");
     let lower = text.to_ascii_lowercase();
     let login = match provider {
-        "vercel" => "vercel",
-        "netlify" => "netlify",
-        _ => "wrangler",
+        "vercel" => "vercel login",
+        "netlify" => "netlify login",
+        "fly" => "fly auth login",
+        "railway" => "railway login",
+        _ => "wrangler login",
     };
     if fail_needles.iter().any(|n| lower.contains(n)) || is_auth_failure_inner(&lower) {
         return Err(format!(
-            "Not logged in to {provider}. Please run Login CLI (`{login} login`) or Sign in (web), then retry Deploy."
+            "Not logged in to {provider}. Please run Login CLI (`{login}`) or Sign in (web), then retry."
         ));
     }
     if !status.success() {
         return Err(format!(
-            "Not logged in to {provider} (exit {}). Please run Login CLI (`{login} login`), then retry Deploy.",
+            "Not logged in to {provider} (exit {}). Please run Login CLI (`{login}`), then retry.",
             status.code().unwrap_or(-1)
         ));
     }
-    if provider == "vercel" {
+    if provider == "vercel" || provider == "railway" {
         let user = out.trim().to_string();
         if user.is_empty() || user.to_ascii_lowercase().contains("error") {
-            return Err(
-                "Not logged in to vercel. Please run Login CLI (`vercel login`), then retry Deploy."
-                    .into(),
-            );
+            return Err(format!(
+                "Not logged in to {provider}. Please run Login CLI (`{login}`), then retry."
+            ));
         }
         return Ok(());
     }
     let _ = ok_needles;
     Ok(())
+}
+
+fn normalize_auth_provider(raw: &str) -> Result<&'static str> {
+    match raw.trim().to_ascii_lowercase().as_str() {
+        "cloudflare" | "cf" | "wrangler" => Ok("cloudflare"),
+        "vercel" => Ok("vercel"),
+        "netlify" => Ok("netlify"),
+        "fly" | "flyio" | "fly.io" => Ok("fly"),
+        "railway" => Ok("railway"),
+        other => bail!(
+            "auth-check unsupported provider `{other}` (cloudflare|vercel|netlify|fly|railway)"
+        ),
+    }
 }
 
 fn normalize_provider(raw: &str) -> Result<&'static str> {
@@ -631,10 +660,16 @@ pub fn detect_provider(project: &Path, provider: &str) -> Result<HostPlan> {
 }
 
 fn resolve_cli(cli: &str) -> Result<PathBuf> {
+    resolve_auth_cli(cli)
+}
+
+fn resolve_auth_cli(cli: &str) -> Result<PathBuf> {
     let candidates: &[&str] = match cli {
         "wrangler" => &["wrangler", "wrangler.cmd", "wrangler.exe"],
         "vercel" => &["vercel", "vercel.cmd", "vercel.exe"],
         "netlify" => &["netlify", "netlify.cmd", "netlify.exe"],
+        "fly" => &["flyctl", "fly", "flyctl.exe", "fly.exe"],
+        "railway" => &["railway", "railway.exe", "railway.cmd"],
         other => bail!("unknown CLI `{other}`"),
     };
     for name in candidates {
@@ -646,6 +681,8 @@ fn resolve_cli(cli: &str) -> Result<PathBuf> {
         "wrangler" => "npm i -g wrangler",
         "vercel" => "npm i -g vercel",
         "netlify" => "npm i -g netlify-cli",
+        "fly" => "install flyctl — https://fly.io/docs/hands-on/install-flyctl/",
+        "railway" => "npm i -g @railway/cli",
         _ => "install the vendor CLI",
     };
     bail!("{cli} not on PATH — install with `{hint}` or use Login CLI after install")

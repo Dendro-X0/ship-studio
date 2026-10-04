@@ -1,13 +1,13 @@
 # Host deploy confirm + Results isolation (design)
 
+**Status:** Shipped · uniform CLI auth vetting on host select + Deploy  
 **Updated:** 2026-10-04  
-**Status:** Shipped · Netlify name editable · auth-before-deploy redirect  
 **Parent:** [hosted-deploy-ops-value-bar-design](../backend/hosted-deploy-ops-value-bar-design.md)
 
 ```text
 GOAL:  Each host card shows only that host’s last-run evidence (no shared Live URL).
        Deploy opens a confirm dialog (name / lane) before streaming CLI when useful.
-       Unauthenticated Deploy redirects to Login CLI, then Retry Deploy.
+       Selecting any CLI host (CF/Vercel/Netlify/Fly/Railway) runs the same auth vetting.
 NOT:   Studio-held secrets · CDP · inventing vendor project UIs
 ```
 
@@ -38,15 +38,19 @@ Before `shipctl hostdeploy`:
 
 Self-host: no dialog (local lane already one-click).
 
-### Auth before Deploy
+### Auth vetting (every CLI host)
 
-| Step | Behavior |
-|------|----------|
-| Preflight | `shipctl hostdeploy --auth-check` (wrangler whoami / vercel whoami / `netlify api getCurrentUser`) |
-| Not logged in | Desktop **opens Login CLI** (vendor OAuth in terminal/browser) — deploy does not start |
-| After auth | Operator taps **Retry Deploy** (or Deploy again) |
-| Mid-deploy auth fail | Same redirect: auto Login CLI + Retry Deploy |
-| Kernel | `hostdeploy` also probes auth before streaming (fail fast `[auth]`) |
+Same gate for **Cloudflare · Vercel · Netlify · Fly · Railway**:
+
+| Moment | Behavior |
+|--------|----------|
+| **Select** host card | `hostdeploy --auth-check` — silent if ok; else **Login CLI** + Check again |
+| **Deploy** (Tier A) | Same check before streaming; Retry Deploy after auth |
+| Mid-deploy auth fail | Auto Login CLI + Retry Deploy |
+| Missing CLI | Toast install hint (no fake login) |
+
+Self-host / GitHub Pages / Orbit: no CLI OAuth on the card (Pages uses Portal → GitHub).  
+Payments Integrations: Open dashboard → Put (no CLI login session).
 
 Studio never stores vendor tokens. Login CLI is the authentication page path.
 

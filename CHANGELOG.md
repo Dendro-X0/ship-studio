@@ -5,6 +5,7 @@
 ### Added
 
 - **Client finishability S1–S3** — detect `PUBLIC_PADDLE_*` + website marketing; catalog diet; unbound `platforms.host`; official site bound to **Netlify** (`apps/website/netlify.toml`) ([design](./specs/backend/client-finishability-design.md))
+- **Uniform host auth vetting** — selecting Cloudflare / Vercel / Netlify / Fly / Railway runs the same `--auth-check` → Login CLI gate as Deploy ([design](./specs/frontend/host-deploy-confirm-design.md))
 - **Host deploy auth gate** — unauthenticated Deploy runs `--auth-check`, opens Login CLI (vendor OAuth), then Retry Deploy ([design](./specs/frontend/host-deploy-confirm-design.md))
 - **Netlify deploy name** — Confirm dialog site name is editable; `hostdeploy --name` maps to `--site` / `--create-site` when unlinked ([design](./specs/frontend/host-deploy-confirm-design.md))
 - **Game butler CLI** — `shipctl butler push --target user/game:channel` (+ MCP `ship_butler_push`); submit.itch detail points at the recipe/spawn path ([design](./specs/backend/game-butler-push-design.md))

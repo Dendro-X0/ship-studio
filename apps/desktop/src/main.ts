@@ -3172,6 +3172,26 @@ function selectPlatform(id: string) {
   });
   if (activeViewId !== "platforms") setView("platforms");
   else renderPlatforms();
+  // Same auth vetting for every CLI host — silent when already signed in.
+  void vetProviderOnSelect(wiz);
+}
+
+/** Hosts that require vendor CLI login before Deploy / Portal work. */
+function providerNeedsCliAuthVetting(wiz: ProviderWizard | null | undefined): boolean {
+  if (!wiz) return false;
+  const p = (wiz.provider ?? wiz.id).toLowerCase();
+  return (
+    p === "cloudflare" ||
+    p === "vercel" ||
+    p === "netlify" ||
+    p === "fly" ||
+    p === "railway"
+  );
+}
+
+async function vetProviderOnSelect(wiz: ProviderWizard): Promise<void> {
+  if (!providerNeedsCliAuthVetting(wiz)) return;
+  await ensureProviderCliAuth(wiz, { context: "select" });
 }
 
 
@@ -4110,9 +4130,13 @@ function promptHostedCliDeploy(wiz: ProviderWizard): void {
   openHostDeployDialog(wiz);
 }
 
-async function ensureHostCliAuth(wiz: ProviderWizard): Promise<boolean> {
+async function ensureProviderCliAuth(
+  wiz: ProviderWizard,
+  opts?: { context?: "select" | "deploy" },
+): Promise<boolean> {
   const provider = wiz.provider ?? wiz.id;
   const title = wiz.title;
+  const context = opts?.context ?? "deploy";
   const check = await run(["hostdeploy", "--provider", provider, "--auth-check"], {
     silent: true,
     quietToast: true,
@@ -4121,6 +4145,7 @@ async function ensureHostCliAuth(wiz: ProviderWizard): Promise<boolean> {
   if (!check) return false;
   const blob = `${check.stdout}\n${check.stderr}`;
   let authRequired = false;
+  let missingCli = false;
   let message = "";
   try {
     const j = JSON.parse(check.stdout.trim() || "{}") as {
@@ -4130,46 +4155,78 @@ async function ensureHostCliAuth(wiz: ProviderWizard): Promise<boolean> {
     };
     if (j.ok) return true;
     authRequired = Boolean(j.auth_required) || /\[auth\]/i.test(j.message ?? "");
+    missingCli = /\[missing_cli\]/i.test(j.message ?? "");
     message = j.message ?? "";
   } catch {
     authRequired =
       !check.ok &&
       /not logged in|login required|auth_required|\[auth\]|please run login/i.test(blob);
+    missingCli = /\[missing_cli\]|not on path/i.test(blob);
     message = blob.slice(0, 240);
   }
   if (check.ok) return true;
-  if (authRequired || /not logged in|login required|\[auth\]/i.test(blob)) {
-    await openPortalLoginTerminal(provider);
+
+  if (missingCli) {
     toast(
-      `${title}: sign in to continue — finish Login CLI / browser auth, then Retry Deploy`,
-      "info",
-      12000,
+      `${title}: install the vendor CLI on PATH, then Login CLI — ${message.slice(0, 140)}`,
+      "err",
+      10000,
       [
         {
-          id: "retry",
-          label: "Retry Deploy",
-          icon: "continue",
-          run: () => {
-            void runHostedCliDeploy(wiz, {
-              name: lastHostDeployName || defaultHostProjectName(),
-              skipConfirm: true,
-            });
-          },
-        },
-        {
-          id: "login",
-          label: "Login CLI again",
+          id: "preview",
+          label: "Preview log",
           icon: "open",
-          run: () => {
-            void openPortalLoginTerminal(provider);
-          },
+          run: () => openOutputPreview(),
         },
       ],
     );
     return false;
   }
+
+  if (authRequired || /not logged in|login required|\[auth\]/i.test(blob)) {
+    await openPortalLoginTerminal(provider);
+    const actions: ToastAction[] = [
+      {
+        id: "login",
+        label: "Login CLI again",
+        icon: "open",
+        run: () => {
+          void openPortalLoginTerminal(provider);
+        },
+      },
+      {
+        id: "recheck",
+        label: context === "deploy" ? "Retry Deploy" : "Check again",
+        icon: "continue",
+        run: () => {
+          if (context === "deploy") {
+            void runHostedCliDeploy(wiz, {
+              name: lastHostDeployName || defaultHostProjectName(),
+              skipConfirm: true,
+            });
+          } else {
+            void ensureProviderCliAuth(wiz, { context: "select" });
+          }
+        },
+      },
+    ];
+    toast(
+      context === "deploy"
+        ? `${title}: sign in to continue — finish Login CLI / browser auth, then Retry Deploy`
+        : `${title}: sign in required — finish Login CLI / browser auth, then Check again`,
+      "info",
+      12000,
+      actions,
+    );
+    return false;
+  }
   toast(`${title}: ${message || "auth check failed"}`, "err", 8000);
   return false;
+}
+
+/** @deprecated name kept for call sites — use ensureProviderCliAuth */
+async function ensureHostCliAuth(wiz: ProviderWizard): Promise<boolean> {
+  return ensureProviderCliAuth(wiz, { context: "deploy" });
 }
 
 async function runHostedCliDeploy(
@@ -4193,7 +4250,7 @@ async function runHostedCliDeploy(
   }
 
   // Redirect unauthenticated operators to Login CLI before streaming deploy.
-  const authed = await ensureHostCliAuth(wiz);
+  const authed = await ensureProviderCliAuth(wiz, { context: "deploy" });
   if (!authed) return;
 
   applyOutputDock(true);
