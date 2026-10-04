@@ -1,19 +1,15 @@
 # Host deploy confirm + Results isolation (design)
 
 **Updated:** 2026-10-04  
-**Status:** Shipped · Netlify site name editable (create-if-missing)  
+**Status:** Shipped · Netlify name editable · auth-before-deploy redirect  
 **Parent:** [hosted-deploy-ops-value-bar-design](../backend/hosted-deploy-ops-value-bar-design.md)
 
 ```text
 GOAL:  Each host card shows only that host’s last-run evidence (no shared Live URL).
        Deploy opens a confirm dialog (name / lane) before streaming CLI when useful.
+       Unauthenticated Deploy redirects to Login CLI, then Retry Deploy.
 NOT:   Studio-held secrets · CDP · inventing vendor project UIs
 ```
-
-## Bugs
-
-1. Self-host / Vercel cards show Cloudflare `host.*` steps + `.pages.dev` URL from shared `.ship/last-run.json`.
-2. Deploy fires immediately — no chance to confirm Pages project name.
 
 ## Contract
 
@@ -21,6 +17,7 @@ NOT:   Studio-held secrets · CDP · inventing vendor project UIs
 |-------|--------|--------|
 | `last_run.host_provider` | `selfhost` → `"selfhost"`; `hostdeploy` → `cloudflare\|vercel\|netlify` | Desktop Results bay |
 | `hostdeploy --name` | Optional override for Pages/site name | Dialog → CLI |
+| `hostdeploy --auth-check` | Probe CLI login only | Desktop preflight |
 
 ## UX
 
@@ -40,6 +37,18 @@ Before `shipctl hostdeploy`:
 | Secondary | Cancel | Cancel | Cancel |
 
 Self-host: no dialog (local lane already one-click).
+
+### Auth before Deploy
+
+| Step | Behavior |
+|------|----------|
+| Preflight | `shipctl hostdeploy --auth-check` (wrangler whoami / vercel whoami / `netlify api getCurrentUser`) |
+| Not logged in | Desktop **opens Login CLI** (vendor OAuth in terminal/browser) — deploy does not start |
+| After auth | Operator taps **Retry Deploy** (or Deploy again) |
+| Mid-deploy auth fail | Same redirect: auto Login CLI + Retry Deploy |
+| Kernel | `hostdeploy` also probes auth before streaming (fail fast `[auth]`) |
+
+Studio never stores vendor tokens. Login CLI is the authentication page path.
 
 ## Dashboard deep links
 
@@ -70,6 +79,7 @@ Cloud hosts (Cloudflare / Vercel / Netlify): Studio is a **portal** only — sto
 
 | Layer | Check |
 |-------|--------|
-| L1 | last-run serde includes `host_provider`; classify/name sanitize |
+| L1 | last-run serde includes `host_provider`; classify/name sanitize; auth_check JSON |
 | L2 | After CF deploy, Self-host card hides CF URL; CF card shows it |
 | L2 | Deploy → dialog → rename → create/deploy uses new name |
+| L2 | Unauthenticated Deploy → Login CLI opens; Retry Deploy after login |

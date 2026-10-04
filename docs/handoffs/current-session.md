@@ -2,15 +2,15 @@
 
 **Updated:** 2026-10-04  
 **Branch:** `main`  
-**Status:** **S3 Netlify bound** · Netlify **site name editable** in Deploy confirm (`--create-site` when unlinked).
+**Status:** **Host deploy auth gate** — unauthenticated Deploy opens Login CLI, then Retry Deploy.
 
 ## Next Atomic Step
 
-**Idle** — rebuild Desktop if needed, then Deploy → set site name → confirm (requires `netlify login`).
+**Idle** — restart Desktop; Deploy Netlify without login should open Login CLI first.
 
 | Option | When |
 |--------|------|
-| Live Netlify deploy | After login; type desired site name in confirm dialog |
+| Live Netlify deploy | After Login CLI; set site name in confirm |
 | Put PUBLIC_PADDLE_* on Netlify env | Before Solo Buy on the live site |
 | Paddle Solo dogfood | Stays PAUSED until explicit reopen |
 

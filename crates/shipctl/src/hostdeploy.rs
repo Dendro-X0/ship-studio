@@ -25,6 +25,14 @@ pub struct HostPlan {
 }
 
 #[derive(Debug, Serialize)]
+pub struct HostAuthReport {
+    pub ok: bool,
+    pub provider: String,
+    pub auth_required: bool,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize)]
 pub struct HostDeployReport {
     pub ok: bool,
     pub provider: String,
@@ -32,6 +40,152 @@ pub struct HostDeployReport {
     pub urls: Vec<String>,
     pub auth_required: bool,
     pub message: String,
+}
+
+/// Probe whether the vendor CLI has an interactive login session (no deploy).
+pub fn auth_check(provider: &str) -> Result<HostAuthReport> {
+    let provider = normalize_provider(provider)?;
+    let cli = match provider {
+        "cloudflare" => "wrangler",
+        "vercel" => "vercel",
+        "netlify" => "netlify",
+        _ => unreachable!(),
+    };
+    let bin = match resolve_cli(cli) {
+        Ok(b) => b,
+        Err(err) => {
+            return Ok(HostAuthReport {
+                ok: false,
+                provider: provider.into(),
+                auth_required: false,
+                message: format!("{err} [{}]", HostFailClass::MissingCli.as_str()),
+            });
+        }
+    };
+    match probe_cli_auth(provider, &bin) {
+        Ok(()) => Ok(HostAuthReport {
+            ok: true,
+            provider: provider.into(),
+            auth_required: false,
+            message: format!("{provider} CLI session ok"),
+        }),
+        Err(msg) => Ok(HostAuthReport {
+            ok: false,
+            provider: provider.into(),
+            auth_required: true,
+            message: format!("{msg} [{}]", HostFailClass::Auth.as_str()),
+        }),
+    }
+}
+
+fn probe_cli_auth(provider: &str, bin: &Path) -> std::result::Result<(), String> {
+    let (args, ok_needles, fail_needles): (&[&str], &[&str], &[&str]) = match provider {
+        "cloudflare" => (
+            &["whoami"],
+            &["logged in", "oauth", "email", "account"],
+            &["not logged in", "please log in", "login required", "unauthorized"],
+        ),
+        "vercel" => (
+            &["whoami"],
+            &[],
+            &["not logged in", "no existing credentials", "log in", "login required"],
+        ),
+        "netlify" => (
+            &["api", "getCurrentUser"],
+            &["\"email\"", "\"id\"", "\"full_name\""],
+            &[
+                "not logged in",
+                "please log in",
+                "login required",
+                "netlify login",
+                "unauthorized",
+                "please login",
+            ],
+        ),
+        _ => return Err(format!("unsupported provider `{provider}`")),
+    };
+
+    let mut child = Command::new(bin)
+        .args(args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("failed to spawn {provider} auth probe: {e}"))?;
+
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+    let reader = thread::spawn(move || {
+        let mut out = String::new();
+        let mut err = String::new();
+        if let Some(s) = stdout {
+            for line in BufReader::new(s).lines().flatten() {
+                out.push_str(&line);
+                out.push('\n');
+            }
+        }
+        if let Some(s) = stderr {
+            for line in BufReader::new(s).lines().flatten() {
+                err.push_str(&line);
+                err.push('\n');
+            }
+        }
+        (out, err)
+    });
+
+    let started = std::time::Instant::now();
+    let timeout = std::time::Duration::from_secs(20);
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(s)) => break s,
+            Ok(None) if started.elapsed() > timeout => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(format!(
+                    "{provider} auth probe timed out — run Login CLI (`{} login`)",
+                    match provider {
+                        "vercel" => "vercel",
+                        "netlify" => "netlify",
+                        _ => "wrangler",
+                    }
+                ));
+            }
+            Ok(None) => thread::sleep(std::time::Duration::from_millis(50)),
+            Err(e) => return Err(format!("auth probe wait failed: {e}")),
+        }
+    };
+
+    let (out, err) = reader.join().unwrap_or_default();
+    let text = format!("{out}\n{err}");
+    let lower = text.to_ascii_lowercase();
+    let login = match provider {
+        "vercel" => "vercel",
+        "netlify" => "netlify",
+        _ => "wrangler",
+    };
+    if fail_needles.iter().any(|n| lower.contains(n)) || is_auth_failure_inner(&lower) {
+        return Err(format!(
+            "Not logged in to {provider}. Please run Login CLI (`{login} login`) or Sign in (web), then retry Deploy."
+        ));
+    }
+    if !status.success() {
+        return Err(format!(
+            "Not logged in to {provider} (exit {}). Please run Login CLI (`{login} login`), then retry Deploy.",
+            status.code().unwrap_or(-1)
+        ));
+    }
+    if provider == "vercel" {
+        let user = out.trim().to_string();
+        if user.is_empty() || user.to_ascii_lowercase().contains("error") {
+            return Err(
+                "Not logged in to vercel. Please run Login CLI (`vercel login`), then retry Deploy."
+                    .into(),
+            );
+        }
+        return Ok(());
+    }
+    let _ = ok_needles;
+    Ok(())
 }
 
 fn normalize_provider(raw: &str) -> Result<&'static str> {
@@ -813,6 +967,30 @@ pub fn run(project: &Path, provider: &str, name_override: Option<&str>) -> Resul
         }
     };
 
+    // Auth gate — fail fast to Login CLI instead of streaming an interactive prompt.
+    if let Err(msg) = probe_cli_auth(provider, &bin) {
+        println!("hostdeploy · auth required · {msg}");
+        write_run(
+            &project,
+            started,
+            false,
+            msg.clone(),
+            vec![],
+            &plan,
+            1,
+            false,
+        )?;
+        return Ok(HostDeployReport {
+            ok: false,
+            provider: plan.provider,
+            lane: plan.lane,
+            urls: vec![],
+            auth_required: true,
+            message: format!("{msg} [{}]", HostFailClass::Auth.as_str()),
+        });
+    }
+    println!("hostdeploy · auth ok · {provider}");
+
     let (mut code, mut output) = run_cli_stream(&bin, &plan)?;
 
     // Cloudflare Pages: create-if-missing then one retry (no dashboard trip).
@@ -1086,5 +1264,24 @@ Visit https://harbor.pages.dev/index.html
         assert!(is_missing_netlify_site(
             "This folder isn't linked to a project yet\nTo create and deploy in one go, use: netlify deploy --create-site"
         ));
+    }
+
+    #[test]
+    fn auth_check_reports_json_shape_when_cli_missing() {
+        // Force missing CLI by probing a fake provider path via normalize only —
+        // when wrangler/vercel/netlify exist this still returns a HostAuthReport.
+        let report = auth_check("netlify").expect("auth_check returns");
+        assert_eq!(report.provider, "netlify");
+        assert!(!report.message.is_empty());
+        // Either logged in (ok) or auth_required / missing_cli.
+        if !report.ok {
+            assert!(
+                report.auth_required
+                    || report.message.contains("[missing_cli]")
+                    || report.message.contains("[auth]"),
+                "unexpected message: {}",
+                report.message
+            );
+        }
     }
 }

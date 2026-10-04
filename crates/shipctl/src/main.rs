@@ -202,6 +202,9 @@ enum Commands {
         /// Override Pages / site project name (default: folder name).
         #[arg(long)]
         name: Option<String>,
+        /// Only check vendor CLI login; print JSON and exit (no deploy).
+        #[arg(long, default_value_t = false)]
+        auth_check: bool,
     },
     /// itch.io butler push — recipe or spawn a visible terminal (never stores credentials).
     Butler {
@@ -847,8 +850,17 @@ fn main() -> Result<()> {
             project,
             provider,
             name,
+            auth_check,
         } => {
-            let _ = hostdeploy::run(&project, &provider, name.as_deref())?;
+            if auth_check {
+                let report = hostdeploy::auth_check(&provider)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+                if !report.ok {
+                    bail!("{}", report.message);
+                }
+            } else {
+                let _ = hostdeploy::run(&project, &provider, name.as_deref())?;
+            }
         }
         Commands::Butler { action } => match action {
             ButlerCmd::Push {

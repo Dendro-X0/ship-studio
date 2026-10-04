@@ -3946,7 +3946,7 @@ function classifyHostDeployFailure(text: string, provider = "cloudflare"): HostR
     };
   }
   if (
-    /not logged in|please log in|login required|wrangler login|vercel login|netlify login|authentication error|unauthorized|missing credentials|auth required|re-authenticate|no existing credentials|not authenticated/.test(
+    /not logged in|please log in|login required|wrangler login|vercel login|netlify login|authentication error|unauthorized|missing credentials|auth required|re-authenticate|no existing credentials|not authenticated|\[auth\]|sign in \(web\)|run login cli/i.test(
       l,
     )
   ) {
@@ -4110,6 +4110,68 @@ function promptHostedCliDeploy(wiz: ProviderWizard): void {
   openHostDeployDialog(wiz);
 }
 
+async function ensureHostCliAuth(wiz: ProviderWizard): Promise<boolean> {
+  const provider = wiz.provider ?? wiz.id;
+  const title = wiz.title;
+  const check = await run(["hostdeploy", "--provider", provider, "--auth-check"], {
+    silent: true,
+    quietToast: true,
+    quietHeader: true,
+  });
+  if (!check) return false;
+  const blob = `${check.stdout}\n${check.stderr}`;
+  let authRequired = false;
+  let message = "";
+  try {
+    const j = JSON.parse(check.stdout.trim() || "{}") as {
+      ok?: boolean;
+      auth_required?: boolean;
+      message?: string;
+    };
+    if (j.ok) return true;
+    authRequired = Boolean(j.auth_required) || /\[auth\]/i.test(j.message ?? "");
+    message = j.message ?? "";
+  } catch {
+    authRequired =
+      !check.ok &&
+      /not logged in|login required|auth_required|\[auth\]|please run login/i.test(blob);
+    message = blob.slice(0, 240);
+  }
+  if (check.ok) return true;
+  if (authRequired || /not logged in|login required|\[auth\]/i.test(blob)) {
+    await openPortalLoginTerminal(provider);
+    toast(
+      `${title}: sign in to continue — finish Login CLI / browser auth, then Retry Deploy`,
+      "info",
+      12000,
+      [
+        {
+          id: "retry",
+          label: "Retry Deploy",
+          icon: "continue",
+          run: () => {
+            void runHostedCliDeploy(wiz, {
+              name: lastHostDeployName || defaultHostProjectName(),
+              skipConfirm: true,
+            });
+          },
+        },
+        {
+          id: "login",
+          label: "Login CLI again",
+          icon: "open",
+          run: () => {
+            void openPortalLoginTerminal(provider);
+          },
+        },
+      ],
+    );
+    return false;
+  }
+  toast(`${title}: ${message || "auth check failed"}`, "err", 8000);
+  return false;
+}
+
 async function runHostedCliDeploy(
   wiz: ProviderWizard,
   opts?: { name?: string; skipConfirm?: boolean },
@@ -4129,6 +4191,11 @@ async function runHostedCliDeploy(
       /* ignore quota */
     }
   }
+
+  // Redirect unauthenticated operators to Login CLI before streaming deploy.
+  const authed = await ensureHostCliAuth(wiz);
+  if (!authed) return;
+
   applyOutputDock(true);
   cloudEvidenceClearedProvider = null;
   toast(`${title} Deploy — streaming CLI in Output`, "ok", 3500);
@@ -4167,16 +4234,34 @@ async function runHostedCliDeploy(
     return;
   }
   const recovery = classifyHostDeployFailure(errText, provider);
+  // Auth mid-deploy: auto-open Login CLI (same redirect path as preflight).
+  if (recovery.kind === "auth") {
+    void openPortalLoginTerminal(provider);
+  }
   const toastActions: ToastAction[] = [
     {
       id: "primary",
-      label: recovery.label,
+      label: recovery.kind === "auth" ? "Retry Deploy" : recovery.label,
       icon: recovery.action === "login_cli" || recovery.action === "retry_deploy" ? "continue" : "open",
-      run: () => runHostRecoveryAction(recovery, wiz),
+      run: () => {
+        if (recovery.kind === "auth") {
+          void runHostedCliDeploy(wiz, { name, skipConfirm: true });
+        } else {
+          runHostRecoveryAction(recovery, wiz);
+        }
+      },
     },
   ];
-  // Flexible manual path: Open dashboard first, then Retry without re-reading the log.
-  if (recovery.action === "open_dashboard" || recovery.kind === "account") {
+  if (recovery.kind === "auth") {
+    toastActions.push({
+      id: "login",
+      label: "Login CLI",
+      icon: "open",
+      run: () => {
+        void openPortalLoginTerminal(provider);
+      },
+    });
+  } else if (recovery.action === "open_dashboard" || recovery.kind === "account") {
     toastActions.push({
       id: "retry",
       label: "Retry Deploy",
@@ -4195,7 +4280,14 @@ async function runHostedCliDeploy(
       },
     });
   }
-  toast(`${title}: ${recovery.hint}`, "err", 11000, toastActions);
+  toast(
+    recovery.kind === "auth"
+      ? `${title}: sign in required — Login CLI opened; Retry Deploy when done`
+      : `${title}: ${recovery.hint}`,
+    "err",
+    11000,
+    toastActions,
+  );
 }
 
 function polishCtaLabel(raw: string): string {
