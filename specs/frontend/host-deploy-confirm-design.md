@@ -1,7 +1,7 @@
 # Host deploy confirm + Results isolation (design)
 
-**Status:** Shipped  
-**Updated:** 2026-09-27  
+**Updated:** 2026-10-04  
+**Status:** Shipped · Netlify site name editable (create-if-missing)  
 **Parent:** [hosted-deploy-ops-value-bar-design](../backend/hosted-deploy-ops-value-bar-design.md)
 
 ```text
@@ -32,12 +32,12 @@ Show only when `selectedPlatform` matches `last_run.host_provider` (infer from s
 
 Before `shipctl hostdeploy`:
 
-| Control | Cloudflare | Vercel / Netlify |
-|---------|------------|------------------|
-| Project / site name | Editable (default folder name) | Shown; edit when CLI supports |
-| Lane summary | pages/workers · asset path | prod · cwd |
-| Primary | **Deploy** | **Deploy** |
-| Secondary | Cancel | Cancel |
+| Control | Cloudflare | Vercel | Netlify |
+|---------|------------|--------|---------|
+| Project / site name | Editable (default folder name) | Shown for reference (link wins) | Editable → `--site` / `--create-site` if unlinked |
+| Lane summary | pages/workers · asset path | prod · cwd | prod · publish dir |
+| Primary | **Deploy** | **Deploy** | **Deploy** |
+| Secondary | Cancel | Cancel | Cancel |
 
 Self-host: no dialog (local lane already one-click).
 

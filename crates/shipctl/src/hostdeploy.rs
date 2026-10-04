@@ -461,6 +461,7 @@ pub fn detect_netlify(project: &Path) -> Result<HostPlan> {
             "--prod".into(),
             "--dir".into(),
             asset_rel,
+            "--no-build".into(),
         ],
         cli: "netlify".into(),
     })
@@ -681,6 +682,56 @@ fn apply_project_name(plan: &mut HostPlan, name: &str) {
         }
         i += 1;
     }
+    // Netlify: prefer --site <name>; create-if-missing uses --create-site on retry.
+    if plan.provider == "netlify" {
+        let mut i = 0;
+        while i + 1 < plan.argv.len() {
+            if plan.argv[i] == "--site" || plan.argv[i] == "--create-site" {
+                plan.argv[i + 1] = name.clone();
+                return;
+            }
+            i += 1;
+        }
+        plan.argv.push("--site".into());
+        plan.argv.push(name);
+    }
+}
+
+fn is_missing_netlify_site(text: &str) -> bool {
+    let l = text.to_ascii_lowercase();
+    l.contains("isn't linked")
+        || l.contains("is not linked")
+        || l.contains("not linked to a project")
+        || l.contains("create & configure a new project")
+        || l.contains("create-site")
+        || (l.contains("site not found") && l.contains("netlify"))
+        || l.contains("could not find the project")
+        || l.contains("project not found")
+}
+
+fn netlify_create_and_deploy_plan(plan: &HostPlan) -> HostPlan {
+    let mut argv = vec!["deploy".into(), "--prod".into()];
+    // Keep --dir <path> from original plan.
+    let mut i = 0;
+    while i + 1 < plan.argv.len() {
+        if plan.argv[i] == "--dir" {
+            argv.push("--dir".into());
+            argv.push(plan.argv[i + 1].clone());
+            break;
+        }
+        i += 1;
+    }
+    if !argv.iter().any(|a| a == "--dir") {
+        argv.push("--dir".into());
+        argv.push(plan.asset_rel.clone());
+    }
+    argv.push("--no-build".into());
+    argv.push("--create-site".into());
+    argv.push(plan.project_name.clone());
+    HostPlan {
+        argv,
+        ..plan.clone()
+    }
 }
 
 pub fn run(project: &Path, provider: &str, name_override: Option<&str>) -> Result<HostDeployReport> {
@@ -715,6 +766,18 @@ pub fn run(project: &Path, provider: &str, name_override: Option<&str>) -> Resul
     if let Some(n) = name_override {
         apply_project_name(&mut plan, n);
         println!("hostdeploy · project-name override · {}", plan.project_name);
+    }
+
+    // Unlinked Netlify folder + named site → create-site up front (avoids interactive link prompt).
+    if plan.provider == "netlify"
+        && !plan.project_name.is_empty()
+        && !project.join(".netlify").is_dir()
+    {
+        plan = netlify_create_and_deploy_plan(&plan);
+        println!(
+            "hostdeploy · Netlify unlinked — using --create-site {}",
+            plan.project_name
+        );
     }
 
     println!(
@@ -776,6 +839,23 @@ pub fn run(project: &Path, provider: &str, name_override: Option<&str>) -> Resul
         } else {
             println!("hostdeploy · create failed · exit {cc}");
         }
+    }
+
+    // Netlify: unlinked folder / missing site → create-site <name> then done (one shot).
+    if code != 0
+        && plan.provider == "netlify"
+        && !plan.project_name.is_empty()
+        && is_missing_netlify_site(&output)
+    {
+        println!(
+            "hostdeploy · Netlify site `{}` missing/unlinked — create-site + deploy…",
+            plan.project_name
+        );
+        let create = netlify_create_and_deploy_plan(&plan);
+        let (c2, o2) = run_cli_stream(&bin, &create)?;
+        code = c2;
+        output.push('\n');
+        output.push_str(&o2);
     }
 
     let urls = extract_hosted_urls(&output);
@@ -984,5 +1064,27 @@ Visit https://harbor.pages.dev/index.html
         assert_eq!(plan.provider, "netlify");
         assert!(plan.argv.iter().any(|a| a == "--prod"));
         assert!(plan.argv.iter().any(|a| a == "public"));
+    }
+
+    #[test]
+    fn apply_project_name_adds_netlify_site_flag() {
+        let dir = tmp();
+        fs::create_dir_all(dir.join("dist")).unwrap();
+        fs::write(dir.join("dist/index.html"), "<h1>ok</h1>").unwrap();
+        let mut plan = detect_netlify(&dir).unwrap();
+        apply_project_name(&mut plan, "Ship Studio Site!");
+        assert_eq!(plan.project_name, "ship-studio-site");
+        let site_idx = plan
+            .argv
+            .iter()
+            .position(|a| a == "--site")
+            .expect("--site");
+        assert_eq!(plan.argv.get(site_idx + 1).map(String::as_str), Some("ship-studio-site"));
+        let create = netlify_create_and_deploy_plan(&plan);
+        assert!(create.argv.iter().any(|a| a == "--create-site"));
+        assert!(create.argv.iter().any(|a| a == "ship-studio-site"));
+        assert!(is_missing_netlify_site(
+            "This folder isn't linked to a project yet\nTo create and deploy in one go, use: netlify deploy --create-site"
+        ));
     }
 }

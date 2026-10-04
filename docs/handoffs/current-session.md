@@ -2,15 +2,15 @@
 
 **Updated:** 2026-10-04  
 **Branch:** `main`  
-**Status:** **S3 Netlify bound** for `apps/website`. Live deploy waits on your `netlify login` + site link.
+**Status:** **S3 Netlify bound** · Netlify **site name editable** in Deploy confirm (`--create-site` when unlinked).
 
 ## Next Atomic Step
 
-**Idle** — human Netlify auth/link, then `shipctl hostdeploy --project apps/website --provider netlify` (after `pnpm website:build`).
+**Idle** — rebuild Desktop if needed, then Deploy → set site name → confirm (requires `netlify login`).
 
 | Option | When |
 |--------|------|
-| Live Netlify deploy | After `netlify login` + link/create site |
+| Live Netlify deploy | After login; type desired site name in confirm dialog |
 | Put PUBLIC_PADDLE_* on Netlify env | Before Solo Buy on the live site |
 | Paddle Solo dogfood | Stays PAUSED until explicit reopen |
 

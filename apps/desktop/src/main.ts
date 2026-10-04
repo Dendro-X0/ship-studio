@@ -4082,7 +4082,7 @@ function openHostDeployDialog(wiz: ProviderWizard) {
         ? "Confirm the Pages/Workers project name. Studio streams wrangler on this machine — Login CLI once if needed."
         : wiz.id === "vercel"
           ? "Confirm deploy. Vercel uses the linked project or creates from this folder name (`vercel --prod --yes`)."
-          : "Confirm deploy. Netlify streams `netlify deploy --prod` for this publish directory.";
+          : "Confirm the Netlify site name. Studio streams `netlify deploy --prod` and creates the site if it is not linked yet.";
   }
   const remembered =
     lastHostDeployName ||
@@ -4090,14 +4090,15 @@ function openHostDeployDialog(wiz: ProviderWizard) {
       ? localStorage.getItem(`ship.hostdeploy.name.${wiz.id}`) || ""
       : "");
   nameInput.value = remembered || defaultHostProjectName();
-  nameInput.readOnly = wiz.id !== "cloudflare";
+  // Cloudflare + Netlify honor --name; Vercel still uses linked project / folder.
+  nameInput.readOnly = wiz.id === "vercel";
   if (metaEl) {
     metaEl.textContent =
       wiz.id === "cloudflare"
         ? "Lane: Cloudflare Pages (or Workers if wrangler.toml) · create-if-missing · then deploy"
         : wiz.id === "vercel"
           ? "Lane: Vercel production · name shown for reference (CLI link wins when present)"
-          : "Lane: Netlify production · name shown for reference";
+          : "Lane: Netlify production · editable site name (--site / create-if-missing)";
   }
   dlg.hidden = false;
   nameInput.focus();
@@ -4132,7 +4133,7 @@ async function runHostedCliDeploy(
   cloudEvidenceClearedProvider = null;
   toast(`${title} Deploy — streaming CLI in Output`, "ok", 3500);
   const args = ["hostdeploy", "--provider", provider];
-  if (name && wiz.id === "cloudflare") {
+  if (name && (wiz.id === "cloudflare" || wiz.id === "netlify")) {
     args.push("--name", name);
   }
   const result = await run(args, {
