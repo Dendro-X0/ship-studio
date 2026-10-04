@@ -1,6 +1,6 @@
 # Close-cut — finish the repo without a commercial loop
 
-**Status:** Slice 1 landed (legal + CURRENT/README). Remaining: optional named tag; then freeze.  
+**Status:** Slice 1 landed · freeze tag `freeze/mcp-agent-2026-10-04` — OSS done without paid loop.  
 **Updated:** 2026-10-04  
 **Owner:** docs + `apps/website` legal honesty · **not** Desktop portal expansion  
 **Parent:** [SCOPE-OF-SERVICE.md](../../docs/product/SCOPE-OF-SERVICE.md) · [CURRENT.md](../../docs/CURRENT.md)

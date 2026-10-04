@@ -2,16 +2,16 @@
 
 **Updated:** 2026-10-03  
 **Branch:** `main`  
-**Status:** **MCP agent path closed** (G1–G4 + `ship-mcp-agent` skill). Client stays thin. G6 CDP parked.
+**Status:** **Frozen** — close-cut OSS + MCP agent path (G1–G4 + skill). Tag `freeze/mcp-agent-2026-10-04`.
 
 ## Next Atomic Step
 
-**Idle** — freeze complete for agent guide band. Named git tag optional. No Desktop wizard growth.
+**Idle** — no coding. Desktop wizards stay frozen. G6 CDP only if Reliability Later is activated.
 
 | Option | When |
 |--------|------|
-| Named freeze tag | Maintainer |
 | G6 CDP dogfood | Reliability Later only |
+| New product band | Maintainer charter only |
 
 ## Design queue (not coding until activated)
 
@@ -49,6 +49,7 @@
 
 | Band | Link |
 |------|------|
+| **Freeze tag** | `freeze/mcp-agent-2026-10-04` — close-cut + MCP G1–G4 + skill |
 | **MCP agent skill** | [`.cursor/skills/ship-mcp-agent`](../../.cursor/skills/ship-mcp-agent/SKILL.md) · prefer ship_* over Desktop wizards |
 | **S2.4 G3–G4 MCP put/vault honesty** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · TTY bail · vault schema |
 | **S2.4 G2 MCP env put launch** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · `ship_env_put` recipe + spawn |

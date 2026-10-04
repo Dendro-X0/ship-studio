@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3  
 **Updated:** 2026-10-03  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Close-cut OSS · MCP agent path + skill closed.
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Frozen at `freeze/mcp-agent-2026-10-04` (OSS close-cut + MCP agent path).
 
 ## Truth pointers
 
