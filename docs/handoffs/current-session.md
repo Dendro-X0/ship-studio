@@ -55,7 +55,7 @@
 | **Uniform CLI host auth vetting** | select CF/Vercel/Netlify/Fly/Railway → Login CLI |
 | **Website Netlify bind (S3)** | `apps/website/netlify.toml` |
 | **Client finishability S1–S2** | [client-finishability-design](../../specs/backend/client-finishability-design.md) |
-| **Game butler push** | `orbityard butler push` · `orbit_butler_push` |
+| **Game butler push** | `orbityard butler push` · `yard_butler_push` |
 | **Freeze tag** | `freeze/mcp-agent-2026-10-04` |
 | **MCP agent skill** | [`.cursor/skills/orbit-yard-mcp-agent`](../../.cursor/skills/orbit-yard-mcp-agent/SKILL.md) |
 

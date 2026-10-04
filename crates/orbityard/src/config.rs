@@ -98,7 +98,7 @@ fn suggested_deploy_args(detected: &Detected) -> Vec<String> {
     if detected.netlify {
         return vec!["deploy".into(), "--provider".into(), "netlify".into()];
     }
-    if detected.orbit_configured {
+    if detected.yard_configured {
         return vec!["status".into()];
     }
     default_deploy_args()
@@ -142,7 +142,7 @@ pub struct Detected {
     #[serde(default)]
     pub polar: bool,
     #[serde(default)]
-    pub orbit_configured: bool,
+    pub yard_configured: bool,
     /// Any mobile layout (Android / iOS / Expo / Flutter / Capacitor).
     #[serde(default)]
     pub mobile: bool,
@@ -384,7 +384,7 @@ pub fn probe(project: &Path) -> Detected {
         || project.join(".netlify").is_dir();
     d.github = project.join(".git").is_dir() || project.join(".git").is_file();
     d.polar = detect_polar(project);
-    d.orbit_configured = project.join(".orbit/state.json").is_file();
+    d.yard_configured = project.join(".orbit/state.json").is_file();
     detect_mobile(project, &mut d);
     detect_db(project, &mut d);
     detect_baas(project, &mut d);
@@ -401,7 +401,7 @@ pub fn probe(project: &Path) -> Detected {
     detect_marketing_site(project, &mut d);
     detect_graduate_commerce(project, &mut d);
     detect_suite_sync(project, &mut d);
-    let orbit_configured = d.orbit_configured;
+    let yard_configured = d.yard_configured;
 
     if d.signet_toml {
         d.hints
@@ -672,11 +672,11 @@ pub fn probe(project: &Path) -> Detected {
             }
         ));
     }
-    if orbit_configured {
+    if yard_configured {
         d.hints
             .push(".orbit/state.json found — Orbit already configured for this repo.".into());
     }
-    if !d.wrangler && !d.vercel && !d.netlify && !orbit_configured {
+    if !d.wrangler && !d.vercel && !d.netlify && !yard_configured {
         d.hints
             .push("No wrangler/vercel/netlify/Orbit config yet — run `orbityard portal` then `orbit configure`.".into());
     } else {

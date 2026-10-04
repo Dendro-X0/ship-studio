@@ -34,7 +34,7 @@ Self-host is the **flagship local-auto** lane. Containers are the nearest shippe
 | Local process (serve / static preview / compose-up / studio site build) | Studio + operator machine | **Stream** stdout/stderr in Desktop terminal; operator watches progress |
 | Done? | Disk + local CLI ([verify-status-layers](../backend/verify-status-layers-design.md)) | Probe URL / port / artifact / last-run — **auto mark done** when checks pass |
 | Public SaaS cutover | Operator + vendor | Out of this lane — use Hosting cards + Confirm |
-| Orbit CLI | Optional when `orbit_configured` | Separate card; never “your datacenter” |
+| Orbit CLI | Optional when `yard_configured` | Separate card; never “your datacenter” |
 
 **Invariant:** Bridge still never calls vendor HTTPS with secrets and never `docker push`. Self-host only automates what runs **on the bound machine**.
 
@@ -56,7 +56,7 @@ Product copy: “Like a local container run — Studio streams it and checks it 
 
 | Surface | Behavior |
 |---------|----------|
-| **Deployment** catalog | **Self-host** card (not Orbit-as-SaaS). Orbit only if `orbit_configured`. |
+| **Deployment** catalog | **Self-host** card (not Orbit-as-SaaS). Orbit only if `yard_configured`. |
 | Detail panel | **Deploy** primary (not Open dashboard). Live stream + check status. |
 | Publish / Launch | Optional `selfhost.deploy` as **Auto** step (Continue/script) — omitted from Human-gate Confirm list when checks own completion. |
 | CmdK | “Self-host deploy” → Deployment + start or focus stream. |

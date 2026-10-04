@@ -29,7 +29,7 @@ export type Detected = {
   netlify?: boolean;
   github?: boolean;
   polar?: boolean;
-  orbit_configured?: boolean;
+  yard_configured?: boolean;
   selfhost?: boolean;
   studio_monorepo?: boolean;
   fly?: boolean;

@@ -54,7 +54,7 @@ pub fn push_launch(
                 butler_path: None,
                 spawned: false,
                 hint: format!(
-                    "butler not on PATH — install from {BUTLER_DOCS} then re-run `orbityard butler push` or orbit_butler_push"
+                    "butler not on PATH — install from {BUTLER_DOCS} then re-run `orbityard butler push` or yard_butler_push"
                 ),
                 docs_url: Some(BUTLER_DOCS.into()),
             });

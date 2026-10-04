@@ -1,6 +1,6 @@
 # Game cut — butler push assist (itch)
 
-**Status:** Slice 1b shipped (`orbit_butler_push` + `orbityard butler push`)  
+**Status:** Slice 1b shipped (`yard_butler_push` + `orbityard butler push`)  
 **Updated:** 2026-10-04  
 **Owner:** `orbityard` MCP/CLI · Publish `submit.itch`  
 **Parent:** [marketplace-submit-parity-design](./marketplace-submit-parity-design.md) · [mcp-agent-guide-design](./mcp-agent-guide-design.md) · [close-cut-design](./close-cut-design.md)
@@ -18,7 +18,7 @@ SURFACE:               CLI / MCP (not Desktop wizards)
 ```
 
 - Maintainer is developing a game to release later; wants finishable publish/deploy/sign → platforms.
-- Freeze stays for Desktop wizard growth; **MCP/CLI spawn of official tools** is the allowed depth (same as `orbit_env_put` / `orbit_hostdeploy`).
+- Freeze stays for Desktop wizard growth; **MCP/CLI spawn of official tools** is the allowed depth (same as `yard_env_put` / `yard_hostdeploy`).
 - [marketplace-submit-parity](./marketplace-submit-parity-design.md) forbade *bridge* running butler silently. This band **spawns a visible terminal** (or prints a recipe) — human sees auth/errors; Studio never holds itch credentials.
 
 ## Value
@@ -34,7 +34,7 @@ Steam/Epic stay Open+Confirm only (harder tooling; no depot API).
 - Existing: `.ship/markets` includes `itch` / `itch.io`, or `itch.toml` present → Advanced `listing.itch` / `submit.itch`.
 - Optional: `butler` on PATH → pulse/assist note “butler available”.
 
-### MCP / CLI: `orbit_butler_push`
+### MCP / CLI: `yard_butler_push`
 
 | Arg | Meaning |
 |-----|---------|
@@ -54,7 +54,7 @@ Never accepts passwords/API keys. If `butler` missing → `ok: false` + install 
 ## Slice 1 (this band)
 
 1. `envx`-style launcher module or `game.rs` / `butler.rs` with `push_launch`.
-2. MCP tool `orbit_butler_push`.
+2. MCP tool `yard_butler_push`.
 3. Unit tests: missing butler → ok false; recipe contains `butler push`; rejects empty target when spawn.
 4. Docs: mcp-assist inventory · agent skill · handoff · OPERATOR-NEXT itch row.
 
@@ -72,7 +72,7 @@ Never accepts passwords/API keys. If `butler` missing → `ok: false` + install 
 
 ## Acceptance
 
-- [x] `orbit_butler_push` in MCP `tools()`
+- [x] `yard_butler_push` in MCP `tools()`
 - [x] Recipe-only works without spawning
 - [x] Missing butler returns install hint, no hang
 - [x] Skill mentions game → butler path
@@ -84,5 +84,5 @@ Never accepts passwords/API keys. If `butler` missing → `ok: false` + install 
 | Layer | Proof |
 |-------|--------|
 | L1 | `cargo test -p orbityard butler` — pass |
-| L2 | tools list includes `orbit_butler_push` — pass |
+| L2 | tools list includes `yard_butler_push` — pass |
 | L3 | 2026-10-04: butler v15.31.0 on PATH; fixture `E:/Temp/ship-butler-dogfood`; `--no-spawn` recipe ok + spawn `spawned:true`; assist/pulse itch cues. Live push blocked until human `butler login` (no `butler_creds`) |

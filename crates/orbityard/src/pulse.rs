@@ -363,7 +363,7 @@ fn push_url(urls: &mut Vec<String>, raw: Option<&str>) {
 }
 
 /// Scan `.orbit/runs/*/summary.json` (newest first) for successful deploys + URLs.
-pub fn latest_orbit_deploy(project: &Path) -> Option<(String, Vec<String>)> {
+pub fn latest_yard_deploy(project: &Path) -> Option<(String, Vec<String>)> {
     let runs = project.join(".orbit/runs");
     let Ok(entries) = fs::read_dir(&runs) else {
         return None;
@@ -444,7 +444,7 @@ pub fn latest_orbit_deploy(project: &Path) -> Option<(String, Vec<String>)> {
 
 pub fn latest_live_urls(project: &Path) -> Vec<String> {
     let mut urls = Vec::new();
-    if let Some((_, u)) = latest_orbit_deploy(project) {
+    if let Some((_, u)) = latest_yard_deploy(project) {
         for x in u {
             push_url(&mut urls, Some(&x));
         }
@@ -496,7 +496,7 @@ pub fn deploy_is_live(deploy: &DeployPulse) -> bool {
         return false;
     }
     let has_hosted_url = deploy.urls.iter().any(|u| !is_loopback_url(u));
-    matches!(deploy.signal.as_str(), "orbit_deployed" | "last_run_ok") || has_hosted_url
+    matches!(deploy.signal.as_str(), "yard_deployed" | "last_run_ok") || has_hosted_url
 }
 
 /// Public inspect for publish skip / verify (same as internal pulse).
@@ -510,8 +510,8 @@ fn deploy_pulse(project: &Path) -> DeployPulse {
     let mut signal = "unknown".to_string();
     let mut detail = "No local deploy signal yet.".to_string();
 
-    if let Some((orbit_detail, orbit_urls)) = latest_orbit_deploy(project) {
-        signal = "orbit_deployed".into();
+    if let Some((orbit_detail, orbit_urls)) = latest_yard_deploy(project) {
+        signal = "yard_deployed".into();
         detail = orbit_detail;
         for u in orbit_urls {
             push_url(&mut urls, Some(&u));
@@ -529,7 +529,7 @@ fn deploy_pulse(project: &Path) -> DeployPulse {
         }
         if selfhost_run {
             // Local-auto health only — never promote to hosted last_run_ok / live.
-            if signal != "orbit_deployed" {
+            if signal != "yard_deployed" {
                 signal = "selfhost_ok".into();
                 detail = if let Some(u) = urls.iter().find(|u| is_loopback_url(u)) {
                     format!("Self-host local check ok · {u} — not a hosted deploy")
@@ -548,7 +548,7 @@ fn deploy_pulse(project: &Path) -> DeployPulse {
                     let id = s.get("id").and_then(|x| x.as_str()).unwrap_or("");
                     let ok = s.get("ok").and_then(|x| x.as_bool()).unwrap_or(false);
                     // `selfhost.deploy` contains "deploy" — excluded via selfhost_run branch.
-                    if id.contains("deploy") && ok && signal != "orbit_deployed" {
+                    if id.contains("deploy") && ok && signal != "yard_deployed" {
                         signal = "last_run_ok".into();
                         detail = "Last orbityard deploy step succeeded.".into();
                     }
@@ -587,7 +587,7 @@ fn deploy_pulse(project: &Path) -> DeployPulse {
                     == Some(true);
                 let configured = j.get("configured").and_then(|x| x.as_bool()) == Some(true);
                 if cf || configured {
-                    signal = "orbit_configured".into();
+                    signal = "yard_configured".into();
                     detail = "Orbit configured (.orbit/state.json) — no successful run summary yet."
                         .into();
                 }
@@ -745,7 +745,7 @@ fn action(
 fn provider_linked(deploy: &DeployPulse) -> bool {
     deploy_is_live(deploy)
         || deploy.signal == "vercel_linked"
-        || deploy.signal == "orbit_configured"
+        || deploy.signal == "yard_configured"
         || deploy.signal == "wrangler_local"
 }
 
@@ -946,7 +946,7 @@ fn decide_now(
     if git.dirty
         && matches!(
             deploy.signal.as_str(),
-            "unknown" | "wrangler_local" | "vercel_linked" | "orbit_configured"
+            "unknown" | "wrangler_local" | "vercel_linked" | "yard_configured"
         )
         && !deploy_is_live(deploy)
         && publish.finished
@@ -1014,7 +1014,7 @@ fn decide_now(
         };
     }
 
-    if deploy.signal == "vercel_linked" || deploy.signal == "orbit_configured" {
+    if deploy.signal == "vercel_linked" || deploy.signal == "yard_configured" {
         return NowPulse {
             title: format!("{name} is provider-linked"),
             detail: format!(
@@ -1129,7 +1129,7 @@ pub fn for_project(project: &Path) -> Result<ProjectPulse> {
             m.push("Epic");
         }
         let itch_cue = if detected.itch {
-            " itch: `orbityard butler push --target user/game:channel` (or orbit_butler_push)."
+            " itch: `orbityard butler push --target user/game:channel` (or yard_butler_push)."
         } else {
             ""
         };
@@ -1444,7 +1444,7 @@ mod tests {
         intent: None,
         };
         let deploy = DeployPulse {
-            signal: "orbit_deployed".into(),
+            signal: "yard_deployed".into(),
             detail: "Orbit cloudflare deploy ok".into(),
             urls: vec!["https://assess-api.example.workers.dev".into()],
             last_run_ok: Some(true),
@@ -1517,7 +1517,7 @@ mod tests {
         )
         .unwrap();
         let deploy = deploy_pulse(&dir);
-        assert_eq!(deploy.signal, "orbit_deployed");
+        assert_eq!(deploy.signal, "yard_deployed");
         assert!(deploy_is_live(&deploy));
         assert!(deploy.urls.iter().any(|u| u.contains("workers.dev")));
     }

@@ -63,12 +63,12 @@ pub fn serve() -> Result<()> {
 fn tools() -> Vec<Value> {
     vec![
         tool(
-            "orbit_doctor",
+            "yard_doctor",
             "Check Signet/Orbit and project path (offline)",
             false,
         ),
         tool(
-            "orbit_configure",
+            "yard_configure",
             "Write .ship/studio.json env/workflow intent",
             false,
         ),
@@ -76,28 +76,28 @@ fn tools() -> Vec<Value> {
         tool_secrets(),
         tool_vault(),
         tool(
-            "orbit_guide",
+            "yard_guide",
             "Unified offline shipping checklist (doctor+portal+secrets+flow); optional open entry URLs",
             false,
         ),
         tool(
-            "orbit_ship",
+            "yard_ship",
             "One-shot offline prep: guide → configure → flow dry-run; optional open entry URLs",
             false,
         ),
         tool(
-            "orbit_human",
-            "Human portal sprint: open Polar/GitHub/dashboards. put:true requires an interactive TTY — prefer orbit_env_put (spawn) or Desktop Put when running under MCP.",
+            "yard_human",
+            "Human portal sprint: open Polar/GitHub/dashboards. put:true requires an interactive TTY — prefer yard_env_put (spawn) or Desktop Put when running under MCP.",
             false,
         ),
         tool(
-            "orbit_launch",
+            "yard_launch",
             "Guided launch status (open→verify→next). Use CLI for open/verify/confirm/next mutations.",
             false,
         ),
         tool(
-            "orbit_publish",
-            "Publish portal status (minute wizard, read-only). Mutations: orbit_publish_open / orbit_publish_verify / orbit_publish_confirm / orbit_publish_next.",
+            "yard_publish",
+            "Publish portal status (minute wizard, read-only). Mutations: yard_publish_open / yard_publish_verify / yard_publish_confirm / yard_publish_next.",
             false,
         ),
         tool_publish_open(),
@@ -108,49 +108,49 @@ fn tools() -> Vec<Value> {
         tool_env_put(),
         tool_butler_push(),
         tool(
-            "orbit_scopes",
+            "yard_scopes",
             "Detect Web/API/Desktop deploy scopes (directories + providers)",
             false,
         ),
         tool(
-            "orbit_env",
+            "yard_env",
             "ENV/token portal: configure, retrieve, create URLs (no secret values)",
             false,
         ),
         tool(
-            "orbit_sign_paths",
+            "yard_sign_paths",
             "Self-sign (Signet) vs official vendor signing wizards",
             false,
         ),
         tool(
-            "orbit_assist",
+            "yard_assist",
             "Full-stack deploy assist checklist",
             false,
         ),
         tool(
-            "orbit_flow_dry_run",
+            "yard_flow_dry_run",
             "Print configure→sign→deploy plan",
             true,
         ),
         tool(
-            "orbit_flow",
+            "yard_flow",
             "Execute configure→sign→deploy (set skip_deploy when offline)",
             true,
         ),
         tool(
-            "orbit_sign",
+            "yard_sign",
             "Run signet with studio.json sign_args (or override args)",
             false,
         ),
         tool(
-            "orbit_deploy",
+            "yard_deploy",
             "Run orbit with studio.json deploy_args (or override args)",
             false,
         ),
         tool_hostdeploy(),
-        tool("orbit_status", "Read .ship/last-run.json", false),
+        tool("yard_status", "Read .ship/last-run.json", false),
         tool(
-            "orbit_pulse",
+            "yard_pulse",
             "Project pulse: git, publish/launch progress, deploy signals, next action (local only)",
             false,
         ),
@@ -159,7 +159,7 @@ fn tools() -> Vec<Value> {
 
 fn tool_secrets() -> Value {
     json!({
-        "name": "orbit_secrets",
+        "name": "yard_secrets",
         "description": "Paste-secret assist: hinted secret names + put CLI (never stores values)",
         "inputSchema": {
             "type": "object",
@@ -174,7 +174,7 @@ fn tool_secrets() -> Value {
 
 fn tool_vault() -> Value {
     json!({
-        "name": "orbit_vault",
+        "name": "yard_vault",
         "description": "Encrypted kmvault (.km) list/export — Clavis-compatible. Prefer Desktop vault export. Do NOT pass secret values or passphrases in tool args (they land in agent logs); use SHIP_VAULT_PASSPHRASE in the environment and export from a human TTY when possible. list/show titles only when needed.",
         "inputSchema": {
             "type": "object",
@@ -209,7 +209,7 @@ fn tool_vault() -> Value {
 
 fn tool_publish_open() -> Value {
     json!({
-        "name": "orbit_publish_open",
+        "name": "yard_publish_open",
         "description": "Open/Run the current publish step (browser entry_url and/or local CLI). Does not Confirm. Never stores secrets. OAuth login CLIs may prompt — prefer a human-visible TTY.",
         "inputSchema": {
             "type": "object",
@@ -221,8 +221,8 @@ fn tool_publish_open() -> Value {
 
 fn tool_publish_verify() -> Value {
     json!({
-        "name": "orbit_publish_verify",
-        "description": "Local Verify for the current publish step (disk / local CLI / operator CLI). Never vendor HTTPS. Does not mark Human/OAuth/deploy Done — use orbit_publish_confirm after the human attests.",
+        "name": "yard_publish_verify",
+        "description": "Local Verify for the current publish step (disk / local CLI / operator CLI). Never vendor HTTPS. Does not mark Human/OAuth/deploy Done — use yard_publish_confirm after the human attests.",
         "inputSchema": {
             "type": "object",
             "properties": publish_common_props(json!({})),
@@ -233,7 +233,7 @@ fn tool_publish_verify() -> Value {
 
 fn tool_publish_confirm() -> Value {
     json!({
-        "name": "orbit_publish_confirm",
+        "name": "yard_publish_confirm",
         "description": "Mark the current publish step done (operator attestation). Agents must only call this after the human finished the official page or CLI. Never live npm/cargo/docker/store upload.",
         "inputSchema": {
             "type": "object",
@@ -245,7 +245,7 @@ fn tool_publish_confirm() -> Value {
 
 fn tool_publish_next() -> Value {
     json!({
-        "name": "orbit_publish_next",
+        "name": "yard_publish_next",
         "description": "Advance to the next pending publish step (requires current done, or force=true). Does not skip vendor UI.",
         "inputSchema": {
             "type": "object",
@@ -275,7 +275,7 @@ fn publish_common_props(mut extra: Value) -> Value {
 
 fn tool_env_put() -> Value {
     json!({
-        "name": "orbit_env_put",
+        "name": "yard_env_put",
         "description": "Launch (or print) interactive host Put for a secret NAME on cloudflare|vercel|netlify. Never accepts a secret value. Prefer spawn:true so a visible terminal prompts the human.",
         "inputSchema": {
             "type": "object",
@@ -301,7 +301,7 @@ fn tool_env_put() -> Value {
 
 fn tool_butler_push() -> Value {
     json!({
-        "name": "orbit_butler_push",
+        "name": "yard_butler_push",
         "description": "itch.io butler push: print recipe and/or spawn a visible terminal. Pass target user/game:channel and optional dir. Never holds itch credentials. Prefer spawn:true so the human sees login/errors.",
         "inputSchema": {
             "type": "object",
@@ -327,7 +327,7 @@ fn tool_butler_push() -> Value {
 
 fn tool_publish_watch() -> Value {
     json!({
-        "name": "orbit_publish_watch",
+        "name": "yard_publish_watch",
         "description": "One local Verify probe for the current publish step (never vendor HTTPS). Agents should poll. Optional auto_confirm when verify ok (never live-publishes).",
         "inputSchema": {
             "type": "object",
@@ -345,7 +345,7 @@ fn tool_publish_watch() -> Value {
 
 fn tool_portal() -> Value {
     json!({
-        "name": "orbit_portal",
+        "name": "yard_portal",
         "description": "Provider portal plan: Cloudflare/Vercel/Netlify/GitHub entry URLs and OAuth CLI steps",
         "inputSchema": {
             "type": "object",
@@ -366,7 +366,7 @@ fn tool_portal() -> Value {
 
 fn tool_hostdeploy() -> Value {
     json!({
-        "name": "orbit_hostdeploy",
+        "name": "yard_hostdeploy",
         "description": "Stream local vendor CLI deploy (wrangler/vercel/netlify) via orbityard hostdeploy. Writes hosted last-run URLs. Prefer Desktop Deployment Deploy when auth prompts may appear. Never stores secrets; does not fill Create Token. On auth fail tell human: Login CLI or Sign in (web).",
         "inputSchema": {
             "type": "object",
@@ -395,25 +395,25 @@ fn tool(name: &str, description: &str, flow_flags: bool) -> Value {
         props["skip_deploy"] = json!({ "type": "boolean" });
         props["offline"] = json!({ "type": "boolean" });
     }
-    if name == "orbit_sign" || name == "orbit_deploy" {
+    if name == "yard_sign" || name == "yard_deploy" {
         props["args"] = json!({
             "type": "array",
             "items": { "type": "string" },
             "description": "Optional override args"
         });
     }
-    if name == "orbit_guide" || name == "orbit_ship" {
+    if name == "yard_guide" || name == "yard_ship" {
         props["open"] = json!({
             "type": "boolean",
             "description": "Open all unique entry URLs in the browser"
         });
     }
-    if name == "orbit_human" {
+    if name == "yard_human" {
         props["open"] = json!({ "type": "boolean", "description": "Open paste-source URLs (default true)" });
         props["open_all"] = json!({ "type": "boolean", "description": "Also open full guide entry URLs" });
         props["put"] = json!({
             "type": "boolean",
-            "description": "Interactive put queue — REQUIRES a real TTY. Under MCP use orbit_env_put instead (default false)."
+            "description": "Interactive put queue — REQUIRES a real TTY. Under MCP use yard_env_put instead (default false)."
         });
     }
     json!({
@@ -451,9 +451,9 @@ fn call_tool(params: Value) -> Result<Value> {
         .unwrap_or(false);
 
     let body = match name {
-        "orbit_doctor" => serde_json::to_value(adapters::doctor(&project)?)?,
-        "orbit_configure" => serde_json::to_value(config::configure(&project)?)?,
-        "orbit_portal" => {
+        "yard_doctor" => serde_json::to_value(adapters::doctor(&project)?)?,
+        "yard_configure" => serde_json::to_value(config::configure(&project)?)?,
+        "yard_portal" => {
             let filter = args
                 .get("provider")
                 .and_then(|p| p.as_str())
@@ -471,7 +471,7 @@ fn call_tool(params: Value) -> Result<Value> {
             }
             out
         }
-        "orbit_secrets" => {
+        "yard_secrets" => {
             let filter = args
                 .get("provider")
                 .and_then(|p| p.as_str())
@@ -489,7 +489,7 @@ fn call_tool(params: Value) -> Result<Value> {
             }
             out
         }
-        "orbit_vault" => {
+        "yard_vault" => {
             let action = args
                 .get("action")
                 .and_then(|a| a.as_str())
@@ -505,7 +505,7 @@ fn call_tool(params: Value) -> Result<Value> {
                         .get("out")
                         .and_then(|p| p.as_str())
                         .map(PathBuf::from)
-                        .context("orbit_vault export requires out")?;
+                        .context("yard_vault export requires out")?;
                     let vault_name = args
                         .get("name")
                         .and_then(|n| n.as_str())
@@ -536,7 +536,7 @@ fn call_tool(params: Value) -> Result<Value> {
                             let notes = item
                                 .get("notes")
                                 .and_then(|x| x.as_str())
-                                .unwrap_or("Exported via MCP orbit_vault")
+                                .unwrap_or("Exported via MCP yard_vault")
                                 .to_string();
                             entries.push((title, value, url, notes));
                         }
@@ -545,11 +545,11 @@ fn call_tool(params: Value) -> Result<Value> {
                         let title = args
                             .get("title")
                             .and_then(|t| t.as_str())
-                            .context("orbit_vault export needs entries[] or title+value")?;
+                            .context("yard_vault export needs entries[] or title+value")?;
                         let value = args
                             .get("value")
                             .and_then(|v| v.as_str())
-                            .context("orbit_vault export needs value")?;
+                            .context("yard_vault export needs value")?;
                         let url = args.get("url").and_then(|u| u.as_str()).unwrap_or("");
                         vault_km::export_one(&out_path, vault_name, title, value, url)?
                     };
@@ -565,7 +565,7 @@ fn call_tool(params: Value) -> Result<Value> {
                         .get("file")
                         .and_then(|p| p.as_str())
                         .map(PathBuf::from)
-                        .context("orbit_vault list requires file")?;
+                        .context("yard_vault list requires file")?;
                     let titles = vault_km::list_titles(&file)?;
                     json!({ "file": file, "titles": titles })
                 }
@@ -574,18 +574,18 @@ fn call_tool(params: Value) -> Result<Value> {
                         .get("file")
                         .and_then(|p| p.as_str())
                         .map(PathBuf::from)
-                        .context("orbit_vault show requires file")?;
+                        .context("yard_vault show requires file")?;
                     let title = args
                         .get("title")
                         .and_then(|t| t.as_str())
-                        .context("orbit_vault show requires title")?;
+                        .context("yard_vault show requires title")?;
                     let value = vault_km::show_value(&file, title)?;
                     json!({ "title": title, "value": value })
                 }
-                other => anyhow::bail!("orbit_vault unknown action: {other}"),
+                other => anyhow::bail!("yard_vault unknown action: {other}"),
             }
         }
-        "orbit_guide" => {
+        "yard_guide" => {
             let plan = guide::plan_for(&project)?;
             let open = args
                 .get("open")
@@ -598,14 +598,14 @@ fn call_tool(params: Value) -> Result<Value> {
             }
             out
         }
-        "orbit_ship" => {
+        "yard_ship" => {
             let open = args
                 .get("open")
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false);
             serde_json::to_value(ship::run(&project, open)?)?
         }
-        "orbit_human" => {
+        "yard_human" => {
             let open = args
                 .get("open")
                 .and_then(|v| v.as_bool())
@@ -620,26 +620,26 @@ fn call_tool(params: Value) -> Result<Value> {
                 .unwrap_or(false);
             if put && !std::io::stdin().is_terminal() {
                 anyhow::bail!(
-                    "orbit_human put:true needs an interactive TTY (MCP has none). Use orbit_env_put {{ provider, name, spawn:true }} or Desktop Put — never paste secrets into tool args."
+                    "yard_human put:true needs an interactive TTY (MCP has none). Use yard_env_put {{ provider, name, spawn:true }} or Desktop Put — never paste secrets into tool args."
                 );
             }
             serde_json::to_value(human::run_with_options(&project, open, put, open_all)?)?
         }
-        "orbit_launch" => {
+        "yard_launch" => {
             let state = launch::load_or_build(&project)?;
             serde_json::to_value(launch::view(&state))?
         }
-        "orbit_publish" => {
+        "yard_publish" => {
             let (mode, intent) = publish_args(&args);
             let state = publish::load_or_build_with_options(&project, mode, intent)?;
             serde_json::to_value(publish::view(&state))?
         }
-        "orbit_publish_open" => {
+        "yard_publish_open" => {
             let (mode, intent) = publish_args(&args);
             let _ = publish::load_or_build_with_options(&project, mode, intent)?;
             serde_json::to_value(publish::open_current(&project)?)?
         }
-        "orbit_publish_verify" => {
+        "yard_publish_verify" => {
             let (mode, intent) = publish_args(&args);
             let _ = publish::load_or_build_with_options(&project, mode, intent)?;
             let (ok, msg, view) = publish::verify_current(&project)?;
@@ -649,12 +649,12 @@ fn call_tool(params: Value) -> Result<Value> {
                 "publish": view
             })
         }
-        "orbit_publish_confirm" => {
+        "yard_publish_confirm" => {
             let (mode, intent) = publish_args(&args);
             let _ = publish::load_or_build_with_options(&project, mode, intent)?;
             serde_json::to_value(publish::confirm_current(&project)?)?
         }
-        "orbit_publish_next" => {
+        "yard_publish_next" => {
             let (mode, intent) = publish_args(&args);
             let force = args
                 .get("force")
@@ -674,7 +674,7 @@ fn call_tool(params: Value) -> Result<Value> {
                 }
             }
         }
-        "orbit_publish_watch" => {
+        "yard_publish_watch" => {
             let auto_confirm = args
                 .get("auto_confirm")
                 .and_then(|v| v.as_bool())
@@ -682,33 +682,33 @@ fn call_tool(params: Value) -> Result<Value> {
             let _ = publish::load_or_build(&project)?;
             publish::watch_probe(&project, auto_confirm)?
         }
-        "orbit_scopes" => serde_json::to_value(scopes::plan_for(&project))?,
-        "orbit_env" => serde_json::to_value(envx::plan_for(&project)?)?,
-        "orbit_env_put" => {
+        "yard_scopes" => serde_json::to_value(scopes::plan_for(&project))?,
+        "yard_env" => serde_json::to_value(envx::plan_for(&project)?)?,
+        "yard_env_put" => {
             if args.get("value").is_some() {
                 anyhow::bail!(
-                    "orbit_env_put never accepts a secret value — pass name only; human pastes in the terminal"
+                    "yard_env_put never accepts a secret value — pass name only; human pastes in the terminal"
                 );
             }
             let provider = args
                 .get("provider")
                 .and_then(|p| p.as_str())
-                .context("orbit_env_put requires provider")?;
+                .context("yard_env_put requires provider")?;
             let name = args
                 .get("name")
                 .and_then(|n| n.as_str())
-                .context("orbit_env_put requires name")?;
+                .context("yard_env_put requires name")?;
             let spawn = args
                 .get("spawn")
                 .and_then(|v| v.as_bool())
                 .unwrap_or(true);
             serde_json::to_value(envx::put_launch(&project, provider, name, spawn)?)?
         }
-        "orbit_butler_push" => {
+        "yard_butler_push" => {
             let target = args
                 .get("target")
                 .and_then(|t| t.as_str())
-                .context("orbit_butler_push requires target (user/game:channel)")?;
+                .context("yard_butler_push requires target (user/game:channel)")?;
             let dir = args.get("dir").and_then(|d| d.as_str());
             let spawn = args
                 .get("spawn")
@@ -716,34 +716,34 @@ fn call_tool(params: Value) -> Result<Value> {
                 .unwrap_or(true);
             serde_json::to_value(butler::push_launch(&project, target, dir, spawn)?)?
         }
-        "orbit_sign_paths" => serde_json::to_value(signpath::plan_for(&project))?,
-        "orbit_assist" => serde_json::to_value(assist::plan_for(&project)?)?,
-        "orbit_flow_dry_run" => {
+        "yard_sign_paths" => serde_json::to_value(signpath::plan_for(&project))?,
+        "yard_assist" => serde_json::to_value(assist::plan_for(&project)?)?,
+        "yard_flow_dry_run" => {
             serde_json::to_value(flow::plan(&project, skip_sign, skip_deploy, offline)?)?
         }
-        "orbit_flow" => {
+        "yard_flow" => {
             let plan = flow::plan(&project, skip_sign, skip_deploy, offline)?;
             flow::execute(&project, &plan)?;
             config::read_last_run(&project)?
         }
-        "orbit_sign" => {
+        "yard_sign" => {
             let intent = config::intent_for(&project)?;
             let sign_args = override_args(&args, &intent.sign_args);
             let code = adapters::run_signet(&project, &sign_args)?;
             json!({ "ok": code == 0, "exit_code": code, "args": sign_args })
         }
-        "orbit_deploy" => {
+        "yard_deploy" => {
             if offline {
-                anyhow::bail!("orbit_deploy refuses offline");
+                anyhow::bail!("yard_deploy refuses offline");
             }
             let intent = config::intent_for(&project)?;
             let deploy_args = override_args(&args, &intent.deploy_args);
             let code = adapters::run_orbit(&project, &deploy_args)?;
             json!({ "ok": code == 0, "exit_code": code, "args": deploy_args })
         }
-        "orbit_hostdeploy" => {
+        "yard_hostdeploy" => {
             if offline {
-                anyhow::bail!("orbit_hostdeploy refuses offline");
+                anyhow::bail!("yard_hostdeploy refuses offline");
             }
             let provider = args
                 .get("provider")
@@ -765,8 +765,8 @@ fn call_tool(params: Value) -> Result<Value> {
                 }
             }
         }
-        "orbit_status" => config::read_last_run(&project)?,
-        "orbit_pulse" => serde_json::to_value(pulse::for_project(&project)?)?,
+        "yard_status" => config::read_last_run(&project)?,
+        "yard_pulse" => serde_json::to_value(pulse::for_project(&project)?)?,
         other => anyhow::bail!("unknown tool: {other}"),
     };
 
@@ -817,14 +817,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn tools_include_orbit_hostdeploy() {
+    fn tools_include_yard_hostdeploy() {
         let tools = tools();
         let names: Vec<_> = tools
             .iter()
             .filter_map(|t| t.get("name").and_then(|n| n.as_str()))
             .collect();
-        assert!(names.contains(&"orbit_hostdeploy"), "{names:?}");
-        assert!(names.contains(&"orbit_pulse"));
+        assert!(names.contains(&"yard_hostdeploy"), "{names:?}");
+        assert!(names.contains(&"yard_pulse"));
     }
 
     #[test]
@@ -835,12 +835,12 @@ mod tests {
             .filter_map(|t| t.get("name").and_then(|n| n.as_str()))
             .collect();
         for n in [
-            "orbit_publish_open",
-            "orbit_publish_verify",
-            "orbit_publish_confirm",
-            "orbit_publish_next",
-            "orbit_env_put",
-            "orbit_butler_push",
+            "yard_publish_open",
+            "yard_publish_verify",
+            "yard_publish_confirm",
+            "yard_publish_next",
+            "yard_env_put",
+            "yard_butler_push",
         ] {
             assert!(names.contains(&n), "{n} missing in {names:?}");
         }
@@ -858,7 +858,7 @@ mod tests {
         let _ = std::fs::create_dir_all(&dir);
         std::fs::write(dir.join("package.json"), r#"{"name":"mcp-g1"}"#).unwrap();
         let params = json!({
-            "name": "orbit_publish_verify",
+            "name": "yard_publish_verify",
             "arguments": { "project": dir.to_string_lossy() }
         });
         let wrapped = call_tool(params).expect("verify tool");
@@ -872,7 +872,7 @@ mod tests {
     #[test]
     fn env_put_rejects_value_arg() {
         let params = json!({
-            "name": "orbit_env_put",
+            "name": "yard_env_put",
             "arguments": {
                 "project": ".",
                 "provider": "cloudflare",
@@ -896,7 +896,7 @@ mod tests {
         let _ = std::fs::create_dir_all(&dir);
         std::fs::write(dir.join("wrangler.toml"), "name = \"g2\"\n").unwrap();
         let params = json!({
-            "name": "orbit_env_put",
+            "name": "yard_env_put",
             "arguments": {
                 "project": dir.to_string_lossy(),
                 "provider": "cloudflare",
@@ -926,11 +926,11 @@ mod tests {
             return;
         }
         let params = json!({
-            "name": "orbit_human",
+            "name": "yard_human",
             "arguments": { "project": ".", "put": true, "open": false }
         });
         let err = call_tool(params).expect_err("put without TTY must fail");
         let msg = err.to_string();
-        assert!(msg.contains("TTY") || msg.contains("orbit_env_put"), "{msg}");
+        assert!(msg.contains("TTY") || msg.contains("yard_env_put"), "{msg}");
     }
 }

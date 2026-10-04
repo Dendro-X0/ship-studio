@@ -62,7 +62,7 @@ Copy must never say Studio deploys SaaS *for* you without the local CLI or the d
 | **H2 — Vercel (+ Netlify)** | Same shape for `vercel --prod --yes` / `netlify deploy --prod` | **Shipped** — L1 detect tests |
 | **H3 — Results bay** | Deployment aside shows last deploy evidence (phases · URL · Open live · Open dashboard) from pulse + last-run | **Shipped** — Desktop `plat-results` |
 | **H4 — Troubleshoot taxonomy** | `HostFailClass` + Desktop one primary recovery (Login CLI / Preview / Retry / Open dashboard) on toast + Results bay | **Shipped** — L1 classify tests |
-| **H5 — MCP playbook** | Document `ship_*` sequence for agents (no secret paste); thin `orbit_hostdeploy` | **Shipped** — playbook + MCP tool L1 |
+| **H5 — MCP playbook** | Document `ship_*` sequence for agents (no secret paste); thin `yard_hostdeploy` | **Shipped** — playbook + MCP tool L1 |
 | **H6 — Confirm + isolate Results** | Per-host Results bay; Deploy confirm dialog + `--name` | **Shipped** — [host-deploy-confirm-design](../frontend/host-deploy-confirm-design.md) |
 
 ## Rigor invariants (non-negotiable)
@@ -124,12 +124,12 @@ orbityard annotates failed last-run messages with `[class]`. Desktop mirrors cla
 ### Agent playbook (hosted Path B)
 
 ```text
-1. orbit_pulse → confirm project; note deploy signals (not selfhost_ok loopback)
-2. orbit_portal provider=cloudflare|vercel|netlify → Sign in (web) / Login CLI URLs
+1. yard_pulse → confirm project; note deploy signals (not selfhost_ok loopback)
+2. yard_portal provider=cloudflare|vercel|netlify → Sign in (web) / Login CLI URLs
 3. Human: Login CLI once (Desktop terminal) OR Sign in (web) + Path A dashboard deploy
 4. Prefer Desktop Deployment **Deploy** when auth TTY may appear
-5. Else orbit_hostdeploy { project, provider } — streams local wrangler/vercel/netlify
-6. orbit_status / orbit_pulse → hosted urls · last_run message [class]
+5. Else yard_hostdeploy { project, provider } — streams local wrangler/vercel/netlify
+6. yard_status / yard_pulse → hosted urls · last_run message [class]
 7. On auth → tell human Login CLI / Sign in (web); never paste tokens into chat
 8. Open live / Open dashboard (Desktop) → Publish Live check → human Confirm
 9. Never claim “Studio created your API token” or fill Create Custom Token
@@ -139,8 +139,8 @@ orbityard annotates failed last-run messages with `[class]`. Desktop mirrors cla
 
 | Tool | Role |
 |------|------|
-| `orbit_hostdeploy` | Thin wrapper on `hostdeploy::run`; provider default `cloudflare`; refuses offline; on Err returns last_run + recovery hint |
-| `orbit_deploy` | Still Orbit only — do not use for Cloudflare/Vercel/Netlify hosted cut |
+| `yard_hostdeploy` | Thin wrapper on `hostdeploy::run`; provider default `cloudflare`; refuses offline; on Err returns last_run + recovery hint |
+| `yard_deploy` | Still Orbit only — do not use for Cloudflare/Vercel/Netlify hosted cut |
 
 Invariant: no secret custody; Prefer Desktop for interactive login prompts (mcp-assist G5).
 
@@ -148,5 +148,5 @@ Invariant: no secret custody; Prefer Desktop for interactive login prompts (mcp-
 
 | Layer | Check |
 |-------|--------|
-| L1 | `tools_include_orbit_hostdeploy` |
+| L1 | `tools_include_yard_hostdeploy` |
 | Doc | Playbook above + [mcp-assist-contract](./mcp-assist-contract-design.md) hosted section |

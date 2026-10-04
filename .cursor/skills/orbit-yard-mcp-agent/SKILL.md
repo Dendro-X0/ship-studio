@@ -14,33 +14,33 @@ Client stays thin. You assist through **`orbityard mcp`** tools. You do **not** 
 ## Loop
 
 ```text
-1. orbit_doctor / orbit_pulse          → local tools + signals
-2. orbit_publish                      → required next gate (read-only)
-3. orbit_portal | orbit_guide          → one entry_url (open=true only if human wants browser)
+1. yard_doctor / yard_pulse          → local tools + signals
+2. yard_publish                      → required next gate (read-only)
+3. yard_portal | yard_guide          → one entry_url (open=true only if human wants browser)
 4. Human: vendor UI / Login CLI / Put in a real TTY
-5. orbit_publish_verify | orbit_publish_watch → local Verify only
-6. Human Confirm → orbit_publish_confirm → orbit_publish_next
+5. yard_publish_verify | yard_publish_watch → local Verify only
+6. Human Confirm → yard_publish_confirm → yard_publish_next
 ```
 
 ## Tools (prefer these)
 
 | Need | Tool |
 |------|------|
-| Status / next gate | `orbit_publish`, `orbit_pulse` |
-| Open current step | `orbit_publish_open` |
-| Local verify | `orbit_publish_verify`, `orbit_publish_watch` |
-| Confirm / next | `orbit_publish_confirm`, `orbit_publish_next` — Confirm only after human finished |
-| Vendor URLs | `orbit_portal`, `orbit_guide` |
-| Put secret **NAME** | `orbit_env_put` `{ provider, name, spawn: true }` — **never** pass `value` |
-| itch butler push | `orbit_butler_push` or `orbityard butler push --target user/game:channel` — never holds itch credentials |
-| Hosted deploy | Prefer Desktop Deploy; else `orbit_hostdeploy` if CLI session exists |
+| Status / next gate | `yard_publish`, `yard_pulse` |
+| Open current step | `yard_publish_open` |
+| Local verify | `yard_publish_verify`, `yard_publish_watch` |
+| Confirm / next | `yard_publish_confirm`, `yard_publish_next` — Confirm only after human finished |
+| Vendor URLs | `yard_portal`, `yard_guide` |
+| Put secret **NAME** | `yard_env_put` `{ provider, name, spawn: true }` — **never** pass `value` |
+| itch butler push | `yard_butler_push` or `orbityard butler push --target user/game:channel` — never holds itch credentials |
+| Hosted deploy | Prefer Desktop Deploy; else `yard_hostdeploy` if CLI session exists |
 
 ## Never
 
 - Paste API keys / tokens into tool args or chat (`pdl_…`, OATs, wrangler tokens)
-- `orbit_human put:true` under MCP (no TTY — it will fail; use `orbit_env_put`)
+- `yard_human put:true` under MCP (no TTY — it will fail; use `yard_env_put`)
 - Claim “OAuth done” / “checkout works” without Verify or human Confirm evidence
-- Pass `value` / `passphrase` to `orbit_vault` in MCP — prefer Desktop export
+- Pass `value` / `passphrase` to `yard_vault` in MCP — prefer Desktop export
 - Grow Desktop Integrations / coach UI — out of scope
 
 ## Validate means

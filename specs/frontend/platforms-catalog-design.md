@@ -41,7 +41,7 @@ See [deployment-nav-design](./deployment-nav-design.md).
 | A | Cloudflare · Vercel · Netlify — Portal Login CLI |
 | B | Fly · Railway — Portal Login CLI |
 | C | GitHub Pages — Open GitHub + Docs only (no PAT portal) |
-| E | Orbit — gated on `orbit_configured`; **Self-host** = Studio local-auto lane ([studio-selfhost-guide-design](./studio-selfhost-guide-design.md)) |
+| E | Orbit — gated on `yard_configured`; **Self-host** = Studio local-auto lane ([studio-selfhost-guide-design](./studio-selfhost-guide-design.md)) |
 
 **Tier D** (Render · DO · Heroku · Amplify · Cloud Run · Azure SWA): Advanced Publish `host.*` + `orbityard portal --provider` only — not Platforms cards yet.
 

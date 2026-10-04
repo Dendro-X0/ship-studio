@@ -8,14 +8,14 @@
 - **Uniform host auth vetting** — selecting Cloudflare / Vercel / Netlify / Fly / Railway runs the same `--auth-check` → Login CLI gate as Deploy ([design](./specs/frontend/host-deploy-confirm-design.md))
 - **Host deploy auth gate** — unauthenticated Deploy runs `--auth-check`, opens Login CLI (vendor OAuth), then Retry Deploy ([design](./specs/frontend/host-deploy-confirm-design.md))
 - **Netlify deploy name** — Confirm dialog site name is editable; `hostdeploy --name` maps to `--site` / `--create-site` when unlinked ([design](./specs/frontend/host-deploy-confirm-design.md))
-- **Game butler CLI** — `orbityard butler push --target user/game:channel` (+ MCP `orbit_butler_push`); submit.itch detail points at the recipe/spawn path ([design](./specs/backend/game-butler-push-design.md))
-- **Game butler push** — MCP `orbit_butler_push` recipe + optional terminal spawn for itch.io (no credentials; Steam/Epic stay Open+Confirm) ([design](./specs/backend/game-butler-push-design.md))
+- **Game butler CLI** — `orbityard butler push --target user/game:channel` (+ MCP `yard_butler_push`); submit.itch detail points at the recipe/spawn path ([design](./specs/backend/game-butler-push-design.md))
+- **Game butler push** — MCP `yard_butler_push` recipe + optional terminal spawn for itch.io (no credentials; Steam/Epic stay Open+Confirm) ([design](./specs/backend/game-butler-push-design.md))
 - **Freeze** — annotated tag `freeze/mcp-agent-2026-10-04` marks close-cut OSS + MCP agent path (G1–G4 + skill); Desktop wizards stay frozen
 - **MCP agent skill** — `.cursor/skills/orbit-yard-mcp-agent` prefers `orbit_*` over Desktop wizards; no secret custody ([design](./specs/backend/mcp-agent-guide-design.md))
-- **Rebrand** — product **Orbit Yard**; CLI/MCP binary **`orbityard`**; MCP tools `orbit_*`; Desktop `orbit-yard-desktop` / `com.dendro.orbityard`. Config dir remains `.ship/` for compatibility. GitHub remote still `Dendro-X0/ship-studio` until renamed.
-- **MCP S2.4 G3–G4** — `orbit_human put:true` bails without TTY (use `orbit_env_put`); `orbit_vault` schema discourages value/passphrase in agent args ([design](./specs/backend/mcp-assist-contract-design.md))
-- **MCP S2.4 G2** — `orbit_env_put` launches (or prints) interactive host Put for a secret NAME; rejects `value`; optional external terminal ([design](./specs/backend/mcp-assist-contract-design.md))
-- **MCP S2.4 G1** — `orbit_publish_open` / `orbit_publish_verify` / `orbit_publish_confirm` / `orbit_publish_next` (CLI publish mutations; Confirm remains human attest) ([design](./specs/backend/mcp-assist-contract-design.md))
+- **Rebrand** — product **Orbit Yard**; CLI/MCP binary **`orbityard`**; MCP tools **`yard_*`** (not `orbit_*`, to avoid Orbit engine confusion); Desktop `orbit-yard-desktop` / `com.dendro.orbityard`. Config dir remains `.ship/` for compatibility. GitHub remote still `Dendro-X0/ship-studio` until renamed.
+- **MCP S2.4 G3–G4** — `yard_human put:true` bails without TTY (use `yard_env_put`); `yard_vault` schema discourages value/passphrase in agent args ([design](./specs/backend/mcp-assist-contract-design.md))
+- **MCP S2.4 G2** — `yard_env_put` launches (or prints) interactive host Put for a secret NAME; rejects `value`; optional external terminal ([design](./specs/backend/mcp-assist-contract-design.md))
+- **MCP S2.4 G1** — `yard_publish_open` / `yard_publish_verify` / `yard_publish_confirm` / `yard_publish_next` (CLI publish mutations; Confirm remains human attest) ([design](./specs/backend/mcp-assist-contract-design.md))
 
 ### Fixed
 
@@ -58,7 +58,7 @@
 - **Cloudflare Pages create-if-missing** — Deploy auto-runs `wrangler pages project create` then retries when the project is absent (no dashboard-first trip) ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md))
 - **Hosted Troubleshoot — missing project** — wrangler “Pages project does not exist” → `[account]`; toast/Results offer **Open dashboard** + **Retry Deploy** ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md) H4)
 - **Demo shelf v0.2.1 (T1–T5)** — `/demo` points at live Harbor GIFs; T6 Sign Open · T7 Deploy Open remain operator-record ([SCRIPT](./docs/assets/demo/v0.2.1/SCRIPT.md))
-- **Hosted deploy ops H1–H5** — Deployment **Deploy** streams `orbityard hostdeploy` (Cloudflare · Vercel · Netlify); **Results bay** + **Troubleshoot** taxonomy; MCP `orbit_hostdeploy` + agent playbook (no secret custody) ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md))
+- **Hosted deploy ops H1–H5** — Deployment **Deploy** streams `orbityard hostdeploy` (Cloudflare · Vercel · Netlify); **Results bay** + **Troubleshoot** taxonomy; MCP `yard_hostdeploy` + agent playbook (no secret custody) ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md))
 - **Vendor handoff coach — CANCELLED** — in-app coach subtracted after failed product test; Portal Open/Docs restored; host setup stays CLI/agent — [design](./specs/backend/vendor-handoff-coach-design.md)
 - **Desktop reliability slice 4** — Advanced Online Deploy / Flow (with deploy) open `open_orbityard_terminal`; dry-run/doctor stay headless; soft-fail covers auth/login prompts ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
 - **Desktop reliability slice 3** — user-initiated Env / Assist / Scopes loads toast `cmdFailDetail` + Preview on fail; bind/pulse stay silent ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
@@ -90,7 +90,7 @@
 - **Hosting OAuth web entry** — Portal Cloudflare/Vercel/… OAuth steps now **Sign in (web)** (dashboard/login URL); Login CLI secondary for local CLI creds ([design](./specs/backend/hosting-oauth-web-entry-design.md))
 - **Self-host ≠ hosted Deploy** — `selfhost` last-run / loopback URLs no longer mark Deploy **Ready** / Live / “Already deployed”; pulse signal `selfhost_ok` + Desktop **Self-host** badge ([investigation](./specs/backend/selfhost-vs-hosted-deploy-probe-investigation.md))
 - **Launch auth assist** — oauth / GitHub gates expose **Login CLI** (official CLI in a terminal); Run local uses interactive TTY; `signet identity` Open creates when missing — not “auth elsewhere then return” ([launch-auth-assist-investigation](./specs/backend/launch-auth-assist-investigation.md))
-- **Verify / Watch honesty** — successful local Verify no longer auto-marks Human/OAuth/deploy gates Done (Confirm still required). Fixes MCP `orbit_publish_watch` silently advancing Scopes when active scopes exist
+- **Verify / Watch honesty** — successful local Verify no longer auto-marks Human/OAuth/deploy gates Done (Confirm still required). Fixes MCP `yard_publish_watch` silently advancing Scopes when active scopes exist
 - **Continue toast honesty** — no more `publish · done` when Continue only pauses at a human gate; copy says paused / Confirm next
 
 ### Changed
@@ -102,7 +102,7 @@
 - **Self-host Publish Auto** — `selfhost.deploy` on General + Advanced (+ Launch); Continue/Verify runs local health and marks Done without Confirm ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Self-host health checks** — Deploy completes on artifact + local HTTP 200 (`selfhost.check` in last-run); optional `--serve` ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Self-host Deploy stream** — `orbityard selfhost` detects static root, streams phases, writes last-run; Deployment **Deploy** opens Output dock ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
-- **Self-host catalog** — Deployment **Self-host** local-auto card (Orbit only when `orbit_configured`) ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
+- **Self-host catalog** — Deployment **Self-host** local-auto card (Orbit only when `yard_configured`) ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Studio self-host (design)** — local-auto lane: stream deploy + non-step checks (disk/CLI verify); Docker cousin, not vendor Confirm; Orbit gated ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Sign catalog grid** — Official signing cards (Apple · Microsoft · Play · GitHub) restored on Sign, same layout as Deployment / Integrations; Check status paths stay below
 - **Back navigation** — topbar **← Back** returns to the previous page (Alt+← / CmdK “Go back”); **Back to Publish** still jumps to the publish spine when mid-flight
@@ -211,7 +211,7 @@
 - **Assist notes expand** — checklist notes for alt hosts / mobile BaaS / Stripe·Paddle / marketplace submit + Watch cue on Publish step
 - **Pulse cut hints expand** — Dashboard Now mid-publish detail cues for `host.*` / `baas.provision` / `submit.*` / commerce listings
 - **Commerce expand** — Advanced `listing.stripe` / `listing.paddle` Open dashboard URLs + name-only secret catalog (no Payment Link creation)
-- **MCP publish watch** — `orbit_publish_watch` one-shot local Verify probe for agents (optional `auto_confirm`; no vendor HTTPS / stdio pollution)
+- **MCP publish watch** — `yard_publish_watch` one-shot local Verify probe for agents (optional `auto_confirm`; no vendor HTTPS / stdio pollution)
 - **TUI publish watch** — Publish screen `w` toggles local Verify poll (~15s); READY status when Confirm is safe (parity with CLI/Desktop Watch)
 - **Alt host expand** — Advanced `host.render` / `host.digitalocean` Open dashboard URLs (deploy stays on vendor CLI/UI)
 - **Marketplace submit parity** — Advanced `submit.itch` / `submit.epic` open butler / Epic publishing docs (Open + Confirm; no upload from bridge)
@@ -243,7 +243,7 @@
 - **Shipping hub final-mile** — cut order build→trust→graduate→release; `signet graduate notes` Run; `ship.desktop_cut` for desktop-only; doctor “can I cut?” notes
 - **Suite URL sync** (Advanced) — `suite.url_sync` from `.ship/suite.json` sibling env key names (never writes sibling `.env`)
 - **Publish portal** (`orbityard publish` / open / verify / confirm / next) — minute wizard through the full manual ship path
-- Desktop **Publish** view (primary) + TUI Publish screen (`P`) + MCP `orbit_publish`
+- Desktop **Publish** view (primary) + TUI Publish screen (`P`) + MCP `yard_publish`
 - Assist `--start` loads the publish portal; Assist remains the checklist overview
 - **Deploy assist** (`orbityard assist`) + Desktop Assist view — scopes → env → sign → publish
 - **Scopes** (`orbityard scopes` / `set --ids`) — Web / API / Desktop / Mobile / Container directories drive per-scope deploy
@@ -262,7 +262,7 @@
 - Configure defaults `sign_args=[build]` when Tauri or signet.toml is present
 - **Human portal sprint** opens paste-source tabs only (Polar→GitHub); Desktop **Paste in terminal**; `--open-all` for full dashboards
 - **CI** (GitHub Actions): `cargo test -p orbityard` + CLI smoke on `main`
-- **Desktop / TUI / MCP** vault export surfaces (`Export vault`, TUI `v`, `orbit_vault`)
+- **Desktop / TUI / MCP** vault export surfaces (`Export vault`, TUI `v`, `yard_vault`)
 - **Guide** step `vault` (optional encrypted backup after secrets)
 - **`orbityard vault`** encrypted `.km` export (Clavis / Keys Manager `kmvault` v1): `export` / `add` / `list` / `show`
 - **Portal** for Cloudflare, Vercel, Netlify, GitHub, Polar (entry URLs + OAuth/dashboard navigation)
@@ -271,7 +271,7 @@
 - **`orbityard ship`** one-shot offline prep (guide → configure → flow dry-run; writes `.ship/last-guide.json`)
 - **`orbityard tui`** ratatui wizard (providers, portal, secrets, ship prep)
 - **Desktop** Tauri shell: Wizard / Ship / Guide / Portal / Secrets
-- **MCP**: `orbit_guide`, `orbit_ship`, `orbit_portal`, `orbit_secrets`, …
+- **MCP**: `yard_guide`, `yard_ship`, `yard_portal`, `yard_secrets`, …
 - Doctor reports `portal_providers`, `secret_hint_count`, `provider_clis`
 
 ### Notes

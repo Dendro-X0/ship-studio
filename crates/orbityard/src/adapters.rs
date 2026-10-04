@@ -349,7 +349,7 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
         ));
     }
     notes.push(
-        "Progress nudge: `orbityard publish watch` (CLI) · Desktop Watch · TUI `w` · MCP `orbit_publish_watch` — local Verify only."
+        "Progress nudge: `orbityard publish watch` (CLI) · Desktop Watch · TUI `w` · MCP `yard_publish_watch` — local Verify only."
             .into(),
     );
 

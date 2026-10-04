@@ -92,7 +92,7 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
         AssistStep {
             id: "publish".into(),
             title: "Publish portal — minute wizard".into(),
-            detail: "Open/Run → Confirm → Next — final-mile sign → release → deploy. Optional Watch: CLI `publish watch`, Desktop toggle, TUI `w`, MCP `orbit_publish_watch`.".into(),
+            detail: "Open/Run → Confirm → Next — final-mile sign → release → deploy. Optional Watch: CLI `publish watch`, Desktop toggle, TUI `w`, MCP `yard_publish_watch`.".into(),
             view: "publish".into(),
             ready: has_studio,
         },
@@ -194,7 +194,7 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
             m.push("Epic");
         }
         let itch_cue = if detected.itch {
-            " itch: `orbityard butler push --target user/game:channel` (or orbit_butler_push)."
+            " itch: `orbityard butler push --target user/game:channel` (or yard_butler_push)."
         } else {
             ""
         };

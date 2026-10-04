@@ -81,7 +81,7 @@ Design: `specs/backend/shipping-hub-north-star.md` · `specs/backend/provider-po
 | `vault` | **Encrypted `.km` export** (Clavis-compatible); `export` / `add` / `list` / `show` |
 | `tui` | Interactive terminal wizard |
 | `sign` / `deploy` / `flow` / `status` | Signet / Orbit / pipeline / last-run |
-| `mcp` | Stdio MCP (`orbit_publish`, `orbit_publish_open`/`verify`/`confirm`/`next`, `orbit_guide`, `orbit_portal`, …) |
+| `mcp` | Stdio MCP (`yard_publish`, `yard_publish_open`/`verify`/`confirm`/`next`, `yard_guide`, `yard_portal`, …) |
 
 ## Providers (portal)
 

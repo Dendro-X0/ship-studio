@@ -11,10 +11,10 @@ Dashboard could say “already deployed” from a bare `.wrangler` folder (often
 
 | Signal | Evidence | Drives “live”? |
 |--------|----------|----------------|
-| `orbit_deployed` | Latest `.orbit/runs/*/summary.json` with `ok: true` (+ `url` / `apiUrl` / `docsUrl`) | **Yes** |
+| `yard_deployed` | Latest `.orbit/runs/*/summary.json` with `ok: true` (+ `url` / `apiUrl` / `docsUrl`) | **Yes** |
 | `last_run_ok` | `.ship/last-run.json` successful deploy step or overall ok | **Yes** |
 | `vercel_linked` | `.vercel/project.json` at root or `apps/*/` | Soft (linked) |
-| `orbit_configured` | `.orbit/state.json` provider `configured: true` | Soft |
+| `yard_configured` | `.orbit/state.json` provider `configured: true` | Soft |
 | `wrangler_local` | `.wrangler/state` or `tmp` only (no successful orbit summary) | **No** |
 | `unknown` | None | No |
 
@@ -36,6 +36,6 @@ When `deploy_is_live`:
 ## Proof
 
 - L1: fixture with only `.wrangler/state` → `wrangler_local`, not live  
-- L1: fixture with orbit summary ok + url → `orbit_deployed`, General publish marks deploy + live_check Done  
+- L1: fixture with orbit summary ok + url → `yard_deployed`, General publish marks deploy + live_check Done  
 - L1: `cargo test -p orbityard pulse:: publish::`  
 - L3: assess-api Dashboard shows workers.dev / Deployed; Publish skips redeploy steps  

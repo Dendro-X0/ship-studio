@@ -39,7 +39,7 @@ orbityard vault show --file PATH.km --title TITLE
 | CLI | `orbityard vault …` |
 | TUI | Secrets → `v` → `./ship-secrets.km` |
 | Desktop | **Export vault** (passphrase + paste prompts) |
-| MCP | `orbit_vault` action `export` / `list` / `show` |
+| MCP | `yard_vault` action `export` / `list` / `show` |
 | Guide | step id `vault` after `secrets` |
 
 ## Invariants
@@ -54,4 +54,4 @@ orbityard vault show --file PATH.km --title TITLE
 
 - L1: round-trip encode/decode unit test
 - L2: `vault export` → `vault list` shows titles
-- L3: Desktop **Export vault** / TUI `v` / MCP `orbit_vault` / guide step `vault`
+- L3: Desktop **Export vault** / TUI `v` / MCP `yard_vault` / guide step `vault`

@@ -159,7 +159,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
                 "--project".into(),
                 project.display().to_string(),
             ],
-            detail: "Preferred final-mile spine. Optional Watch: `publish watch`, Desktop toggle, TUI `w`, MCP `orbit_publish_watch`.".into(),
+            detail: "Preferred final-mile spine. Optional Watch: `publish watch`, Desktop toggle, TUI `w`, MCP `yard_publish_watch`.".into(),
         },
         GuideStep {
             id: "flow_dry_run".into(),
@@ -300,7 +300,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
         ));
     }
     notes.push(
-        "Progress nudge: `orbityard publish watch` · Desktop Watch · TUI `w` · MCP `orbit_publish_watch`."
+        "Progress nudge: `orbityard publish watch` · Desktop Watch · TUI `w` · MCP `yard_publish_watch`."
             .into(),
     );
     // Prefer cut-readiness / portal cues from doctor over early PATH noise.

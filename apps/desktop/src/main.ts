@@ -992,7 +992,7 @@ function isSelfhostLocalEvidence(pulse: ProjectPulse | null | undefined): boolea
 function deployEvidenceFromPulse(pulse: ProjectPulse | null | undefined): boolean {
   const dep = pulse?.deploy;
   if (!dep || dep.signal === "selfhost_ok") return false;
-  if (dep.signal === "orbit_deployed") return true;
+  if (dep.signal === "yard_deployed") return true;
   if (dep.signal === "last_run_ok") {
     const urls = dep.urls ?? [];
     if (urls.length > 0 && urls.every(isLoopbackDeployUrl)) return false;
@@ -2098,7 +2098,7 @@ function buildSignDeployProbeRows(
   const deployOk = deployEvidenceFromPulse(pulse);
   const selfhostOk = isSelfhostLocalEvidence(pulse);
   const linked =
-    dep?.signal === "vercel_linked" || dep?.signal === "orbit_configured";
+    dep?.signal === "vercel_linked" || dep?.signal === "yard_configured";
   const deployActions: Array<{ id: string; label: string }> = [
     { id: "choose-host", label: "Choose host" },
   ];
@@ -3037,7 +3037,7 @@ function preferredHostingPlatformId(detected?: Detected | null): string | null {
     return "github-pages";
   }
   if (detected.marketing_host === "pages") return "github-pages";
-  if (detected.orbit_configured) return "orbit";
+  if (detected.yard_configured) return "orbit";
   return "selfhost";
 }
 
@@ -3129,7 +3129,7 @@ function paintSignWizard() {
 }
 
 function deployCatalogEntries() {
-  return hostingCatalogEntries({ orbitConfigured: Boolean(lastDetected?.orbit_configured) });
+  return hostingCatalogEntries({ orbitConfigured: Boolean(lastDetected?.yard_configured) });
 }
 
 function renderPlatforms() {
@@ -3895,7 +3895,7 @@ function routeDetectChip(label: string) {
       setView("sign");
       return;
     case "orbit":
-      if (lastDetected?.orbit_configured) {
+      if (lastDetected?.yard_configured) {
         openPlatformsCatalog({ preferGroup: "Hosting", selectId: "orbit" });
       } else {
         openPlatformsCatalog({ preferGroup: "Hosting", selectId: "selfhost" });
@@ -4500,7 +4500,7 @@ function classifyOverall(pulse: ProjectPulse): {
   const selfhostOk = isSelfhostLocalEvidence(pulse);
   const linked =
     pulse.deploy?.signal === "vercel_linked" ||
-    pulse.deploy?.signal === "orbit_configured";
+    pulse.deploy?.signal === "yard_configured";
   const localOnly = pulse.deploy?.signal === "wrangler_local";
   const pub = pulse.publish;
   const launch = pulse.launch;
@@ -4558,7 +4558,7 @@ function classifyOverall(pulse: ProjectPulse): {
       state: "deployed",
       badge: "Deployed",
       title:
-        pulse.deploy?.signal === "orbit_deployed"
+        pulse.deploy?.signal === "yard_deployed"
           ? "Already live (Orbit)"
           : "Already deployed",
       detail:
@@ -4615,10 +4615,10 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
   const signet = !!pulse.tools?.signet_found;
   const orbit = !!pulse.tools?.orbit_found;
   const linked =
-    pulse.deploy?.signal === "orbit_deployed" ||
+    pulse.deploy?.signal === "yard_deployed" ||
     pulse.deploy?.signal === "last_run_ok" ||
     pulse.deploy?.signal === "vercel_linked" ||
-    pulse.deploy?.signal === "orbit_configured" ||
+    pulse.deploy?.signal === "yard_configured" ||
     hostedDeployUrls(pulse.deploy).length > 0;
   const wantsSignet = (pulse.kind ?? "").toLowerCase().includes("desktop")
     || (pulse.kind ?? "").toLowerCase().includes("tauri");
@@ -4837,7 +4837,7 @@ function applyPulseHealth(pulse: ProjectPulse) {
     setPill("pill-deploy", "ok", "Live");
   } else if (signal === "selfhost_ok") {
     setPill("pill-deploy", "muted", "Self-host");
-  } else if (signal === "vercel_linked" || signal === "orbit_configured") {
+  } else if (signal === "vercel_linked" || signal === "yard_configured") {
     setPill("pill-deploy", "ok", "Linked");
   } else if (signal === "wrangler_local") {
     setPill("pill-deploy", "muted", "Local");
@@ -7237,7 +7237,7 @@ function applyDetected(detected?: Detected) {
     ],
     ["github", detected.github && !detected.marketing_site],
     ["polar", detected.polar],
-    ["orbit", detected.orbit_configured],
+    ["orbit", detected.yard_configured],
   ];
   host.hidden = false;
   const onFlags = flags.filter(([, on]) => on);

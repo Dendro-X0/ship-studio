@@ -20,7 +20,7 @@ Same pattern as **CodaCtrl Studio + CodaCtrl MCP** or **Ghidra + Ghidra MCP**: U
 ## Invariants
 
 1. Desktop and TUI are thin Clients — no second business logic; they invoke `orbityard`.  
-2. MCP exposes the same contracts (`orbit_publish`, `orbit_guide`, `orbit_portal`, …) — **no secret custody**; put/login remain human-initiated.  
+2. MCP exposes the same contracts (`yard_publish`, `yard_guide`, `yard_portal`, …) — **no secret custody**; put/login remain human-initiated.  
 3. CLI is the shared kernel. Excellence of the Client may make CLI invisible to buyers; it does not make CLI optional for the architecture.  
 4. Portal semantics: navigate exact next human act (deep link / Put / Login CLI); human does OAuth/env. **Docs is secondary**, never the default setup path.  
 5. Bridge does not call vendor HTTPS with secrets; shells may open URLs / spawn login or put CLIs on operator action.  

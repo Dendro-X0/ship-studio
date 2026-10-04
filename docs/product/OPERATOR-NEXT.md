@@ -56,7 +56,7 @@ Env/token work stays **Open → official UI → Confirm**. The provider remains 
 
 Desktop: topbar **General** (default) · **Local** (first-run default) · **Publish** · primary **Continue** · Watch toggle · Related opens Env / Sign / Portal / Scopes / Dashboard · **Back to Publish**.  
 TUI: Publish (`P`) → o / v / c / n · **`w` Watch** (local Verify poll, READY when Confirm is safe).  
-MCP: `orbit_publish_watch` · `orbit_publish_verify` / `open` / `confirm` / `next` (G1) · `orbit_env_put` (G2 — spawn TTY, never values). Confirm stays human attest.
+MCP: `yard_publish_watch` · `yard_publish_verify` / `open` / `confirm` / `next` (G1) · `yard_env_put` (G2 — spawn TTY, never values). Confirm stays human attest.
 
 Progress: project `.ship/publish.json` (no secret values).
 
@@ -95,7 +95,7 @@ These steps stay on you **by design** — Studio opens the right door and waits 
 | Desktop cut | No Orbit host → Confirm `ship.desktop_cut` on Publish or Launch — Signet release is the deploy |
 | Listing | Polar · Gumroad · Lemon · Stripe · Paddle · npm · crates.io · Hugging Face · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced Publish + Launch) |
 | Steam submit | After listing, Open Steamworks uploading docs (`submit.steam`) and upload depots yourself |
-| itch / Epic submit | After listing: itch → `orbit_butler_push` (or Open butler docs); Epic → Open publish docs. Confirm when live. Studio never stores store credentials. |
+| itch / Epic submit | After listing: itch → `yard_butler_push` (or Open butler docs); Epic → Open publish docs. Confirm when live. Studio never stores store credentials. |
 | Fly / Railway / Render / DO / Heroku / Amplify / Cloud Run / Azure Static | Open dashboard (`host.*`); deploy with their CLI/UI — Studio does not Orbit-deploy them |
 | DB | Provision on Neon/Supabase/D1/Turso console (Publish or Launch `db.provision`); put connection on deploy target |
 | CI | After tag/Signet release, Run `gh run list` from Publish or Launch / confirm GitHub Actions |

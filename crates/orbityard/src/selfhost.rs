@@ -70,7 +70,9 @@ fn read_selfhost_file(project: &Path) -> Option<SelfhostFile> {
 
 /// Orbit Yard monorepo layout (this repo / forks) — prefer Self-host over Orbit-as-SaaS.
 pub fn is_studio_monorepo(project: &Path) -> bool {
-    project.join("crates/orbityard/Cargo.toml").is_file()
+    let crate_manifest = project.join("crates/orbityard/Cargo.toml").is_file()
+        || project.join("crates/shipctl/Cargo.toml").is_file();
+    crate_manifest
         && (project.join("apps/desktop").is_dir()
             || project.join("apps/desktop/src-tauri").is_dir())
 }

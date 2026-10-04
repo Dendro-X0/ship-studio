@@ -20,10 +20,10 @@ Dashboard shows stack chips but not whether the repo is clean, mid-publish, or a
 |--------|---------|---------|
 | Git | `git rev-parse`, `status --porcelain`, `log -1`, `rev-list --left-right --count @{u}...HEAD` (best-effort) | branch, dirty, ahead/behind, last commit |
 | Ship | `.ship/studio.json`, `launch.json`, `publish.json`, `last-run.json` | mid-wizard step, finished, last run ok |
-| Deploy | `.orbit/runs/*/summary.json` (ok+url) · `.ship/last-run.json` · nested `.vercel` · `.orbit/state.json` · local `.wrangler` | `orbit_deployed` / `last_run_ok` / `vercel_linked` / `orbit_configured` / `wrangler_local` / `unknown` + `urls[]` |
+| Deploy | `.orbit/runs/*/summary.json` (ok+url) · `.ship/last-run.json` · nested `.vercel` · `.orbit/state.json` · local `.wrangler` | `yard_deployed` / `last_run_ok` / `vercel_linked` / `yard_configured` / `wrangler_local` / `unknown` + `urls[]` |
 | Tools | lightweight PATH probe | Signet/Orbit found |
 
-**Live vs local:** only `orbit_deployed`, `last_run_ok`, or non-empty `urls` mean “already live”. Bare `.wrangler/state` is `wrangler_local` (dev) — does **not** auto-skip redeploy.
+**Live vs local:** only `yard_deployed`, `last_run_ok`, or non-empty `urls` mean “already live”. Bare `.wrangler/state` is `wrangler_local` (dev) — does **not** auto-skip redeploy.
 
 When live, Publish marks `deploy*` + `live_check` Done (`specs/backend/deploy-status-skip-design.md`).
 
@@ -45,7 +45,7 @@ API / Worker stacks must not show **Blocked: Tools missing** solely because Orbi
 orbityard pulse [--project .]
 ```
 
-MCP: `orbit_pulse`. Desktop bind + Dashboard refresh call pulse and drive Now + health + quick actions.
+MCP: `yard_pulse`. Desktop bind + Dashboard refresh call pulse and drive Now + health + quick actions.
 
 ## Proof
 

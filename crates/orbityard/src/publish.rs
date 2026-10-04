@@ -1088,7 +1088,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "submit.itch",
             "Submit — itch.io butler push",
             PubKind::List,
-            "Push the build with butler: `orbityard butler push --target user/game:channel [--dir dist]` (or MCP orbit_butler_push). Opens a visible terminal — Studio never stores itch credentials. Docs: itch.io/docs/butler. Confirm when the build is live.",
+            "Push the build with butler: `orbityard butler push --target user/game:channel [--dir dist]` (or MCP yard_butler_push). Opens a visible terminal — Studio never stores itch credentials. Docs: itch.io/docs/butler. Confirm when the build is live.",
             3,
             Some("https://itch.io/docs/butler/".into()),
             None,
@@ -2376,7 +2376,7 @@ mod tests {
     }
 
     #[test]
-    fn unbound_project_gets_platforms_host_not_orbit_deploy() {
+    fn unbound_project_gets_platforms_host_not_yard_deploy() {
         let dir = std::env::temp_dir().join(format!(
             "orbityard-publish-unbound-{}",
             std::time::SystemTime::now()
