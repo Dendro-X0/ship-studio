@@ -8,12 +8,12 @@
 ## Plan alignment
 
 ```text
-HANDOFF ATOMIC STEP: Idle after butler CLI — L3 dogfood optional
-ACTIVE BAND / SCOPE:   Game cut · itch butler (CLI/MCP spawn) — slice 1b done
+HANDOFF ATOMIC STEP: Idle — L3 butler dogfood recorded; live push needs human login
+ACTIVE BAND / SCOPE:   Game cut · itch butler — slice 1b + L3 dogfood done
 PAUSED / CANCELLED:    Vendor coach · Portal UX expansion · Paddle Solo dogfood · CDP · store API upload
 FORBIDDEN THIS TASK:   Desktop Integrations growth · Steam depot automation · Epic upload API
 CANONICAL OWNER:       crates/shipctl (mcp + CLI + publish cues)
-PROOF BEFORE DONE:     L1 cargo test · L2 shipctl butler push --help · tools list includes ship_butler_push
+PROOF BEFORE DONE:     L1 cargo test · L2 shipctl butler push --help · L3 spawn dogfood
 SURFACE:               CLI / MCP (not Desktop wizards)
 ```
 
@@ -85,4 +85,4 @@ Never accepts passwords/API keys. If `butler` missing → `ok: false` + install 
 |-------|--------|
 | L1 | `cargo test -p shipctl butler` — pass |
 | L2 | tools list includes `ship_butler_push` — pass |
-| L3 | Maintainer with butler installed: spawn opens terminal (optional) |
+| L3 | 2026-10-04: butler v15.31.0 on PATH; fixture `E:/Temp/ship-butler-dogfood`; `--no-spawn` recipe ok + spawn `spawned:true`; assist/pulse itch cues. Live push blocked until human `butler login` (no `butler_creds`) |

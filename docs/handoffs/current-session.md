@@ -2,15 +2,15 @@
 
 **Updated:** 2026-10-04  
 **Branch:** `main`  
-**Status:** **Game butler slice 1b (CLI)** — `shipctl butler push` + Publish/assist/pulse cues. Desktop wizards stay frozen.
+**Status:** **Game butler L3 dogfood done** (recipe + spawn). Live itch push needs your `butler login`.
 
 ## Next Atomic Step
 
-**Idle** after butler CLI — L3 dogfood when you have a game build + `butler` on PATH. Steam/Epic remain Open+Confirm only.
+**Idle.** Steam/Epic remain Open+Confirm only.
 
 | Option | When |
 |--------|------|
-| L3 butler spawn dogfood | Maintainer has itch target + build dir |
+| Live itch push (human) | After `butler login` + real `user/game:channel` page |
 | Steam Open-only depth | Only if a Steam App ID ship asks |
 
 ## Design queue (not coding until activated)
@@ -49,6 +49,7 @@
 
 | Band | Link |
 |------|------|
+| **Game butler L3 dogfood** | Installed butler v15.31.0 → `~/.local/bin`; fixture `E:/Temp/ship-butler-dogfood`; `--no-spawn` recipe ok; spawn `spawned:true`; assist itch cue present; **no** `butler_creds` yet (push waits on human login) |
 | **Game butler push (CLI + MCP)** | [game-butler-push-design](../../specs/backend/game-butler-push-design.md) · `shipctl butler push` · `ship_butler_push` |
 | **Freeze tag** | `freeze/mcp-agent-2026-10-04` — close-cut + MCP G1–G4 + skill |
 | **MCP agent skill** | [`.cursor/skills/ship-mcp-agent`](../../.cursor/skills/ship-mcp-agent/SKILL.md) · prefer ship_* over Desktop wizards |
