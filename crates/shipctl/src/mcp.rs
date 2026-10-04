@@ -18,7 +18,7 @@ use crate::signpath;
 use crate::vault_km;
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead, IsTerminal, Write};
 use std::path::PathBuf;
 
 pub fn serve() -> Result<()> {
@@ -86,7 +86,7 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ship_human",
-            "Human portal sprint: open Polar/GitHub/dashboards; optional interactive secret put queue",
+            "Human portal sprint: open Polar/GitHub/dashboards. put:true requires an interactive TTY — prefer ship_env_put (spawn) or Desktop Put when running under MCP.",
             false,
         ),
         tool(
@@ -173,24 +173,30 @@ fn tool_secrets() -> Value {
 fn tool_vault() -> Value {
     json!({
         "name": "ship_vault",
-        "description": "Encrypted kmvault (.km) export/list/show — Clavis-compatible. Passphrase via SHIP_VAULT_PASSPHRASE or argument (local only).",
+        "description": "Encrypted kmvault (.km) list/export — Clavis-compatible. Prefer Desktop vault export. Do NOT pass secret values or passphrases in tool args (they land in agent logs); use SHIP_VAULT_PASSPHRASE in the environment and export from a human TTY when possible. list/show titles only when needed.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "action": {
                     "type": "string",
-                    "description": "export | list | show"
+                    "description": "export | list | show — prefer list; avoid export with value in MCP"
                 },
                 "out": { "type": "string", "description": "Output .km path (export)" },
                 "file": { "type": "string", "description": "Existing .km path (list/show)" },
                 "title": { "type": "string", "description": "Entry title (export one / show)" },
-                "value": { "type": "string", "description": "Secret value (export one; prefer not logging)" },
+                "value": {
+                    "type": "string",
+                    "description": "DISCOURAGED in MCP — secret lands in agent context. Prefer Desktop Put + vault export."
+                },
                 "url": { "type": "string" },
                 "name": { "type": "string", "description": "Vault display name" },
-                "passphrase": { "type": "string", "description": "Optional; else SHIP_VAULT_PASSPHRASE" },
+                "passphrase": {
+                    "type": "string",
+                    "description": "DISCOURAGED — prefer SHIP_VAULT_PASSPHRASE env; never echo in chat"
+                },
                 "entries": {
                     "type": "array",
-                    "description": "export: [{title,value,url?}]",
+                    "description": "DISCOURAGED in MCP export: [{title,value,url?}]",
                     "items": { "type": "object" }
                 }
             },
@@ -377,7 +383,10 @@ fn tool(name: &str, description: &str, flow_flags: bool) -> Value {
     if name == "ship_human" {
         props["open"] = json!({ "type": "boolean", "description": "Open paste-source URLs (default true)" });
         props["open_all"] = json!({ "type": "boolean", "description": "Also open full guide entry URLs" });
-        props["put"] = json!({ "type": "boolean", "description": "Interactively put queued secrets" });
+        props["put"] = json!({
+            "type": "boolean",
+            "description": "Interactive put queue — REQUIRES a real TTY. Under MCP use ship_env_put instead (default false)."
+        });
     }
     json!({
         "name": name,
@@ -581,6 +590,11 @@ fn call_tool(params: Value) -> Result<Value> {
                 .get("open_all")
                 .and_then(|v| v.as_bool())
                 .unwrap_or(false);
+            if put && !std::io::stdin().is_terminal() {
+                anyhow::bail!(
+                    "ship_human put:true needs an interactive TTY (MCP has none). Use ship_env_put {{ provider, name, spawn:true }} or Desktop Put — never paste secrets into tool args."
+                );
+            }
             serde_json::to_value(human::run_with_options(&project, open, put, open_all)?)?
         }
         "ship_launch" => {
@@ -861,5 +875,21 @@ mod tests {
         let host = body["host_cli"].as_array().expect("host_cli");
         assert_eq!(host[0], "wrangler");
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn human_put_bails_without_tty() {
+        // MCP stdio is not an interactive put TTY in unit tests.
+        if std::io::stdin().is_terminal() {
+            // Rare in CI; skip assertion rather than hang.
+            return;
+        }
+        let params = json!({
+            "name": "ship_human",
+            "arguments": { "project": ".", "put": true, "open": false }
+        });
+        let err = call_tool(params).expect_err("put without TTY must fail");
+        let msg = err.to_string();
+        assert!(msg.contains("TTY") || msg.contains("ship_env_put"), "{msg}");
     }
 }

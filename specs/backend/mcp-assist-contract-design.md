@@ -56,8 +56,8 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 | `ship_flow_dry_run` | J | Yes | Plan print |
 | `ship_flow` / `ship_sign` / `ship_deploy` | N / J | Caution | Deploy/sign may need TTY; deploy refuses offline; Orbit only |
 | `ship_hostdeploy` | N | Caution | Hosted CLI (CF/Vercel/Netlify); prefer Desktop Deploy; no secret custody |
-| `ship_human` | T when put | Caution | `put` needs interactive TTY |
-| `ship_vault` | L+custody risk | Caution | Passphrase/values — don’t log |
+| `ship_human` | T when put | Caution | MCP: `put:true` **bails** without TTY — use `ship_env_put` |
+| `ship_vault` | L+custody risk | Caution | Schema discourages value/passphrase in MCP args |
 
 ## Agent playbook (human gates)
 
@@ -89,8 +89,8 @@ See [hosted-deploy-ops-value-bar H5](./hosted-deploy-ops-value-bar-design.md). S
 |-----|--------------|---------------------|
 | **G1** `ship_publish_open` / `confirm` / `next` / `verify` | **Shipped** — MCP wrappers | Agents still must not fake Confirm |
 | **G2** `ship_env_put` recipe + optional terminal spawn | **Shipped** — never accepts `value` | Prefer `spawn:true` for a visible TTY |
-| **G3** `ship_human` put in MCP sessions without TTY | Silent hang / fail | Tool description + bail when non-TTY |
-| **G4** `ship_vault` value-in-args | Temptation to paste secrets into agent context | Soften schema docs; prefer Desktop export |
+| **G3** `ship_human` put without TTY | **Shipped** — MCP bails; prefer `ship_env_put` | CLI `--put` still soft-skips |
+| **G4** `ship_vault` value-in-args | **Shipped** — schema/docs discourage value/passphrase in MCP | Prefer Desktop export |
 | **G5** Deploy/flow/hostdeploy from MCP vs Desktop | Auth prompts headless | Prefer Desktop Deploy; `ship_hostdeploy` hint on fail (**H5 shipped**) |
 | **G6** CDP / live Desktop MCP dogfood | Can’t prove agent↔Desktop loop | Reliability Later / CDP attach |
 

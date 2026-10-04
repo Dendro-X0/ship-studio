@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3  
 **Updated:** 2026-10-03  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Close-cut OSS · **S2.4 G1+G2** MCP publish + env put launch.
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Close-cut OSS · **S2.4 G1–G4** MCP agent path.
 
 ## Truth pointers
 

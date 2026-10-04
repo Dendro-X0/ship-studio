@@ -50,7 +50,7 @@ Desktop stays: bind folder · Publish spine · Deploy (official CLI) · Open das
 | Local validate | `ship_pulse`, `ship_status`, `ship_publish_watch` |
 | Hosted deploy | Prefer Desktop Deploy; `ship_hostdeploy` if CLI session exists |
 
-S2.4 **G1 + G2 shipped** — publish open/verify/confirm/next · `ship_env_put`. G6 CDP stays Later.
+S2.4 **G1–G4 shipped** — publish mutations · `ship_env_put` · human put TTY bail · vault docs. G5 hint already on hostdeploy; G6 CDP stays Later.
 
 ## Skills (Cursor)
 
@@ -62,6 +62,7 @@ A short project skill may tell the agent: use `shipctl mcp` first; official vend
 - [x] Design + MCP inventory agree (this file + mcp.rs `tools()`)
 - [x] Impl slice: G1 wrappers
 - [x] Impl slice: G2 `ship_env_put`
+- [x] Impl slice: G3 human put TTY bail · G4 vault schema soften
 - [ ] L3: agent session uses `ship_publish_verify` then human Confirm (not required to ship G1)
 
 ## Do not

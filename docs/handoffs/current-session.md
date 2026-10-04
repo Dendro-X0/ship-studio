@@ -2,18 +2,18 @@
 
 **Updated:** 2026-10-03  
 **Branch:** `main`  
-**Status:** **S2.4 G1 + G2 shipped** (publish mutations · `ship_env_put`). Client stays thin.
+**Status:** **S2.4 G1–G4 shipped**. Client stays thin. G6 CDP parked.
 
 ## Next Atomic Step
 
-**Idle** — G3–G6 remain backlog. Named freeze tag optional. No Desktop wizard growth.
+**Idle** — named freeze tag optional. No Desktop wizard growth. G5 already hinted on `ship_hostdeploy`.
 
 Canon: [mcp-assist-contract-design](../../specs/backend/mcp-assist-contract-design.md) · [mcp-agent-guide-design](../../specs/backend/mcp-agent-guide-design.md).
 
 | Option | When |
 |--------|------|
 | Named freeze tag | Maintainer |
-| S2.4 G3 non-TTY put bail | If MCP put hangs without TTY |
+| G6 CDP dogfood | Reliability Later only |
 
 ## Design queue (not coding until activated)
 
@@ -51,6 +51,7 @@ Canon: [mcp-assist-contract-design](../../specs/backend/mcp-assist-contract-desi
 
 | Band | Link |
 |------|------|
+| **S2.4 G3–G4 MCP put/vault honesty** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · TTY bail · vault schema |
 | **S2.4 G2 MCP env put launch** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · `ship_env_put` recipe + spawn |
 | **S2.4 G1 MCP publish mutations** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · `ship_publish_open`/`verify`/`confirm`/`next` |
 | **Close-cut slice 1** | [close-cut-design](../../specs/backend/close-cut-design.md) · legal OSS · Releases-first README |
