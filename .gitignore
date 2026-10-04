@@ -28,3 +28,4 @@ docs/assets/demo/**/_raw/
 ship-studio-*.license
 
 apps/website/.astro/
+.netlify/
