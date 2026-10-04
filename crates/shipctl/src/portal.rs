@@ -1074,20 +1074,23 @@ pub fn plan_for(project: &Path, filter: Option<ProviderId>) -> Result<PortalPlan
             providers.push(f);
         }
     }
-    if providers.is_empty() {
-        providers = ProviderId::all().to_vec();
+    // Auto-detect empty → empty plan (not full catalog). Explicit wizards use plan_for_providers.
+    let mut plan = plan_for_providers(&project, &providers)?;
+    if providers.is_empty() && filter.is_none() {
+        plan.notes.insert(
+            0,
+            "No providers detected — open Platforms to choose a host, or pass --provider / .ship/markets. Studio no longer dumps the full catalog.".into(),
+        );
     }
-    plan_for_providers(&project, &providers)
+    Ok(plan)
 }
 
 /// Build a portal plan for an explicit provider set (wizard / multi-select).
+/// Empty `providers` yields an empty plan (callers that want the full catalog
+/// must pass `ProviderId::all()`).
 pub fn plan_for_providers(project: &Path, providers: &[ProviderId]) -> Result<PortalPlan> {
     let project = std::fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
-    let providers: Vec<ProviderId> = if providers.is_empty() {
-        ProviderId::all().to_vec()
-    } else {
-        providers.to_vec()
-    };
+    let providers = providers.to_vec();
 
     let mut steps = Vec::new();
     for id in &providers {
@@ -1340,6 +1343,22 @@ mod tests {
         let plan = plan_for(&dir, Some(ProviderId::Vercel)).unwrap();
         assert_eq!(plan.providers, vec!["vercel".to_string()]);
         assert!(plan.steps.iter().all(|s| s.provider == "vercel"));
+    }
+
+    #[test]
+    fn empty_detect_does_not_flood_full_catalog() {
+        let dir = tempfile_dir();
+        let plan = plan_for(&dir, None).unwrap();
+        assert!(
+            plan.providers.is_empty(),
+            "empty project must not expand to all providers, got {:?}",
+            plan.providers
+        );
+        assert!(plan.steps.is_empty());
+        assert!(plan
+            .notes
+            .iter()
+            .any(|n| n.contains("No providers detected")));
     }
 
     #[test]

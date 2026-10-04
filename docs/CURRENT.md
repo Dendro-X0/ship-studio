@@ -2,7 +2,7 @@
 
 **Version:** 0.2.3  
 **Updated:** 2026-10-04  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Freeze tagged · itch butler CLI/MCP **L3 dogfooded** (spawn ok; live push needs `butler login`).
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · **Client finishability S1–S2** (detect + catalog diet + unbound host gate) · itch butler L3 dogfooded.
 
 ## Truth pointers
 

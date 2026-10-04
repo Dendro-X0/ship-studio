@@ -1218,7 +1218,10 @@ fn open_portal_auto(app: &mut App) {
 }
 
 fn load_portal_from_selection(app: &mut App) {
-    let ids = selected_providers(app);
+    let mut ids = selected_providers(app);
+    if ids.is_empty() {
+        ids = ProviderId::all().to_vec();
+    }
     match portal::plan_for_providers(&app.project, &ids) {
         Ok(plan) => apply_plan(app, plan),
         Err(e) => {

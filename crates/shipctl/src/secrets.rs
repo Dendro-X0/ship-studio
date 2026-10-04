@@ -37,9 +37,8 @@ pub fn plan_for(project: &Path, filter: Option<ProviderId>) -> Result<SecretsPla
             providers.push(f);
         }
     }
-    if providers.is_empty() {
-        providers = ProviderId::all().to_vec();
-    }
+    // Empty detect → empty hints (not ProviderId::all). Obstacle-course diet.
+    let detect_empty = providers.is_empty() && filter.is_none();
 
     let mut hints = Vec::new();
     for id in &providers {
@@ -48,17 +47,25 @@ pub fn plan_for(project: &Path, filter: Option<ProviderId>) -> Result<SecretsPla
     hints.extend(graduate_commerce_catalog_hints(&project, &detected));
     dedupe_hints(&mut hints);
 
+    let mut notes = vec![
+        "Paste values into the provider CLI — shipctl never stores secret values.".into(),
+        "Run: shipctl secrets put --project . --provider cloudflare --name <NAME>".into(),
+        "Or use TUI → Secrets → Enter to put the selected hint.".into(),
+        "Graduate / Gumroad / Lemon / Stripe / Paddle rows are name-only catalogs — set in CI or vendor dashboards, not .ship/.".into(),
+        "Optional backup: shipctl vault export --out ship-secrets.km --from-hints".into(),
+    ];
+    if detect_empty {
+        notes.insert(
+            0,
+            "No host/commerce providers detected — choose a host on Platforms or opt in via .ship/markets (no full-catalog flood).".into(),
+        );
+    }
+
     Ok(SecretsPlan {
         schema: "ship-studio/secrets/v1".into(),
         project: project.display().to_string(),
         hints,
-        notes: vec![
-            "Paste values into the provider CLI — shipctl never stores secret values.".into(),
-            "Run: shipctl secrets put --project . --provider cloudflare --name <NAME>".into(),
-            "Or use TUI → Secrets → Enter to put the selected hint.".into(),
-            "Graduate / Gumroad / Lemon / Stripe / Paddle rows are name-only catalogs — set in CI or vendor dashboards, not .ship/.".into(),
-            "Optional backup: shipctl vault export --out ship-secrets.km --from-hints".into(),
-        ],
+        notes,
     })
 }
 
@@ -863,19 +870,35 @@ name = "x"
     }
 
     #[test]
-    fn empty_dev_vars_become_hints() {
+    fn empty_detect_does_not_flood_all_secret_catalogs() {
         let dir = tempfile_dir();
-        fs::write(dir.join("wrangler.toml"), "name = \"x\"\n").unwrap();
+        let plan = plan_for(&dir, None).unwrap();
+        assert!(
+            plan.hints.is_empty(),
+            "empty project must not dump Neon/Supabase/… catalogs, got {} hints",
+            plan.hints.len()
+        );
+        assert!(plan
+            .notes
+            .iter()
+            .any(|n| n.contains("No host/commerce providers detected")));
+    }
+
+    #[test]
+    fn public_paddle_env_yields_paddle_hints() {
+        let dir = tempfile_dir();
         fs::write(
-            dir.join(".dev.vars"),
-            "API_KEY_PEPPER=set\nGITHUB_TOKEN=\nPOLAR_CHECKOUT_URL=\n",
+            dir.join(".env"),
+            "PUBLIC_PADDLE_CLIENT_TOKEN=\nPUBLIC_PADDLE_PRICE_ID=\n",
         )
         .unwrap();
-        let plan = plan_for(&dir, Some(ProviderId::Cloudflare)).unwrap();
-        let names: Vec<_> = plan.hints.iter().map(|h| h.name.as_str()).collect();
-        assert!(names.contains(&"GITHUB_TOKEN"));
-        assert!(names.contains(&"POLAR_CHECKOUT_URL"));
-        assert!(!names.contains(&"API_KEY_PEPPER"));
+        let plan = plan_for(&dir, None).unwrap();
+        assert!(plan.hints.iter().any(|h| h.provider == "paddle"));
+        assert!(plan
+            .hints
+            .iter()
+            .any(|h| h.name == "PUBLIC_PADDLE_CLIENT_TOKEN"));
+        assert!(!plan.hints.iter().any(|h| h.provider == "neon"));
     }
 
     #[test]

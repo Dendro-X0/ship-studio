@@ -308,6 +308,8 @@ fn is_general_step(step: &PubStep) -> bool {
         || id == "live_check"
         || id == "deploy"
         || id.starts_with("deploy.")
+        || id == "deploy.host"
+        || id == "platforms.host"
         || id == "sign.self.build"
         || id == "selfhost.deploy"
 }
@@ -320,7 +322,11 @@ fn is_local_intent_step(step: &PubStep, env_required: bool) -> bool {
     if id == "env.sprint" {
         return env_required;
     }
-    if id == "deploy" || id.starts_with("deploy.") || id == "live_check" {
+    if id == "deploy"
+        || id.starts_with("deploy.")
+        || id == "platforms.host"
+        || id == "live_check"
+    {
         return false;
     }
     if id.starts_with("listing.") || id.starts_with("submit.") {
@@ -1292,21 +1298,63 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
         .cloned()
         .collect();
     if deploy_scopes.is_empty() {
-        steps.push(step(
-            "deploy",
-            "Deploy — Orbit (network)",
-            PubKind::Deploy,
-            "Run Orbit with studio.json deploy_args. Confirm after success.",
-            3,
-            None,
-            Some(vec![
-                "shipctl".into(),
-                "deploy".into(),
-                "--project".into(),
-                ".".into(),
-            ]),
-            Some("launch"),
-        ));
+        let tier_a = detected.wrangler || detected.vercel || detected.netlify;
+        let primary = config::primary_host_for(project);
+        if !tier_a && primary.is_none() {
+            // Honest unbound gate — do not run a blank Orbit deploy.
+            steps.push(step(
+                "platforms.host",
+                "Platforms — choose primary host",
+                PubKind::Human,
+                "No Cloudflare/Vercel/Netlify config yet. Open Platforms, pick a host, finish Login CLI or dashboard deploy, then Confirm. Studio will not invent an Orbit deploy.",
+                3,
+                None,
+                None,
+                Some("platforms"),
+            ));
+        } else if !tier_a {
+            let host = primary.unwrap_or_else(|| "cloudflare".into());
+            let provider = match host.as_str() {
+                "vercel" => "vercel",
+                "netlify" => "netlify",
+                _ => "cloudflare",
+            };
+            steps.push(step(
+                "deploy.host",
+                format!("Deploy — {provider} (host CLI)"),
+                PubKind::Deploy,
+                format!(
+                    "Run shipctl hostdeploy --provider {provider}. Confirm after the hosted URL is live. Login CLI first if auth fails."
+                ),
+                3,
+                None,
+                Some(vec![
+                    "shipctl".into(),
+                    "hostdeploy".into(),
+                    "--project".into(),
+                    ".".into(),
+                    "--provider".into(),
+                    provider.into(),
+                ]),
+                Some("platforms"),
+            ));
+        } else {
+            steps.push(step(
+                "deploy",
+                "Deploy — Orbit (network)",
+                PubKind::Deploy,
+                "Run Orbit with studio.json deploy_args. Confirm after success.",
+                3,
+                None,
+                Some(vec![
+                    "shipctl".into(),
+                    "deploy".into(),
+                    "--project".into(),
+                    ".".into(),
+                ]),
+                Some("launch"),
+            ));
+        }
     } else {
         for s in deploy_scopes {
             let mut run = vec![
@@ -2325,6 +2373,41 @@ mod tests {
         assert!(v.minutes_total >= 5);
         assert!(!v.finished);
         assert_eq!(v.mode, StudioMode::Advanced);
+    }
+
+    #[test]
+    fn unbound_project_gets_platforms_host_not_orbit_deploy() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-unbound-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("astro.config.mjs"), "export default {};\n").unwrap();
+        fs::write(
+            dir.join(".env"),
+            "PUBLIC_PADDLE_CLIENT_TOKEN=\nPUBLIC_PADDLE_PRICE_ID=\n",
+        )
+        .unwrap();
+        let state = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(
+            state.steps.iter().any(|s| s.id == "platforms.host"),
+            "expected platforms.host, steps={:?}",
+            state.steps.iter().map(|s| &s.id).collect::<Vec<_>>()
+        );
+        assert!(!state.steps.iter().any(|s| s.id == "deploy"));
+        assert_eq!(
+            state
+                .steps
+                .iter()
+                .find(|s| s.id == "platforms.host")
+                .and_then(|s| s.desktop_view.as_deref()),
+            Some("platforms")
+        );
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]

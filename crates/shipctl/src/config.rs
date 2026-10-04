@@ -1051,13 +1051,34 @@ fn detect_marketing_site(project: &Path, d: &mut Detected) {
     .iter()
     .any(|rel| project.join(rel).is_dir());
 
+    // When the bound root *is* apps/website (or marketing/landing), child dir_hit misses.
+    let base = project
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    let name_hit = matches!(
+        base.as_str(),
+        "website" | "marketing" | "landing" | "hook"
+    );
+
+    let astro = [
+        "astro.config.mjs",
+        "astro.config.js",
+        "astro.config.ts",
+        "astro.config.mts",
+    ]
+    .iter()
+    .any(|n| project.join(n).is_file());
+
     let pages_file = project.join("CNAME").is_file() || project.join(".nojekyll").is_file();
     let pages_workflow = marketing_pages_workflow(project);
     let preview = project
         .join("docs/launch/preview/index.html")
         .is_file();
 
-    d.marketing_site = opt_in || dir_hit || pages_file || pages_workflow || preview;
+    d.marketing_site =
+        opt_in || dir_hit || name_hit || astro || pages_file || pages_workflow || preview;
     if !d.marketing_site {
         d.marketing_host.clear();
         return;
@@ -1149,6 +1170,7 @@ fn detect_graduate_commerce(project: &Path, d: &mut Detected) {
 
     d.paddle = opted.iter().any(|m| m == "paddle")
         || env_key_prefix(project, "PADDLE_")
+        || env_key_prefix(project, "PUBLIC_PADDLE_")
         || package_mentions(project, &["@paddle/", "paddle-sdk"]);
 
     d.creem = opted.iter().any(|m| m == "creem")
@@ -2109,6 +2131,46 @@ mod tests {
         assert!(probe(&dir2).marketing_site);
         let _ = fs::remove_dir_all(&dir);
         let _ = fs::remove_dir_all(&dir2);
+
+        // Bound root *is* the website folder (dogfood bind apps/website).
+        let dir3 = std::env::temp_dir().join(format!(
+            "shipctl-mkt-website-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir3);
+        fs::create_dir_all(&dir3).unwrap();
+        // Rename path ending in website
+        let website = dir3.join("website");
+        fs::create_dir_all(&website).unwrap();
+        fs::write(website.join("astro.config.mjs"), "export default {};\n").unwrap();
+        assert!(
+            probe(&website).marketing_site,
+            "folder named website + astro should detect marketing_site"
+        );
+        let _ = fs::remove_dir_all(&dir3);
+    }
+
+    #[test]
+    fn detects_public_paddle_env_keys() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-paddle-public-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join(".env"),
+            "PUBLIC_PADDLE_CLIENT_TOKEN=\nPUBLIC_PADDLE_PRICE_ID=\n",
+        )
+        .unwrap();
+        assert!(probe(&dir).paddle);
+        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]

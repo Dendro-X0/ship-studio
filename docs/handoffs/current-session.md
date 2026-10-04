@@ -2,17 +2,17 @@
 
 **Updated:** 2026-10-04  
 **Branch:** `main`  
-**Status:** **Capability audit + website L2 dogfood** — Client sequences full launch; cannot eliminate vendor/CLI kernel. Idle unless you reopen a PAUSED band.
+**Status:** **Client finishability S1+S2 shipped** — detect honesty, catalog diet, unbound `platforms.host` gate.
 
 ## Next Atomic Step
 
-**Idle.** Optional human: `butler login` for live itch, or reopen **Portal UX** / **Paddle Solo dogfood** if Client zero-curve is the new goal (conflicts with freeze).
+**Idle** (or **S3** — maintainer binds website primary host: CF/Vercel/Netlify marker / Platforms pick).
 
 | Option | When |
 |--------|------|
-| Live itch push (human) | After `butler login` + real `user/game:channel` |
-| Bind website primary host | Maintainer picks CF/Vercel/Netlify then Platforms Continue |
-| Reopen Portal UX / Paddle Solo | Explicit maintainer override of PAUSED |
+| S3 website host bind | Maintainer picks host for `apps/website` |
+| Live itch push | After `butler login` |
+| Paddle Solo dogfood | Stays PAUSED until explicit reopen |
 
 ## Design queue (not coding until activated)
 
@@ -50,6 +50,7 @@
 
 | Band | Link |
 |------|------|
+| **Client finishability S1–S2** | [client-finishability-design](../../specs/backend/client-finishability-design.md) · PUBLIC_PADDLE + marketing detect · catalog diet · `platforms.host` |
 | **Release capability audit** | Client sequences site+payments; CLI=kernel; MCP=agents; zero-curve Out · L2 `apps/website` selfhost ok, host unbound, Paddle env names present |
 | **Game butler L3 dogfood** | Installed butler v15.31.0 → `~/.local/bin`; fixture `E:/Temp/ship-butler-dogfood`; `--no-spawn` recipe ok; spawn `spawned:true`; assist itch cue present; **no** `butler_creds` yet (push waits on human login) |
 | **Game butler push (CLI + MCP)** | [game-butler-push-design](../../specs/backend/game-butler-push-design.md) · `shipctl butler push` · `ship_butler_push` |

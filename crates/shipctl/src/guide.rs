@@ -95,7 +95,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
             detail: format!(
                 "Providers: {}. OAuth stays manual in the browser.",
                 if portal.providers.is_empty() {
-                    "(none detected — full catalog)".into()
+                    "(none detected — choose host on Platforms)".into()
                 } else {
                     portal.providers.join(", ")
                 }

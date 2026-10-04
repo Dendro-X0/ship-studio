@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Client finishability S1–S2** — detect `PUBLIC_PADDLE_*` + website-folder marketing; stop empty→all secrets/portal flood; unbound Publish uses `platforms.host` instead of blank Orbit deploy ([design](./specs/backend/client-finishability-design.md))
 - **Game butler CLI** — `shipctl butler push --target user/game:channel` (+ MCP `ship_butler_push`); submit.itch detail points at the recipe/spawn path ([design](./specs/backend/game-butler-push-design.md))
 - **Game butler push** — MCP `ship_butler_push` recipe + optional terminal spawn for itch.io (no credentials; Steam/Epic stay Open+Confirm) ([design](./specs/backend/game-butler-push-design.md))
 - **Freeze** — annotated tag `freeze/mcp-agent-2026-10-04` marks close-cut OSS + MCP agent path (G1–G4 + skill); Desktop wizards stay frozen
