@@ -2,18 +2,18 @@
 
 **Updated:** 2026-10-03  
 **Branch:** `main`  
-**Status:** **S2.4 G1 shipped** (`ship_publish_open` / `verify` / `confirm` / `next`). Client stays thin.
+**Status:** **S2.4 G1 + G2 shipped** (publish mutations · `ship_env_put`). Client stays thin.
 
 ## Next Atomic Step
 
-**Idle** after G1 — or named freeze tag. No Desktop wizard growth. G2–G6 remain backlog.
+**Idle** — G3–G6 remain backlog. Named freeze tag optional. No Desktop wizard growth.
 
 Canon: [mcp-assist-contract-design](../../specs/backend/mcp-assist-contract-design.md) · [mcp-agent-guide-design](../../specs/backend/mcp-agent-guide-design.md).
 
 | Option | When |
 |--------|------|
 | Named freeze tag | Maintainer |
-| S2.4 G2 env-put launch recipe | If agents still cannot start Put |
+| S2.4 G3 non-TTY put bail | If MCP put hangs without TTY |
 
 ## Design queue (not coding until activated)
 
@@ -51,6 +51,7 @@ Canon: [mcp-assist-contract-design](../../specs/backend/mcp-assist-contract-desi
 
 | Band | Link |
 |------|------|
+| **S2.4 G2 MCP env put launch** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · `ship_env_put` recipe + spawn |
 | **S2.4 G1 MCP publish mutations** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · `ship_publish_open`/`verify`/`confirm`/`next` |
 | **Close-cut slice 1** | [close-cut-design](../../specs/backend/close-cut-design.md) · legal OSS · Releases-first README |
 | **Env Put convenience** | [env-put-convenience-design](../../specs/backend/env-put-convenience-design.md) · Secrets/Human/Integrations Put → host CLI |

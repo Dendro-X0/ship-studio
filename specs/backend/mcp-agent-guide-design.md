@@ -45,12 +45,12 @@ Desktop stays: bind folder · Publish spine · Deploy (official CLI) · Open das
 | Need | Tool |
 |------|------|
 | Next URL | `ship_portal`, `ship_guide` (`open` optional) |
-| Secret **names** + put recipe | `ship_secrets`, `ship_env` — no values |
+| Secret **names** + put recipe | `ship_secrets`, `ship_env`, `ship_env_put` (spawn terminal; no values) |
 | Checklist | `ship_assist` |
 | Local validate | `ship_pulse`, `ship_status`, `ship_publish_watch` |
 | Hosted deploy | Prefer Desktop Deploy; `ship_hostdeploy` if CLI session exists |
 
-S2.4 **G1 shipped** — `ship_publish_open` / `ship_publish_verify` / `ship_publish_confirm` / `ship_publish_next`. G6 CDP stays Later.
+S2.4 **G1 + G2 shipped** — publish open/verify/confirm/next · `ship_env_put`. G6 CDP stays Later.
 
 ## Skills (Cursor)
 
@@ -61,6 +61,7 @@ A short project skill may tell the agent: use `shipctl mcp` first; official vend
 - [x] Desktop: no new wizard surfaces in this band
 - [x] Design + MCP inventory agree (this file + mcp.rs `tools()`)
 - [x] Impl slice: G1 wrappers
+- [x] Impl slice: G2 `ship_env_put`
 - [ ] L3: agent session uses `ship_publish_verify` then human Confirm (not required to ship G1)
 
 ## Do not

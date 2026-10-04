@@ -104,6 +104,7 @@ fn tools() -> Vec<Value> {
         tool_publish_confirm(),
         tool_publish_next(),
         tool_publish_watch(),
+        tool_env_put(),
         tool(
             "ship_scopes",
             "Detect Web/API/Desktop deploy scopes (directories + providers)",
@@ -262,6 +263,32 @@ fn publish_common_props(mut extra: Value) -> Value {
         "description": "Optional ship intent override (local | public)"
     });
     extra
+}
+
+fn tool_env_put() -> Value {
+    json!({
+        "name": "ship_env_put",
+        "description": "Launch (or print) interactive host Put for a secret NAME on cloudflare|vercel|netlify. Never accepts a secret value. Prefer spawn:true so a visible terminal prompts the human.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "project": { "type": "string", "description": "Absolute project path" },
+                "provider": {
+                    "type": "string",
+                    "description": "cloudflare | vercel | netlify"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Secret env NAME only — never the value"
+                },
+                "spawn": {
+                    "type": "boolean",
+                    "description": "Open an external terminal with the Put CLI (default true)"
+                }
+            },
+            "required": ["project", "provider", "name"]
+        }
+    })
 }
 
 fn tool_publish_watch() -> Value {
@@ -615,6 +642,26 @@ fn call_tool(params: Value) -> Result<Value> {
         }
         "ship_scopes" => serde_json::to_value(scopes::plan_for(&project))?,
         "ship_env" => serde_json::to_value(envx::plan_for(&project)?)?,
+        "ship_env_put" => {
+            if args.get("value").is_some() {
+                anyhow::bail!(
+                    "ship_env_put never accepts a secret value — pass name only; human pastes in the terminal"
+                );
+            }
+            let provider = args
+                .get("provider")
+                .and_then(|p| p.as_str())
+                .context("ship_env_put requires provider")?;
+            let name = args
+                .get("name")
+                .and_then(|n| n.as_str())
+                .context("ship_env_put requires name")?;
+            let spawn = args
+                .get("spawn")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true);
+            serde_json::to_value(envx::put_launch(&project, provider, name, spawn)?)?
+        }
         "ship_sign_paths" => serde_json::to_value(signpath::plan_for(&project))?,
         "ship_assist" => serde_json::to_value(assist::plan_for(&project)?)?,
         "ship_flow_dry_run" => {
@@ -738,6 +785,7 @@ mod tests {
             "ship_publish_verify",
             "ship_publish_confirm",
             "ship_publish_next",
+            "ship_env_put",
         ] {
             assert!(names.contains(&n), "{n} missing in {names:?}");
         }
@@ -763,6 +811,55 @@ mod tests {
         let body: Value = serde_json::from_str(text).expect("json");
         assert!(body.get("ok").and_then(|v| v.as_bool()).is_some(), "{body}");
         assert!(body.get("publish").is_some(), "{body}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn env_put_rejects_value_arg() {
+        let params = json!({
+            "name": "ship_env_put",
+            "arguments": {
+                "project": ".",
+                "provider": "cloudflare",
+                "name": "FOO",
+                "value": "secret"
+            }
+        });
+        let err = call_tool(params).expect_err("must reject value");
+        assert!(err.to_string().contains("never accepts"), "{err}");
+    }
+
+    #[test]
+    fn env_put_recipe_without_spawn() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-mcp-g2-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = std::fs::create_dir_all(&dir);
+        std::fs::write(dir.join("wrangler.toml"), "name = \"g2\"\n").unwrap();
+        let params = json!({
+            "name": "ship_env_put",
+            "arguments": {
+                "project": dir.to_string_lossy(),
+                "provider": "cloudflare",
+                "name": "RESEND_API_KEY",
+                "spawn": false
+            }
+        });
+        let wrapped = call_tool(params).expect("env put");
+        let text = wrapped["content"][0]["text"].as_str().expect("text");
+        let body: Value = serde_json::from_str(text).expect("json");
+        assert_eq!(body["ok"], true);
+        assert_eq!(body["spawned"], false);
+        assert_eq!(body["name"], "RESEND_API_KEY");
+        let recipe = body["recipe"].as_str().unwrap_or("");
+        assert!(recipe.contains("--put"), "{recipe}");
+        assert!(recipe.contains("RESEND_API_KEY"), "{recipe}");
+        let host = body["host_cli"].as_array().expect("host_cli");
+        assert_eq!(host[0], "wrangler");
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

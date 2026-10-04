@@ -40,6 +40,7 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 | `ship_portal` | J (+ open) | Yes | Plan + optional open entry URLs |
 | `ship_secrets` | J (+ open) | Yes | Names + put CLI; no values |
 | `ship_env` | J | Yes | Plan only |
+| `ship_env_put` | J (+ spawn) | Yes | NAME only; recipe + optional external TTY; rejects `value` |
 | `ship_scopes` | J | Yes | Detect scopes |
 | `ship_sign_paths` | J | Yes | Self vs official |
 | `ship_assist` | J | Yes | Checklist |
@@ -62,7 +63,7 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 
 ```text
 1. ship_pulse / ship_publish → what’s required next
-2. If secret_put → tell human: Desktop Portal Put (or terminal shipctl env --put)
+2. If secret_put → `ship_env_put` { provider, name, spawn:true } or Desktop Put — never paste values into tool args
 3. If oauth_login → tell human: Desktop Login CLI / Sign in (web) / shipctl portal
 4. Open dashboard URLs via ship_portal open=true only as secondary
 5. After human finishes → `ship_publish_verify` or `ship_publish_watch` → human-ok then `ship_publish_confirm` → `ship_publish_next`
@@ -87,7 +88,7 @@ See [hosted-deploy-ops-value-bar H5](./hosted-deploy-ops-value-bar-design.md). S
 | Gap | Why it hurts | Suggested follow-up |
 |-----|--------------|---------------------|
 | **G1** `ship_publish_open` / `confirm` / `next` / `verify` | **Shipped** — MCP wrappers | Agents still must not fake Confirm |
-| **G2** No `ship_env_put` that only *launches* put (non-interactive spawn recipe) | Agents can’t start Desktop/TTY Put without telling the human | Document + optional “spawn terminal” meta (platform-specific) — not headless stdin |
+| **G2** `ship_env_put` recipe + optional terminal spawn | **Shipped** — never accepts `value` | Prefer `spawn:true` for a visible TTY |
 | **G3** `ship_human` put in MCP sessions without TTY | Silent hang / fail | Tool description + bail when non-TTY |
 | **G4** `ship_vault` value-in-args | Temptation to paste secrets into agent context | Soften schema docs; prefer Desktop export |
 | **G5** Deploy/flow/hostdeploy from MCP vs Desktop | Auth prompts headless | Prefer Desktop Deploy; `ship_hostdeploy` hint on fail (**H5 shipped**) |

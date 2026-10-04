@@ -450,6 +450,11 @@ fn hints_for_provider(project: &Path, id: ProviderId) -> Result<Vec<SecretHint>>
     Ok(out)
 }
 
+/// Host CLI argv for a Tier A Put (wrangler/vercel/netlify) — never includes the secret value.
+pub fn put_cli_public(id: ProviderId, name: &str) -> Vec<String> {
+    put_cli_for(id, name)
+}
+
 fn put_cli_for(id: ProviderId, name: &str) -> Vec<String> {
     match id {
         ProviderId::Cloudflare => vec!["wrangler".into(), "secret".into(), "put".into(), name.into()],
