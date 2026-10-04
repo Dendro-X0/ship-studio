@@ -83,7 +83,8 @@ pub fn plan_for(project: &Path) -> Result<EnvPortal> {
         schema: "ship-studio/env/v1".into(),
         project: project.display().to_string(),
         notes: vec![
-            "Create tokens on official dashboards. Retrieve = copy + put CLI.".into(),
+            "Create tokens on official dashboards. Retrieve = copy + Put on Cloudflare/Vercel/Netlify.".into(),
+            "No Put rows yet? Add empty NAME= lines to .env / .dev.vars or wrangler # Secrets: comments.".into(),
             "Ship Studio never stores secret values in .ship/.".into(),
         ],
         actions,

@@ -81,7 +81,7 @@ Design: `specs/backend/shipping-hub-north-star.md` · `specs/backend/provider-po
 | `vault` | **Encrypted `.km` export** (Clavis-compatible); `export` / `add` / `list` / `show` |
 | `tui` | Interactive terminal wizard |
 | `sign` / `deploy` / `flow` / `status` | Signet / Orbit / pipeline / last-run |
-| `mcp` | Stdio MCP (`ship_publish`, `ship_guide`, `ship_portal`, …) |
+| `mcp` | Stdio MCP (`ship_publish`, `ship_publish_open`/`verify`/`confirm`/`next`, `ship_guide`, `ship_portal`, …) |
 
 ## Providers (portal)
 
@@ -95,7 +95,9 @@ Design: `specs/backend/shipping-hub-north-star.md` · `specs/backend/provider-po
 | Gumroad | markets / `GUMROAD_*` | dashboard (no CLI OAuth) | app.gumroad.com |
 | Lemon | markets / `LEMON_*` | dashboard (no CLI OAuth) | app.lemonsqueezy.com |
 | Stripe | markets / `STRIPE_*` | dashboard (no CLI OAuth) | dashboard.stripe.com |
-| Paddle | markets / `PADDLE_*` | dashboard (no CLI OAuth) | vendors.paddle.com |
+| Paddle | markets / `PUBLIC_PADDLE_*` | sandbox dashboard (no CLI OAuth) | sandbox-vendors.paddle.com |
+| Creem | markets / `CREEM_*` | dashboard (no CLI OAuth) | creem.io/dashboard |
+| Waffo | markets / `WAFFO_*` | dashboard (no CLI OAuth) | pancake.waffo.ai |
 
 ## Desktop
 

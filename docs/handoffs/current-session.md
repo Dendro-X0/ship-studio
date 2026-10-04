@@ -1,19 +1,19 @@
 # Current session — Ship Studio
 
-**Updated:** 2026-09-28  
-**Branch:** `main` (in sync with `origin/main` at `6f4fd68`)  
-**Status:** Near site trust arc **closed** (S1.2–S1.6) · Queue **idle**
+**Updated:** 2026-10-03  
+**Branch:** `main`  
+**Status:** **S2.4 G1 shipped** (`ship_publish_open` / `verify` / `confirm` / `next`). Client stays thin.
 
 ## Next Atomic Step
 
-**Idle** — no coding band until activated.
+**Idle** after G1 — or named freeze tag. No Desktop wizard growth. G2–G6 remain backlog.
+
+Canon: [mcp-assist-contract-design](../../specs/backend/mcp-assist-contract-design.md) · [mcp-agent-guide-design](../../specs/backend/mcp-agent-guide-design.md).
 
 | Option | When |
 |--------|------|
-| Optional GIF recompress/spot-check | Maintainer polish |
-| Commerce (deploy site · Polar URLs · live buy/refund) | Org `payment_ready` |
-| Deepen a Payments/Integrations wizard dogfood | Activating a guide slice |
-| S2.4 MCP wrappers | A real agent ship asks |
+| Named freeze tag | Maintainer |
+| S2.4 G2 env-put launch recipe | If agents still cannot start Put |
 
 ## Design queue (not coding until activated)
 
@@ -30,7 +30,9 @@
 | Band | Rule |
 |------|------|
 | **Vendor handoff coach** | **CANCELLED** |
-| Polar paid checkout E2E | Deferred — org `payment_ready` (Studio *Solo* sale) |
+| **Paddle Solo API keys / overlay dogfood** | **PAUSED** — maintainer halt |
+| **Portal / Integrations UX expansion** | **PAUSED** — obstacle-course verdict |
+| Polar paid checkout E2E | Deferred — Polar is not the Solo processor |
 | aperio Advanced L4 | Parked |
 | Mobile store API upload | Deferred |
 | k8s controllers | Out of scope |
@@ -42,13 +44,20 @@
 | Surface | State |
 |---------|--------|
 | OSS / GitHub Releases tool | Ready (v0.2.3 + Desktop dogfood) |
-| Customer Payments/Integrations **guide** | In product — Open → Put outside Studio → Confirm ([PLATFORMS-AND-PORTAL](../product/PLATFORMS-AND-PORTAL.md)) |
-| Paid Solo checkout on the website | **Not ready** — Polar E2E + terms/privacy placeholders |
+| Customer Payments/Integrations **guide** | Polar · Stripe · Gumroad · Lemon · Paddle · Creem · Waffo |
+| Paid Solo checkout on the website | **Optional** — env-gated; not the close-cut |
 
 ## Last closed
 
 | Band | Link |
 |------|------|
+| **S2.4 G1 MCP publish mutations** | [mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md) · `ship_publish_open`/`verify`/`confirm`/`next` |
+| **Close-cut slice 1** | [close-cut-design](../../specs/backend/close-cut-design.md) · legal OSS · Releases-first README |
+| **Env Put convenience** | [env-put-convenience-design](../../specs/backend/env-put-convenience-design.md) · Secrets/Human/Integrations Put → host CLI |
+| **Integrations Deploy-feel** | [integrations-deploy-parity-design](../../specs/backend/integrations-deploy-parity-design.md) · all lanes `openLinks` |
+| **Website Paddle overlay** | [website-paddle-checkout-design](../../specs/backend/website-paddle-checkout-design.md) · [frontend spec](../frontend/website-paddle-checkout-spec.md) · [PADDLE-SETUP.md](../../apps/website/docs/PADDLE-SETUP.md) |
+| **Paddle portal minute** | [paddle-portal-minute-design](../../specs/backend/paddle-portal-minute-design.md) · Desktop Open → sandbox dashboard |
+| **Creem / Waffo payments guide** | [commerce-creem-waffo-design](../../specs/backend/commerce-creem-waffo-design.md) · [frontend spec](../frontend/payments-creem-waffo-spec.md) · L3 CLI: `shipctl portal --provider creem\|waffo` |
 | **S1.6 Cafe / FAQ** | [cafe-faq-design](../../specs/frontend/cafe-faq-design.md) · `/faq` |
 | **S1.5 OPERATOR-NEXT product** | [operator-next-product-design](../../specs/frontend/operator-next-product-design.md) · `/honesty` |
 | **S1.4 One intent page** | [one-intent-page-design](../../specs/frontend/one-intent-page-design.md) · `/intent` |

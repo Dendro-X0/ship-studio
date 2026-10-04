@@ -709,8 +709,8 @@
 
           <section class="view" data-view="integrations" aria-label="Integrations" hidden>
             <p class="hint">
-              Pick a wizard, follow the checklist, then open the vendor dashboard. Studio does not
-              create products, issue API keys, or send email.
+              Same shape as Deployment: page Opens → finish on the vendor → Put when a host secret
+              exists → Confirm. Studio does not create products, hold payment keys, or send email.
             </p>
             <div class="int-layout">
               <div id="integrations-catalog"></div>
@@ -719,6 +719,7 @@
                 <p class="hint" id="int-wizard-blurb"></p>
                 <p class="int-done-cue" id="int-wizard-done" hidden></p>
                 <ol class="int-steps" id="int-wizard-steps"></ol>
+                <div class="int-open-links" id="int-open-links" hidden></div>
                 <div class="hero-cta int-actions">
                   <button type="button" class="primary" id="int-open">Open dashboard</button>
                   <button
@@ -730,6 +731,7 @@
                     Put key
                   </button>
                   <button type="button" id="int-portal-steps" hidden>Portal steps</button>
+                  <button type="button" id="int-docs" hidden>Learn more</button>
                   <button
                     type="button"
                     id="int-confirm-gate"

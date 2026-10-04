@@ -23,7 +23,12 @@ import {
   integrationIconHtml,
   providerIconHtml,
 } from "./icons";
-import { INTEGRATION_WIZARDS, INTEGRATION_DONE_CRITERIA, INTEGRATION_PUBLISH_STEP } from "./integrations-data";
+import {
+  INTEGRATION_WIZARDS,
+  INTEGRATION_DONE_CRITERIA,
+  INTEGRATION_HOST_PUT,
+  INTEGRATION_PUBLISH_STEP,
+} from "./integrations-data";
 import { PLATFORM_GROUPS, PLATFORM_WIZARDS, SIGN_GROUPS, hostingCatalogEntries, signingCatalogEntries } from "./platforms-data";
 import {
   paintProviderWizard,
@@ -37,7 +42,6 @@ import type {
   DoctorReport,
   EnvPortal,
   HumanSprint,
-  IntegrationWizard,
   LaunchView,
   PortalPlan,
   ProjectPulse,
@@ -1630,6 +1634,8 @@ const PORTAL_PROVIDER_IDS = new Set([
   "lemon",
   "stripe",
   "paddle",
+  "creem",
+  "waffo",
   "heroku",
   "amplify",
   "cloudrun",
@@ -2925,10 +2931,13 @@ let selectedIntegration = "polar";
 let selectedPlatform = "selfhost";
 let selectedSignLane = "apple-sign";
 
-function integrationAllowed(wiz: IntegrationWizard): boolean {
-  if (!projectPath()) return false;
-  if (wiz.needsPublic && (studioMode() !== "advanced" || shipIntent() !== "public")) return false;
-  return true;
+async function openIntegrationVendor(url: string, label: string): Promise<void> {
+  if (!projectPath()) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  await openUrl(url);
+  toast(`Opened ${label}`, "ok");
 }
 
 function platformLocked(wiz: (typeof PLATFORM_WIZARDS)[number]): boolean {
@@ -2974,7 +2983,7 @@ function selectIntegration(id: string) {
 
 function paintIntegrationWizard() {
   const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration) ?? null;
-  const putName = selectedIntegration === "resend" ? "RESEND_API_KEY" : null;
+  const putName = INTEGRATION_HOST_PUT[selectedIntegration] ?? null;
   const putHost = putName ? preferredEnvPutHost() : null;
   paintProviderWizard({
     entry: wiz,
@@ -2985,8 +2994,10 @@ function paintIntegrationWizard() {
     openBtn: document.querySelector<HTMLButtonElement>("#int-open"),
     secondaryBtn: document.querySelector<HTMLButtonElement>("#int-portal-steps"),
     secondaryVisible: Boolean(wiz?.provider && isPortalProvider(wiz.provider)),
+    docsBtn: document.querySelector<HTMLButtonElement>("#int-docs"),
     putBtn: document.querySelector<HTMLButtonElement>("#int-put"),
     putVisible: Boolean(putName),
+    openLinksEl: document.querySelector<HTMLElement>("#int-open-links"),
   });
   const putBtn = document.querySelector<HTMLButtonElement>("#int-put");
   if (putBtn && putName) {
@@ -5292,6 +5303,26 @@ async function openEnvPutTerminal(provider: string, name: string) {
   );
 }
 
+/** Resolve Tier A host for Put — commerce hints Open vendor, then Put lands on CF/Vercel/Netlify. */
+function hostForSecretPut(hintProvider?: string | null): string | null {
+  const p = (hintProvider ?? "").toLowerCase();
+  if (providerHasEnvPut(p)) return p;
+  return preferredEnvPutHost();
+}
+
+async function putNamedSecretOnHost(name: string, hintProvider?: string | null): Promise<void> {
+  const host = hostForSecretPut(hintProvider);
+  if (!host) {
+    toast("Put needs Cloudflare, Vercel, or Netlify detected — bind a hosted project", "info", 5500);
+    return;
+  }
+  if (!name.trim() || name === "<NAME>") {
+    toast("Add empty NAME= lines to .env / .dev.vars first — then Put", "info", 5500);
+    return;
+  }
+  await openEnvPutTerminal(host, name);
+}
+
 /** Tier A hosts with a real put CLI — O1 Portal env primary CTA. */
 const ENV_PUT_PROVIDERS = new Set(["cloudflare", "vercel", "netlify"]);
 
@@ -5359,7 +5390,7 @@ function applyEnv(plan: EnvPortal | null) {
           </li>`;
         })
         .join("")
-    : `<li class="portal-step"><div class="meta"><p class="detail empty-hint">Load env portal.</p></div></li>`;
+    : `<li class="portal-step"><div class="meta"><p class="detail empty-hint">Load env portal — or add empty NAME= lines to .env / .dev.vars (or wrangler # Secrets:) so Put rows appear.</p></div></li>`;
   list.querySelectorAll<HTMLButtonElement>(".env-open").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const url = btn.getAttribute("data-url");
@@ -5570,11 +5601,13 @@ async function loadSecrets() {
       .map((h) => {
         const cmd = (h.put_cli ?? []).join(" ");
         const url = h.entry_url ?? "";
+        const name = h.name ?? "";
+        const canPut = Boolean(name && name !== "<NAME>" && hostForSecretPut(h.provider));
         return `<li class="portal-step">
           <div class="meta">
             <div class="title"><span class="kind">${escapeHtml(
               h.provider ?? "",
-            )}</span>${escapeHtml(h.name ?? "")}</div>
+            )}</span>${escapeHtml(name)}</div>
             <p class="detail">${escapeHtml(h.detail ?? "")}${
               cmd ? ` · ${escapeHtml(cmd)}` : ""
             }</p>
@@ -5583,6 +5616,9 @@ async function loadSecrets() {
             <button type="button" class="secret-open" data-url="${escapeHtml(
               url,
             )}" ${url ? "" : "disabled"}>Open</button>
+            <button type="button" class="secret-put${canPut ? " primary" : ""}" data-provider="${escapeHtml(
+              h.provider ?? "",
+            )}" data-name="${escapeHtml(name)}" ${canPut ? "" : "disabled"} title="Paste in host CLI terminal — never into Studio">Put</button>
             <button type="button" class="secret-copy" data-cmd="${escapeHtml(
               cmd,
             )}" ${cmd ? "" : "disabled"}>Copy CLI</button>
@@ -5594,6 +5630,14 @@ async function loadSecrets() {
       btn.addEventListener("click", async () => {
         const url = btn.getAttribute("data-url");
         if (url) await openUrl(url);
+      });
+    });
+    list.querySelectorAll<HTMLButtonElement>(".secret-put").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const name = btn.getAttribute("data-name");
+        const provider = btn.getAttribute("data-provider");
+        if (!name) return;
+        void putNamedSecretOnHost(name, provider);
       });
     });
     list.querySelectorAll<HTMLButtonElement>(".secret-copy").forEach((btn) => {
@@ -5625,11 +5669,13 @@ function applyHumanSprint(sprint: HumanSprint | null) {
     .map((h, i) => {
       const cmd = (h.put_cli ?? []).join(" ");
       const url = h.entry_url ?? "";
+      const name = h.name ?? "";
+      const canPut = Boolean(name && name !== "<NAME>" && hostForSecretPut(h.provider));
       return `<li class="portal-step">
         <div class="meta">
           <div class="title"><span class="kind">${i + 1}</span>${escapeHtml(
             h.provider ?? "",
-          )} · ${escapeHtml(h.name ?? "")}</div>
+          )} · ${escapeHtml(name)}</div>
           <p class="detail">${escapeHtml(url || "no source url")}${
             cmd ? ` · ${escapeHtml(cmd)}` : ""
           }</p>
@@ -5638,6 +5684,9 @@ function applyHumanSprint(sprint: HumanSprint | null) {
           <button type="button" class="human-open" data-url="${escapeHtml(
             url,
           )}" ${url ? "" : "disabled"}>Open source</button>
+          <button type="button" class="human-put${canPut ? " primary" : ""}" data-provider="${escapeHtml(
+            h.provider ?? "",
+          )}" data-name="${escapeHtml(name)}" ${canPut ? "" : "disabled"} title="Paste in host CLI terminal">Put</button>
           <button type="button" class="human-copy" data-cmd="${escapeHtml(
             cmd,
           )}" ${cmd ? "" : "disabled"}>Copy CLI</button>
@@ -5649,6 +5698,14 @@ function applyHumanSprint(sprint: HumanSprint | null) {
     btn.addEventListener("click", async () => {
       const url = btn.getAttribute("data-url");
       if (url) await openUrl(url);
+    });
+  });
+  list.querySelectorAll<HTMLButtonElement>(".human-put").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const name = btn.getAttribute("data-name");
+      const provider = btn.getAttribute("data-provider");
+      if (!name) return;
+      void putNamedSecretOnHost(name, provider);
     });
   });
   list.querySelectorAll<HTMLButtonElement>(".human-copy").forEach((btn) => {
@@ -7523,21 +7580,14 @@ window.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#int-open")?.addEventListener("click", async () => {
     const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration);
     if (!wiz) return;
-    if (!integrationAllowed(wiz) && wiz.needsPublic) {
-      toast(
-        studioMode() !== "advanced"
-          ? "Payment wizards need Advanced mode"
-          : "Payment wizards need Public intent",
-        "info",
-      );
-      return;
-    }
-    if (!projectPath()) {
-      toast("Bind a project first", "info");
-      return;
-    }
-    await openUrl(wiz.openUrl);
-    toast(`Opened ${wiz.title}`, "ok");
+    await openIntegrationVendor(wiz.openUrl, wiz.title);
+  });
+  document.querySelector("#int-open-links")?.addEventListener("click", async (ev) => {
+    const btn = (ev.target as HTMLElement | null)?.closest<HTMLButtonElement>("[data-open-url]");
+    const url = btn?.getAttribute("data-open-url")?.trim();
+    if (!url) return;
+    const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration);
+    await openIntegrationVendor(url, btn?.textContent?.trim() || wiz?.title || "Paddle");
   });
   document.querySelector("#int-portal-steps")?.addEventListener("click", () => {
     const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration);
@@ -7547,21 +7597,26 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     void openPortalProvider(wiz.provider);
   });
+  document.querySelector("#int-docs")?.addEventListener("click", async () => {
+    const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration);
+    if (!wiz?.docsUrl) {
+      toast("No Learn more link for this wizard", "info");
+      return;
+    }
+    await openUrl(wiz.docsUrl);
+    toast(`Opened ${wiz.title} docs — setup still happens on the vendor`, "info", 4500);
+  });
   document.querySelector("#int-put")?.addEventListener("click", () => {
-    if (selectedIntegration !== "resend") {
-      toast("Put key is for Resend — use Portal / Env for other secrets", "info");
+    const putName = INTEGRATION_HOST_PUT[selectedIntegration];
+    if (!putName) {
+      toast("This lane has no host Put — use page Opens, then Secrets / Env Put", "info", 5000);
       return;
     }
     if (!projectPath()) {
       toast("Bind a project first", "info");
       return;
     }
-    const host = preferredEnvPutHost();
-    if (!host) {
-      toast("Put needs a Cloudflare, Vercel, or Netlify host in this repo", "info");
-      return;
-    }
-    void openEnvPutTerminal(host, "RESEND_API_KEY");
+    void putNamedSecretOnHost(putName, selectedIntegration);
   });
   document.querySelector("#int-confirm-gate")?.addEventListener("click", () => {
     const stepId = INTEGRATION_PUBLISH_STEP[selectedIntegration] ?? null;

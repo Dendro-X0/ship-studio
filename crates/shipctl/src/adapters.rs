@@ -329,13 +329,19 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
                 .into(),
         );
     }
-    if detected.stripe || detected.paddle {
+    if detected.stripe || detected.paddle || detected.creem || detected.waffo {
         let mut m = Vec::new();
         if detected.stripe {
             m.push("Stripe");
         }
         if detected.paddle {
             m.push("Paddle");
+        }
+        if detected.creem {
+            m.push("Creem");
+        }
+        if detected.waffo {
+            m.push("Waffo");
         }
         notes.push(format!(
             "Commerce ({}) — Advanced listing.* opens SKU dashboards; no Payment Link creation from Studio.",

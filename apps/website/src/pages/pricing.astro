@@ -1,25 +1,32 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import {
+  CHECKOUT_SUCCESS_PATH,
   checkoutConfigured,
   downloadUrl,
-  polarCheckoutUrl,
-  polarPortalUrl,
+  paddleClientToken,
+  paddleEnv,
+  paddlePriceId,
   priceLabel,
   refundWindowDays,
 } from "../lib/commerce";
+
+const ready = checkoutConfigured();
+const token = paddleClientToken();
+const priceId = paddlePriceId();
+const env = paddleEnv();
 ---
 
 <BaseLayout
   title="Pricing — Ship Studio"
-  description={`Solo license via Polar. ${refundWindowDays()}-day refunds.`}
+  description={`Solo license via Paddle. ${refundWindowDays()}-day refunds.`}
   path="/pricing"
 >
   <section class="section">
     <h1>Pricing</h1>
     <p class="lead">
       One Solo plan for the local hub (CLI · TUI · Desktop). Checkout is hosted by
-      <strong>Polar</strong> — we never see your card number.
+      <strong>Paddle</strong> — we never see your card number.
     </p>
 
     <div class="price-block">
@@ -34,7 +41,7 @@ import {
         <li>shipctl CLI, TUI, and Desktop — Adaptive Publish spine</li>
         <li>Launch companion · provider portal · env honesty · local vault export</li>
         <li>Docs on this site · dogfood scripts in the repo</li>
-        <li>Local <a href="/license">license key file</a> after checkout (email / Polar benefit)</li>
+        <li>Local <a href="/license">license key file</a> after checkout (email after Paddle confirms)</li>
         <li>{refundWindowDays()}-day refund window — see <a href="/legal/refunds">refunds</a></li>
       </ul>
 
@@ -44,7 +51,7 @@ import {
           <p class="price-delta-label">Solo license</p>
           <ul class="list-clean">
             <li>Supported download builds + license file for this major</li>
-            <li>Polar-hosted checkout · invoices · refunds in the published window</li>
+            <li>Paddle-hosted checkout · invoices · refunds in the published window</li>
             <li>Packaged Desktop / CLI without assembling the toolchain yourself</li>
           </ul>
         </div>
@@ -63,22 +70,27 @@ import {
         publish sequence itself.
       </p>
       {
-        checkoutConfigured() ? (
-          <a
+        ready ? (
+          <button
+            type="button"
             class="btn btn-primary"
-            href={polarCheckoutUrl()}
-            rel="noopener noreferrer"
-            target="_blank"
+            id="paddle-checkout"
+            data-paddle-token={token}
+            data-paddle-price={priceId}
+            data-paddle-env={env}
+            data-paddle-success={CHECKOUT_SUCCESS_PATH}
           >
-            Checkout with Polar
-          </a>
+            Checkout with Paddle
+          </button>
         ) : (
           <>
             <a class="btn btn-primary btn-disabled" href="#" aria-disabled="true">
-              Checkout with Polar
+              Checkout with Paddle
             </a>
             <p class="note">
-              Set PUBLIC_POLAR_CHECKOUT_URL — see apps/website/docs/POLAR-SETUP.md
+              Set PUBLIC_PADDLE_CLIENT_TOKEN and PUBLIC_PADDLE_PRICE_ID — see
+              apps/website/docs/PADDLE-SETUP.md. Use Paddle <strong>Sandbox</strong> until a test
+              card works.
             </p>
           </>
         )
@@ -86,10 +98,44 @@ import {
       <p class="price-meta">
         Prefer trying first? <a href={downloadUrl()}>Download from GitHub Releases</a>
         · manage orders on <a href="/account">your account</a>
-        ({" "}
-        <a href={polarPortalUrl()} rel="noopener noreferrer">Polar portal</a>)
         · common questions on <a href="/faq">FAQ</a>
       </p>
     </div>
   </section>
+  {
+    ready && (
+      <>
+        <script is:inline src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+        <script is:inline>
+          const boot = () => {
+            const btn = document.getElementById("paddle-checkout");
+            if (!btn || typeof Paddle === "undefined") return;
+            const token = btn.getAttribute("data-paddle-token") || "";
+            const priceId = btn.getAttribute("data-paddle-price") || "";
+            const env = btn.getAttribute("data-paddle-env") || "sandbox";
+            const successPath = btn.getAttribute("data-paddle-success") || "/checkout/success";
+            if (!token || !priceId) return;
+            if (env !== "live") {
+              Paddle.Environment.set("sandbox");
+            }
+            Paddle.Initialize({ token });
+            btn.addEventListener("click", (e) => {
+              e.preventDefault();
+              Paddle.Checkout.open({
+                items: [{ priceId, quantity: 1 }],
+                settings: {
+                  successUrl: `${window.location.origin}${successPath}`,
+                },
+              });
+            });
+          };
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", boot);
+          } else {
+            boot();
+          }
+        </script>
+      </>
+    )
+  }
 </BaseLayout>

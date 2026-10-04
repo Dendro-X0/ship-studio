@@ -83,18 +83,18 @@ Ship a public site that lets a stranger:
 |-------|--------|-----|
 | Site | Astro or Next static + light islands | Docs + marketing; deploy on Vercel/Cloudflare Pages |
 | Path | `apps/website` | Matches Studio’s marketing.deploy detection later |
-| Payments | **Polar** Checkout / Product links | Already in Studio commerce honesty; OSS-friendly; less PCI surface |
-| Refunds | Polar refund API + public `/legal/refunds` policy | Human-triggered + automated window (e.g. 14 days) |
+| Payments | **Paddle** Billing overlay (Paddle.js) | Studio Solo Buy; Polar remains an Integrations guide for *customer* products |
+| Refunds | Paddle dashboard + public `/legal/refunds` policy | Human-triggered window (e.g. 14 days); no PAN on Studio |
 | Docs | Publish `docs/product` + START-HERE as MD → site `/docs` | One source of truth; no duplicate prose in Studio |
 | Demo | Silent GIFs + 60–90s scripted walk of Desktop Publish | Obscur-style GIF shelf; no fake “cloud Studio” |
 
-**Avoid first slice:** building a SaaS control plane, storing customer secrets, replacing Polar’s customer portal, or embedding live `shipctl` in the browser.
+**Avoid first slice:** building a SaaS control plane, storing customer secrets, replacing Paddle’s customer portal, or embedding live `shipctl` in the browser.
 
 ## Site map
 
 ```
 /                 Hero: brand · one headline · one CTA (Download / Buy)
-/pricing          Plans · Polar checkout buttons · what’s included
+/pricing          Plans · Paddle overlay · what’s included
 /docs             Index → install · Publish · Launch · OPERATOR-NEXT · FAQ
 /docs/*           Generated from docs/ + selected specs (north star summary only)
 /demo             Feature demo page (GIF + captions + “Open desktop” CTA)

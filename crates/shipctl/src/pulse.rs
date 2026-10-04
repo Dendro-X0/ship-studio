@@ -788,7 +788,9 @@ fn publish_cut_hint(id: &str) -> &'static str {
         | "listing.paddle"
         | "listing.gumroad"
         | "listing.lemon"
-        | "listing.polar" => " Open commerce dashboard for SKU/checkout, then Confirm.",
+        | "listing.polar"
+        | "listing.creem"
+        | "listing.waffo" => " Open commerce dashboard for SKU/checkout, then Confirm.",
         "container.build" => " Run local `docker build` / compose build, then Confirm.",
         "container.deploy" => " Push image on your machine (docs Open); bridge never pushes.",
         "selfhost.deploy" => " Run Self-host Deploy (artifact + local health) — done without Confirm.",
@@ -1186,7 +1188,7 @@ pub fn for_project(project: &Path) -> Result<ProjectPulse> {
             }
         ));
     }
-    if detected.gumroad || detected.lemon || detected.stripe || detected.paddle {
+    if detected.gumroad || detected.lemon || detected.stripe || detected.paddle || detected.creem || detected.waffo {
         let mut m = Vec::new();
         if detected.gumroad {
             m.push("Gumroad");
@@ -1199,6 +1201,12 @@ pub fn for_project(project: &Path) -> Result<ProjectPulse> {
         }
         if detected.paddle {
             m.push("Paddle");
+        }
+        if detected.creem {
+            m.push("Creem");
+        }
+        if detected.waffo {
+            m.push("Waffo");
         }
         notes.push(format!(
             "Commerce ({}) — Advanced listing opens SKU dashboards.",

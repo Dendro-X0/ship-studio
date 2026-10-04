@@ -1,13 +1,11 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import {
-  checkoutConfigured,
   downloadUrl,
-  polarCheckoutUrl,
   priceLabel,
 } from "../lib/commerce";
 
-const buyHref = checkoutConfigured() ? polarCheckoutUrl() : "/pricing";
+const buyHref = "/pricing";
 const price = priceLabel();
 ---
 
@@ -52,8 +50,18 @@ const price = priceLabel();
         <p class="intent-contrast-body">
           The publish sequence itself is not paywalled — you can clone and build for free.
           <strong>Solo</strong> pays for packaged Desktop/CLI builds, a local license file,
-          Polar-hosted checkout/invoices/refunds, and not assembling the toolchain yourself.
+          Paddle-hosted checkout/invoices/refunds, and not assembling the toolchain yourself.
           Details on <a href="/pricing">Pricing</a>.
+        </p>
+      </div>
+
+      <div class="intent-contrast-row" role="listitem" id="other-payments">
+        <h2 class="intent-contrast-label">Can Studio take Paddle, Creem, or Waffo for my app?</h2>
+        <p class="intent-contrast-body">
+          <strong>As a guide, yes.</strong> Desktop Integrations opens those vendor dashboards;
+          you create the product there and put keys on the deploy host. Studio does not process
+          those charges. <strong>Buying Ship Studio Solo</strong> is Paddle overlay on this site
+          (when <code>PUBLIC_PADDLE_*</code> is set). Creem and Waffo stay customer-product guides.
         </p>
       </div>
 

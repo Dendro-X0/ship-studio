@@ -65,7 +65,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **37** | **Assist notes expand** — checklist cues for hosts / BaaS / commerce / submit + Watch | Done (first slice) |
 | **38** | **Doctor notes expand** — cut-readiness cues for hosts / BaaS / commerce + optional host CLIs | Done (first slice) |
 | **39** | **Guide notes expand** — Publish step + host / BaaS / commerce / Watch cues | Done (first slice) |
-| **40** | **Commerce portal catalog** — Gumroad / Lemon / Stripe / Paddle as portal providers | Done (first slice) |
+| **40** | **Commerce portal catalog** — Gumroad / Lemon / Stripe / Paddle / Creem / Waffo as portal providers | Done (Creem/Waffo 2026-10-02) |
 | **41** | **Launch commerce parity** — companion listing.* for Gumroad / Lemon / Stripe / Paddle | Done (first slice) |
 | **42** | **Alt host expand** — `host.heroku` / `host.amplify` dashboard Open URLs | Done (first slice) |
 | **43** | **Launch host / BaaS parity** — companion `host.*` + `baas.provision` Open URLs | Done (first slice) |

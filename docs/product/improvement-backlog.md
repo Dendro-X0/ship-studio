@@ -1,8 +1,8 @@
 # Ship Studio — improvement backlog
 
-**Status:** Living idea list — through **S1.6 FAQ**; Near site trust arc closed; next optional GIF / commerce when Polar  
-**Updated:** 2026-09-28  
-**Cadence:** Idle Near queue · commerce when Polar unlocks · activate one depth band at a time  
+**Status:** Living idea list — through **S1.6 FAQ**; **close-cut** = OSS done, not Paddle sale  
+**Updated:** 2026-10-04  
+**Cadence:** Close-cut then freeze · no portal expansion · Paddle overlay optional · activate one depth band at a time  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
@@ -12,7 +12,7 @@ Value bar:  Finishable host cut — stream process · show deployed URL · open 
             final-mile order + honest Verify (portal/guide; Put/Login not Docs)
 Not:        Hype · encyclopedia dumps · CDP Create-Token form-fill · fake auto-publish ·
             coach theater · Studio-held secrets
-Price:      $29 one-time (Polar) — paid delta = account-holders ship without DevOps fluency
+Price:      $29 one-time (Paddle) — paid delta = account-holders ship without DevOps fluency
 Role:       DUAL TRUNK (2026-09-25) — long-term offering + client portfolio face
             Depth shelf: Obscur · Vectis · Hobby gifts stay separate
             Intent: strategy-research-lab/strategies/ship-studio-dual-trunk.md
@@ -40,7 +40,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | ID | Idea | Notes |
 |----|------|-------|
 | **S1.2m** | **Client honesty overhaul** | **Done** O0–O5 — [overhaul](../../specs/backend/ship-studio-overhaul-design.md) · [Harbor evidence](../handoffs/evidence-harbor-client-honesty.md) |
-| S0.1 | **W4 — license delivery** | Built; live email dogfood when Polar charge/free checkout works |
+| S0.1 | **W4 — license delivery** | Built; live email dogfood when a Paddle sandbox overlay succeeds |
 | S0.2 | **Refund path dogfood** | Built; E2E deferred on Polar `payment_ready` |
 | S0.3 | **Public download path** | Done — [v0.2.1](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.1) installer + zip (v0.2.0 / v0.1.0 retained) |
 | S0.4 | **Paid delta on `/pricing`** | Done (`28f696e`) |
@@ -93,6 +93,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S1.16 | **Targets catalog depth** | **Done** — Folder · Deploy · auto-detect on bind · dirty Save cue — [design](../../specs/frontend/targets-catalog-parity-design.md) |
 | S1.17 | **Multi-project portfolio cue** | Recents / suite-oriented “next repo to ship” for 30+ OSS indies — stay local, no cloud hub |
 | S1.18 | **Web3 / chain release lanes** | Only when a real ship asks — detect + Open official explorers/wallets; no custody or auto-broadcast |
+| S1.21 | **Creem / Waffo / Paddle guide depth** | **Done** — detect · listing · portal · Desktop wizards · site honesty (Solo stays Polar) — [design](../../specs/backend/commerce-creem-waffo-design.md) |
 
 ---
 
@@ -136,10 +137,10 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 Near
 1. Optional   Recompress/spot-check demo GIFs if weight/noise bothers
 
-Commerce / site (when Polar unlocks — not a release blocker)
-2. Deploy site · Polar URLs · PUBLIC_DOWNLOAD_URL
-3. S0.1–S0.2  Live buy/refund when payment_ready
-4. S0.6       Polar env → host deploy dogfood (no Studio-held secrets)
+Commerce / site (not a release blocker)
+2. Deploy site · PUBLIC_PADDLE_* sandbox overlay · PUBLIC_DOWNLOAD_URL
+3. S0.1–S0.2  Live buy/refund after sandbox overlay works
+4. S0.6       Polar (customer product) env → host deploy dogfood (no Studio-held secrets)
 
 Value depth (activate one band at a time)
 5. S2.4       MCP when a real ship asks

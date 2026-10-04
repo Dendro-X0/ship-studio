@@ -4,16 +4,23 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
 <BaseLayout
   title="Privacy — Ship Studio"
-  description="Privacy practices for the Ship Studio website and checkout."
+  description="Privacy practices for the Ship Studio website."
   path="/legal/privacy"
 >
   <section class="section legal">
     <h1>Privacy</h1>
-    <p class="lead">W0 placeholder — replace with a full privacy policy before public sale.</p>
+    <p class="lead">
+      The desktop and CLI tools are offline-first. This website is documentation and download
+      links. There is no public paid checkout on this site unless Paddle env is configured.
+    </p>
     <p>
-      The desktop app is offline-first and does not store secret values in <code>.ship/</code>.
-      This website may use standard hosting analytics. Payment data is handled by Polar — we do
-      not receive card numbers.
+      The apps do not store secret values in <code>.ship/</code>. This website may use standard
+      hosting logs. We do not collect card numbers. If checkout is enabled later, payment data is
+      handled by Paddle under Paddle’s privacy policy.
+    </p>
+    <p>
+      Source and issues live on GitHub. Do not send API keys or tokens to the project maintainers
+      or into git.
     </p>
   </section>
 </BaseLayout>

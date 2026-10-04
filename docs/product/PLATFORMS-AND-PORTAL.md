@@ -1,7 +1,7 @@
 # Platforms · Portal · Integrations — functionality & objectives
 
 **Status:** Shipped guide surfaces on **v0.2.3** (+ Launch Payments opt-in · primary host) — honest portal, not vendor replacement  
-**Updated:** 2026-09-28  
+**Updated:** 2026-10-03  
 **Audience:** Operators + agents continuing Desktop provider UX  
 **Parents:** [PRODUCT.md](./PRODUCT.md) · [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md)  
 **Hosting improvement plan:** [hosting-portal-parity-design](../../specs/backend/hosting-portal-parity-design.md)
@@ -12,7 +12,7 @@ OBJECTIVE:  One place to pick a host / store / payment / email lane, finish the
             without Studio holding secrets or pretending to deploy / notarize / charge.
 SHIPPED:    Platforms catalog · Integrations Payments/Email wizards · Portal Open/Docs/Login CLI ·
             Launch Payments opt-in · Deployment primary_host · Harbor Desktop dogfood
-NOT YET:    Full host Tier D catalog parity · Studio Solo Polar checkout E2E · Studio-owned OAuth success
+NOT YET:    Full host Tier D catalog parity · Studio Solo live Paddle overlay dogfood · Studio-owned OAuth success
 OVERHAUL:   **Done O0–O5** — [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) ·
             [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md) ·
             [Harbor evidence](../handoffs/evidence-harbor-client-honesty.md)
@@ -23,7 +23,7 @@ OVERHAUL:   **Done O0–O5** — [ship-studio-overhaul-design](../../specs/backe
 | Job | Surface | Ready? |
 |-----|---------|--------|
 | **Help the operator set up Polar / Stripe / … for their product** | Desktop **Integrations** → Payments wizard → Open vendor → Put `PUBLIC_*` / host secrets **outside** Studio → Continue publishing → Confirm listing | **Yes** — guide path |
-| **Sell Ship Studio Solo on the official website** | `apps/website` Polar checkout env | **No** — deferred on org `payment_ready` |
+| **Sell Ship Studio Solo on the official website** | `apps/website` Paddle.js overlay (`PUBLIC_PADDLE_*`) | **Wired** — live overlay needs sandbox/live tokens in host env (not git). Polar E2E stays deferred. |
 
 Do not conflate them. Integrations is for *their* commerce; website Buy is for *this* product’s license.
 
@@ -68,7 +68,7 @@ Specs: [platforms-catalog-design](../../specs/frontend/platforms-catalog-design.
 
 | Group | Lanes | Minute loop |
 |-------|-------|-------------|
-| Payments | Polar · Stripe · Gumroad · Lemon · Paddle | Open → create listing → put `PUBLIC_*` / host secrets **outside** Studio → Continue publishing → Confirm |
+| Payments | Polar · Stripe · Gumroad · Lemon · Paddle · Creem · Waffo | Open → create listing → put `PUBLIC_*` / host secrets **outside** Studio → Continue publishing → Confirm |
 | Email | Resend | Open API keys → Env Put on host → test on Resend → Confirm if Publish asks |
 
 ### Portal (`portal` view · `shipctl portal`)

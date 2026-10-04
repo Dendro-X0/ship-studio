@@ -1,9 +1,9 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { checkoutConfigured, downloadUrl, polarCheckoutUrl } from "../lib/commerce";
+import { checkoutConfigured, downloadUrl } from "../lib/commerce";
 import { DEMO_STAGES, DEMO_VERSION } from "../lib/demo";
 
-const buyHref = checkoutConfigured() ? polarCheckoutUrl() : "/pricing";
+const buyHref = "/pricing";
 const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
 const first = DEMO_STAGES[0];
 ---

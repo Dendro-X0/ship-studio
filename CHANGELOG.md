@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- **MCP S2.4 G1** — `ship_publish_open` / `ship_publish_verify` / `ship_publish_confirm` / `ship_publish_next` (CLI publish mutations; Confirm remains human attest) ([design](./specs/backend/mcp-assist-contract-design.md))
+
 ### Fixed
 
 - **Deployment soft-open** — Opening Deployment (nav / Launch related) no longer writes `primary_host`; only explicit card click or chip/`selectId` persists ([dogfood](./docs/handoffs/evidence-harbor-desktop-dogfood.md))

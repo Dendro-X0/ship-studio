@@ -1,10 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import {
-  polarPortalUrl,
-  refundWindowDays,
-  supportEmail,
-} from "../../lib/commerce";
+import { refundWindowDays, supportEmail } from "../../lib/commerce";
 
 const days = refundWindowDays();
 const email = supportEmail();
@@ -12,25 +8,20 @@ const email = supportEmail();
 
 <BaseLayout
   title="Refunds — Ship Studio"
-  description={`${days}-day refund window via Polar. Money-back only — Studio is a local tool.`}
+  description={`${days}-day refund window via Paddle. Money-back only — Studio is a local tool.`}
   path="/legal/refunds"
 >
   <section class="section legal">
     <h1>Refunds</h1>
     <p class="lead">
       If Ship Studio is not right for you, request a refund within
-      <strong>{days} days</strong> of purchase. All card processing stays on Polar.
+      <strong>{days} days</strong> of purchase. All card processing stays on Paddle.
     </p>
 
     <h2>How to request</h2>
     <ol>
       <li>
-        Open the <a href="/account">account</a> page and go to your
-        <a href={polarPortalUrl()} rel="noopener noreferrer">Polar customer portal</a>.
-      </li>
-      <li>Locate the Ship Studio Solo order and request a refund there.</li>
-      <li>
-        Or email
+        Email
         {
           email ? (
             <a href={`mailto:${email}?subject=Ship%20Studio%20refund`}> {email} </a>
@@ -38,8 +29,11 @@ const email = supportEmail();
             <span> the maintainer </span>
           )
         }
-        with your Polar order ID. In-window refunds are approved on Polar — we never hold your
-        card.
+        with your Paddle transaction ID (from the Paddle receipt email).
+      </li>
+      <li>
+        In-window refunds are processed on Paddle — we never hold your card. You get the money back
+        through Paddle, not through this website.
       </li>
     </ol>
 
@@ -48,19 +42,14 @@ const email = supportEmail();
       Ship Studio runs on your machine. A refund returns your payment. It does <strong>not</strong>
       remotely uninstall binaries, wipe projects, or delete your local
       <a href="/license">license file</a>. Stop using the software if you refund — the maintainer
-      marks the order revoked in the local ledger after Polar pays you back.
+      marks the order revoked in the local ledger after Paddle pays you back.
     </p>
 
     <h2>Non-refundable</h2>
     <ul>
       <li>Requests after the {days}-day window (unless required by applicable law)</li>
-      <li>Chargebacks filed after a completed Polar refund</li>
+      <li>Chargebacks filed after a completed Paddle refund</li>
       <li>Purchases explicitly marked non-refundable (none on the Solo plan today)</li>
     </ul>
-
-    <p class="price-meta" style="margin-top: 2rem">
-      Maintainer dogfood: <code>apps/website/docs/LICENSE-REFUND-DOGFOOD.md</code> · Polar setup:
-      <code>apps/website/docs/POLAR-SETUP.md</code>
-    </p>
   </section>
 </BaseLayout>

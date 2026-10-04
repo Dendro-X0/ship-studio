@@ -1,8 +1,8 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { checkoutConfigured, downloadUrl, polarCheckoutUrl } from "../lib/commerce";
+import { checkoutConfigured, downloadUrl } from "../lib/commerce";
 
-const buyHref = checkoutConfigured() ? polarCheckoutUrl() : "/pricing";
+const buyHref = "/pricing";
 const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
 ---
 
@@ -27,6 +27,55 @@ const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
         <a class="btn" href={downloadUrl()}>Download</a>
         <a class="btn" href="/docs">Docs</a>
       </div>
+    </div>
+  </section>
+
+  <section class="section home-band" aria-label="Surfaces">
+    <h2>Three surfaces. One engine.</h2>
+    <p class="lead">
+      <code>shipctl</code> is the kernel. CLI, TUI, and Desktop share Adaptive Publish —
+      Open/Run → Confirm → Next. Detail panels (Platforms, Integrations, Portal) never become a
+      second wizard.
+    </p>
+    <div class="home-grid">
+      <article>
+        <h3>CLI</h3>
+        <p>JSON and MCP for agents. Humans still hold keys.</p>
+      </article>
+      <article>
+        <h3>TUI</h3>
+        <p>Terminal client for the same plan and Confirm gates.</p>
+      </article>
+      <article>
+        <h3>Desktop</h3>
+        <p>Publish spine plus Platforms and Integrations catalogs.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section home-band" aria-label="Payments honesty">
+    <h2>Payments: two different jobs.</h2>
+    <div class="home-split">
+      <article>
+        <h3>Your product</h3>
+        <p>
+          Integrations is a <strong>guide</strong>: Polar, Stripe, Gumroad, Lemon Squeezy,
+          <a href="https://www.paddle.com/">Paddle</a>,
+          <a href="https://www.creem.io/">Creem</a>, and
+          <a href="https://www.waffo.ai/">Waffo</a>. Open the vendor, put
+          <code>PUBLIC_*</code> / host secrets <strong>outside</strong> Studio, then Confirm the
+          listing step. Studio never creates SKUs or holds API keys.
+        </p>
+      </article>
+      <article>
+        <h3>This site</h3>
+        <p>
+          Ship Studio Solo checkout is <strong>Paddle</strong> overlay when
+          <code>PUBLIC_PADDLE_*</code> is set on the site host. Creem and Waffo stay Integrations
+          <strong>guides</strong> for your products — not ways to buy this license. Until env is
+          set, <a href={downloadUrl()}>download OSS builds</a> or <a href="/pricing">see pricing</a>.
+        </p>
+      </article>
     </div>
   </section>
 </BaseLayout>

@@ -1,8 +1,8 @@
 # CURRENT — Ship Studio
 
 **Version:** 0.2.3  
-**Updated:** 2026-09-28  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Near trust arc S1.2–S1.6 on `main`. **Next:** idle — commerce when Polar unlocks / optional GIF / activate a guide depth slice.
+**Updated:** 2026-10-03  
+**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · Close-cut OSS · **S2.4 G1** MCP publish mutations shipped.
 
 ## Truth pointers
 
@@ -16,7 +16,7 @@
 | Human gates | [product/OPERATOR-NEXT.md](./product/OPERATOR-NEXT.md) · site [/honesty](../specs/frontend/operator-next-product-design.md) |
 | Hub mission / bands | [../specs/backend/shipping-hub-north-star.md](../specs/backend/shipping-hub-north-star.md) |
 | Gap / surface map | [../specs/backend/release-surface-map.md](../specs/backend/release-surface-map.md) |
-| Official website | [../specs/backend/product-website-charter.md](../specs/backend/product-website-charter.md) · `pnpm website:dev` · `/intent` · `/honesty` · `/faq` |
+| Official website | [../specs/backend/product-website-charter.md](../specs/backend/product-website-charter.md) · `pnpm website:dev` · `/pricing` Paddle overlay · `/intent` · `/honesty` · `/faq` |
 | Improvement ideas | [product/improvement-backlog.md](./product/improvement-backlog.md) |
 
 ## Release readiness
@@ -25,7 +25,7 @@
 |------|--------|-------|
 | OSS tool (download · dogfood · docs) | **Yes** | v0.2.3 · Harbor Desktop dogfood · demo shelf |
 | Guide users’ payments / integrations | **Yes (guide)** | Integrations wizards — Open → Put **outside** Studio → Confirm |
-| Sell Solo on the website | **No** | Polar `payment_ready` · terms/privacy still placeholders |
+| Sell Solo on the website | **Optional** | Overlay env-gated · not required for OSS done |
 
 ## PAUSED / CANCELLED (do not invent work)
 
@@ -35,8 +35,10 @@
 | aperio Advanced L4 (public cut) | Parked — personal use |
 | Mobile store API upload | Deferred |
 | k8s controllers | Out of scope |
-| Polar paid checkout E2E | Deferred — org `payment_ready` (Studio Solo sale only) |
+| Polar paid checkout E2E | Deferred — Polar is not the Solo processor |
+| Paddle Solo API keys / overlay dogfood | **PAUSED** — maintainer halt |
+| Portal / Integrations UX expansion | **PAUSED** — maintainer halt |
 
 ## Docs index
 
-Full shelf TOC: [README.md](./README.md) · Boot order: [START-HERE.md](./START-HERE.md)
+See [README.md](./README.md).

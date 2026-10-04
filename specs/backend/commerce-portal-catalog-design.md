@@ -7,7 +7,7 @@
 
 ## Product framing
 
-Gumroad / Lemon / Stripe / Paddle are first-class portal providers beside Polar — dashboard Open only; no Payment Link / SKU creation from the bridge.
+Gumroad / Lemon / Stripe / Paddle / Creem / Waffo are first-class portal providers beside Polar — dashboard Open only; no Payment Link / SKU creation from the bridge.
 
 ## Behavior
 
@@ -16,9 +16,11 @@ Gumroad / Lemon / Stripe / Paddle are first-class portal providers beside Polar 
 | Gumroad | `gumroad` | app.gumroad.com |
 | Lemon | `lemon` | app.lemonsqueezy.com |
 | Stripe | `stripe` | dashboard.stripe.com |
-| Paddle | `paddle` | vendors.paddle.com |
+| Paddle | `paddle` | sandbox-vendors.paddle.com |
+| Creem | `creem` | creem.io/dashboard |
+| Waffo | `waffo` (`pancake`) | pancake.waffo.ai |
 
-`is_commerce()` covers Polar + these four — `put_secret` bails to Open + put on deploy host.
+`is_commerce()` covers Polar + these — `put_secret` bails to Open + put on deploy host.
 
 ## Acceptance
 

@@ -1469,6 +1469,17 @@ body[data-mode="general"] .advanced-only {
   margin: 0.35rem 0;
 }
 
+.int-open-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.85rem;
+}
+
+.int-open-links button {
+  font-size: 0.78rem;
+}
+
 .plat-results {
   margin: 0.85rem 0 1rem;
   padding: 0.7rem 0.8rem;

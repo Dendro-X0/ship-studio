@@ -56,6 +56,7 @@ export function paintProviderWizard(opts: {
   /** When set, shown for Tier A put hosts (Cloudflare / Vercel / Netlify). */
   putBtn?: HTMLButtonElement | null;
   putVisible?: boolean;
+  openLinksEl?: HTMLElement | null;
 }): void {
   const {
     entry,
@@ -69,10 +70,15 @@ export function paintProviderWizard(opts: {
     docsBtn,
     putBtn,
     putVisible,
+    openLinksEl,
   } = opts;
   if (!panel) return;
   if (!entry) {
     panel.hidden = true;
+    if (openLinksEl) {
+      openLinksEl.hidden = true;
+      openLinksEl.innerHTML = "";
+    }
     return;
   }
   panel.hidden = false;
@@ -94,5 +100,15 @@ export function paintProviderWizard(opts: {
   }
   if (openBtn) {
     openBtn.classList.toggle("primary", !showPut);
+  }
+  if (openLinksEl) {
+    const links = entry.openLinks ?? [];
+    openLinksEl.hidden = links.length === 0;
+    openLinksEl.innerHTML = links
+      .map(
+        (l) =>
+          `<button type="button" data-open-url="${escapeHtml(l.url)}">${escapeHtml(l.label)}</button>`,
+      )
+      .join("");
   }
 }

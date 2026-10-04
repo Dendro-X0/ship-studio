@@ -210,10 +210,17 @@ fn graduate_commerce_catalog_hints(
     }
 
     if detected.paddle {
-        for (name, why) in [
-            ("PADDLE_API_KEY", "Paddle API key"),
-            ("PADDLE_WEBHOOK_SECRET", "Webhook signing secret"),
-            ("PADDLE_PRICE_ID", "Price / product id"),
+        for (name, why, url) in [
+            (
+                "PUBLIC_PADDLE_CLIENT_TOKEN",
+                "Paddle.js client-side token (test_… on sandbox)",
+                "https://sandbox-vendors.paddle.com/authentication",
+            ),
+            (
+                "PUBLIC_PADDLE_PRICE_ID",
+                "Catalog price id (pri_…)",
+                "https://sandbox-vendors.paddle.com/products",
+            ),
         ] {
             out.push(SecretHint {
                 provider: "paddle".into(),
@@ -227,9 +234,61 @@ fn graduate_commerce_catalog_hints(
                     "--open".into(),
                 ],
                 work_dir: work.clone(),
-                entry_url: Some("https://vendors.paddle.com/".into()),
+                entry_url: Some(url.into()),
                 detail: format!(
-                    "{why}. Create on Paddle; put on the deploy target — never in .ship/."
+                    "{why}. Create on Paddle sandbox; put on the website host — never in .ship/."
+                ),
+            });
+        }
+    }
+
+    if detected.creem {
+        for (name, why) in [
+            ("CREEM_API_KEY", "Creem API key"),
+            ("CREEM_WEBHOOK_SECRET", "Webhook signing secret"),
+            ("CREEM_PRODUCT_ID", "Product id"),
+        ] {
+            out.push(SecretHint {
+                provider: "creem".into(),
+                name: name.into(),
+                source: "catalog · creem".into(),
+                put_cli: vec![
+                    "shipctl".into(),
+                    "portal".into(),
+                    "--provider".into(),
+                    "creem".into(),
+                    "--open".into(),
+                ],
+                work_dir: work.clone(),
+                entry_url: Some("https://creem.io/dashboard".into()),
+                detail: format!(
+                    "{why}. Create on Creem; put on the deploy target — never in .ship/."
+                ),
+            });
+        }
+    }
+
+    if detected.waffo {
+        for (name, why) in [
+            ("WAFFO_MERCHANT_ID", "Waffo merchant id"),
+            ("WAFFO_PRIVATE_KEY", "Waffo private key"),
+            ("WAFFO_WEBHOOK_SECRET", "Webhook signing secret"),
+        ] {
+            out.push(SecretHint {
+                provider: "waffo".into(),
+                name: name.into(),
+                source: "catalog · waffo".into(),
+                put_cli: vec![
+                    "shipctl".into(),
+                    "portal".into(),
+                    "--provider".into(),
+                    "waffo".into(),
+                    "--open".into(),
+                ],
+                work_dir: work.clone(),
+                entry_url: Some("https://pancake.waffo.ai/merchant/auth/signin".into()),
+                detail: format!(
+                    "{why}. Create on Waffo; put on the deploy target — never in .ship/."
                 ),
             });
         }
@@ -327,7 +386,8 @@ fn hints_for_provider(project: &Path, id: ProviderId) -> Result<Vec<SecretHint>>
         | ProviderId::Heroku | ProviderId::Amplify | ProviderId::CloudRun | ProviderId::AzureStatic => {
             // First slice: portal Open only — deploy stays on vendor CLI/UI.
         }
-        ProviderId::Gumroad | ProviderId::Lemon | ProviderId::Stripe | ProviderId::Paddle => {
+        ProviderId::Gumroad | ProviderId::Lemon | ProviderId::Stripe | ProviderId::Paddle
+        | ProviderId::Creem | ProviderId::Waffo => {
             // Catalog names come from graduate_commerce_catalog_hints — portal Open only here.
         }
     }
@@ -416,7 +476,9 @@ fn put_cli_for(id: ProviderId, name: &str) -> Vec<String> {
         | ProviderId::Gumroad
         | ProviderId::Lemon
         | ProviderId::Stripe
-        | ProviderId::Paddle => vec![
+        | ProviderId::Paddle
+        | ProviderId::Creem
+        | ProviderId::Waffo => vec![
             "shipctl".into(),
             "portal".into(),
             "--provider".into(),
@@ -668,7 +730,8 @@ fn dedupe_hints(hints: &mut Vec<SecretHint>) {
             "polar" => 4,
             "neon" | "supabase" | "d1" | "turso" | "container" | "firebase" | "appwrite"
             | "convex" | "fly" | "railway" | "render" | "digitalocean" | "heroku" | "amplify"
-            | "cloudrun" | "azurestatic" | "gumroad" | "lemon" | "stripe" | "paddle" => 5,
+            | "cloudrun" | "azurestatic" | "gumroad" | "lemon" | "stripe" | "paddle"
+            | "creem" | "waffo" => 5,
             "graduate" => 6,
             _ => 9,
         }

@@ -882,9 +882,35 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "listing.paddle",
             "Listing — Paddle product / checkout",
             PubKind::List,
-            "Create/update product and checkout on Paddle. Confirm after the live CTA works. Bridge does not create products.",
+            "Paddle sandbox: seed script or Catalog/Authentication for pri_… + test_…; Checkout configuration default payment link required. Confirm after overlay works. Studio never holds pdl_ keys.",
             3,
-            Some("https://vendors.paddle.com/".into()),
+            Some("https://sandbox-vendors.paddle.com/products".into()),
+            None,
+            Some("integrations"),
+        ));
+    }
+
+    if detected.creem {
+        steps.push(step(
+            "listing.creem",
+            "Listing — Creem product / checkout",
+            PubKind::List,
+            "Create/update product and checkout on Creem. Confirm after the live CTA works. Bridge does not create products.",
+            3,
+            Some("https://creem.io/dashboard".into()),
+            None,
+            Some("integrations"),
+        ));
+    }
+
+    if detected.waffo {
+        steps.push(step(
+            "listing.waffo",
+            "Listing — Waffo Pancake product / checkout",
+            PubKind::List,
+            "Create/update product and checkout on Waffo. Confirm after the live CTA works. Bridge does not create products.",
+            3,
+            Some("https://pancake.waffo.ai/merchant/auth/signin".into()),
             None,
             Some("integrations"),
         ));
@@ -3464,11 +3490,48 @@ mod tests {
             .expect("listing.paddle");
         assert_eq!(
             paddle.entry_url.as_deref(),
-            Some("https://vendors.paddle.com/")
+            Some("https://sandbox-vendors.paddle.com/products")
         );
         let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
         assert!(!general.steps.iter().any(|s| s.id == "listing.stripe"));
         assert!(!general.steps.iter().any(|s| s.id == "listing.paddle"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn creem_waffo_listing_advanced_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-publish-creem-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".env"), "CREEM_API_KEY=\nWAFFO_MERCHANT_ID=\n").unwrap();
+        let advanced = load_or_build_with_mode(&dir, StudioMode::Advanced).unwrap();
+        let creem = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "listing.creem")
+            .expect("listing.creem");
+        assert_eq!(
+            creem.entry_url.as_deref(),
+            Some("https://creem.io/dashboard")
+        );
+        let waffo = advanced
+            .steps
+            .iter()
+            .find(|s| s.id == "listing.waffo")
+            .expect("listing.waffo");
+        assert_eq!(
+            waffo.entry_url.as_deref(),
+            Some("https://pancake.waffo.ai/merchant/auth/signin")
+        );
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(!general.steps.iter().any(|s| s.id == "listing.creem"));
+        assert!(!general.steps.iter().any(|s| s.id == "listing.waffo"));
         let _ = fs::remove_dir_all(&dir);
     }
 

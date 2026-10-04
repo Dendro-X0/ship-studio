@@ -200,7 +200,9 @@ fn annotate_choice_board(steps: &mut [LaunchStep], detected: &config::Detected) 
         || detected.stripe
         || detected.gumroad
         || detected.lemon
-        || detected.paddle;
+        || detected.paddle
+        || detected.creem
+        || detected.waffo;
     let suggest_env = steps.iter().any(|s| s.id == "env.sprint");
 
     for step in steps.iter_mut() {
@@ -497,7 +499,9 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         || detected.gumroad
         || detected.lemon
         || detected.stripe
-        || detected.paddle;
+        || detected.paddle
+        || detected.creem
+        || detected.waffo;
     let payments_opt_in = config::launch_payments_for(project);
     if needs_integrations || payments_opt_in {
         let mut bits = Vec::new();
@@ -515,6 +519,12 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         }
         if detected.paddle {
             bits.push("Paddle");
+        }
+        if detected.creem {
+            bits.push("Creem");
+        }
+        if detected.waffo {
+            bits.push("Waffo");
         }
         let detail = if bits.is_empty() {
             "Payments lane opted in — Open Integrations for checkout providers. Confirm when listings are updated (or skip if N/A)."

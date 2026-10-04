@@ -305,6 +305,8 @@ export type ProviderWizard = {
   /** Official tutorial — Platforms Learn more button when set. */
   docsUrl?: string;
   needsPublic: boolean;
+  /** Exact vendor pages (not docs). Operator still finishes on that site. */
+  openLinks?: Array<{ label: string; url: string }>;
   steps: string[];
   /** Optional Ritual deploy_args when this host is selected. */
   deployArgs?: string;

@@ -9,12 +9,24 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 >
   <section class="section legal">
     <h1>Terms</h1>
-    <p class="lead">W0 placeholder — replace with counsel-reviewed terms before public sale.</p>
-    <p>
-      Ship Studio is provided as a local tool. You are responsible for vendor accounts (Cloudflare,
-      Apple, Polar, etc.), secrets, and compliance with third-party terms. The website checkout is
-      processed by Polar.
+    <p class="lead">
+      Ship Studio is MIT-licensed open source. This site documents the tool. There is no public
+      paid checkout until the operator enables Paddle env and publishes a sale policy.
     </p>
-    <p>License grant details will match the Solo product on Polar when checkout goes live.</p>
+    <p>
+      The software is provided under the <a href="https://github.com/Dendro-X0/ship-studio/blob/main/LICENSE">MIT License</a>
+      in the repository. You may clone, build, and run it without a Solo purchase. Packaged GitHub
+      Releases are the supported download path.
+    </p>
+    <p>
+      You are responsible for vendor accounts (Cloudflare, Vercel, Polar, Paddle, Apple, and others),
+      secrets, and those vendors’ terms. Ship Studio does not create API keys, does not store secret
+      values in <code>.ship/</code>, and does not replace vendor dashboards.
+    </p>
+    <p>
+      If a Paddle checkout is configured later, that purchase is a contract with Paddle for that
+      transaction; license-file issuance is described in the repo’s license-refund dogfood notes.
+      Until then, these terms do not sell a Solo SKU.
+    </p>
   </section>
 </BaseLayout>

@@ -56,7 +56,7 @@ Env/token work stays **Open → official UI → Confirm**. The provider remains 
 
 Desktop: topbar **General** (default) · **Local** (first-run default) · **Publish** · primary **Continue** · Watch toggle · Related opens Env / Sign / Portal / Scopes / Dashboard · **Back to Publish**.  
 TUI: Publish (`P`) → o / v / c / n · **`w` Watch** (local Verify poll, READY when Confirm is safe).  
-MCP: `ship_publish_watch` — one local Verify probe per call (agents poll; optional `auto_confirm`).
+MCP: `ship_publish_watch` (poll Verify) · `ship_publish_verify` / `ship_publish_open` / `ship_publish_confirm` / `ship_publish_next` (G1). Confirm stays human attest.
 
 Progress: project `.ship/publish.json` (no secret values).
 

@@ -1,8 +1,8 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { checkoutConfigured, downloadUrl, polarCheckoutUrl } from "../lib/commerce";
+import { downloadUrl } from "../lib/commerce";
 
-const buyHref = checkoutConfigured() ? polarCheckoutUrl() : "/pricing";
+const buyHref = "/pricing";
 ---
 
 <BaseLayout

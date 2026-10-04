@@ -264,6 +264,12 @@ pub struct Detected {
     /// Paddle commerce markers.
     #[serde(default)]
     pub paddle: bool,
+    /// Creem commerce markers.
+    #[serde(default)]
+    pub creem: bool,
+    /// Waffo Pancake commerce markers.
+    #[serde(default)]
+    pub waffo: bool,
     /// Cross-suite URL sync configured (`.ship/suite.json` or markets).
     #[serde(default)]
     pub suite_sync: bool,
@@ -631,7 +637,7 @@ pub fn probe(project: &Path) -> Detected {
                 .into(),
         );
     }
-    if d.gumroad || d.lemon || d.stripe || d.paddle {
+    if d.gumroad || d.lemon || d.stripe || d.paddle || d.creem || d.waffo {
         let mut bits = Vec::new();
         if d.gumroad {
             bits.push("Gumroad");
@@ -644,6 +650,12 @@ pub fn probe(project: &Path) -> Detected {
         }
         if d.paddle {
             bits.push("Paddle");
+        }
+        if d.creem {
+            bits.push("Creem");
+        }
+        if d.waffo {
+            bits.push("Waffo");
         }
         d.hints.push(format!(
             "Commerce ({}) — Advanced listing opens SKU dashboards (URL + confirm).",
@@ -1138,6 +1150,16 @@ fn detect_graduate_commerce(project: &Path, d: &mut Detected) {
     d.paddle = opted.iter().any(|m| m == "paddle")
         || env_key_prefix(project, "PADDLE_")
         || package_mentions(project, &["@paddle/", "paddle-sdk"]);
+
+    d.creem = opted.iter().any(|m| m == "creem")
+        || env_key_prefix(project, "CREEM_")
+        || package_mentions(project, &["\"creem\"", "@creem/"]);
+
+    d.waffo = opted
+        .iter()
+        .any(|m| m == "waffo" || m == "pancake" || m == "waffo_pancake")
+        || env_key_prefix(project, "WAFFO_")
+        || package_mentions(project, &["@waffo/", "pancake-ts"]);
 }
 
 #[derive(Debug, Deserialize)]
@@ -2109,6 +2131,25 @@ mod tests {
         assert!(d.graduate_sign);
         assert!(d.gumroad);
         assert!(d.lemon);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_creem_and_waffo_opt_in() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-creem-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".env"), "CREEM_API_KEY=\nWAFFO_MERCHANT_ID=\n").unwrap();
+        fs::write(dir.join(".ship/markets.json"), r#"["creem","waffo"]"#).unwrap();
+        let d = probe(&dir);
+        assert!(d.creem);
+        assert!(d.waffo);
         let _ = fs::remove_dir_all(&dir);
     }
 

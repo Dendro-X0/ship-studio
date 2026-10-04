@@ -96,9 +96,13 @@ fn tools() -> Vec<Value> {
         ),
         tool(
             "ship_publish",
-            "Publish portal status (minute wizard). Use CLI for open/verify/confirm/next mutations.",
+            "Publish portal status (minute wizard, read-only). Mutations: ship_publish_open / ship_publish_verify / ship_publish_confirm / ship_publish_next.",
             false,
         ),
+        tool_publish_open(),
+        tool_publish_verify(),
+        tool_publish_confirm(),
+        tool_publish_next(),
         tool_publish_watch(),
         tool(
             "ship_scopes",
@@ -192,6 +196,72 @@ fn tool_vault() -> Value {
             "required": ["action"]
         }
     })
+}
+
+fn tool_publish_open() -> Value {
+    json!({
+        "name": "ship_publish_open",
+        "description": "Open/Run the current publish step (browser entry_url and/or local CLI). Does not Confirm. Never stores secrets. OAuth login CLIs may prompt — prefer a human-visible TTY.",
+        "inputSchema": {
+            "type": "object",
+            "properties": publish_common_props(json!({})),
+            "required": ["project"]
+        }
+    })
+}
+
+fn tool_publish_verify() -> Value {
+    json!({
+        "name": "ship_publish_verify",
+        "description": "Local Verify for the current publish step (disk / local CLI / operator CLI). Never vendor HTTPS. Does not mark Human/OAuth/deploy Done — use ship_publish_confirm after the human attests.",
+        "inputSchema": {
+            "type": "object",
+            "properties": publish_common_props(json!({})),
+            "required": ["project"]
+        }
+    })
+}
+
+fn tool_publish_confirm() -> Value {
+    json!({
+        "name": "ship_publish_confirm",
+        "description": "Mark the current publish step done (operator attestation). Agents must only call this after the human finished the official page or CLI. Never live npm/cargo/docker/store upload.",
+        "inputSchema": {
+            "type": "object",
+            "properties": publish_common_props(json!({})),
+            "required": ["project"]
+        }
+    })
+}
+
+fn tool_publish_next() -> Value {
+    json!({
+        "name": "ship_publish_next",
+        "description": "Advance to the next pending publish step (requires current done, or force=true). Does not skip vendor UI.",
+        "inputSchema": {
+            "type": "object",
+            "properties": publish_common_props(json!({
+                "force": {
+                    "type": "boolean",
+                    "description": "Advance even if current step is not done (default false)"
+                }
+            })),
+            "required": ["project"]
+        }
+    })
+}
+
+fn publish_common_props(mut extra: Value) -> Value {
+    extra["project"] = json!({ "type": "string", "description": "Absolute project path" });
+    extra["mode"] = json!({
+        "type": "string",
+        "description": "general (default) | advanced"
+    });
+    extra["intent"] = json!({
+        "type": "string",
+        "description": "Optional ship intent override (local | public)"
+    });
+    extra
 }
 
 fn tool_publish_watch() -> Value {
@@ -491,8 +561,49 @@ fn call_tool(params: Value) -> Result<Value> {
             serde_json::to_value(launch::view(&state))?
         }
         "ship_publish" => {
-            let state = publish::load_or_build(&project)?;
+            let (mode, intent) = publish_args(&args);
+            let state = publish::load_or_build_with_options(&project, mode, intent)?;
             serde_json::to_value(publish::view(&state))?
+        }
+        "ship_publish_open" => {
+            let (mode, intent) = publish_args(&args);
+            let _ = publish::load_or_build_with_options(&project, mode, intent)?;
+            serde_json::to_value(publish::open_current(&project)?)?
+        }
+        "ship_publish_verify" => {
+            let (mode, intent) = publish_args(&args);
+            let _ = publish::load_or_build_with_options(&project, mode, intent)?;
+            let (ok, msg, view) = publish::verify_current(&project)?;
+            json!({
+                "ok": ok,
+                "message": msg,
+                "publish": view
+            })
+        }
+        "ship_publish_confirm" => {
+            let (mode, intent) = publish_args(&args);
+            let _ = publish::load_or_build_with_options(&project, mode, intent)?;
+            serde_json::to_value(publish::confirm_current(&project)?)?
+        }
+        "ship_publish_next" => {
+            let (mode, intent) = publish_args(&args);
+            let force = args
+                .get("force")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
+            let _ = publish::load_or_build_with_options(&project, mode, intent)?;
+            match publish::next(&project, force) {
+                Ok(view) => serde_json::to_value(view)?,
+                Err(err) => {
+                    let state =
+                        publish::load_or_build_with_options(&project, mode, intent)?;
+                    json!({
+                        "ok": false,
+                        "message": format!("{err:#}"),
+                        "publish": publish::view(&state)
+                    })
+                }
+            }
         }
         "ship_publish_watch" => {
             let auto_confirm = args
@@ -563,6 +674,19 @@ fn call_tool(params: Value) -> Result<Value> {
     }))
 }
 
+fn publish_args(args: &Value) -> (publish::StudioMode, Option<config::ShipIntent>) {
+    let mode = args
+        .get("mode")
+        .and_then(|m| m.as_str())
+        .map(publish::StudioMode::parse)
+        .unwrap_or_default();
+    let intent = args
+        .get("intent")
+        .and_then(|i| i.as_str())
+        .map(config::ShipIntent::parse);
+    (mode, intent)
+}
+
 fn override_args(args: &Value, defaults: &[String]) -> Vec<String> {
     args.get("args")
         .and_then(|a| a.as_array())
@@ -600,5 +724,45 @@ mod tests {
             .collect();
         assert!(names.contains(&"ship_hostdeploy"), "{names:?}");
         assert!(names.contains(&"ship_pulse"));
+    }
+
+    #[test]
+    fn tools_include_publish_g1_mutations() {
+        let tools = tools();
+        let names: Vec<_> = tools
+            .iter()
+            .filter_map(|t| t.get("name").and_then(|n| n.as_str()))
+            .collect();
+        for n in [
+            "ship_publish_open",
+            "ship_publish_verify",
+            "ship_publish_confirm",
+            "ship_publish_next",
+        ] {
+            assert!(names.contains(&n), "{n} missing in {names:?}");
+        }
+    }
+
+    #[test]
+    fn publish_verify_mcp_returns_ok_payload() {
+        let dir = std::env::temp_dir().join(format!(
+            "shipctl-mcp-g1-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = std::fs::create_dir_all(&dir);
+        std::fs::write(dir.join("package.json"), r#"{"name":"mcp-g1"}"#).unwrap();
+        let params = json!({
+            "name": "ship_publish_verify",
+            "arguments": { "project": dir.to_string_lossy() }
+        });
+        let wrapped = call_tool(params).expect("verify tool");
+        let text = wrapped["content"][0]["text"].as_str().expect("text");
+        let body: Value = serde_json::from_str(text).expect("json");
+        assert!(body.get("ok").and_then(|v| v.as_bool()).is_some(), "{body}");
+        assert!(body.get("publish").is_some(), "{body}");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

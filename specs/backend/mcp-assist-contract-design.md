@@ -26,7 +26,7 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 2. **Put is human-TTY** — Prefer Desktop **Put** or `shipctl human --put` / `env --put` in a terminal the operator can see. Agents must not claim to paste secrets for the user.  
 3. **`ship_human` `put: true`** — Interactive; only when the operator has a TTY attached to the MCP host process. Default agent advice: open Desktop Put or a terminal, don’t run put headlessly.  
 4. **`ship_vault`** — Optional encrypted export; if `value` is passed in tool args, agents must not echo it into chat/logs. Prefer Client Put + vault export from Desktop.  
-5. **Publish mutations** — `ship_publish` / `ship_launch` are **status** today; open/verify/confirm/next remain CLI or Desktop (gap below).  
+5. **Publish mutations** — `ship_publish` is status; `ship_publish_open` / `ship_publish_verify` / `ship_publish_confirm` / `ship_publish_next` mirror CLI. Confirm is human attest; never live npm/cargo/`gh release create` / docker push / store upload.  
 6. **`ship_publish_watch` `auto_confirm`** — Only confirms when local Verify ok; never live npm/cargo/`gh release create` / docker push.  
 7. **`ship_deploy` / `ship_flow` / `ship_hostdeploy`** — Network; may prompt. Prefer Desktop Deployment **Deploy** (or Advanced N-class terminal). Headless MCP may soft-fail on auth — tell human Login CLI / Sign in (web). `ship_deploy` = Orbit only; hosted Tier A = `ship_hostdeploy`.  
 8. **Docs URLs** — Agents may surface `docs_url` as Learn more; primary next act follows [human-gate catalog](./human-gate-catalog-design.md) (Put / Login / Confirm).
@@ -45,7 +45,12 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 | `ship_assist` | J | Yes | Checklist |
 | `ship_guide` / `ship_ship` | J (+ open) | Yes | Offline prep; open URLs optional |
 | `ship_pulse` / `ship_status` | J | Yes | Local signals |
-| `ship_publish` / `ship_launch` | J | Yes (read) | Status only — mutations via CLI/Desktop |
+| `ship_launch` | J | Yes (read) | Status only — mutations stay CLI/Desktop |
+| `ship_publish` | J | Yes (read) | Status only |
+| `ship_publish_open` | J / N | Caution | Opens URL / may run login CLI — human TTY |
+| `ship_publish_verify` | J | Yes | Local Verify JSON `{ok,message,publish}` — not vendor HTTPS |
+| `ship_publish_confirm` | J | Caution | Human attest only — agent must not invent Confirm |
+| `ship_publish_next` | J | Yes | Advance plan; `force` optional |
 | `ship_publish_watch` | J | Yes | Local Verify poll; optional auto_confirm |
 | `ship_flow_dry_run` | J | Yes | Plan print |
 | `ship_flow` / `ship_sign` / `ship_deploy` | N / J | Caution | Deploy/sign may need TTY; deploy refuses offline; Orbit only |
@@ -60,7 +65,7 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 2. If secret_put → tell human: Desktop Portal Put (or terminal shipctl env --put)
 3. If oauth_login → tell human: Desktop Login CLI / Sign in (web) / shipctl portal
 4. Open dashboard URLs via ship_portal open=true only as secondary
-5. After human finishes → ship_publish_watch (or CLI verify) → Confirm on Desktop/CLI
+5. After human finishes → `ship_publish_verify` or `ship_publish_watch` → human-ok then `ship_publish_confirm` → `ship_publish_next`
 6. Never say “I stored your API token” or “OAuth is done” without Verify/Confirm evidence
 ```
 
@@ -81,7 +86,7 @@ See [hosted-deploy-ops-value-bar H5](./hosted-deploy-ops-value-bar-design.md). S
 
 | Gap | Why it hurts | Suggested follow-up |
 |-----|--------------|---------------------|
-| **G1** No `ship_publish_open` / `confirm` / `next` / `verify` MCP tools | Agents must shell out to CLI for minute-wizard mutations | Add thin MCP wrappers mirroring CLI subcommands |
+| **G1** `ship_publish_open` / `confirm` / `next` / `verify` | **Shipped** — MCP wrappers | Agents still must not fake Confirm |
 | **G2** No `ship_env_put` that only *launches* put (non-interactive spawn recipe) | Agents can’t start Desktop/TTY Put without telling the human | Document + optional “spawn terminal” meta (platform-specific) — not headless stdin |
 | **G3** `ship_human` put in MCP sessions without TTY | Silent hang / fail | Tool description + bail when non-TTY |
 | **G4** `ship_vault` value-in-args | Temptation to paste secrets into agent context | Soften schema docs; prefer Desktop export |

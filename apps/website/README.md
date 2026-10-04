@@ -13,27 +13,27 @@ pnpm website:dev
 # → http://localhost:4321
 ```
 
-## Polar checkout (W2)
+## Paddle checkout (Studio Solo)
 
-Full dogfood steps: [docs/POLAR-SETUP.md](./docs/POLAR-SETUP.md).
+Full dogfood steps: [docs/PADDLE-SETUP.md](./docs/PADDLE-SETUP.md).
 
 ```bash
 cp apps/website/.env.example apps/website/.env
-# set PUBLIC_POLAR_CHECKOUT_URL (+ portal, price label, support email)
+# set PUBLIC_PADDLE_CLIENT_TOKEN + PUBLIC_PADDLE_PRICE_ID (sandbox first)
 ```
 
 | Variable | Purpose |
 |----------|---------|
-| `PUBLIC_POLAR_CHECKOUT_URL` | Solo checkout link |
-| `PUBLIC_POLAR_PORTAL_URL` | Customer portal |
-| `PUBLIC_POLAR_PRICE_LABEL` | Display price (e.g. `$49`) |
+| `PUBLIC_PADDLE_CLIENT_TOKEN` | Client-side token (`test_…` / `live_…`) |
+| `PUBLIC_PADDLE_PRICE_ID` | Catalog price id (`pri_…`) |
+| `PUBLIC_PADDLE_ENV` | `sandbox` (default) or `live` |
+| `PUBLIC_PADDLE_PRICE_LABEL` | Display price (e.g. `$29`) |
+| `PUBLIC_PADDLE_PORTAL_URL` | Optional customer portal URL (leave blank) |
 | `PUBLIC_REFUND_WINDOW_DAYS` | Default `14` |
 | `PUBLIC_SUPPORT_EMAIL` | Refund / support mailto |
 | `PUBLIC_DOWNLOAD_URL` | GitHub releases |
 
-Polar success/cancel URLs should hit `/checkout/success` and `/checkout/cancel`.
-
-Until `PUBLIC_POLAR_CHECKOUT_URL` is set, Buy stays disabled with a setup note.
+Until token and price id are set, Buy stays disabled with a setup note. Overlay success redirects to `/checkout/success`.
 
 ## Never-say (S1.3)
 
@@ -71,8 +71,8 @@ python scripts/generate-demo-gifs.py   # regenerate stylized GIFs → docs + pub
 Buyer page: `/license` · maintainer checklist: [docs/LICENSE-REFUND-DOGFOOD.md](./docs/LICENSE-REFUND-DOGFOOD.md).
 
 ```bash
-python scripts/issue-license.py issue --email buyer@example.com --order polar_xxx
-python scripts/issue-license.py revoke --order polar_xxx
+python scripts/issue-license.py issue --email buyer@example.com --order paddle_xxx
+python scripts/issue-license.py revoke --order paddle_xxx
 ```
 
 Format: `docs/assets/license/FORMAT.md`. Ledger: `.ship-licenses/` (gitignored).

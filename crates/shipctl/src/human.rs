@@ -239,7 +239,7 @@ fn put_queue_from_hints(hints: &[SecretHint]) -> Vec<SecretHint> {
             "polar" | "github" | "neon" | "supabase" | "d1" | "turso" | "container"
                 | "firebase" | "appwrite" | "convex" | "fly" | "railway" | "render"
                 | "digitalocean" | "heroku" | "amplify" | "cloudrun" | "azurestatic" | "gumroad"
-                | "lemon" | "stripe" | "paddle"
+                | "lemon" | "stripe" | "paddle" | "creem" | "waffo"
         ) {
             continue;
         }

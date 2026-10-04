@@ -21,7 +21,7 @@ Portal Open + Confirm for Stripe / Paddle SKUs — same honesty as Gumroad / Lem
 | Id | URL |
 |----|-----|
 | `listing.stripe` | `https://dashboard.stripe.com/` |
-| `listing.paddle` | `https://vendors.paddle.com/` |
+| `listing.paddle` | `https://sandbox-vendors.paddle.com/products` |
 
 Advanced + Public only.
 

@@ -23,7 +23,7 @@ Shared helper also used by **Deployment** / **Sign** Continue publishing (prefer
 
 ## shipctl
 
-Commerce `listing.polar|stripe|gumroad|lemon|paddle` `desktop_view`: **`integrations`** (was `portal`) so Publish Related opens the Integrations catalog.
+Commerce `listing.polar|stripe|gumroad|lemon|paddle|creem|waffo` `desktop_view`: **`integrations`** (was `portal`) so Publish Related opens the Integrations catalog.
 
 ## Non-goals
 

@@ -30,6 +30,8 @@ pub enum ProviderId {
     Lemon,
     Stripe,
     Paddle,
+    Creem,
+    Waffo,
     Heroku,
     Amplify,
     CloudRun,
@@ -60,6 +62,8 @@ impl ProviderId {
             Self::Lemon => "lemon",
             Self::Stripe => "stripe",
             Self::Paddle => "paddle",
+            Self::Creem => "creem",
+            Self::Waffo => "waffo",
             Self::Heroku => "heroku",
             Self::Amplify => "amplify",
             Self::CloudRun => "cloudrun",
@@ -71,7 +75,7 @@ impl ProviderId {
         catalog_entry(self).label
     }
 
-    pub fn all() -> [ProviderId; 25] {
+    pub fn all() -> [ProviderId; 27] {
         [
             ProviderId::Cloudflare,
             ProviderId::Vercel,
@@ -94,6 +98,8 @@ impl ProviderId {
             ProviderId::Lemon,
             ProviderId::Stripe,
             ProviderId::Paddle,
+            ProviderId::Creem,
+            ProviderId::Waffo,
             ProviderId::Heroku,
             ProviderId::Amplify,
             ProviderId::CloudRun,
@@ -124,6 +130,8 @@ impl ProviderId {
             "lemon" | "lemonsqueezy" | "lemon_squeezy" => Ok(Self::Lemon),
             "stripe" => Ok(Self::Stripe),
             "paddle" => Ok(Self::Paddle),
+            "creem" => Ok(Self::Creem),
+            "waffo" | "pancake" | "waffo_pancake" => Ok(Self::Waffo),
             "heroku" => Ok(Self::Heroku),
             "amplify" | "aws-amplify" | "awsamplify" => Ok(Self::Amplify),
             "cloudrun" | "cloud-run" | "gcp-run" | "google-cloud-run" => Ok(Self::CloudRun),
@@ -132,7 +140,7 @@ impl ProviderId {
             }
             other => {
                 bail!(
-                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex|fly|railway|render|digitalocean|gumroad|lemon|stripe|paddle|heroku|amplify|cloudrun|azurestatic)"
+                    "unknown provider '{other}' (cloudflare|vercel|netlify|github|polar|neon|supabase|d1|turso|container|firebase|appwrite|convex|fly|railway|render|digitalocean|gumroad|lemon|stripe|paddle|creem|waffo|heroku|amplify|cloudrun|azurestatic)"
                 )
             }
         }
@@ -152,7 +160,7 @@ impl ProviderId {
     pub fn is_commerce(self) -> bool {
         matches!(
             self,
-            Self::Polar | Self::Gumroad | Self::Lemon | Self::Stripe | Self::Paddle
+            Self::Polar | Self::Gumroad | Self::Lemon | Self::Stripe | Self::Paddle | Self::Creem | Self::Waffo
         )
     }
 }
@@ -204,6 +212,8 @@ pub fn catalog_entry(id: ProviderId) -> &'static ProviderCatalog {
         ProviderId::Lemon => &LEMON,
         ProviderId::Stripe => &STRIPE,
         ProviderId::Paddle => &PADDLE,
+        ProviderId::Creem => &CREEM,
+        ProviderId::Waffo => &WAFFO,
         ProviderId::Heroku => &HEROKU,
         ProviderId::Amplify => &AMPLIFY,
         ProviderId::CloudRun => &CLOUDRUN,
@@ -516,13 +526,41 @@ static PADDLE: ProviderCatalog = ProviderCatalog {
     label: "Paddle",
     oauth_cli: &[],
     orbit_login: None,
-    token_url: "https://vendors.paddle.com/",
-    create_url: "https://vendors.paddle.com/",
-    docs_url: "https://developer.paddle.com/",
-    oauth_hint: "Open Paddle vendor dashboard — create products/prices there. Studio never creates transactions.",
-    env_hint: "Put PADDLE_* keys on the deploy target — never in .ship/.",
+    token_url: "https://sandbox-vendors.paddle.com/products",
+    create_url: "https://sandbox-vendors.paddle.com/authentication",
+    docs_url: "https://developer.paddle.com/build/checkout/build-overlay-checkout",
+    oauth_hint: "Preferred: Authentication → sandbox API key → host seed script (writes PUBLIC_PADDLE_*). Then Checkout configuration → default payment link. Studio never holds pdl_ keys.",
+    env_hint: "Put PUBLIC_PADDLE_CLIENT_TOKEN + PUBLIC_PADDLE_PRICE_ID on the website host — never in .ship/. Never put pdl_ API keys in PUBLIC_*.",
+    secret_shown_once: false,
+    once_hint: "Copy the client-side token from Authentication (test_…). Do not put pdl_ API keys in PUBLIC_*.",
+    emit_token_page: true,
+};
+
+static CREEM: ProviderCatalog = ProviderCatalog {
+    label: "Creem",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://creem.io/dashboard",
+    create_url: "https://creem.io/dashboard/api-keys",
+    docs_url: "https://docs.creem.io",
+    oauth_hint: "Open Creem dashboard — create products and checkout there. Studio never creates SKUs.",
+    env_hint: "Put CREEM_* keys on the deploy target — never in .ship/.",
     secret_shown_once: true,
-    once_hint: "Paddle API keys may be shown once — rotate if leaked.",
+    once_hint: "Creem API keys may be shown once — rotate if leaked.",
+    emit_token_page: true,
+};
+
+static WAFFO: ProviderCatalog = ProviderCatalog {
+    label: "Waffo",
+    oauth_cli: &[],
+    orbit_login: None,
+    token_url: "https://pancake.waffo.ai/merchant/auth/signin",
+    create_url: "https://pancake.waffo.ai/merchant/auth/signin",
+    docs_url: "https://docs.waffo.ai",
+    oauth_hint: "Open Waffo Pancake merchant dashboard — create products/checkout there. Studio never creates products.",
+    env_hint: "Put WAFFO_* keys on the deploy target — never in .ship/.",
+    secret_shown_once: true,
+    once_hint: "Waffo private keys may be shown once — rotate if leaked.",
     emit_token_page: true,
 };
 
@@ -686,8 +724,17 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
     if upper.starts_with("STRIPE_") {
         return Some(STRIPE.create_url);
     }
-    if upper.starts_with("PADDLE_") {
+    if upper.starts_with("PUBLIC_PADDLE_PRICE") {
+        return Some(PADDLE.token_url);
+    }
+    if upper.starts_with("PUBLIC_PADDLE_") || upper.starts_with("PADDLE_") {
         return Some(PADDLE.create_url);
+    }
+    if upper.starts_with("CREEM_") {
+        return Some(CREEM.create_url);
+    }
+    if upper.starts_with("WAFFO_") {
+        return Some(WAFFO.create_url);
     }
     // Self-generated (CRON_SECRET, BETTER_AUTH_SECRET, …) or unknown → put destination.
     match put_provider {
@@ -712,6 +759,8 @@ pub fn entry_url_for_secret(name: &str, put_provider: Option<ProviderId>) -> Opt
         Some(ProviderId::Lemon) => Some(LEMON.create_url),
         Some(ProviderId::Stripe) => Some(STRIPE.create_url),
         Some(ProviderId::Paddle) => Some(PADDLE.create_url),
+        Some(ProviderId::Creem) => Some(CREEM.create_url),
+        Some(ProviderId::Waffo) => Some(WAFFO.create_url),
         Some(ProviderId::Heroku) => Some(HEROKU.create_url),
         Some(ProviderId::Amplify) => Some(AMPLIFY.create_url),
         Some(ProviderId::CloudRun) => Some(CLOUDRUN.create_url),
@@ -750,7 +799,11 @@ pub fn once_hint_for_secret_name(name: &str) -> &'static str {
     if upper.starts_with("GUMROAD_") || upper.starts_with("LEMON") {
         return "Create on the commerce dashboard; paste checkout URL into marketing CTA only.";
     }
-    if upper.starts_with("STRIPE_") || upper.starts_with("PADDLE_") {
+    if upper.starts_with("STRIPE_")
+        || upper.starts_with("PADDLE_")
+        || upper.starts_with("CREEM_")
+        || upper.starts_with("WAFFO_")
+    {
         return "Create on the commerce dashboard; put keys on the deploy target — never in .ship/.";
     }
     "Copy the value when the provider shows it — many platforms never display it again."
@@ -760,6 +813,7 @@ fn env_entry_url(id: ProviderId, cat: &ProviderCatalog) -> &'static str {
     match id {
         // Settings / console — Docs button carries the tutorial URL.
         ProviderId::Polar => POLAR_WEBHOOK_DOCS,
+        ProviderId::Paddle => "https://sandbox-vendors.paddle.com/checkout-settings",
         ProviderId::Cloudflare => "https://dash.cloudflare.com/?to=/:account/workers-and-pages",
         ProviderId::Vercel => "https://vercel.com/dashboard",
         ProviderId::Netlify => "https://app.netlify.com",
@@ -862,6 +916,33 @@ fn polar_organization_slug(project: &Path) -> Option<String> {
                 && s.chars()
                     .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
         })
+}
+
+fn append_paddle_page_opens(steps: &mut Vec<PortalStep>) {
+    if !steps.iter().any(|s| s.provider == "paddle") {
+        return;
+    }
+    let docs = Some(PADDLE.docs_url);
+    steps.push(portal_step(
+        "paddle.checkout_settings".into(),
+        "paddle".into(),
+        "checkout_settings",
+        "Paddle checkout configuration".into(),
+        Some("https://sandbox-vendors.paddle.com/checkout-settings".into()),
+        None,
+        "Required: default payment link — sandbox accepts http://localhost:4321 (overlay fails without it).".into(),
+        docs,
+    ));
+    steps.push(portal_step(
+        "paddle.orders".into(),
+        "paddle".into(),
+        "orders",
+        "Paddle orders / refunds".into(),
+        Some("https://sandbox-vendors.paddle.com/orders".into()),
+        None,
+        "Refund a sandbox order here (auto-approves ~10 min). Live refunds need Paddle approval.".into(),
+        docs,
+    ));
 }
 
 fn apply_polar_deep_links(project: &Path, steps: &mut [PortalStep]) {
@@ -974,6 +1055,12 @@ pub fn detected_providers(detected: &Detected) -> Vec<ProviderId> {
     if detected.paddle {
         out.push(ProviderId::Paddle);
     }
+    if detected.creem {
+        out.push(ProviderId::Creem);
+    }
+    if detected.waffo {
+        out.push(ProviderId::Waffo);
+    }
     out
 }
 
@@ -1071,6 +1158,7 @@ pub fn plan_for_providers(project: &Path, providers: &[ProviderId]) -> Result<Po
     }
 
     apply_polar_deep_links(&project, &mut steps);
+    append_paddle_page_opens(&mut steps);
 
     // Prefer GHCR docs when the project looks GitHub-backed.
     let container_docs = config::container_docs_url(&project);
@@ -1491,17 +1579,55 @@ mod tests {
         assert!(plan.providers.iter().any(|p| p == "gumroad"));
         assert!(plan.providers.iter().any(|p| p == "paddle"));
         assert!(plan.steps.iter().any(|s| {
+            s.provider == "paddle"
+                && s.kind == "dashboard"
+                && s.entry_url.as_deref() == Some(PADDLE.token_url)
+        }));
+        assert!(plan.steps.iter().any(|s| {
+            s.provider == "paddle"
+                && s.kind == "token_page"
+                && s.entry_url.as_deref() == Some(PADDLE.create_url)
+        }));
+        assert!(plan.steps.iter().any(|s| {
+            s.id == "paddle.checkout_settings"
+                && s.entry_url.as_deref()
+                    == Some("https://sandbox-vendors.paddle.com/checkout-settings")
+        }));
+        assert!(plan.steps.iter().any(|s| {
+            s.id == "paddle.orders"
+                && s.entry_url.as_deref() == Some("https://sandbox-vendors.paddle.com/orders")
+        }));
+        assert!(plan.steps.iter().any(|s| {
             s.provider == "stripe" && s.entry_url.as_deref() == Some(STRIPE.token_url)
         }));
         assert!(plan.steps.iter().any(|s| {
             s.provider == "gumroad" && s.entry_url.as_deref() == Some(GUMROAD.token_url)
         }));
         assert_eq!(ProviderId::parse("lemonsqueezy").unwrap(), ProviderId::Lemon);
+        assert_eq!(ProviderId::parse("creem").unwrap(), ProviderId::Creem);
+        assert_eq!(ProviderId::parse("pancake").unwrap(), ProviderId::Waffo);
         assert!(ProviderId::Stripe.is_commerce());
+        assert!(ProviderId::Creem.is_commerce());
+        assert!(ProviderId::Waffo.is_commerce());
         let err = crate::secrets::put_secret(&dir, ProviderId::Stripe, "STRIPE_SECRET_KEY");
         assert!(err.is_err());
         let msg = format!("{}", err.unwrap_err());
         assert!(msg.contains("Stripe") || msg.contains("commerce") || msg.contains("dashboard"));
+    }
+
+    #[test]
+    fn commerce_portal_detects_creem_and_waffo() {
+        let dir = tempfile_dir();
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".env"), "CREEM_API_KEY=\nWAFFO_MERCHANT_ID=\n").unwrap();
+        let plan = plan_for(&dir, None).unwrap();
+        assert!(plan.providers.iter().any(|p| p == "creem"));
+        assert!(plan.providers.iter().any(|p| p == "waffo"));
+        assert!(plan.steps.iter().any(|s| {
+            s.provider == "creem" && s.entry_url.as_deref() == Some(CREEM.token_url)
+        }));
+        let err = crate::secrets::put_secret(&dir, ProviderId::Creem, "CREEM_API_KEY");
+        assert!(err.is_err());
     }
 
     #[test]

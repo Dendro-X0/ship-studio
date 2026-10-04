@@ -1,25 +1,34 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { polarPortalUrl, supportEmail } from "../lib/commerce";
+import { paddlePortalUrl, supportEmail } from "../lib/commerce";
 
 const email = supportEmail();
+const portal = paddlePortalUrl();
 ---
 
 <BaseLayout
   title="Account — Ship Studio"
-  description="Manage your Ship Studio order on Polar."
+  description="Manage your Ship Studio order on Paddle."
   path="/account"
 >
   <section class="section">
     <h1>Account</h1>
     <p class="lead">
-      Billing, invoices, and refunds are handled on Polar. We do not run a separate login for the
-      local app.
+      Billing, invoices, and card data stay on Paddle. We do not run a separate login for the local
+      app.
+    </p>
+    <p>
+      Your receipt is in the email Paddle sent at checkout. Refunds: email us with the Paddle
+      transaction id — see <a href="/legal/refunds">refund policy</a>.
     </p>
     <div class="hero-cta">
-      <a class="btn btn-primary" href={polarPortalUrl()} rel="noopener noreferrer" target="_blank">
-        Open Polar portal
-      </a>
+      {
+        portal ? (
+          <a class="btn btn-primary" href={portal} rel="noopener noreferrer" target="_blank">
+            Open Paddle customer portal
+          </a>
+        ) : null
+      }
       <a class="btn" href="/license">License file</a>
       <a class="btn" href="/legal/refunds">Refund policy</a>
       <a class="btn" href="/docs/start">Docs</a>

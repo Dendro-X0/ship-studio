@@ -51,7 +51,7 @@ pnpm website:dev                  # http://localhost:4321
 pnpm website:build                # apps/website/dist
 ```
 
-Copy `apps/website/.env.example` → `.env` and set `PUBLIC_POLAR_CHECKOUT_URL` when Polar products exist.
+Primary distribution: [GitHub Releases](https://github.com/Dendro-X0/ship-studio/releases). Copy `apps/website/.env.example` → `.env` only if you enable optional Paddle overlay (`PUBLIC_PADDLE_*`). Empty env leaves Buy disabled.
 
 ## Vault (Clavis-compatible)
 
