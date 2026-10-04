@@ -18,4 +18,4 @@ Guided Launch sequences Steam / itch / Epic listing + submit Open + Confirm — 
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl launch_market` |
+| L1 | `cargo test -p orbityard launch_market` |

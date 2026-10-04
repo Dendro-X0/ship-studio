@@ -1,4 +1,4 @@
-# START HERE — Ship Studio
+# START HERE — Orbit Yard
 
 **One front door.** Do not search all of `/docs`.
 
@@ -22,7 +22,7 @@ That is enough for most sessions.
 
 | Prefer | Companion |
 |--------|-----------|
-| `shipctl publish` — Open/Run → Confirm → Next | `shipctl launch` ([design](../specs/backend/guided-launch-design.md)) |
+| `orbityard publish` — Open/Run → Confirm → Next | `orbityard launch` ([design](../specs/backend/guided-launch-design.md)) |
 
 Extend lanes: [../specs/backend/release-surface-map.md](../specs/backend/release-surface-map.md) · [../specs/backend/shipping-hub-north-star.md](../specs/backend/shipping-hub-north-star.md)
 
@@ -45,22 +45,22 @@ Extend lanes: [../specs/backend/release-surface-map.md](../specs/backend/release
 ```bash
 git clone https://github.com/Dendro-X0/ship-studio.git
 cd ship-studio
-cargo build -p shipctl --release
-cargo test -p shipctl
+cargo build -p orbityard --release
+cargo test -p orbityard
 ```
 
 ## First useful commands
 
 ```bash
-./target/release/shipctl doctor --project /path/to/project
-./target/release/shipctl guide --project /path/to/project
-./target/release/shipctl human --project /path/to/project
-./target/release/shipctl publish --project /path/to/project
-./target/release/shipctl tui --project /path/to/project
+./target/release/orbityard doctor --project /path/to/project
+./target/release/orbityard guide --project /path/to/project
+./target/release/orbityard human --project /path/to/project
+./target/release/orbityard publish --project /path/to/project
+./target/release/orbityard tui --project /path/to/project
 ```
 
 Desktop (Windows): `pnpm install && pnpm dev` · or `bash scripts/stage-desktop.sh`
 
 ## Non-goals
 
-Ship Studio does **not** replace Cloudflare/Vercel/GitHub OAuth or store secret values in `.ship/`. Full boundary: [product/SCOPE-OF-SERVICE.md](./product/SCOPE-OF-SERVICE.md).
+Orbit Yard does **not** replace Cloudflare/Vercel/GitHub OAuth or store secret values in `.ship/`. Full boundary: [product/SCOPE-OF-SERVICE.md](./product/SCOPE-OF-SERVICE.md).

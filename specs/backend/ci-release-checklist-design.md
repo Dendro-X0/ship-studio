@@ -6,7 +6,7 @@
 
 ## Problem
 
-Repos with GitHub Actions release workflows get no Ship Studio cue to open Actions after tagging/signing. Operators forget the CI gate.
+Repos with GitHub Actions release workflows get no Orbit Yard cue to open Actions after tagging/signing. Operators forget the CI gate.
 
 ## Scope (first slice)
 

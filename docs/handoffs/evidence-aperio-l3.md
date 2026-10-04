@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-18  
 **Subject:** `E:/Web Projects/aperio` (Desktop Tauri + Web Vercel)  
-**Binary:** `target/release/shipctl.exe` + `target/release/ship-studio-desktop.exe`
+**Binary:** `target/release/orbityard.exe` + `target/release/orbit-yard-desktop.exe`
 
 ## CLI (subject plan)
 
@@ -37,4 +37,4 @@ Artifacts:
 ## Env notes
 
 - First Tauri build failed on corrupted cargo `cc-1.4.5` (missing `src/target/*`); registry entry removed, rebuild succeeded.
-- WSL `bash` unavailable on this host; dogfood assertions run via PowerShell + release `shipctl`.
+- WSL `bash` unavailable on this host; dogfood assertions run via PowerShell + release `orbityard`.

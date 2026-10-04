@@ -8,14 +8,14 @@
 
 | Probe | Result |
 |-------|--------|
-| `shipctl portal --project fixtures/harbor --provider cloudflare` | Exit 0 · JSON steps OK |
-| `shipctl portal … --provider orbit` | Exit 1 · `unknown provider 'orbit'` |
+| `orbityard portal --project fixtures/harbor --provider cloudflare` | Exit 0 · JSON steps OK |
+| `orbityard portal … --provider orbit` | Exit 1 · `unknown provider 'orbit'` |
 | Screenshot | Cloudflare steps visible + toast `portal failed` + Dock FAILED |
 | CodaCtrl | workspaceAligned; no CDP session yet (preflight: need remote debugging) |
 
 ## Failure classes (not one-off bugs)
 
-### F1 — Interactive CLI in headless `run_shipctl`
+### F1 — Interactive CLI in headless `run_orbityard`
 
 `Login CLI` calls `run(["portal", …, "--login"])` → Windows `CREATE_NO_WINDOW` + piped stdio. `wrangler login` / `vercel login` need a real terminal. Result: spawn/auth dies → exit ≠ 0 → toast **`portal failed`** with no guidance.
 
@@ -50,7 +50,7 @@ if (!result?.ok || !result.stdout) return; // loadPortal, openPortalProvider, lo
 
 - Full CDP dogfood (Tauri needs `--remote-debugging-port`; separate attach recipe)
 - Softening Confirm honesty
-- Rewriting shipctl portal catalog
+- Rewriting orbityard portal catalog
 - Remaining Desktop reliability classes (Tools / Env Put / Ritual terminal parity) — track in [PLATFORMS-AND-PORTAL](../../docs/product/PLATFORMS-AND-PORTAL.md); design before more patches
 
 ## Remaining after slice 1

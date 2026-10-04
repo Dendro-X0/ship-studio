@@ -631,7 +631,7 @@ pub fn save_active(project: &Path, ids: &[String]) -> Result<()> {
     fs::write(
         active_path(project),
         serde_json::to_string_pretty(&serde_json::json!({
-            "schema": "ship-studio/scopes/v1",
+            "schema": "orbit-yard/scopes/v1",
             "active": ids,
         }))?,
     )?;
@@ -652,7 +652,7 @@ pub fn plan_for(project: &Path) -> ScopesPlan {
         }
     }
     ScopesPlan {
-        schema: "ship-studio/scopes/v1".into(),
+        schema: "orbit-yard/scopes/v1".into(),
         project: project.display().to_string(),
         notes: vec![
             "Select Web / API / Desktop / Mobile / Container scopes; deploy Open/Run uses that directory.".into(),
@@ -686,7 +686,7 @@ mod tests {
     #[test]
     fn labels_use_framework_stack() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-scopes-labels-{}",
+            "orbityard-scopes-labels-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -740,7 +740,7 @@ mod tests {
     #[test]
     fn detects_web_and_api() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-scopes-{}",
+            "orbityard-scopes-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -761,7 +761,7 @@ mod tests {
     #[test]
     fn detects_workspace_node_apps() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-scopes-ws-{}",
+            "orbityard-scopes-ws-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -787,7 +787,7 @@ mod tests {
     #[test]
     fn detects_mobile_android_and_expo() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-scopes-mobile-{}",
+            "orbityard-scopes-mobile-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -818,7 +818,7 @@ mod tests {
     #[test]
     fn root_prefers_api_when_wrangler_and_mobile_coexist() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-scopes-mixed-{}",
+            "orbityard-scopes-mixed-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -849,7 +849,7 @@ mod tests {
     #[test]
     fn detects_container_dockerfile() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-scopes-docker-{}",
+            "orbityard-scopes-docker-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())

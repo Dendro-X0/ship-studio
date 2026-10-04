@@ -18,4 +18,4 @@ Guided Launch sequences Play / App Store / Microsoft Store listing + submit Open
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl launch_store` |
+| L1 | `cargo test -p orbityard launch_store` |

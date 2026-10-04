@@ -7,7 +7,7 @@
 
 ## Product framing
 
-`shipctl guide` offline checklist surfaces the same portal lanes as Assist / Doctor / Pulse, and prefers **Publish** over legacy Flow.
+`orbityard guide` offline checklist surfaces the same portal lanes as Assist / Doctor / Pulse, and prefers **Publish** over legacy Flow.
 
 ## Behavior
 
@@ -26,4 +26,4 @@
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl guide_notes` |
+| L1 | `cargo test -p orbityard guide_notes` |

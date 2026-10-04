@@ -375,7 +375,7 @@ static CONTAINER: ProviderCatalog = ProviderCatalog {
     token_url: "https://hub.docker.com/",
     create_url: "https://hub.docker.com/",
     docs_url: "https://docs.docker.com/get-started/docker-concepts/building-images/build-tag-and-publish-an-image/",
-    oauth_hint: "Build/tag locally, then push to Docker Hub or GHCR. Ship Studio only opens docs — no remote build.",
+    oauth_hint: "Build/tag locally, then push to Docker Hub or GHCR. Orbit Yard only opens docs — no remote build.",
     env_hint: "Registry credentials stay in docker login / gh auth — never in .ship/.",
     secret_shown_once: false,
     once_hint: "Use `docker login` or `gh auth token` for GHCR. Rotate registry tokens if leaked.",
@@ -1180,13 +1180,13 @@ pub fn plan_for_providers(project: &Path, providers: &[ProviderId]) -> Result<Po
     let notes = vec![
         "Portal navigates you to entry points — OAuth and env values stay manual.".into(),
         "Many API tokens are shown ONLY once (Create/Roll). Prefer browser sign-in when already logged in; Login CLI when you need local CLI credentials.".into(),
-        "shipctl does not store secrets or call vendor HTTPS APIs.".into(),
+        "orbityard does not store secrets or call vendor HTTPS APIs.".into(),
         "Use --open to launch pages; --login to start CLI OAuth.".into(),
-        "After auth: shipctl human --put  or  shipctl flow.".into(),
+        "After auth: orbityard human --put  or  orbityard flow.".into(),
     ];
 
     Ok(PortalPlan {
-        schema: "ship-studio/portal/v1".into(),
+        schema: "orbit-yard/portal/v1".into(),
         project: project.display().to_string(),
         providers: providers.iter().map(|p| p.as_str().to_string()).collect(),
         steps,
@@ -1310,7 +1310,7 @@ mod tests {
 
     fn tempfile_dir() -> PathBuf {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-portal-{}-{}",
+            "orbityard-portal-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)

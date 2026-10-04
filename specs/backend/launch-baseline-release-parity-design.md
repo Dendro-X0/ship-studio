@@ -31,4 +31,4 @@ Guided Launch sequences legal baseline, TRUST pack, graduate signing notes, hand
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl launch_baseline` |
+| L1 | `cargo test -p orbityard launch_baseline` |

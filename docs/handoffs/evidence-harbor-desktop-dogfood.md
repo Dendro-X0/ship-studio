@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-28  
 **Subject:** `fixtures/harbor`  
-**Binary:** `target/release/ship-studio-desktop.exe` (rebuilt this session)  
+**Binary:** `target/release/orbit-yard-desktop.exe` (rebuilt this session)  
 **Method:** WebView2 CDP `:9223` + Playwright `connectOverCDP`  
 **Related CLI:** [evidence-harbor-launch-l3-l4](./evidence-harbor-launch-l3-l4.md)
 

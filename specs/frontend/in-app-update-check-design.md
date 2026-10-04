@@ -25,7 +25,7 @@ NOT: Silent auto-install · force update · updater plugin · delta patches.
 
 ## CTA
 
-- Toast action **Open download** → `https://github.com/Dendro-X0/ship-studio/releases/latest` (opener)
+- Toast action **Open download** → `Dendro-X0/ship-studio/releases/latest` (opener)
 - Optional **Later** → snooze that remote tag in `localStorage` until a different tag appears
 
 ## Non-goals

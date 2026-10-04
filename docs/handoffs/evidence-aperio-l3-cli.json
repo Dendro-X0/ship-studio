@@ -1,5 +1,5 @@
 ﻿{
-  "schema": "ship-studio/publish/v1",
+  "schema": "orbit-yard/publish/v1",
   "project": "\\\\?\\E:\\Web Projects\\aperio",
   "mode": "advanced",
   "current_index": 2,
@@ -25,7 +25,7 @@
       "detail": "Required tools for this project are ready. Confirm and continue.",
       "minutes": 1,
       "run": [
-        "shipctl",
+        "orbityard",
         "doctor",
         "--project",
         "."
@@ -41,7 +41,7 @@
       "detail": "2 detected ┬╖ 2 active. Save selection in Scopes, then Confirm.",
       "minutes": 1,
       "run": [
-        "shipctl",
+        "orbityard",
         "scopes",
         "--project",
         "."
@@ -85,7 +85,7 @@
       "detail": "Persist sign/deploy intent for this publish.",
       "minutes": 1,
       "run": [
-        "shipctl",
+        "orbityard",
         "configure",
         "--project",
         "."
@@ -237,7 +237,7 @@
       "detail": "Offline preview before network deploy.",
       "minutes": 1,
       "run": [
-        "shipctl",
+        "orbityard",
         "flow",
         "--project",
         ".",
@@ -255,7 +255,7 @@
       "detail": "Orbit deploy in `apps/web`.",
       "minutes": 3,
       "run": [
-        "shipctl",
+        "orbityard",
         "deploy",
         "--project",
         "apps/web",
@@ -278,15 +278,15 @@
     }
   ],
   "actions": [
-    "shipctl publish --mode advanced",
-    "shipctl publish open",
-    "shipctl publish confirm",
-    "shipctl publish next",
+    "orbityard publish --mode advanced",
+    "orbityard publish open",
+    "orbityard publish confirm",
+    "orbityard publish next",
     "desktop view: dashboard"
   ],
   "notes": [
     "Mode: advanced ΓÇö full OAuth / official sign / listing path.",
-    "~52 min guided publish ΓÇö you finish vendor UIs; shipctl sequences.",
+    "~52 min guided publish ΓÇö you finish vendor UIs; orbityard sequences.",
     "Open/Run ΓåÆ work on official platform or local CLI ΓåÆ Confirm ΓåÆ Next.",
     "Network deploy & live release require your initiation."
   ]

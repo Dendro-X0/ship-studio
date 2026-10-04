@@ -3319,7 +3319,7 @@ pre#output,
   max-height: min(62vh, 640px);
 }
 
-.statusbar #shipctl-path {
+.statusbar #orbityard-path {
   font-family: var(--mono);
   max-width: 45%;
   overflow: hidden;

@@ -2,7 +2,7 @@
 
 **Status:** Design — G1–G4 + project skill shipped; Client thin  
 **Updated:** 2026-10-04  
-**Owner:** `shipctl mcp` (`crates/shipctl/src/mcp.rs`)  
+**Owner:** `orbityard mcp` (`crates/orbityard/src/mcp.rs`)  
 **Parent:** [mcp-assist-contract-design](./mcp-assist-contract-design.md) · [close-cut-design](./close-cut-design.md) · [human-gate-catalog-design](./human-gate-catalog-design.md)
 
 ## Plan alignment
@@ -10,16 +10,16 @@
 - Maintainer: keep **Desktop streamlined**; put “guide to the page + help validate” on **MCP / agents**, not more Client wizards.
 - **CANCELLED:** Vendor handoff coach (in-app overlay / CDP form-fill).
 - **PAUSED:** Portal / Integrations UX expansion on Desktop.
-- **In scope:** Agents call `ship_*` → exact `entry_url` · tell human what to do on that page · `ship_pulse` / `ship_publish` / `ship_publish_watch` for **local** validation.
+- **In scope:** Agents call `ship_*` → exact `entry_url` · tell human what to do on that page · `orbit_pulse` / `orbit_publish` / `orbit_publish_watch` for **local** validation.
 - **Out of scope:** Agent creates API keys, pastes secrets, finishes OAuth, uploads Steam depots, auto-Confirms live publish.
 
 ## Why this is the remaining product
 
 Easy vendors (Vercel, Polar) need a URL + official CLI. Hard vendors still own token-create. A second Client loses. An agent in the editor the operator already uses can:
 
-1. `ship_portal` / `ship_guide` → **one URL** (not encyclopedia).
+1. `orbit_portal` / `orbit_guide` → **one URL** (not encyclopedia).
 2. Say the field name (e.g. default payment link, Polar checkout URL).
-3. After the human returns: `ship_pulse` / `ship_publish` / doctor — **validate the project**, not the vendor account.
+3. After the human returns: `orbit_pulse` / `orbit_publish` / doctor — **validate the project**, not the vendor account.
 
 Same kernel as CLI. No new shell.
 
@@ -30,11 +30,11 @@ Desktop stays: bind folder · Publish spine · Deploy (official CLI) · Open das
 ## Agent loop (canon)
 
 ```text
-1. ship_doctor / ship_pulse     → local tools + signals
-2. ship_publish                 → required next gate (read-only)
-3. ship_portal | ship_guide     → entry_url for that gate (open=true only if human wants browser)
+1. orbit_doctor / orbit_pulse     → local tools + signals
+2. orbit_publish                 → required next gate (read-only)
+3. orbit_portal | orbit_guide     → entry_url for that gate (open=true only if human wants browser)
 4. Human does vendor UI / Login CLI / Put in a real TTY
-5. ship_publish_watch | pulse   → local Verify; never “OAuth is done” without evidence
+5. orbit_publish_watch | pulse   → local Verify; never “OAuth is done” without evidence
 6. Human Confirm on CLI/Desktop for irreversible steps
 ```
 
@@ -44,30 +44,30 @@ Desktop stays: bind folder · Publish spine · Deploy (official CLI) · Open das
 
 | Need | Tool |
 |------|------|
-| Next URL | `ship_portal`, `ship_guide` (`open` optional) |
-| Secret **names** + put recipe | `ship_secrets`, `ship_env`, `ship_env_put` (spawn terminal; no values) |
-| Checklist | `ship_assist` |
-| Local validate | `ship_pulse`, `ship_status`, `ship_publish_watch` |
-| Hosted deploy | Prefer Desktop Deploy; `ship_hostdeploy` if CLI session exists |
+| Next URL | `orbit_portal`, `orbit_guide` (`open` optional) |
+| Secret **names** + put recipe | `orbit_secrets`, `orbit_env`, `orbit_env_put` (spawn terminal; no values) |
+| Checklist | `orbit_assist` |
+| Local validate | `orbit_pulse`, `orbit_status`, `orbit_publish_watch` |
+| Hosted deploy | Prefer Desktop Deploy; `orbit_hostdeploy` if CLI session exists |
 
-S2.4 **G1–G4 shipped** — publish mutations · `ship_env_put` · human put TTY bail · vault docs. G5 hint already on hostdeploy; G6 CDP stays Later.
+S2.4 **G1–G4 shipped** — publish mutations · `orbit_env_put` · human put TTY bail · vault docs. G5 hint already on hostdeploy; G6 CDP stays Later.
 
 ## Skills (Cursor)
 
-Project skill: [`.cursor/skills/ship-mcp-agent/SKILL.md`](../../.cursor/skills/ship-mcp-agent/SKILL.md) — prefer `ship_*` over Desktop wizards; never hold keys.
+Project skill: [`.cursor/skills/orbit-yard-mcp-agent/SKILL.md`](../../.cursor/skills/orbit-yard-mcp-agent/SKILL.md) — prefer `ship_*` over Desktop wizards; never hold keys.
 
 ## Acceptance
 
 - [x] Desktop: no new wizard surfaces in this band
 - [x] Design + MCP inventory agree (this file + mcp.rs `tools()`)
 - [x] Impl slice: G1 wrappers
-- [x] Impl slice: G2 `ship_env_put`
+- [x] Impl slice: G2 `orbit_env_put`
 - [x] Impl slice: G3 human put TTY bail · G4 vault schema soften
-- [x] Cursor project skill `ship-mcp-agent`
-- [ ] L3: agent session uses `ship_publish_verify` then human Confirm (not required to ship G1)
+- [x] Cursor project skill `orbit-yard-mcp-agent`
+- [ ] L3: agent session uses `orbit_publish_verify` then human Confirm (not required to ship G1)
 
 ## Do not
 
 - Reintroduce in-app tooltips on vendor pages  
-- `ship_env_put` that types the secret  
+- `orbit_env_put` that types the secret  
 - Claim MCP “sets up Paddle” end-to-end

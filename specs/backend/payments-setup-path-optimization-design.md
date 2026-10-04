@@ -89,7 +89,7 @@ Studio **never** holds `pdl_…`. Seed writes only gitignored `PUBLIC_*`. Dashbo
 - Do **not** add Get started as a primary Open.
 - Learn more may stay overlay tutorial; optional secondary docs URL = [quickstart](https://developer.paddle.com/get-started/quickstart) only if we add a second docs affordance (else leave as-is).
 
-### B. Portal / shipctl strings
+### B. Portal / orbityard strings
 
 - Align human/portal step titles with “Checkout configuration” if they still say settings.
 - Keep sandbox URLs; no live-first Opens.

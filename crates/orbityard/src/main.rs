@@ -27,7 +27,7 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
-#[command(name = "shipctl", version, about = "Local Ship workflow bridge (Signet + Orbit)")]
+#[command(name = "orbityard", version, about = "Orbit Yard — local shipping bridge (Signet + Orbit)")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -339,7 +339,7 @@ enum VaultCmd {
         #[arg(long)]
         out: PathBuf,
         /// Vault display name inside the file.
-        #[arg(long, default_value = "Ship Studio secrets")]
+        #[arg(long, default_value = "Orbit Yard secrets")]
         name: String,
         /// Pre-fill entry titles from project secret hints (values still prompted).
         #[arg(long, default_value_t = false)]
@@ -723,7 +723,7 @@ fn main() -> Result<()> {
                         "path": path,
                         "format": "kmvault/v1",
                         "compatible_with": "Clavis / Keys Manager",
-                        "hint": "Open the .km file in Clavis, or shipctl vault list --file …"
+                        "hint": "Open the .km file in Clavis, or orbityard vault list --file …"
                     })
                 );
             }
@@ -748,7 +748,7 @@ fn main() -> Result<()> {
                     &title,
                     &value,
                     &url,
-                    "Added via shipctl vault add",
+                    "Added via orbityard vault add",
                 )?;
                 value.clear();
                 println!(
@@ -831,9 +831,9 @@ fn main() -> Result<()> {
                         detail: format!("orbit {}", args.join(" ")),
                     }],
                     message: if code == 0 {
-                        "shipctl deploy succeeded".into()
+                        "orbityard deploy succeeded".into()
                     } else {
-                        format!("shipctl deploy exited {code}")
+                        format!("orbityard deploy exited {code}")
                     },
                     urls,
                     host_provider: Some("orbit".into()),

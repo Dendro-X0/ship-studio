@@ -32,5 +32,5 @@ Complete Watch surface parity: CLI · Desktop · **TUI**. Same local Verify poll
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo check -p shipctl` (TUI compiles) |
+| L1 | `cargo check -p orbityard` (TUI compiles) |
 | L3 | Manual: TUI Publish → w → see READY after fixing a sticky step |

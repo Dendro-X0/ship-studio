@@ -1,4 +1,4 @@
-# Ship Studio Documentation
+# Orbit Yard Documentation
 
 **Start:** [CURRENT.md](./CURRENT.md) → [handoffs/current-session.md](./handoffs/current-session.md)
 

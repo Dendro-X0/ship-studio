@@ -70,7 +70,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
             title: "Doctor — local tools".into(),
             human: false,
             command: vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "doctor".into(),
                 "--project".into(),
                 project.display().to_string(),
@@ -86,7 +86,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
             title: "Portal — open provider entry points".into(),
             human: true,
             command: vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "portal".into(),
                 "--project".into(),
                 project.display().to_string(),
@@ -106,7 +106,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
             title: "Secrets — paste into provider CLIs".into(),
             human: true,
             command: vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "secrets".into(),
                 "--project".into(),
                 project.display().to_string(),
@@ -115,7 +115,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
                 "No named hints — add wrangler `# Secrets:` or empty .dev.vars keys.".into()
             } else {
                 format!(
-                    "{} hint(s): {}. Put via `shipctl secrets put --provider … --name …`.",
+                    "{} hint(s): {}. Put via `orbityard secrets put --provider … --name …`.",
                     secret_names.len(),
                     secret_names.join(", ")
                 )
@@ -126,7 +126,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
             title: "Vault — optional encrypted .km backup (Clavis)".into(),
             human: true,
             command: vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "vault".into(),
                 "export".into(),
                 "--out".into(),
@@ -142,7 +142,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
             title: "Configure — write .ship/studio.json".into(),
             human: false,
             command: vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "configure".into(),
                 "--project".into(),
                 project.display().to_string(),
@@ -154,19 +154,19 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
             title: "Publish — minute Open/Run → Confirm → Next".into(),
             human: true,
             command: vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "publish".into(),
                 "--project".into(),
                 project.display().to_string(),
             ],
-            detail: "Preferred final-mile spine. Optional Watch: `publish watch`, Desktop toggle, TUI `w`, MCP `ship_publish_watch`.".into(),
+            detail: "Preferred final-mile spine. Optional Watch: `publish watch`, Desktop toggle, TUI `w`, MCP `orbit_publish_watch`.".into(),
         },
         GuideStep {
             id: "flow_dry_run".into(),
             title: "Flow dry-run — preview sign → deploy args".into(),
             human: false,
             command: vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "flow".into(),
                 "--project".into(),
                 project.display().to_string(),
@@ -189,7 +189,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
             title: "Flow — sign then deploy (when ready)".into(),
             human: true,
             command: vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "flow".into(),
                 "--project".into(),
                 project.display().to_string(),
@@ -213,7 +213,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
                 command: human
                     .cli
                     .clone()
-                    .unwrap_or_else(|| vec!["shipctl".into(), "portal".into(), "--open".into()]),
+                    .unwrap_or_else(|| vec!["orbityard".into(), "portal".into(), "--open".into()]),
                 detail: human.detail.clone(),
             },
         );
@@ -223,15 +223,15 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
     let detected = config::probe(&project);
     let mut notes = vec![
         "Guide is offline-safe JSON — open/login/put are operator-initiated.".into(),
-        "Prefer Publish (`shipctl publish`) over Flow for Adaptive Open → Confirm → Next.".into(),
+        "Prefer Publish (`orbityard publish`) over Flow for Adaptive Open → Confirm → Next.".into(),
         format!("Suggested deploy_args: {:?}", intent.deploy_args),
         format!("Suggested sign_args: {:?}", intent.sign_args),
         format!(
-            "{} unique entry URL(s) — `shipctl guide --open` launches them.",
+            "{} unique entry URL(s) — `orbityard guide --open` launches them.",
             entry_urls.len()
         ),
         "Desktop/TUI Wizard follows the same step ids.".into(),
-        "Optional vault: shipctl vault export --out ship-secrets.km --from-hints".into(),
+        "Optional vault: orbityard vault export --out ship-secrets.km --from-hints".into(),
     ];
     if detected.fly
         || detected.railway
@@ -300,7 +300,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
         ));
     }
     notes.push(
-        "Progress nudge: `shipctl publish watch` · Desktop Watch · TUI `w` · MCP `ship_publish_watch`."
+        "Progress nudge: `orbityard publish watch` · Desktop Watch · TUI `w` · MCP `orbit_publish_watch`."
             .into(),
     );
     // Prefer cut-readiness / portal cues from doctor over early PATH noise.
@@ -311,7 +311,7 @@ pub fn plan_for(project: &Path) -> Result<GuidePlan> {
     }
 
     Ok(GuidePlan {
-        schema: "ship-studio/guide/v1".into(),
+        schema: "orbit-yard/guide/v1".into(),
         project: project.display().to_string(),
         providers: portal.providers,
         secret_hint_count: secret_names.len(),
@@ -341,7 +341,7 @@ mod tests {
     #[test]
     fn guide_includes_core_steps() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-guide-{}",
+            "orbityard-guide-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -364,7 +364,7 @@ mod tests {
     #[test]
     fn guide_notes_hosts_baas_commerce_and_watch() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-guide-expand-{}",
+            "orbityard-guide-expand-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())

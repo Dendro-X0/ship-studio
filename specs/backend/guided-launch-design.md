@@ -2,7 +2,7 @@
 
 **Status:** Active  
 **Updated:** 2026-09-13  
-**Owner:** `crates/shipctl` (`launch`) · Desktop / TUI Launch
+**Owner:** `crates/orbityard` (`launch`) · Desktop / TUI Launch
 
 ## Vision
 
@@ -14,7 +14,7 @@ Semi-automated shipping through to **product launch**: for each task, open the o
 |----------------|-------------------------------------|
 | Tauri / `signet.toml` | identity → `signet build` → `signet ship --plan` → `signet release --dry-run` → `signet release` (confirm tag) |
 | Polar markers | listing — open Polar dashboard (marketplace paste is human) |
-| Wrangler / Vercel / Netlify | `shipctl deploy` (Orbit) |
+| Wrangler / Vercel / Netlify | `orbityard deploy` (Orbit) |
 | Always | doctor → oauth → paste → configure → intent → flow dry-run → deploy |
 
 Worker-only repos skip desktop Signet build/release unless `signet.toml` exists.
@@ -28,14 +28,14 @@ Worker-only repos skip desktop Signet build/release unless `signet.toml` exists.
 | `paste` | source URL + optional put | confirm or secret list |
 | `sign` | `signet …` via `run` | exit 0 or confirm |
 | `list` | Polar/GitHub release URL | confirm (marketplace is human) |
-| `deploy` | `shipctl deploy` / orbit | last-run ok or confirm |
+| `deploy` | `orbityard deploy` / orbit | last-run ok or confirm |
 
 ## Commands
 
 ```text
-shipctl launch [--project .]
-shipctl launch open|run     # open URL and/or execute step.run
-shipctl launch verify|confirm|next|reset
+orbityard launch [--project .]
+orbityard launch open|run     # open URL and/or execute step.run
+orbityard launch verify|confirm|next|reset
 ```
 
 ## Surfaces
@@ -54,5 +54,5 @@ shipctl launch verify|confirm|next|reset
 ## Proof
 
 - L1: tauri fixture includes build/release steps; wrangler fixture skips them  
-- L2: `shipctl launch` / verify configure / next  
+- L2: `orbityard launch` / verify configure / next  
 - L3: Desktop + TUI Launch controls

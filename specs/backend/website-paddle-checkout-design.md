@@ -8,7 +8,7 @@
 ## Plan alignment
 
 - **Handoff atomic step:** Maintainer activated commerce — **Paddle** (Billing overlay), not Polar E2E.
-- **PAUSED/CANCELLED:** Polar paid checkout E2E stays deferred. Vendor coach CANCELLED. No Studio-held API secrets. No creating Paddle products from `shipctl`.
+- **PAUSED/CANCELLED:** Polar paid checkout E2E stays deferred. Vendor coach CANCELLED. No Studio-held API secrets. No creating Paddle products from `orbityard`.
 - **In scope:** Env-gated Paddle.js v2 overlay on `/pricing`; honest copy; Desktop Paddle wizard Open aligned with Billing Get started (sandbox first).
 - **Out of scope:** Paddle secret API keys in the repo; webhook license automation; Polar checkout buttons; replacing the Paddle dashboard.
 
@@ -17,13 +17,13 @@
 | Job | Owner |
 |-----|--------|
 | Help operators set up Paddle for **their** app | Desktop Integrations `paddle` wizard |
-| Sell **Ship Studio Solo** on this site | **Paddle overlay** (`PUBLIC_PADDLE_*`) |
+| Sell **Orbit Yard Solo** on this site | **Paddle overlay** (`PUBLIC_PADDLE_*`) |
 
 Polar remains an Integrations **guide** lane. It is not the Solo checkout owner.
 
 ## Why overlay
 
-Paddle Billing Get started (catalog → checkout → fulfillment) expects [Paddle.js overlay](https://developer.paddle.com/build/checkout/build-overlay-checkout): client-side token + price id. Card data never hits Ship Studio servers.
+Paddle Billing Get started (catalog → checkout → fulfillment) expects [Paddle.js overlay](https://developer.paddle.com/build/checkout/build-overlay-checkout): client-side token + price id. Card data never hits Orbit Yard servers.
 
 ## Contracts
 
@@ -55,7 +55,7 @@ Default payment link (Paddle → Checkout → Checkout configuration) must allow
 Screenshot: Billing **Get started** · Live vs Sandbox.
 
 1. **Open sandbox** page buttons (`/products`, `/authentication`, `/checkout-settings`, `/orders`) until a test card (`4242…`) completes. Live (`vendors.paddle.com`) is a separate account and real money.
-2. Catalog → product **Ship Studio Solo** + one-time price.
+2. Catalog → product **Orbit Yard Solo** + one-time price.
 3. Developer tools → Authentication → client-side token (not a server API key).
 4. Checkout → Checkout settings → default payment link.
 5. Put `PUBLIC_PADDLE_*` on the website host — never into Desktop.

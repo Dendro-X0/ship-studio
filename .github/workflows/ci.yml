@@ -10,8 +10,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  shipctl:
-    name: shipctl test
+  orbityard:
+    name: orbityard test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,12 +21,12 @@ jobs:
         with:
           workspaces: "."
           cache-targets: "true"
-      - name: Test shipctl
-        run: cargo test -p shipctl --locked
+      - name: Test orbityard
+        run: cargo test -p orbityard --locked
       - name: CLI smoke
         run: |
-          cargo build -p shipctl --release --locked
-          ./target/release/shipctl --help
-          ./target/release/shipctl doctor --project .
-          ./target/release/shipctl guide --project .
-          ./target/release/shipctl vault --help
+          cargo build -p orbityard --release --locked
+          ./target/release/orbityard --help
+          ./target/release/orbityard doctor --project .
+          ./target/release/orbityard guide --project .
+          ./target/release/orbityard vault --help

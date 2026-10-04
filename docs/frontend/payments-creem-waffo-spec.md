@@ -1,11 +1,11 @@
 # Frontend — Payments catalog (Creem / Waffo) + site landing honesty
 
-**Product:** Ship Studio Desktop Integrations + official website  
+**Product:** Orbit Yard Desktop Integrations + official website  
 **Audience:** Operators picking a checkout lane for *their* product; strangers on the public site  
 **Reference:** Existing Desktop provider catalog · Linear marketing restraint on website  
 **Stack:** Desktop vanilla TS (no React); website Astro + existing `global.css`  
 **Spec status:** approved for this slice  
-**API:** `shipctl` detect/portal/publish contracts in [commerce-creem-waffo-design](../../specs/backend/commerce-creem-waffo-design.md)
+**API:** `orbityard` detect/portal/publish contracts in [commerce-creem-waffo-design](../../specs/backend/commerce-creem-waffo-design.md)
 
 ## Visual direction
 
@@ -49,7 +49,7 @@ Layout:
    - *Your product:* Polar · Stripe · Gumroad · Lemon · Paddle · Creem · Waffo — Open vendor, Confirm in Studio.
    - *This site:* Solo Buy is Polar-hosted when `PUBLIC_POLAR_CHECKOUT_URL` is set; otherwise disabled with setup note.
 
-DO NOT: list Creem/Waffo as ways to buy Ship Studio. DO NOT claim live Polar checkout.
+DO NOT: list Creem/Waffo as ways to buy Orbit Yard. DO NOT claim live Polar checkout.
 
 ## `/faq`
 

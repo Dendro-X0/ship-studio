@@ -1,4 +1,4 @@
-# ROADMAP — Ship Studio (portfolio pointer)
+# ROADMAP — Orbit Yard (portfolio pointer)
 
 Canonical product status lives in this repo’s existing docs (`docs/CURRENT.md`, `docs/product/`, handoffs). This file is the **planned-portfolio** mirror.
 

@@ -28,4 +28,4 @@ Advanced + Public only; Local/General omit.
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl host_` |
+| L1 | `cargo test -p orbityard host_` |

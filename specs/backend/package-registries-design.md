@@ -7,7 +7,7 @@
 
 ## Problem
 
-CLI/library ships (Signet, Velocity `create-velocity`, shipctl) need npm / crates.io listing cues. Studio sequences Polar + stores + Steam but not package registries.
+CLI/library ships (Signet, Velocity `create-velocity`, orbityard) need npm / crates.io listing cues. Studio sequences Polar + stores + Steam but not package registries.
 
 ## Scope (first slice)
 

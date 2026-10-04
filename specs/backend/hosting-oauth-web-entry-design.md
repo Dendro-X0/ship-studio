@@ -32,5 +32,5 @@ CLI-capable hosts (Cloudflare · Vercel · Netlify · …) emitted `*.oauth` wit
 
 | Layer | Check |
 |-------|--------|
-| L1 | `cargo test -p shipctl -- cloudflare_steps_have_distinct_open_targets vercel_oauth_has_web_sign_in_entry` — green |
+| L1 | `cargo test -p orbityard -- cloudflare_steps_have_distinct_open_targets vercel_oauth_has_web_sign_in_entry` — green |
 | L2 | Portal filter Cloudflare → OAuth **Sign in (web)** enabled |

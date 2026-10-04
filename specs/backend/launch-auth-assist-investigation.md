@@ -1,6 +1,6 @@
 # Launch auth assist — investigation
 
-**Status:** Fixed — implement in Desktop Launch + shipctl open  
+**Status:** Fixed — implement in Desktop Launch + orbityard open  
 **Updated:** 2026-09-26  
 **Symptom:** Launch / Confirm gates feel pointless — “authenticate on the vendor site, then return” with no auth link or official CLI launch.
 
@@ -30,5 +30,5 @@ Portal-card Launch UI subtracted the auth assist path. Copy (`return → Confirm
 
 ## Proof
 
-- L1: `cargo test -p shipctl` (118 ok) · desktop `tsc --noEmit`
+- L1: `cargo test -p orbityard` (118 ok) · desktop `tsc --noEmit`
 - L2: Harbor Launch → oauth current → **Login CLI**; identity Run → create-when-missing in TTY

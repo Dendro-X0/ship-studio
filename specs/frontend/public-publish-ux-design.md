@@ -7,7 +7,7 @@
 
 ## Verdict
 
-Ship Studio is **not yet worth $29 to a stranger** as a *general-public* product. The Adaptive plan and honesty model are sound; the **Publish shell fails the first-session clarity test**. Operators face three competing UIs at once (toolbar · chip rail · checkpoint card), jargon without payoff, and a detail-panel bounce that feels like busywork.
+Orbit Yard is **not yet worth $29 to a stranger** as a *general-public* product. The Adaptive plan and honesty model are sound; the **Publish shell fails the first-session clarity test**. Operators face three competing UIs at once (toolbar · chip rail · checkpoint card), jargon without payoff, and a detail-panel bounce that feels like busywork.
 
 Agents do not replace this product — but **this UI currently sells “another dense checklist”**, which agents undercut for free.
 
@@ -94,7 +94,7 @@ $29 test: stranger completes Sign-only (or Sign-and-deploy on a web fixture) **w
 
 ### 7. Actionable toasts lied about “official path” (2026-09-24)
 
-Configure (Auto · local `studio.json`) was offered **Open Ritual** + “official path” because `desktop_view=ritual`. Verify failures also toasted raw `shipctl publish confirm` and a useless **publish failed**.
+Configure (Auto · local `studio.json`) was offered **Open Ritual** + “official path” because `desktop_view=ritual`. Verify failures also toasted raw `orbityard publish confirm` and a useless **publish failed**.
 
 **Fix:** Classify gates (`continue` · `open` · `confirm`); polish/suppress CLI copy; `publishAction` owns toasts (`quietToast`).
 

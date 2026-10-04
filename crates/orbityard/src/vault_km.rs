@@ -240,8 +240,8 @@ fn empty_doc(name: &str) -> VaultDocument {
         },
         workspaces: vec![Workspace {
             id: ws_id.clone(),
-            name: "Ship Studio".into(),
-            source_file: Some("shipctl vault export".into()),
+            name: "Orbit Yard".into(),
+            source_file: Some("orbityard vault export".into()),
             created_at: now.clone(),
             updated_at: now,
             entries: Vec::new(),
@@ -335,7 +335,7 @@ pub fn export_entries(
             value,
             url,
             notes,
-            &["ship-studio".into()],
+            &["orbit-yard".into()],
         ));
     }
     let bytes = encode_document(&doc, &pass)?;
@@ -380,7 +380,7 @@ pub fn load_entries_file(path: &Path) -> Result<Vec<(String, String, String, Str
         let notes = item
             .get("notes")
             .and_then(|x| x.as_str())
-            .unwrap_or("Exported from shipctl vault")
+            .unwrap_or("Exported from orbityard vault")
             .to_string();
         out.push((title, value, url, notes));
     }
@@ -404,8 +404,8 @@ pub fn export_one(
         title,
         value,
         url,
-        "Exported from shipctl vault",
-        &["ship-studio".into()],
+        "Exported from orbityard vault",
+        &["orbit-yard".into()],
     ));
     let bytes = encode_document(&doc, &pass)?;
     pass.zeroize();
@@ -443,8 +443,8 @@ pub fn export_interactive(
                 &title,
                 &value,
                 &url,
-                "Exported from shipctl vault",
-                &["ship-studio".into()],
+                "Exported from orbityard vault",
+                &["orbit-yard".into()],
             ));
         }
     } else {
@@ -464,7 +464,7 @@ pub fn export_interactive(
                 &value,
                 url,
                 crate::portal::once_hint_for_secret_name(name),
-                &["ship-studio".into(), name.clone()],
+                &["orbit-yard".into(), name.clone()],
             ));
         }
     }
@@ -505,7 +505,7 @@ pub fn add_secret(
         value,
         url,
         notes,
-        &["ship-studio".into()],
+        &["orbit-yard".into()],
     ));
     let out = encode_document(&doc, &pass)?;
     pass.zeroize();

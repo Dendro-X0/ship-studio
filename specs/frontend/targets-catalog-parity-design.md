@@ -7,7 +7,7 @@
 ```text
 GOAL:  Targets page reads as a first-class catalog (Deployment-like cards),
        not a sparse “Scopes” checkbox list.
-NOT:   Per-target Deploy Run · new shipctl fields
+NOT:   Per-target Deploy Run · new orbityard fields
 ```
 
 ## Product naming

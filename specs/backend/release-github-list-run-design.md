@@ -24,4 +24,4 @@
 ## Proof
 
 - L1: fixture asserts `release.github.run` starts with `gh release list`  
-- L2: `cargo test -p shipctl`  
+- L2: `cargo test -p orbityard`  

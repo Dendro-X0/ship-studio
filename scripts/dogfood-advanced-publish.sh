@@ -29,55 +29,55 @@ if command -v git >/dev/null 2>&1; then
     git -C "$FIX" init -q || true
   fi
   if ! git -C "$FIX" remote get-url origin >/dev/null 2>&1; then
-    git -C "$FIX" remote add origin "https://github.com/example/ship-studio-dogfood.git" 2>/dev/null || true
+    git -C "$FIX" remote add origin "https://github.com/example/orbit-yard-dogfood.git" 2>/dev/null || true
   fi
 fi
 
-SHIPCTL="${SHIPCTL_PATH:-}"
-EXPLICIT_SHIPCTL=0
-if [[ -n "$SHIPCTL" ]]; then
-  EXPLICIT_SHIPCTL=1
+ORBITYARD="${ORBITYARD_PATH:-}"
+EXPLICIT_ORBITYARD=0
+if [[ -n "$ORBITYARD" ]]; then
+  EXPLICIT_ORBITYARD=1
 fi
-if [[ -z "$SHIPCTL" ]]; then
+if [[ -z "$ORBITYARD" ]]; then
   # Prefer freshly built debug over stale release (Desktop may stage release separately).
-  if [[ -x "$ROOT/target/debug/shipctl.exe" ]]; then
-    SHIPCTL="$ROOT/target/debug/shipctl.exe"
-  elif [[ -x "$ROOT/target/debug/shipctl" ]]; then
-    SHIPCTL="$ROOT/target/debug/shipctl"
-  elif [[ -x "$ROOT/target/release/shipctl.exe" ]]; then
-    SHIPCTL="$ROOT/target/release/shipctl.exe"
-  elif [[ -x "$ROOT/target/release/shipctl" ]]; then
-    SHIPCTL="$ROOT/target/release/shipctl"
+  if [[ -x "$ROOT/target/debug/orbityard.exe" ]]; then
+    ORBITYARD="$ROOT/target/debug/orbityard.exe"
+  elif [[ -x "$ROOT/target/debug/orbityard" ]]; then
+    ORBITYARD="$ROOT/target/debug/orbityard"
+  elif [[ -x "$ROOT/target/release/orbityard.exe" ]]; then
+    ORBITYARD="$ROOT/target/release/orbityard.exe"
+  elif [[ -x "$ROOT/target/release/orbityard" ]]; then
+    ORBITYARD="$ROOT/target/release/orbityard"
   else
-    (cd "$ROOT" && cargo build -p shipctl)
-    SHIPCTL="$ROOT/target/debug/shipctl"
-    [[ -x "${SHIPCTL}.exe" ]] && SHIPCTL="${SHIPCTL}.exe"
+    (cd "$ROOT" && cargo build -p orbityard)
+    ORBITYARD="$ROOT/target/debug/orbityard"
+    [[ -x "${ORBITYARD}.exe" ]] && ORBITYARD="${ORBITYARD}.exe"
   fi
 fi
 
 # If we auto-picked release and it's older than sources, rebuild debug and use it.
-if [[ "$EXPLICIT_SHIPCTL" -eq 0 && "$SHIPCTL" == *"/release/"* ]]; then
-  (cd "$ROOT" && cargo build -p shipctl >/dev/null)
-  if [[ -x "$ROOT/target/debug/shipctl.exe" ]]; then
-    SHIPCTL="$ROOT/target/debug/shipctl.exe"
-  elif [[ -x "$ROOT/target/debug/shipctl" ]]; then
-    SHIPCTL="$ROOT/target/debug/shipctl"
+if [[ "$EXPLICIT_ORBITYARD" -eq 0 && "$ORBITYARD" == *"/release/"* ]]; then
+  (cd "$ROOT" && cargo build -p orbityard >/dev/null)
+  if [[ -x "$ROOT/target/debug/orbityard.exe" ]]; then
+    ORBITYARD="$ROOT/target/debug/orbityard.exe"
+  elif [[ -x "$ROOT/target/debug/orbityard" ]]; then
+    ORBITYARD="$ROOT/target/debug/orbityard"
   fi
 fi
 
-# Ensure debug binary matches sources (cargo test does not always refresh shipctl.exe).
-if [[ "$EXPLICIT_SHIPCTL" -eq 0 ]]; then
-  (cd "$ROOT" && cargo build -p shipctl >/dev/null)
-  if [[ -x "$ROOT/target/debug/shipctl.exe" ]]; then
-    SHIPCTL="$ROOT/target/debug/shipctl.exe"
-  elif [[ -x "$ROOT/target/debug/shipctl" ]]; then
-    SHIPCTL="$ROOT/target/debug/shipctl"
+# Ensure debug binary matches sources (cargo test does not always refresh orbityard.exe).
+if [[ "$EXPLICIT_ORBITYARD" -eq 0 ]]; then
+  (cd "$ROOT" && cargo build -p orbityard >/dev/null)
+  if [[ -x "$ROOT/target/debug/orbityard.exe" ]]; then
+    ORBITYARD="$ROOT/target/debug/orbityard.exe"
+  elif [[ -x "$ROOT/target/debug/orbityard" ]]; then
+    ORBITYARD="$ROOT/target/debug/orbityard"
   fi
 fi
 
 echo "Fixture: $FIX"
-echo "shipctl: $SHIPCTL"
-OUT="$("$SHIPCTL" publish --mode advanced --project "$FIX")"
+echo "orbityard: $ORBITYARD"
+OUT="$("$ORBITYARD" publish --mode advanced --project "$FIX")"
 NEED=(
   listing.play
   listing.app_store
@@ -132,10 +132,10 @@ if [[ "$MISS" -ne 0 ]]; then
 fi
 echo "Advanced dogfood plan OK — bind this folder in Desktop (Advanced mode):"
 echo "  $FIX"
-# Keep a current shipctl beside debug desktop for live dogfood (mtime-aware resolve).
-if [[ -x "$ROOT/target/debug/ship-studio-desktop.exe" || -x "$ROOT/target/debug/ship-studio-desktop" ]]; then
-  if [[ -x "$SHIPCTL" ]]; then
-    cp -f "$SHIPCTL" "$ROOT/target/debug/$(basename "$SHIPCTL")" 2>/dev/null || true
-    echo "Staged $(basename "$SHIPCTL") next to target/debug desktop."
+# Keep a current orbityard beside debug desktop for live dogfood (mtime-aware resolve).
+if [[ -x "$ROOT/target/debug/orbit-yard-desktop.exe" || -x "$ROOT/target/debug/orbit-yard-desktop" ]]; then
+  if [[ -x "$ORBITYARD" ]]; then
+    cp -f "$ORBITYARD" "$ROOT/target/debug/$(basename "$ORBITYARD")" 2>/dev/null || true
+    echo "Staged $(basename "$ORBITYARD") next to target/debug desktop."
   fi
 fi

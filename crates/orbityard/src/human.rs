@@ -73,8 +73,8 @@ pub fn run_with_options(
     let mut checklist = vec![
         "1) Copy values from the opened source pages (GitHub PAT / Polar checkout+webhook).".into(),
         "2) IMPORTANT: Cloudflare API Tokens cannot be Viewed after create — only Create or ⋯→Roll shows a new value once. Prefer wrangler login for CF auth.".into(),
-        "3) Paste into each secrets put prompt (shipctl never stores the value).".into(),
-        "4) Optionally encrypt a backup: shipctl vault export --out ./ship-secrets.km --from-hints (Clavis-compatible .km).".into(),
+        "3) Paste into each secrets put prompt (orbityard never stores the value).".into(),
+        "4) Optionally encrypt a backup: orbityard vault export --out ./ship-secrets.km --from-hints (Clavis-compatible .km).".into(),
     ];
     if put_queue.is_empty() {
         checklist.push("No paste queue — add empty POLAR_*/GITHUB_TOKEN in .dev.vars or wrangler # Secrets.".into());
@@ -93,11 +93,11 @@ pub fn run_with_options(
     if put {
         if !io::stdin().is_terminal() {
             checklist.push(
-                "TTY required for --put; re-run in a real terminal: shipctl human --project . --put"
+                "TTY required for --put; re-run in a real terminal: orbityard human --project . --put"
                     .into(),
             );
         } else {
-            eprintln!("\n=== Ship Studio human portal — paste when each CLI prompts ===\n");
+            eprintln!("\n=== Orbit Yard human portal — paste when each CLI prompts ===\n");
             for (i, hint) in put_queue.iter().enumerate() {
                 eprintln!(
                     "[{}/{}] {} / {}  →  {}",
@@ -143,11 +143,11 @@ pub fn run_with_options(
                     }
                 }
             }
-            checklist.push("Put pass finished — verify with wrangler/orbit or shipctl flow.".into());
+            checklist.push("Put pass finished — verify with wrangler/orbit or orbityard flow.".into());
         }
     } else if !put_queue.is_empty() {
         checklist.push(
-            "Next: shipctl human --project . --put   (opens each source page, then wrangler secret put)"
+            "Next: orbityard human --project . --put   (opens each source page, then wrangler secret put)"
                 .into(),
         );
         for h in &put_queue {
@@ -164,7 +164,7 @@ pub fn run_with_options(
     let dir = crate::config::ship_dir(&project);
     let _ = std::fs::create_dir_all(&dir);
     let sprint = HumanSprint {
-        schema: "ship-studio/human/v1".into(),
+        schema: "orbit-yard/human/v1".into(),
         project: project.display().to_string(),
         minutes_hint: "Aim: 2–3 source tabs → copy → paste into put prompts (~few minutes).".into(),
         opened,
@@ -288,7 +288,7 @@ mod tests {
     #[test]
     fn human_default_open_order_is_paste_sources_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-human-{}",
+            "orbityard-human-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())

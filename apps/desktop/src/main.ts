@@ -1333,14 +1333,14 @@ function syncDeployToggle() {
 }
 
 async function refreshShipctlPath() {
-  const el = document.querySelector("#shipctl-path");
+  const el = document.querySelector("#orbityard-path");
   if (!el) return;
   try {
-    const path = await invoke<string>("resolve_shipctl_path");
-    el.textContent = `shipctl: ${path}`;
+    const path = await invoke<string>("resolve_orbityard_path");
+    el.textContent = `orbityard: ${path}`;
     el.setAttribute("title", path);
   } catch (err) {
-    el.textContent = `shipctl: ${String(err)}`;
+    el.textContent = `orbityard: ${String(err)}`;
   }
 }
 
@@ -1605,13 +1605,13 @@ function polishShipctlUserMessage(raw: string): string | null {
     return "CLI missing on PATH — install wrangler/vercel/netlify/orbit/signet or use Learn more / Open dashboard.";
   }
   // Drop raw CLI invocations from operator-facing toasts.
-  if (/^shipctl\b/i.test(t) || /\bshipctl publish\b/i.test(t)) {
+  if (/^orbityard\b/i.test(t) || /\borbityard publish\b/i.test(t)) {
     return "Finish the current checkpoint on Publish, then Confirm.";
   }
   return t;
 }
 
-/** Providers accepted by `shipctl portal --provider`. */
+/** Providers accepted by `orbityard portal --provider`. */
 const PORTAL_PROVIDER_IDS = new Set([
   "cloudflare",
   "vercel",
@@ -1666,7 +1666,7 @@ function isSoftCmdFailure(result: CmdResult): boolean {
   );
 }
 
-/** Class T — interactive shipctl in a real terminal (never headless stdin). */
+/** Class T — interactive orbityard in a real terminal (never headless stdin). */
 async function openShipctlTerminal(
   args: string[],
   opts?: { title?: string; okToast?: string; meta?: string },
@@ -1677,14 +1677,14 @@ async function openShipctlTerminal(
     return false;
   }
   if (!args.length) {
-    toast("No shipctl args for terminal", "err");
+    toast("No orbityard args for terminal", "err");
     return false;
   }
   try {
-    await invoke("open_shipctl_terminal", {
+    await invoke("open_orbityard_terminal", {
       project,
       args,
-      title: opts?.title ?? "Ship Studio",
+      title: opts?.title ?? "Orbit Yard",
     });
     if (opts?.meta) {
       appendStream({ stream: "meta", text: opts.meta });
@@ -1715,8 +1715,8 @@ async function openPortalLoginTerminal(provider: string) {
   await openShipctlTerminal(
     ["portal", "--project", project, "--provider", provider, "--login"],
     {
-      title: "Ship Studio portal login",
-      meta: `Launched terminal: shipctl portal --provider ${provider} --login — complete OAuth there.`,
+      title: "Orbit Yard portal login",
+      meta: `Launched terminal: orbityard portal --provider ${provider} --login — complete OAuth there.`,
       okToast: `Login CLI opened for ${provider} — finish in the terminal`,
     },
   );
@@ -1785,8 +1785,8 @@ async function openLaunchCurrentGate() {
     const opened = await openShipctlTerminal(
       ["launch", "--project", project, "open"],
       {
-        title: "Ship Studio launch",
-        meta: "Launched terminal: shipctl launch open — complete auth / run there, then Verify/Confirm here.",
+        title: "Orbit Yard launch",
+        meta: "Launched terminal: orbityard launch open — complete auth / run there, then Verify/Confirm here.",
         okToast: "Terminal opened for this step",
       },
     );
@@ -2024,7 +2024,7 @@ function renderStatusProbe(
     opts.phase === "checking" ? "Running local probe…" : escapeHtml(opts.title);
   const scriptHint =
     opts.phase === "checking"
-      ? `<span class="status-probe-script" aria-hidden="true">shipctl pulse · sign-paths</span>`
+      ? `<span class="status-probe-script" aria-hidden="true">orbityard pulse · sign-paths</span>`
       : `<button type="button" class="status-probe-recheck" data-probe-action="recheck">Check again</button>`;
   host.innerHTML = `<div class="status-probe-head" data-phase="${opts.phase}">
       <div class="status-probe-head-main">
@@ -3306,7 +3306,7 @@ async function openHostDashboard(wiz: ProviderWizard): Promise<void> {
   toast(`Opened ${where}`, "ok", 4500);
 }
 
-/** True while `shipctl selfhost --serve` is the active Desktop command. */
+/** True while `orbityard selfhost --serve` is the active Desktop command. */
 let selfhostServing = false;
 /** Open live asked for serve — open loopback when health ok streams. */
 let pendingSelfhostOpenLive = false;
@@ -3330,7 +3330,7 @@ function cancelSelfhostServe(): void {
   // Do not rely on #btn-cancel.click() — disabled Tools buttons swallow programmatic clicks.
   void (async () => {
     try {
-      const killed = await invoke<boolean>("cancel_shipctl");
+      const killed = await invoke<boolean>("cancel_orbityard");
       appendStream({
         stream: "meta",
         text: killed ? "cancel signal sent" : "nothing to cancel — unlocking UI",
@@ -3925,7 +3925,7 @@ type HostRecovery = {
   hint: string;
 };
 
-/** H4 — mirror shipctl hostdeploy::classify_host_failure (one primary recovery). */
+/** H4 — mirror orbityard hostdeploy::classify_host_failure (one primary recovery). */
 function classifyHostDeployFailure(text: string, provider = "cloudflare"): HostRecovery {
   const l = text.toLowerCase();
   const cli =
@@ -4428,7 +4428,7 @@ function applyNow(view: PublishView | null) {
   }
   title.textContent = `Pick up ${projectName(path)}`;
   detail.textContent =
-    "Start the publish portal — doctor, env, sign, listing, deploy. You finish the vendor UIs; Ship Studio keeps the sequence.";
+    "Start the publish portal — doctor, env, sign, listing, deploy. You finish the vendor UIs; Orbit Yard keeps the sequence.";
   setNowCtaState("start");
 }
 
@@ -4728,7 +4728,7 @@ function buildStatusChecklist(pulse: ProjectPulse): StatusItem[] {
         state: "done",
         icon: "✓",
         title: "Prior hosted deploy",
-        detail: hostedDeployUrls(dep)[0] || dep?.detail || "Last shipctl hosted run succeeded",
+        detail: hostedDeployUrls(dep)[0] || dep?.detail || "Last orbityard hosted run succeeded",
       });
     } else if (selfhost) {
       items.push({
@@ -4854,7 +4854,7 @@ async function openRelatedStudioView(view: string): Promise<boolean> {
   setView(id);
   const project = projectPath();
   if (!project) return true;
-  // Paint the page first; then load shipctl JSON so chrome does not hitch with the console work.
+  // Paint the page first; then load orbityard JSON so chrome does not hitch with the console work.
   await new Promise<void>((resolve) => afterPaint(() => resolve()));
   if (id === "scopes") {
     applyScopes((await loadJsonCmd(["scopes", "--project", project])) as ScopePlan | null);
@@ -5089,7 +5089,7 @@ async function setTitle(path: string | null) {
   syncProjectIdentity();
   try {
     const win = getCurrentWindow();
-    await win.setTitle(path ? `Ship Studio — ${name}` : "Ship Studio");
+    await win.setTitle(path ? `Orbit Yard — ${name}` : "Orbit Yard");
   } catch {
     /* ignore in browser preview */
   }
@@ -5247,7 +5247,7 @@ async function loadJsonCmd(
     silent: user ? false : opts?.silent !== false,
     quietToast: user,
   });
-  const label = opts?.label ?? args[0] ?? "shipctl";
+  const label = opts?.label ?? args[0] ?? "orbityard";
   const preview: ToastAction[] = [
     { id: "preview", label: "Preview log", icon: "open", run: () => openOutputPreview() },
   ];
@@ -5446,8 +5446,8 @@ async function openEnvPutTerminal(provider: string, name: string) {
   await openShipctlTerminal(
     ["env", "--project", project, "--provider", provider, "--put", name],
     {
-      title: "Ship Studio env put",
-      meta: `Launched terminal: shipctl env --provider ${provider} --put ${name} — paste when the CLI prompts.`,
+      title: "Orbit Yard env put",
+      meta: `Launched terminal: orbityard env --provider ${provider} --put ${name} — paste when the CLI prompts.`,
       okToast: `Env Put opened for ${name} — finish in the terminal`,
     },
   );
@@ -5509,8 +5509,8 @@ async function openPortalEnvPut(provider: string) {
     return;
   }
   await openShipctlTerminal(["human", "--project", project, "--no-open", "--put"], {
-    title: "Ship Studio paste",
-    meta: "Launched terminal: shipctl human --no-open --put — paste each value when prompted.",
+    title: "Orbit Yard paste",
+    meta: "Launched terminal: orbityard human --no-open --put — paste each value when prompted.",
     okToast: "Put terminal opened — finish secrets there, then Confirm in Publish",
   });
 }
@@ -6292,7 +6292,7 @@ async function tickPublishWatch() {
     return;
   }
   try {
-    const result = await invoke<CmdResult>("run_shipctl", {
+    const result = await invoke<CmdResult>("run_orbityard", {
       project,
       args: publishArgs(["watch", "--once"]),
     });
@@ -6313,7 +6313,7 @@ async function tickPublishWatch() {
       ?.classList.toggle("watch-ready", ok);
     if (ok && (!publishWatchLastOk || step !== publishWatchLastStep)) {
       toast(parsed.prompt ?? "Step ready — Confirm on the green button", "ok", 6000);
-      const status = await invoke<CmdResult>("run_shipctl", {
+      const status = await invoke<CmdResult>("run_orbityard", {
         project,
         args: publishArgs(),
       });
@@ -6490,7 +6490,7 @@ async function publishContinuePaced() {
 
 async function publishAction(sub: string[]) {
   const ordered = sub.length === 0 ? publishArgs() : publishArgs(sub);
-  // Own toasts — never stack "publish failed" + raw shipctl copy.
+  // Own toasts — never stack "publish failed" + raw orbityard copy.
   const result = await run(ordered, { step: "paste", quietToast: true });
   if (!result) {
     toast("Publish is busy — Cancel to unlock, then retry.", "err", 7000, [
@@ -7084,7 +7084,7 @@ async function exportVault() {
   if (!hints.length) {
     appendStream({
       stream: "meta",
-      text: "No secret hints — add wrangler # Secrets or empty .dev.vars keys, or use CLI: shipctl vault export --out ./ship-secrets.km",
+      text: "No secret hints — add wrangler # Secrets or empty .dev.vars keys, or use CLI: orbityard vault export --out ./ship-secrets.km",
     });
     return;
   }
@@ -7114,7 +7114,7 @@ async function exportVault() {
       title: h.name,
       value,
       url: h.entry_url ?? "",
-      notes: "Exported from Ship Studio desktop",
+      notes: "Exported from Orbit Yard desktop",
     });
   }
   if (!entries.length) {
@@ -7133,7 +7133,7 @@ async function exportVault() {
     entriesPath = await invoke<string>("write_vault_entries_temp", {
       json: JSON.stringify(entries),
     });
-    const result = await invoke<CmdResult>("run_shipctl_env", {
+    const result = await invoke<CmdResult>("run_orbityard_env", {
       project,
       args: [
         "vault",
@@ -7143,7 +7143,7 @@ async function exportVault() {
         "--entries-file",
         entriesPath,
         "--name",
-        "Ship Studio secrets",
+        "Orbit Yard secrets",
       ],
       env: { SHIP_VAULT_PASSPHRASE: pass },
     });
@@ -7408,14 +7408,14 @@ async function run(
   if (opts?.step) setStep(opts.step, "active");
   setBusy(true, opts?.busyLabel ?? "Running…");
   if (!opts?.silent) {
-    streamBuf = opts?.quietHeader ? "" : `shipctl ${args[0]}\n`;
+    streamBuf = opts?.quietHeader ? "" : `orbityard ${args[0]}\n`;
     show(streamBuf);
   }
 
   let endLabel = "Ready";
   let endFailed = false;
   try {
-    const result = await invoke<CmdResult>("run_shipctl", { project, args });
+    const result = await invoke<CmdResult>("run_orbityard", { project, args });
     // Final pretty pass for JSON-heavy commands
     if (
       !opts?.silent &&
@@ -7443,7 +7443,7 @@ async function run(
         const stderr = result.stderr.trim()
           ? `\n\n[stderr]\n${result.stderr.trim()}`
           : "";
-        show(`shipctl ${args[0]} · exit ${result.code}\n\n${pretty}${stderr}`);
+        show(`orbityard ${args[0]} · exit ${result.code}\n\n${pretty}${stderr}`);
       }
     }
 
@@ -7485,7 +7485,7 @@ async function run(
       }
     }
     if (!opts?.quietHeader && !opts?.silent && !opts?.quietToast) {
-      const cmd = args[0] ?? "shipctl";
+      const cmd = args[0] ?? "orbityard";
       if (result.cancelled) toast(`${cmd} cancelled`, "err");
       else if (result.ok) {
         // Never say "publish · done" — that reads as the whole ship finished.
@@ -7558,16 +7558,16 @@ async function openRitualDeployTerminal(): Promise<boolean> {
     return false;
   }
   return openShipctlTerminal(["deploy", "--project", project], {
-    title: "Ship Studio deploy",
-    meta: "Launched terminal: shipctl deploy — finish auth/prompts there, then refresh pulse.",
+    title: "Orbit Yard deploy",
+    meta: "Launched terminal: orbityard deploy — finish auth/prompts there, then refresh pulse.",
     okToast: "Deploy opened in terminal — finish there if Orbit prompts",
   });
 }
 
 async function openRitualFlowTerminal(args: string[]): Promise<boolean> {
   return openShipctlTerminal(args, {
-    title: "Ship Studio flow",
-    meta: "Launched terminal: shipctl flow — finish deploy/auth prompts there.",
+    title: "Orbit Yard flow",
+    meta: "Launched terminal: orbityard flow — finish deploy/auth prompts there.",
     okToast: "Flow opened in terminal — finish deploy there if prompted",
   });
 }
@@ -8011,7 +8011,7 @@ window.addEventListener("DOMContentLoaded", () => {
     paintPlatformWizard();
   });
 
-  void listen<StreamLine>("shipctl-line", (event) => {
+  void listen<StreamLine>("orbityard-line", (event) => {
     appendStream(event.payload);
   });
 
@@ -8292,7 +8292,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#btn-cancel")?.addEventListener("click", async () => {
     try {
-      const killed = await invoke<boolean>("cancel_shipctl");
+      const killed = await invoke<boolean>("cancel_orbityard");
       if (!killed) {
         appendStream({ stream: "meta", text: "nothing to cancel — unlocking UI" });
       } else {
@@ -8463,7 +8463,7 @@ async function runWizard() {
         await openPortalLoginTerminal(loginProvider);
         window.setTimeout(() => {
           void (async () => {
-            const status = await invoke<CmdResult>("run_shipctl", {
+            const status = await invoke<CmdResult>("run_orbityard", {
               project,
               args: publishArgs(),
             });
@@ -8487,15 +8487,15 @@ async function runWizard() {
         const opened = await openShipctlTerminal(
           ["publish", "--project", project, "open"],
           {
-            title: "Ship Studio publish",
-            meta: "Launched terminal: shipctl publish open — complete auth / run there, then Verify/Confirm here.",
+            title: "Orbit Yard publish",
+            meta: "Launched terminal: orbityard publish open — complete auth / run there, then Verify/Confirm here.",
             okToast: "Terminal opened for this step",
           },
         );
         if (opened) {
           window.setTimeout(() => {
             void (async () => {
-              const status = await invoke<CmdResult>("run_shipctl", {
+              const status = await invoke<CmdResult>("run_orbityard", {
                 project,
                 args: publishArgs(),
               });
@@ -8648,8 +8648,8 @@ async function runWizard() {
     const opened = await openShipctlTerminal(
       ["human", "--project", project, "--no-open", "--put"],
       {
-        title: "Ship Studio paste",
-        meta: "Launched terminal: shipctl human --no-open --put — paste each value when prompted.",
+        title: "Orbit Yard paste",
+        meta: "Launched terminal: orbityard human --no-open --put — paste each value when prompted.",
         okToast: "Paste terminal opened — finish puts there",
       },
     );

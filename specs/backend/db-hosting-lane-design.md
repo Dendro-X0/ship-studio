@@ -6,7 +6,7 @@
 
 ## Problem
 
-Operators provision Neon / Supabase / Cloudflare D1 / Turso outside Ship Studio, then paste connection strings onto the deploy target. Studio has no create URLs or hints for those vendors.
+Operators provision Neon / Supabase / Cloudflare D1 / Turso outside Orbit Yard, then paste connection strings onto the deploy target. Studio has no create URLs or hints for those vendors.
 
 ## Scope (first slice)
 

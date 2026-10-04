@@ -23,7 +23,7 @@ setx PADDLE_SANDBOX_API_KEY "pdl_sdbx_…"
 python scripts/seed-paddle-solo-sandbox.py
 ```
 
-Creates **Ship Studio Solo** ($29 one-time) + a `test_…` token and writes `PUBLIC_PADDLE_*` into `apps/website/.env` (gitignored).
+Creates **Orbit Yard Solo** ($29 one-time) + a `test_…` token and writes `PUBLIC_PADDLE_*` into `apps/website/.env` (gitignored).
 
 Do **not** put `pdl_…` in `PUBLIC_*`.
 

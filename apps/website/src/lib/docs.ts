@@ -17,7 +17,7 @@ export const DOC_PAGES: DocPage[] = [
   {
     slug: "scope",
     title: "Scope of service",
-    description: "What Ship Studio does and does not do.",
+    description: "What Orbit Yard does and does not do.",
     entryId: "product/scope-of-service",
   },
   {

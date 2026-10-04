@@ -2,7 +2,7 @@
 
 **Status:** S1–S3 shipped (Netlify bind)  
 **Updated:** 2026-10-04  
-**Owner:** `shipctl` detect · secrets · portal · publish · `apps/website`  
+**Owner:** `orbityard` detect · secrets · portal · publish · `apps/website`  
 **Parents:** [SCOPE-OF-SERVICE](../../docs/product/SCOPE-OF-SERVICE.md) · [release capability audit](../../docs/handoffs/current-session.md) · [close-cut](./close-cut-design.md)  
 **Trigger:** Maintainer: implement a feasible Client-first plan for website deploy + payments + launch without pretending vendors disappear.
 
@@ -11,7 +11,7 @@ HANDOFF ATOMIC STEP: Idle — Netlify bound; live deploy needs netlify login + s
 ACTIVE BAND / SCOPE:   Finishable Client sequencing (S1–S3)
 PAUSED / CANCELLED:    Vendor coach CANCELLED · Portal UX *expansion* PAUSED · Paddle Solo dogfood PAUSED
 FORBIDDEN THIS TASK:   Coach theater · CDP · Desktop Integrations catalog growth · auto-finish OAuth
-CANONICAL OWNER:       crates/shipctl + apps/website/netlify.toml
+CANONICAL OWNER:       crates/orbityard + apps/website/netlify.toml
 PROOF BEFORE DONE:     L2 detect netlify · publish deploy.web.root · hostdeploy detect ok
 SURFACE:               Kernel + committed host marker
 ```
@@ -61,9 +61,9 @@ L2 on `apps/website` (2026-10-04):
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl --bin shipctl detect_paddle\|marketing\|secrets\|portal` |
-| L2 | `shipctl secrets --project apps/website` → paddle PUBLIC_* only (or few); not Neon/Supabase flood |
-| L2 | `shipctl pulse --project apps/website` → kind mentions marketing / markets |
+| L1 | `cargo test -p orbityard --bin orbityard detect_paddle\|marketing\|secrets\|portal` |
+| L2 | `orbityard secrets --project apps/website` → paddle PUBLIC_* only (or few); not Neon/Supabase flood |
+| L2 | `orbityard pulse --project apps/website` → kind mentions marketing / markets |
 
 ### S2 — Host unbound gate (next)
 

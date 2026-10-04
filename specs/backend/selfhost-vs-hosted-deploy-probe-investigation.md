@@ -8,7 +8,7 @@
 
 | Layer | Behavior |
 |-------|----------|
-| `shipctl selfhost` | Writes `.ship/last-run.json` with `ok: true`, steps `selfhost` / `selfhost.check`, `urls: ["http://127.0.0.1:PORT/"]` |
+| `orbityard selfhost` | Writes `.ship/last-run.json` with `ok: true`, steps `selfhost` / `selfhost.check`, `urls: ["http://127.0.0.1:PORT/"]` |
 | `pulse::deploy_pulse` | Treated any last-run `ok` as `last_run_ok`; collected loopback URLs |
 | `deploy_is_live` | True for `last_run_ok` **or** any non-empty `urls` |
 | Desktop probe | `deployOk` if signal live **or** any URL → Ready / “Prior evidence found” |
@@ -25,7 +25,7 @@ Self-host health is **local-auto**, not Cloudflare/Vercel/Orbit live.
 
 | Layer | Check |
 |-------|--------|
-| L1 | `cargo test -p shipctl -- selfhost_last_run_is_not_hosted_live` (+ `loopback_only_urls_are_not_live`, `orbit_summary_marks_live`) |
+| L1 | `cargo test -p orbityard -- selfhost_last_run_is_not_hosted_live` (+ `loopback_only_urls_are_not_live`, `orbit_summary_marks_live`) |
 | L1 | Orbit summary still live |
 | L2 | Harbor after selfhost → Deploy badge **Self-host**, not Ready |
 

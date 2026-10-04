@@ -12,10 +12,10 @@ NOT:   Speeding up hostdeploy / wrangler · changing selfhost detect algorithm
 
 ## Evidence
 
-| Path | Wall time (debug shipctl) |
+| Path | Wall time (debug orbityard) |
 |------|---------------------------|
-| `shipctl selfhost` (Harbor, no `--serve`) | **~140ms** |
-| `shipctl selfhost --serve` | Unbounded until Cancel |
+| `orbityard selfhost` (Harbor, no `--serve`) | **~140ms** |
+| `orbityard selfhost --serve` | Unbounded until Cancel |
 
 Operator “stuck at 200s” / “finished in a minute last time” = Deploy was wired to `--serve`, so the busy timer never ends after health ok.
 
@@ -38,4 +38,4 @@ Deploy steps must say: check is fast; Open live holds the process. Do not imply 
 | L1 | `tsc --noEmit` (desktop) |
 | L2 | Harbor Deploy → Ready in &lt;5s, no Cancel serve required |
 | L2 | Open live → Serving → Cancel serve → Ready |
-| L2 | CLI: `shipctl selfhost --project fixtures/harbor` still &lt;1s |
+| L2 | CLI: `orbityard selfhost --project fixtures/harbor` still &lt;1s |

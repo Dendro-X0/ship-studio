@@ -99,7 +99,7 @@ const WIZARD_LABELS: &[(WizardPhase, &str)] = &[
 
 pub fn run(project: &Path) -> Result<()> {
     if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
-        bail!("TUI requires an interactive terminal; use shipctl portal / doctor / flow instead");
+        bail!("TUI requires an interactive terminal; use orbityard portal / doctor / flow instead");
     }
 
     let project = std::fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
@@ -133,7 +133,7 @@ pub fn run(project: &Path) -> Result<()> {
         wizard: None,
         status: format!("project: {}", project.display()),
         log: vec![
-            "Ship Studio TUI — wizard navigates entries; OAuth/env stay manual.".into(),
+            "Orbit Yard TUI — wizard navigates entries; OAuth/env stay manual.".into(),
             "↑↓ select · Enter · Space toggle providers · q quit · Esc back".into(),
         ],
     };
@@ -916,7 +916,7 @@ fn do_human(app: &mut App, open: bool, put: bool) {
             app.status = if put {
                 "human put pass finished".into()
             } else {
-                "human — Enter again after enabling put, or: shipctl human --put".into()
+                "human — Enter again after enabling put, or: orbityard human --put".into()
             };
         }
         Err(e) => {
@@ -1142,7 +1142,7 @@ fn put_selected_secret(app: &mut App) {
         }
     };
     if name == "<NAME>" {
-        app.push("template hint — set a real name via CLI: shipctl secrets put --name …");
+        app.push("template hint — set a real name via CLI: orbityard secrets put --name …");
         return;
     }
     app.push(format!("putting {provider}/{name} — paste in the child CLI…"));
@@ -1189,7 +1189,7 @@ fn export_vault_from_hints(app: &mut App) {
     eprintln!("\n=== Encrypted vault export (kmvault) ===\n");
     let result = crate::vault_km::export_interactive(
         &default_out,
-        "Ship Studio secrets",
+        "Orbit Yard secrets",
         &hints,
     );
     let _ = execute!(io::stdout(), EnterAlternateScreen);
@@ -1327,7 +1327,7 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
 
     let title = Paragraph::new(Line::from(vec![
         Span::styled(
-            " Ship Studio ",
+            " Orbit Yard ",
             Style::default()
                 .fg(Color::Black)
                 .bg(Color::Cyan)
@@ -1335,7 +1335,7 @@ fn draw(f: &mut ratatui::Frame, app: &App) {
         ),
         Span::raw("  CLI · TUI · Desktop shipping portal"),
     ]))
-    .block(Block::default().borders(Borders::ALL).title("shipctl tui"));
+    .block(Block::default().borders(Borders::ALL).title("orbityard tui"));
     f.render_widget(title, chunks[0]);
 
     match app.screen {

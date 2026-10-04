@@ -1,8 +1,8 @@
 # Game cut — butler push assist (itch)
 
-**Status:** Slice 1b shipped (`ship_butler_push` + `shipctl butler push`)  
+**Status:** Slice 1b shipped (`orbit_butler_push` + `orbityard butler push`)  
 **Updated:** 2026-10-04  
-**Owner:** `shipctl` MCP/CLI · Publish `submit.itch`  
+**Owner:** `orbityard` MCP/CLI · Publish `submit.itch`  
 **Parent:** [marketplace-submit-parity-design](./marketplace-submit-parity-design.md) · [mcp-agent-guide-design](./mcp-agent-guide-design.md) · [close-cut-design](./close-cut-design.md)
 
 ## Plan alignment
@@ -12,13 +12,13 @@ HANDOFF ATOMIC STEP: Idle — L3 butler dogfood recorded; live push needs human 
 ACTIVE BAND / SCOPE:   Game cut · itch butler — slice 1b + L3 dogfood done
 PAUSED / CANCELLED:    Vendor coach · Portal UX expansion · Paddle Solo dogfood · CDP · store API upload
 FORBIDDEN THIS TASK:   Desktop Integrations growth · Steam depot automation · Epic upload API
-CANONICAL OWNER:       crates/shipctl (mcp + CLI + publish cues)
-PROOF BEFORE DONE:     L1 cargo test · L2 shipctl butler push --help · L3 spawn dogfood
+CANONICAL OWNER:       crates/orbityard (mcp + CLI + publish cues)
+PROOF BEFORE DONE:     L1 cargo test · L2 orbityard butler push --help · L3 spawn dogfood
 SURFACE:               CLI / MCP (not Desktop wizards)
 ```
 
 - Maintainer is developing a game to release later; wants finishable publish/deploy/sign → platforms.
-- Freeze stays for Desktop wizard growth; **MCP/CLI spawn of official tools** is the allowed depth (same as `ship_env_put` / `ship_hostdeploy`).
+- Freeze stays for Desktop wizard growth; **MCP/CLI spawn of official tools** is the allowed depth (same as `orbit_env_put` / `orbit_hostdeploy`).
 - [marketplace-submit-parity](./marketplace-submit-parity-design.md) forbade *bridge* running butler silently. This band **spawns a visible terminal** (or prints a recipe) — human sees auth/errors; Studio never holds itch credentials.
 
 ## Value
@@ -34,7 +34,7 @@ Steam/Epic stay Open+Confirm only (harder tooling; no depot API).
 - Existing: `.ship/markets` includes `itch` / `itch.io`, or `itch.toml` present → Advanced `listing.itch` / `submit.itch`.
 - Optional: `butler` on PATH → pulse/assist note “butler available”.
 
-### MCP / CLI: `ship_butler_push`
+### MCP / CLI: `orbit_butler_push`
 
 | Arg | Meaning |
 |-----|---------|
@@ -54,7 +54,7 @@ Never accepts passwords/API keys. If `butler` missing → `ok: false` + install 
 ## Slice 1 (this band)
 
 1. `envx`-style launcher module or `game.rs` / `butler.rs` with `push_launch`.
-2. MCP tool `ship_butler_push`.
+2. MCP tool `orbit_butler_push`.
 3. Unit tests: missing butler → ok false; recipe contains `butler push`; rejects empty target when spawn.
 4. Docs: mcp-assist inventory · agent skill · handoff · OPERATOR-NEXT itch row.
 
@@ -67,22 +67,22 @@ Never accepts passwords/API keys. If `butler` missing → `ok: false` + install 
 
 ### Slice 1b (CLI)
 
-- `shipctl butler push --target user/game:channel [--dir dist] [--no-spawn]`
+- `orbityard butler push --target user/game:channel [--dir dist] [--no-spawn]`
 - `submit.itch` detail names the CLI/MCP path
 
 ## Acceptance
 
-- [x] `ship_butler_push` in MCP `tools()`
+- [x] `orbit_butler_push` in MCP `tools()`
 - [x] Recipe-only works without spawning
 - [x] Missing butler returns install hint, no hang
 - [x] Skill mentions game → butler path
 - [x] No Desktop wizard changes
-- [x] CLI `shipctl butler push`
+- [x] CLI `orbityard butler push`
 
 ## Proof
 
 | Layer | Proof |
 |-------|--------|
-| L1 | `cargo test -p shipctl butler` — pass |
-| L2 | tools list includes `ship_butler_push` — pass |
+| L1 | `cargo test -p orbityard butler` — pass |
+| L2 | tools list includes `orbit_butler_push` — pass |
 | L3 | 2026-10-04: butler v15.31.0 on PATH; fixture `E:/Temp/ship-butler-dogfood`; `--no-spawn` recipe ok + spawn `spawned:true`; assist/pulse itch cues. Live push blocked until human `butler login` (no `butler_creds`) |

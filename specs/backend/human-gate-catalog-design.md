@@ -13,7 +13,7 @@ NOT:      Coach theater · Docs as default setup · Studio secret custody
 
 ## Why
 
-Ship Studio’s paid value is **choreography of human gates** (same as a freelance DevOps handoff), not vendor documentation. Portal `kind`, Env actions, and Publish Confirm must map to this catalog.
+Orbit Yard’s paid value is **choreography of human gates** (same as a freelance DevOps handoff), not vendor documentation. Portal `kind`, Env actions, and Publish Confirm must map to this catalog.
 
 ## Gate kinds
 
@@ -62,10 +62,10 @@ Env list (`applyEnv`): retrieve + named secret → **Put** primary (already); Op
 | Phase | Owner |
 |-------|--------|
 | O1 | `apps/desktop/src/main.ts` `applyPortalPlan` (+ optional Env label polish) |
-| O2 | `crates/shipctl/src/portal.rs` `env_hint` / step detail / URL audit |
+| O2 | `crates/orbityard/src/portal.rs` `env_hint` / step detail / URL audit |
 | O4 | Platforms/Integrations wizard copy in Desktop |
 
 ## Proof
 
-- L1: desktop `tsc` · `cargo test -p shipctl` portal URL tests  
+- L1: desktop `tsc` · `cargo test -p orbityard` portal URL tests  
 - L2: Harbor Public → Portal → Cloudflare env → **Put** opens terminal; **Learn more** is not the first click story — [evidence-harbor-client-honesty](../../docs/handoffs/evidence-harbor-client-honesty.md)  

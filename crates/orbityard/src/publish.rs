@@ -209,7 +209,7 @@ fn resolve_bin(name: &str) -> Result<PathBuf> {
 }
 
 fn resolve_run_bin(name: &str) -> Result<PathBuf> {
-    if name == "shipctl" {
+    if name == "orbityard" {
         if let Ok(exe) = std::env::current_exe() {
             return Ok(exe);
         }
@@ -376,7 +376,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
         1,
         None,
         Some(vec![
-            "shipctl".into(),
+            "orbityard".into(),
             "doctor".into(),
             "--project".into(),
             ".".into(),
@@ -407,7 +407,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             1,
             None,
             Some(vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "scopes".into(),
                 "--project".into(),
                 ".".into(),
@@ -669,7 +669,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
         1,
         None,
         Some(vec![
-            "shipctl".into(),
+            "orbityard".into(),
             "configure".into(),
             "--project".into(),
             ".".into(),
@@ -1088,7 +1088,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "submit.itch",
             "Submit — itch.io butler push",
             PubKind::List,
-            "Push the build with butler: `shipctl butler push --target user/game:channel [--dir dist]` (or MCP ship_butler_push). Opens a visible terminal — Studio never stores itch credentials. Docs: itch.io/docs/butler. Confirm when the build is live.",
+            "Push the build with butler: `orbityard butler push --target user/game:channel [--dir dist]` (or MCP orbit_butler_push). Opens a visible terminal — Studio never stores itch credentials. Docs: itch.io/docs/butler. Confirm when the build is live.",
             3,
             Some("https://itch.io/docs/butler/".into()),
             None,
@@ -1245,7 +1245,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "Suite — sync canonical URL to siblings",
             PubKind::Human,
             format!(
-                "Paste the live landing URL into sibling env keys ({targets}). Ship Studio never writes sibling .env values — Confirm when keys match."
+                "Paste the live landing URL into sibling env keys ({targets}). Orbit Yard never writes sibling .env values — Confirm when keys match."
             ),
             2,
             Some(config::suite_sync_url(project)),
@@ -1259,11 +1259,11 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
             "selfhost.deploy",
             "Self-host — local auto deploy",
             PubKind::Auto,
-            "Run shipctl selfhost (artifact + loopback health). Done when checks pass — no Confirm.",
+            "Run orbityard selfhost (artifact + loopback health). Done when checks pass — no Confirm.",
             2,
             None,
             Some(vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "selfhost".into(),
                 "--project".into(),
                 ".".into(),
@@ -1280,7 +1280,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
         1,
         None,
         Some(vec![
-            "shipctl".into(),
+            "orbityard".into(),
             "flow".into(),
             "--project".into(),
             ".".into(),
@@ -1324,12 +1324,12 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
                 format!("Deploy — {provider} (host CLI)"),
                 PubKind::Deploy,
                 format!(
-                    "Run shipctl hostdeploy --provider {provider}. Confirm after the hosted URL is live. Login CLI first if auth fails."
+                    "Run orbityard hostdeploy --provider {provider}. Confirm after the hosted URL is live. Login CLI first if auth fails."
                 ),
                 3,
                 None,
                 Some(vec![
-                    "shipctl".into(),
+                    "orbityard".into(),
                     "hostdeploy".into(),
                     "--project".into(),
                     ".".into(),
@@ -1347,7 +1347,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
                 3,
                 None,
                 Some(vec![
-                    "shipctl".into(),
+                    "orbityard".into(),
                     "deploy".into(),
                     "--project".into(),
                     ".".into(),
@@ -1358,7 +1358,7 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
     } else {
         for s in deploy_scopes {
             let mut run = vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "deploy".into(),
                 "--project".into(),
                 s.relative.clone(),
@@ -1606,7 +1606,7 @@ fn load_state(
     let mut notes = vec![
         mode_note.into(),
         intent_note.into(),
-        format!("~{minutes_total} min guided publish — you finish vendor UIs; shipctl sequences."),
+        format!("~{minutes_total} min guided publish — you finish vendor UIs; orbityard sequences."),
         "Open/Run → work on official platform or local CLI → Confirm → Next.".into(),
         "Status layers: disk · local CLI · official CLI probe · human attest — Verify never holds secrets."
             .into(),
@@ -1617,7 +1617,7 @@ fn load_state(
         notes.push("Network deploy & live release require your initiation.".into());
     }
     let state = PublishState {
-        schema: "ship-studio/publish/v1".into(),
+        schema: "orbit-yard/publish/v1".into(),
         project: project.display().to_string(),
         mode,
         intent,
@@ -1651,13 +1651,13 @@ pub fn view(state: &PublishState) -> PublishView {
         .sum();
     let mut actions = vec![
         format!(
-            "shipctl publish --mode {} --intent {}",
+            "orbityard publish --mode {} --intent {}",
             state.mode.as_str(),
             state.intent.as_str()
         ),
-        "shipctl publish open".into(),
-        "shipctl publish confirm".into(),
-        "shipctl publish next".into(),
+        "orbityard publish open".into(),
+        "orbityard publish confirm".into(),
+        "orbityard publish next".into(),
     ];
     if let Some(cur) = &current {
         if let Some(run) = &cur.run {
@@ -1723,7 +1723,7 @@ pub fn open_current(project: &Path) -> Result<PublishView> {
             .status();
     }
     if step.id == "env.sprint" && std::io::stdin().is_terminal() {
-        eprintln!("Tip: shipctl env --project {}  ·  or Desktop → Env / tokens", project.display());
+        eprintln!("Tip: orbityard env --project {}  ·  or Desktop → Env / tokens", project.display());
         eprint!("Run human paste put now? [y/N] ");
         let _ = std::io::Write::flush(&mut std::io::stderr());
         let mut line = String::new();
@@ -2010,7 +2010,7 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
             } else {
                 (
                     false,
-                    "after Open/Run succeeds: shipctl publish confirm".into(),
+                    "after Open/Run succeeds: orbityard publish confirm".into(),
                 )
             }
         }
@@ -2027,7 +2027,7 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
         }
         PubKind::Human | PubKind::List | PubKind::Sign => (
             false,
-            "after Open/Run succeeds: shipctl publish confirm".into(),
+            "after Open/Run succeeds: orbityard publish confirm".into(),
         ),
         _ => (false, "use confirm for this step".into()),
     };
@@ -2352,7 +2352,7 @@ mod tests {
     #[test]
     fn publish_plan_includes_doctor_and_live_check() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-{}",
+            "orbityard-publish-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2378,7 +2378,7 @@ mod tests {
     #[test]
     fn unbound_project_gets_platforms_host_not_orbit_deploy() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-unbound-{}",
+            "orbityard-publish-unbound-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2413,7 +2413,7 @@ mod tests {
     #[test]
     fn general_mode_omits_oauth_and_listing() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-general-{}",
+            "orbityard-publish-general-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2438,7 +2438,7 @@ mod tests {
     #[test]
     fn general_mode_skips_deploy_when_orbit_live() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-skip-{}",
+            "orbityard-publish-skip-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2474,7 +2474,7 @@ mod tests {
     #[test]
     fn multi_scope_deploy_skip_uses_provider_matched_url() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-skip-multi-{}",
+            "orbityard-publish-skip-multi-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2522,7 +2522,7 @@ mod tests {
     #[test]
     fn confirm_live_check_requires_deploy_evidence() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-live-confirm-{}",
+            "orbityard-live-confirm-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2567,7 +2567,7 @@ mod tests {
     #[test]
     fn confirm_then_next_advances() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-next-{}",
+            "orbityard-publish-next-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2586,7 +2586,7 @@ mod tests {
     #[test]
     fn local_intent_omits_hosted_and_store_lanes() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-local-{}",
+            "orbityard-publish-local-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2664,7 +2664,7 @@ mod tests {
     #[test]
     fn mobile_fixture_gets_store_listing_in_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-mobile-{}",
+            "orbityard-publish-mobile-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2721,7 +2721,7 @@ mod tests {
     #[test]
     fn tauri_fixture_gets_microsoft_submit_in_advanced() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-tauri-submit-{}",
+            "orbityard-publish-tauri-submit-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2745,7 +2745,7 @@ mod tests {
     #[test]
     fn db_fixture_gets_provision_in_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-db-{}",
+            "orbityard-publish-db-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2782,7 +2782,7 @@ mod tests {
     #[test]
     fn baas_provision_mobile_firebase_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-baas-{}",
+            "orbityard-publish-baas-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2823,7 +2823,7 @@ mod tests {
     #[test]
     fn baas_provision_skips_supabase_without_mobile() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-baas-api-{}",
+            "orbityard-publish-baas-api-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2849,7 +2849,7 @@ mod tests {
     #[test]
     fn host_fly_railway_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-host-{}",
+            "orbityard-publish-host-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2889,7 +2889,7 @@ mod tests {
     #[test]
     fn host_render_digitalocean_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-host-rd-{}",
+            "orbityard-publish-host-rd-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2928,7 +2928,7 @@ mod tests {
     #[test]
     fn host_heroku_amplify_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-host-ha-{}",
+            "orbityard-publish-host-ha-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2974,7 +2974,7 @@ mod tests {
     #[test]
     fn host_cloudrun_azurestatic_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-host-ca-{}",
+            "orbityard-publish-host-ca-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3035,7 +3035,7 @@ mod tests {
     #[test]
     fn ci_release_fixture_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-ci-{}",
+            "orbityard-publish-ci-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3071,7 +3071,7 @@ mod tests {
     #[test]
     fn selfhost_deploy_general_and_advanced() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-selfhost-{}",
+            "orbityard-publish-selfhost-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3095,7 +3095,7 @@ mod tests {
         assert_eq!(step.desktop_view.as_deref(), Some("platforms"));
         assert_eq!(step.verify_status, VerifyStatus::LocalCli);
         let run = step.run.as_ref().expect("selfhost run");
-        assert_eq!(run[0], "shipctl");
+        assert_eq!(run[0], "orbityard");
         assert_eq!(run[1], "selfhost");
         let dry = general
             .steps
@@ -3120,7 +3120,7 @@ mod tests {
     #[test]
     fn dockerfile_only_skips_selfhost_deploy() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-docker-only-{}",
+            "orbityard-publish-docker-only-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3146,7 +3146,7 @@ mod tests {
     #[test]
     fn container_fixture_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-docker-{}",
+            "orbityard-publish-docker-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3190,7 +3190,7 @@ mod tests {
     #[test]
     fn container_compose_only_runs_compose_build() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-compose-{}",
+            "orbityard-publish-compose-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3220,7 +3220,7 @@ mod tests {
     #[test]
     fn steam_and_markets_listing_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-markets-{}",
+            "orbityard-publish-markets-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3286,7 +3286,7 @@ mod tests {
     #[test]
     fn legal_and_trust_baseline_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-legal-{}",
+            "orbityard-publish-legal-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3330,7 +3330,7 @@ mod tests {
     #[test]
     fn release_github_when_origin_and_not_signet_self() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-ghrel-{}",
+            "orbityard-publish-ghrel-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3379,7 +3379,7 @@ mod tests {
     #[test]
     fn npm_and_crates_listing_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-pkg-{}",
+            "orbityard-publish-pkg-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3443,7 +3443,7 @@ mod tests {
     #[test]
     fn huggingface_listing_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-hf-{}",
+            "orbityard-publish-hf-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3480,7 +3480,7 @@ mod tests {
     #[test]
     fn marketing_deploy_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-mkt-{}",
+            "orbityard-publish-mkt-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3507,7 +3507,7 @@ mod tests {
     #[test]
     fn graduate_and_commerce_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-grad-{}",
+            "orbityard-publish-grad-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3546,7 +3546,7 @@ mod tests {
     #[test]
     fn stripe_paddle_listing_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-stripe-{}",
+            "orbityard-publish-stripe-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3584,7 +3584,7 @@ mod tests {
     #[test]
     fn creem_waffo_listing_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-creem-{}",
+            "orbityard-publish-creem-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3621,7 +3621,7 @@ mod tests {
     #[test]
     fn continue_advances_auto_doctor_when_ok() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-continue-{}",
+            "orbityard-publish-continue-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3640,7 +3640,7 @@ mod tests {
     #[test]
     fn continue_stops_at_human_pending_without_confirm() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-continue-human-{}",
+            "orbityard-publish-continue-human-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3684,7 +3684,7 @@ mod tests {
     #[test]
     fn verify_ok_does_not_attest_human_scopes() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-verify-human-{}",
+            "orbityard-verify-human-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3742,7 +3742,7 @@ mod tests {
     #[test]
     fn final_mile_cut_order_and_graduate_run() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-cut-{}",
+            "orbityard-publish-cut-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3785,7 +3785,7 @@ mod tests {
     #[test]
     fn final_mile_ci_and_container_after_release() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-order-{}",
+            "orbityard-publish-order-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3820,7 +3820,7 @@ mod tests {
     #[test]
     fn suite_url_sync_advanced_only() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-publish-suite-{}",
+            "orbityard-publish-suite-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3854,7 +3854,7 @@ mod tests {
     #[test]
     fn verify_legal_and_trust_reprobe_files() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-verify-legal-{}",
+            "orbityard-verify-legal-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3904,7 +3904,7 @@ mod tests {
     #[test]
     fn watch_once_reports_verify_for_legal_baseline() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-watch-once-{}",
+            "orbityard-watch-once-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3952,7 +3952,7 @@ mod tests {
     #[test]
     fn watch_probe_returns_json_without_printing() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-watch-probe-{}",
+            "orbityard-watch-probe-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -3975,7 +3975,7 @@ mod tests {
     #[test]
     fn verify_desktop_cut_after_release_confirmed() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-verify-cut-{}",
+            "orbityard-verify-cut-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())

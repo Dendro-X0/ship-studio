@@ -6,7 +6,7 @@
 
 ## Problem
 
-Repos with a `Dockerfile` / Compose file get no Ship Studio cue for registry push or host docs. Operators leave the publish spine for ad-hoc docker CLI.
+Repos with a `Dockerfile` / Compose file get no Orbit Yard cue for registry push or host docs. Operators leave the publish spine for ad-hoc docker CLI.
 
 ## Scope (first slice)
 

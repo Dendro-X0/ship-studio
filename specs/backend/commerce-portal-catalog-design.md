@@ -33,4 +33,4 @@ Gumroad / Lemon / Stripe / Paddle / Creem / Waffo are first-class portal provide
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl commerce_portal` |
+| L1 | `cargo test -p orbityard commerce_portal` |

@@ -68,9 +68,9 @@ fn read_selfhost_file(project: &Path) -> Option<SelfhostFile> {
     serde_json::from_str(&raw).ok().or_else(|| Some(SelfhostFile::default()))
 }
 
-/// Ship Studio monorepo layout (this repo / forks) — prefer Self-host over Orbit-as-SaaS.
+/// Orbit Yard monorepo layout (this repo / forks) — prefer Self-host over Orbit-as-SaaS.
 pub fn is_studio_monorepo(project: &Path) -> bool {
-    project.join("crates/shipctl/Cargo.toml").is_file()
+    project.join("crates/orbityard/Cargo.toml").is_file()
         && (project.join("apps/desktop").is_dir()
             || project.join("apps/desktop/src-tauri").is_dir())
 }
@@ -387,7 +387,7 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let dir = std::env::temp_dir().join(format!("shipctl-selfhost-{label}-{n}"));
+        let dir = std::env::temp_dir().join(format!("orbityard-selfhost-{label}-{n}"));
         fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -453,8 +453,8 @@ mod tests {
     #[test]
     fn studio_monorepo_signal() {
         let dir = tmp("studio");
-        fs::create_dir_all(dir.join("crates/shipctl")).unwrap();
-        fs::write(dir.join("crates/shipctl/Cargo.toml"), "[package]\nname=\"shipctl\"\n").unwrap();
+        fs::create_dir_all(dir.join("crates/orbityard")).unwrap();
+        fs::write(dir.join("crates/orbityard/Cargo.toml"), "[package]\nname=\"orbityard\"\n").unwrap();
         fs::create_dir_all(dir.join("apps/desktop")).unwrap();
         assert!(is_studio_monorepo(&dir));
         // No static yet → not plan-eligible (needs surface or opt-in root).

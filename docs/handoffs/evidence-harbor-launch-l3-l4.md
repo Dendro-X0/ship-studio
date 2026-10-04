@@ -2,12 +2,12 @@
 
 **Date:** 2026-09-28  
 **Subject:** `fixtures/harbor` (+ temp wrangler/vercel dir for multi-host primary)  
-**shipctl:** `target/release/shipctl.exe` rebuilt after `f2c08f1`  
+**orbityard:** `target/release/orbityard.exe` rebuilt after `f2c08f1`  
 **Commit under test:** `f2c08f1`
 
 ## Setup
 
-1. `cargo build -p shipctl --release`
+1. `cargo build -p orbityard --release`
 2. `powershell -ExecutionPolicy Bypass -File scripts/harbor-reset.ps1`
 
 ## L2 results (CLI)
@@ -27,4 +27,4 @@ Closed in [evidence-harbor-desktop-dogfood](./evidence-harbor-desktop-dogfood.md
 
 ## Verdict
 
-**CLI L2 pass** for Launch L3–L4 on rebuilt release shipctl. **Desktop UI L2** → see desktop dogfood evidence.
+**CLI L2 pass** for Launch L3–L4 on rebuilt release orbityard. **Desktop UI L2** → see desktop dogfood evidence.

@@ -11,7 +11,7 @@
 |------|------|--------|
 | `apps/desktop/src/main.ts` | 4200+ | God file — types, chrome, publish, portal, sidebar, icons |
 | `apps/desktop/src/styles.css` | 2200+ | Same for CSS (later band) |
-| `crates/shipctl/src/{publish,launch,config}.rs` | 2–3k each | Separate Rust bands — do not mix with Desktop M1 |
+| `crates/orbityard/src/{publish,launch,config}.rs` | 2–3k each | Separate Rust bands — do not mix with Desktop M1 |
 
 ## M1 goal (this band)
 
@@ -31,7 +31,7 @@ apps/desktop/src/
 
 - Rewriting to React/shadcn  
 - Splitting `publish.rs` / `launch.rs`  
-- Changing shipctl JSON contracts  
+- Changing orbityard JSON contracts  
 - Circular “app context” framework
 
 ## Later bands (queued, not this PR)
@@ -41,11 +41,11 @@ apps/desktop/src/
 | **M2** | `sidebar.ts` · `integrations-ui.ts` · `output-preview.ts` · `cmdk.ts` |
 | **M3** | `publish-ui.ts` · `launch-ui.ts` · `portal-ui.ts` |
 | **M4** | CSS partials (`styles/shell.css`, `styles/publish.css`, …) |
-| **R1** | `shipctl` publish plan builder vs actions (Rust) |
+| **R1** | `orbityard` publish plan builder vs actions (Rust) |
 
 ## Proof
 
-- [x] `pnpm --filter ship-studio-desktop build` (tsc + vite)  
+- [x] `pnpm --filter orbit-yard-desktop build` (tsc + vite)  
 - Desktop smoke: Targets · Integrations icons · Set up Polar  
 
 ## Claim
@@ -56,7 +56,7 @@ Modularized ≠ behavior-fixed. UI must match pre-split dogfood.
 
 | Module | Role |
 |--------|------|
-| `types.ts` | Shared shipctl JSON / UI types |
+| `types.ts` | Shared orbityard JSON / UI types |
 | `util.ts` | Pure string/path helpers |
 | `icons.ts` | Bundled SVG map |
 | `integrations-data.ts` | Payment/email wizard catalog |

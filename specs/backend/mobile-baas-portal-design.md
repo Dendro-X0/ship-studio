@@ -7,7 +7,7 @@
 
 ## Product framing
 
-Ship Studio remains a **portal**: guide operators to the official BaaS console for Auth / client keys / project setup. Human still creates projects and pastes keys. Bridge never calls vendor HTTPS; never store API upload.
+Orbit Yard remains a **portal**: guide operators to the official BaaS console for Auth / client keys / project setup. Human still creates projects and pastes keys. Bridge never calls vendor HTTPS; never store API upload.
 
 Distinct from `db.provision` (SQL hosts) and from Play/ASC listing/submit.
 
@@ -61,6 +61,6 @@ Emit when: `mobile && (firebase \|\| appwrite \|\| convex \|\| supabase)`.
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl baas_` |
-| L2 | `shipctl publish --mode advanced --project <mobile+firebase fixture>` |
+| L1 | `cargo test -p orbityard baas_` |
+| L2 | `orbityard publish --mode advanced --project <mobile+firebase fixture>` |
 | L3 | Desktop Open on `baas.provision` (optional) |

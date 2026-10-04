@@ -41,7 +41,7 @@ pub fn plan_for(project: &Path) -> Result<EnvPortal> {
         id: "configure.local".into(),
         kind: "configure".into(),
         title: "Configure — local env files".into(),
-        detail: "Edit .dev.vars / .env locally. Names only in Ship Studio.".into(),
+        detail: "Edit .dev.vars / .env locally. Names only in Orbit Yard.".into(),
         entry_url: None,
         put_cli: None,
         provider: None,
@@ -80,12 +80,12 @@ pub fn plan_for(project: &Path) -> Result<EnvPortal> {
     }
 
     Ok(EnvPortal {
-        schema: "ship-studio/env/v1".into(),
+        schema: "orbit-yard/env/v1".into(),
         project: project.display().to_string(),
         notes: vec![
             "Create tokens on official dashboards. Retrieve = copy + Put on Cloudflare/Vercel/Netlify.".into(),
             "No Put rows yet? Add empty NAME= lines to .env / .dev.vars or wrangler # Secrets: comments.".into(),
-            "Ship Studio never stores secret values in .ship/.".into(),
+            "Orbit Yard never stores secret values in .ship/.".into(),
         ],
         actions,
     })
@@ -103,11 +103,11 @@ pub struct PutLaunch {
     pub project: String,
     pub provider: String,
     pub name: String,
-    /// Exact shipctl argv the human (or spawned terminal) should run.
+    /// Exact orbityard argv the human (or spawned terminal) should run.
     pub argv: Vec<String>,
     /// Shell-friendly one-liner (quoted for copy-paste).
     pub recipe: String,
-    /// Underlying host CLI after shipctl starts (e.g. wrangler secret put NAME).
+    /// Underlying host CLI after orbityard starts (e.g. wrangler secret put NAME).
     pub host_cli: Vec<String>,
     pub spawned: bool,
     pub hint: String,
@@ -133,13 +133,13 @@ pub fn put_launch(
     }
 
     let project = std::fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
-    let shipctl = std::env::current_exe()
+    let orbityard = std::env::current_exe()
         .ok()
         .and_then(|p| p.to_str().map(|s| s.to_string()))
-        .unwrap_or_else(|| "shipctl".into());
+        .unwrap_or_else(|| "orbityard".into());
 
     let argv = vec![
-        shipctl.clone(),
+        orbityard.clone(),
         "env".into(),
         "--project".into(),
         project.display().to_string(),
@@ -196,7 +196,7 @@ fn spawn_put_terminal(recipe: &str, project: &Path) -> Result<bool> {
 
     #[cfg(target_os = "windows")]
     {
-        let title = "Ship Studio env put";
+        let title = "Orbit Yard env put";
         // /K keeps the window open after put so the human sees errors.
         let status = Command::new("cmd")
             .args(["/C", "start", title, "cmd", "/K", recipe])

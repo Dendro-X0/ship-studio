@@ -1,4 +1,4 @@
-# Ship Studio — product contract
+# Orbit Yard — product contract
 
 **Status:** Active — Client · MCP · CLI kernel  
 **Updated:** 2026-09-25  
@@ -12,8 +12,8 @@ GOAL:     Local shipping hub — Client for humans, MCP for agents, CLI as kerne
 NOT:      Product docs/demo authoring · replace vendor UIs · store secrets ·
           finish OAuth/store review without the human · in-app coach theater
 RUNTIME:  Local + offline-first (bridge never requires network; open/login/put are operator-initiated; Verify/Watch = graduated status layers, not Studio-held secrets)
-SHELLS:   Client = Desktop (+ TUI) · MCP = shipctl mcp · CLI = shipctl kernel
-PROOF:    cargo test -p shipctl · scripts/dogfood-advanced-*.sh|.ps1 · Desktop Publish Advanced
+SHELLS:   Client = Desktop (+ TUI) · MCP = orbityard mcp · CLI = orbityard kernel
+PROOF:    cargo test -p orbityard · scripts/dogfood-advanced-*.sh|.ps1 · Desktop Publish Advanced
 DONE:     Publish portal + adaptive doctor + Verify honesty + Continue fast path + final-mile cut order + graduate/container/CI Runs + registry dry-run + desktop_cut + scopes/env/listings/commerce (Polar/Gumroad/Lemon/Stripe/Paddle portal + listing) + assist + desktop shell + Local/Public ship intent + publish progress watch (CLI/Desktop/TUI/MCP) + mobile BaaS portal + Steam/itch/Epic submit + Fly/Railway/Render/DO/Heroku/Amplify/Cloud Run/Azure Static host portals + Launch companion parity + Pulse/Assist/Doctor/Guide notes for those lanes + Desktop Platforms catalog + provider wizards + Portal Open/Docs/Login-CLI terminal + reliability slices 0–4 + surface law (Client·MCP·CLI) + overhaul O0–O5 (charter + Portal/Platforms Put + Tier A plain hints + MCP contract + catalog diet + Harbor honesty proof)
 NOT YET:  Operator completes paste / graduate certs / live release / marketplace / registry push / deploy on vendor platforms (see OPERATOR-NEXT) · Reliability Later · CDP dogfood · MCP G1–G6 ([mcp-assist-contract](../../specs/backend/mcp-assist-contract-design.md)) · S1.1 demo GIFs
 ```
@@ -35,7 +35,7 @@ Full definition: [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · Human gates: [O
 
 ## UX principle — minimal actions, one spine
 
-Access a wide range of shipping functions through **few deliberate actions**. Ship Studio is a **portal and guide**, not a replacement for official providers. Prefer **Continue** / scripts for highly automatable gates; **Open → Confirm** wizards only for official-channel work. Publish is the integrated workflow. Operators pick a **workflow card** on the Dashboard (Sign only · Sign and deploy · Publish to platforms · Deploy focus), then follow a **linear stage pager** on Publish — one checkpoint, guideline, and primary action at a time ([workflow-stages-design](../../specs/frontend/workflow-stages-design.md)). The Publish surface should always answer: **what’s done**, **what’s required next**, and **what’s optional/later** ([publish-progress-clarity-design](../../specs/frontend/publish-progress-clarity-design.md)). Scopes, Env, Sign, Portal, Ritual, and Tools are **detail panels** opened from the current publish step (`desktop_view`), not competing start points.
+Access a wide range of shipping functions through **few deliberate actions**. Orbit Yard is a **portal and guide**, not a replacement for official providers. Prefer **Continue** / scripts for highly automatable gates; **Open → Confirm** wizards only for official-channel work. Publish is the integrated workflow. Operators pick a **workflow card** on the Dashboard (Sign only · Sign and deploy · Publish to platforms · Deploy focus), then follow a **linear stage pager** on Publish — one checkpoint, guideline, and primary action at a time ([workflow-stages-design](../../specs/frontend/workflow-stages-design.md)). The Publish surface should always answer: **what’s done**, **what’s required next**, and **what’s optional/later** ([publish-progress-clarity-design](../../specs/frontend/publish-progress-clarity-design.md)). Scopes, Env, Sign, Portal, Ritual, and Tools are **detail panels** opened from the current publish step (`desktop_view`), not competing start points.
 
 **Modes:** **General** (default) — shortest publish plan + focused nav. **Advanced** — full OAuth/official-sign/listing plan + Assist/Launch/Portal/Ritual/Tools. See `specs/backend/studio-modes-design.md`.
 
@@ -48,11 +48,11 @@ DO NOT: make operators reassemble the release from eight peer nav destinations �
 
 ```text
 ┌─ Client (Desktop) ─┐     ┌─ Client (TUI) ─┐     ┌─ MCP (agents) ─┐
-│  apps/desktop      │     │  shipctl tui   │     │  shipctl mcp   │
+│  apps/desktop      │     │  orbityard tui   │     │  orbityard mcp   │
 └────────┬───────────┘     └────────┬───────┘     └────────┬───────┘
          └────────────┬─────────────┴──────────────────────┘
                       ▼
-                   shipctl (CLI kernel)
+                   orbityard (CLI kernel)
          guide · portal · secrets · configure · signet · orbit
 ```
 
@@ -81,7 +81,7 @@ Design: `specs/backend/shipping-hub-north-star.md` · `specs/backend/provider-po
 | `vault` | **Encrypted `.km` export** (Clavis-compatible); `export` / `add` / `list` / `show` |
 | `tui` | Interactive terminal wizard |
 | `sign` / `deploy` / `flow` / `status` | Signet / Orbit / pipeline / last-run |
-| `mcp` | Stdio MCP (`ship_publish`, `ship_publish_open`/`verify`/`confirm`/`next`, `ship_guide`, `ship_portal`, …) |
+| `mcp` | Stdio MCP (`orbit_publish`, `orbit_publish_open`/`verify`/`confirm`/`next`, `orbit_guide`, `orbit_portal`, …) |
 
 ## Providers (portal)
 
@@ -103,7 +103,7 @@ Design: `specs/backend/shipping-hub-north-star.md` · `specs/backend/provider-po
 
 ```bash
 bash scripts/stage-desktop.sh
-./target/release/ship-studio-desktop.exe
+./target/release/orbit-yard-desktop.exe
 ```
 
 **Primary spine:** Dashboard workflow cards → **Publish** (Stages pager · paced Continue · status probe).
@@ -115,8 +115,8 @@ Also: **Assist** checklist · **Launch** companion · **Human portal** sprint ·
 ## TUI
 
 ```bash
-cargo build -p shipctl --release
-./target/release/shipctl.exe tui --project .
+cargo build -p orbityard --release
+./target/release/orbityard.exe tui --project .
 # Home: Ship wizard · Guide · Portal · Secrets · …
 ```
 
@@ -134,13 +134,13 @@ cargo build -p shipctl --release
 - Desktop **Offline** toggle = prefer offline-safe sign / refuse deploy — the **bridge** still does not require network; Verify/Watch remain operator-initiated status checks.
 
 ```bash
-shipctl vault export --out ./ship-secrets.km --from-hints --project .
-shipctl vault list --file ./ship-secrets.km
+orbityard vault export --out ./ship-secrets.km --from-hints --project .
+orbityard vault list --file ./ship-secrets.km
 ```
 
 ## Non-goals (v0)
 
-- Authoring product docs, feature demos, or marketing GIFs inside Ship Studio  
+- Authoring product docs, feature demos, or marketing GIFs inside Orbit Yard  
 - Rewriting provider CLIs inside this repo  
 - Completing OAuth / store review / DNS without the human  
 - Multi-root portfolio hub / paid unlock bands  

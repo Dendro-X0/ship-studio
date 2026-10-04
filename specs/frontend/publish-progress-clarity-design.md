@@ -2,7 +2,7 @@
 
 **Status:** Slice 1 implemented (Desktop) · v0.2.3+  
 **Parent:** PRODUCT “minutes path” + Continue · operator reflection 2026-09-23  
-**Owner:** `apps/desktop` Publish + Dashboard · existing `PublishView` / pulse JSON (no new shipctl fields for slice 1)
+**Owner:** `apps/desktop` Publish + Dashboard · existing `PublishView` / pulse JSON (no new orbityard fields for slice 1)
 
 ## Goal
 
@@ -41,12 +41,12 @@ When `finished`: `All required gates done` (honest — never invent “live on e
 
 1. **`#publish-progress`** strip under the minutes line — counts as above.  
 2. **Grouped `#publish-steps`:** Done (collapsed by default) · Required · Later. Current step stays expanded in Required.  
-3. **Dashboard Now detail** — reuse the same three counts when `pulse.publish.present` (parse from publish JSON already loaded, or add optional `progress` object in a later shipctl slice).  
+3. **Dashboard Now detail** — reuse the same three counts when `pulse.publish.present` (parse from publish JSON already loaded, or add optional `progress` object in a later orbityard slice).  
 4. Soften Confirm/Next visual weight (keep enabled rules) so Continue remains the obvious primary.
 
 ## Later slices
 
-- shipctl `publish` view emits `progress: { done, required, optional, minutes_* }` for CLI/TUI/MCP parity  
+- orbityard `publish` view emits `progress: { done, required, optional, minutes_* }` for CLI/TUI/MCP parity  
 - First-bind empty state: one sentence “Open a folder → Continue”  
 - Watch auto-Continue for Auto-only (fast-path later)
 

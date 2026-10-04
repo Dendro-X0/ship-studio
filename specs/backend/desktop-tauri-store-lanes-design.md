@@ -34,4 +34,4 @@ That is wrong: Tauri desktop ≠ Android / Play. Operators see noise gates that 
 
 - aperio Advanced plan has no `sign.official.android` / `submit.play` / `listing.play`
 - Mobile fixture still has Play listing + submit
-- `cargo test -p shipctl`
+- `cargo test -p orbityard`

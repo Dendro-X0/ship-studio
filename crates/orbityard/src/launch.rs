@@ -55,7 +55,7 @@ pub struct LaunchStep {
     pub put_provider: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub put_name: Option<String>,
-    /// Local CLI to run on Open/Run, e.g. `["signet","build"]` or `["shipctl","deploy"]`.
+    /// Local CLI to run on Open/Run, e.g. `["signet","build"]` or `["orbityard","deploy"]`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub run: Option<Vec<String>>,
     /// Desktop related panel — e.g. `platforms` opens Deployment (not a vendor URL).
@@ -262,7 +262,7 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             "Fix doctor failures before continuing."
         },
         None,
-        Some("shipctl doctor".into()),
+        Some("orbityard doctor".into()),
         None,
     ));
 
@@ -338,7 +338,7 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         None,
         Some(".ship/studio.json exists".into()),
         Some(vec![
-            "shipctl".into(),
+            "orbityard".into(),
             "configure".into(),
             "--project".into(),
             ".".into(),
@@ -683,7 +683,7 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             "Suite — sync canonical URL to siblings",
             StepKind::List,
             &format!(
-                "Paste the live landing URL into sibling env keys ({targets}). Ship Studio never writes sibling .env values — Confirm when keys match."
+                "Paste the live landing URL into sibling env keys ({targets}). Orbit Yard never writes sibling .env values — Confirm when keys match."
             ),
             Some(config::suite_sync_url(project)),
             Some("confirm when sibling env keys match".into()),
@@ -699,11 +699,11 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             "selfhost.deploy",
             "Self-host — local auto deploy",
             StepKind::Auto,
-            "Run shipctl selfhost (artifact + loopback health). Done when checks pass — no Confirm. Prefer Publish for the full Adaptive path.",
+            "Run orbityard selfhost (artifact + loopback health). Done when checks pass — no Confirm. Prefer Publish for the full Adaptive path.",
             None,
-            Some("shipctl selfhost".into()),
+            Some("orbityard selfhost".into()),
             Some(vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "selfhost".into(),
                 "--project".into(),
                 ".".into(),
@@ -719,9 +719,9 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
             StepKind::Auto,
             "Offline plan check before network deploy. Prefer Publish for the full Adaptive path.",
             None,
-            Some("shipctl flow --dry-run --offline --skip-deploy".into()),
+            Some("orbityard flow --dry-run --offline --skip-deploy".into()),
             Some(vec![
-                "shipctl".into(),
+                "orbityard".into(),
                 "flow".into(),
                 "--project".into(),
                 ".".into(),
@@ -743,9 +743,9 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
                 StepKind::Deploy,
                 "Run Orbit deploy with studio.json deploy_args. Confirm or check last-run.",
                 None,
-                Some("shipctl deploy / last-run ok, or confirm".into()),
+                Some("orbityard deploy / last-run ok, or confirm".into()),
                 Some(vec![
-                    "shipctl".into(),
+                    "orbityard".into(),
                     "deploy".into(),
                     "--project".into(),
                     ".".into(),
@@ -754,7 +754,7 @@ fn build_plan(project: &Path) -> Result<Vec<LaunchStep>> {
         } else {
             for s in deploy_scopes {
                 let mut run = vec![
-                    "shipctl".into(),
+                    "orbityard".into(),
                     "deploy".into(),
                     "--project".into(),
                     s.relative.clone(),
@@ -802,12 +802,12 @@ fn load_state(project: &Path, snap_to_pending: bool) -> Result<LaunchState> {
         }
     }
     let state = LaunchState {
-        schema: "ship-studio/launch/v1".into(),
+        schema: "orbit-yard/launch/v1".into(),
         project: project.display().to_string(),
         current,
         steps,
         notes: vec![
-            "Work on official platforms; shipctl only sequences and verifies.".into(),
+            "Work on official platforms; orbityard only sequences and verifies.".into(),
             "Paste: Open → copy on vendor site → put → Confirm → Next.".into(),
             "Sign/release/deploy: Open/Run executes local CLI; Confirm after live network steps.".into(),
         ],
@@ -817,7 +817,7 @@ fn load_state(project: &Path, snap_to_pending: bool) -> Result<LaunchState> {
 }
 
 fn resolve_run_bin(name: &str) -> Result<PathBuf> {
-    if name == "shipctl" {
+    if name == "orbityard" {
         if let Ok(exe) = std::env::current_exe() {
             return Ok(exe);
         }
@@ -869,18 +869,18 @@ pub fn view(state: &LaunchState) -> LaunchView {
             .all(|s| s.status == StepStatus::Done || s.status == StepStatus::Skipped);
     let current = state.steps.get(state.current).cloned();
     let mut actions = vec![
-        "shipctl launch".into(),
-        "shipctl launch open".into(),
-        "shipctl launch run".into(),
-        "shipctl launch verify".into(),
-        "shipctl launch confirm".into(),
-        "shipctl launch next".into(),
+        "orbityard launch".into(),
+        "orbityard launch open".into(),
+        "orbityard launch run".into(),
+        "orbityard launch verify".into(),
+        "orbityard launch confirm".into(),
+        "orbityard launch next".into(),
     ];
     if let Some(cur) = &current {
         if cur.kind == StepKind::Paste {
             if let (Some(p), Some(n)) = (&cur.put_provider, &cur.put_name) {
                 actions.push(format!(
-                    "shipctl secrets put --provider {p} --name {n}"
+                    "orbityard secrets put --provider {p} --name {n}"
                 ));
             }
         }
@@ -937,7 +937,7 @@ pub fn open_current(project: &Path) -> Result<LaunchView> {
     if step.kind == StepKind::Paste {
         if let (Some(provider), Some(name)) = (&step.put_provider, &step.put_name) {
             eprintln!(
-                "After copying the value, put with:\n  shipctl secrets put --project {} --provider {} --name {}",
+                "After copying the value, put with:\n  orbityard secrets put --project {} --provider {} --name {}",
                 project.display(),
                 provider,
                 name
@@ -1047,7 +1047,7 @@ fn run_capture(bin: &str, args: &[&str], cwd: &Path) -> Result<(i32, String)> {
                 let _ = child.kill();
                 let _ = child.wait();
                 bail!(
-                    "{bin} timed out after {}s — if already logged in: shipctl launch confirm",
+                    "{bin} timed out after {}s — if already logged in: orbityard launch confirm",
                     timeout.as_secs()
                 );
             }
@@ -1234,7 +1234,7 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, LaunchView)> {
                 } else {
                     (
                         false,
-                        "Could not list secrets — after paste use: shipctl launch confirm".into(),
+                        "Could not list secrets — after paste use: orbityard launch confirm".into(),
                     )
                 }
             } else {
@@ -1287,7 +1287,7 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, LaunchView)> {
         }
         StepKind::Sign | StepKind::List => (
             false,
-            "after Open/Run succeeds on this step: shipctl launch confirm".into(),
+            "after Open/Run succeeds on this step: orbityard launch confirm".into(),
         ),
         _ => (false, "use confirm for this step".into()),
     };
@@ -1362,7 +1362,7 @@ mod tests {
     #[test]
     fn plan_includes_doctor_and_deploy() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-launch-{}",
+            "orbityard-launch-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1386,7 +1386,7 @@ mod tests {
     #[test]
     fn tauri_plan_includes_signet_ship_steps() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-launch-tauri-{}",
+            "orbityard-launch-tauri-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1407,7 +1407,7 @@ mod tests {
     #[test]
     fn confirm_then_next_advances() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-launch-next-{}",
+            "orbityard-launch-next-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1426,7 +1426,7 @@ mod tests {
     #[test]
     fn launch_commerce_listings_when_detected() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-launch-commerce-{}",
+            "orbityard-launch-commerce-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1458,7 +1458,7 @@ mod tests {
     #[test]
     fn launch_host_and_baas_when_detected() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-launch-host-{}",
+            "orbityard-launch-host-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1486,7 +1486,7 @@ mod tests {
     #[test]
     fn launch_marketplace_listing_and_submit() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-launch-market-{}",
+            "orbityard-launch-market-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1513,7 +1513,7 @@ mod tests {
     #[test]
     fn launch_store_mobile_and_tauri_honesty() {
         let mobile = std::env::temp_dir().join(format!(
-            "shipctl-launch-play-{}",
+            "orbityard-launch-play-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1529,7 +1529,7 @@ mod tests {
         let _ = fs::remove_dir_all(&mobile);
 
         let tauri = std::env::temp_dir().join(format!(
-            "shipctl-launch-tauri-store-{}",
+            "orbityard-launch-tauri-store-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1550,7 +1550,7 @@ mod tests {
     #[test]
     fn launch_registry_and_hf_listings() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-launch-registry-{}",
+            "orbityard-launch-registry-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1588,7 +1588,7 @@ edition = \"2021\"
     #[test]
     fn launch_db_marketing_and_suite() {
         let db = std::env::temp_dir().join(format!(
-            "shipctl-launch-db-{}",
+            "orbityard-launch-db-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1612,7 +1612,7 @@ edition = \"2021\"
         let _ = fs::remove_dir_all(&db);
 
         let mkt = std::env::temp_dir().join(format!(
-            "shipctl-launch-mkt-{}",
+            "orbityard-launch-mkt-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1633,7 +1633,7 @@ edition = \"2021\"
         let _ = fs::remove_dir_all(&mkt);
 
         let suite = std::env::temp_dir().join(format!(
-            "shipctl-launch-suite-{}",
+            "orbityard-launch-suite-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1657,7 +1657,7 @@ edition = \"2021\"
     #[test]
     fn launch_primary_host_names_oauth_detail() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-launch-primary-{}",
+            "orbityard-launch-primary-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1691,7 +1691,7 @@ edition = \"2021\"
     #[test]
     fn launch_payments_opt_in_without_detect() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-launch-pay-opt-{}",
+            "orbityard-launch-pay-opt-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1719,7 +1719,7 @@ edition = \"2021\"
     #[test]
     fn launch_choice_board_lanes_and_local_omits_orbit() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-launch-choice-{}",
+            "orbityard-launch-choice-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1756,7 +1756,7 @@ edition = \"2021\"
     #[test]
     fn launch_selfhost_parity() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-launch-selfhost-{}",
+            "orbityard-launch-selfhost-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1775,14 +1775,14 @@ edition = \"2021\"
         assert_eq!(step.kind, StepKind::Auto);
         assert_eq!(step.desktop_view.as_deref(), Some("platforms"));
         let run = step.run.as_ref().expect("run");
-        assert_eq!(run[..2], ["shipctl", "selfhost"]);
+        assert_eq!(run[..2], ["orbityard", "selfhost"]);
         let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn launch_ci_container_parity() {
         let ci = std::env::temp_dir().join(format!(
-            "shipctl-launch-ci-{}",
+            "orbityard-launch-ci-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1808,7 +1808,7 @@ edition = \"2021\"
         let _ = fs::remove_dir_all(&ci);
 
         let ctr = std::env::temp_dir().join(format!(
-            "shipctl-launch-ctr-{}",
+            "orbityard-launch-ctr-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1842,7 +1842,7 @@ edition = \"2021\"
     #[test]
     fn launch_baseline_release_parity() {
         let legal = std::env::temp_dir().join(format!(
-            "shipctl-launch-legal-{}",
+            "orbityard-launch-legal-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1859,7 +1859,7 @@ edition = \"2021\"
         let _ = fs::remove_dir_all(&legal);
 
         let grad = std::env::temp_dir().join(format!(
-            "shipctl-launch-grad-{}",
+            "orbityard-launch-grad-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1881,7 +1881,7 @@ edition = \"2021\"
         let _ = fs::remove_dir_all(&grad);
 
         let rel = std::env::temp_dir().join(format!(
-            "shipctl-launch-ghrel-{}",
+            "orbityard-launch-ghrel-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())

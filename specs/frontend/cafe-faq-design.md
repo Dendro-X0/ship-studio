@@ -12,7 +12,7 @@ Strangers hit the same four questions before buying or cloning:
 | Question | Risk if unanswered |
 |----------|-------------------|
 | SmartScreen? | Expect Studio to silence OS trust UI (never-say) |
-| Other Ship Studio / ship.studio? | Brand collision with unrelated agentic product |
+| Other Orbit Yard / ship.studio? | Brand collision with unrelated agentic product |
 | Why $29? | Thinks OSS build is incomplete vs Solo packaging |
 | Signet required? | Blocks on tool install when Local/docs-only cut doesn’t need it |
 

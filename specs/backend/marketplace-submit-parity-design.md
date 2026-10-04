@@ -33,4 +33,4 @@ Mirror Steam: listing = store page; submit = build upload docs. Portal only — 
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl steam_and_markets` · `itch_epic_sign_portal` |
+| L1 | `cargo test -p orbityard steam_and_markets` · `itch_epic_sign_portal` |

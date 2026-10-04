@@ -20,4 +20,4 @@ Advanced + Launch Open dashboard + Confirm for Google Cloud Run and Azure Static
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl host_cloudrun` |
+| L1 | `cargo test -p orbityard host_cloudrun` |

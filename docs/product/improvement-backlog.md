@@ -1,4 +1,4 @@
-# Ship Studio — improvement backlog
+# Orbit Yard — improvement backlog
 
 **Status:** Living idea list — through **S1.6 FAQ**; **close-cut** = OSS done, not Paddle sale  
 **Updated:** 2026-10-04  
@@ -57,7 +57,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 |----|------|-------|
 | **S1.2n** | **Hosted deploy ops ($29 bar)** | Stream CLI deploy · results · dashboard · troubleshoot · MCP playbook — [design](../../specs/backend/hosted-deploy-ops-value-bar-design.md) · **H1–H5 shipped** |
 | S1.1 | **Demo shelf = multi-target tedium** | **Done** — T1–T7 live on `/demo` (`v0.2.1`, 720×420, mirrored) — [SCRIPT](../assets/demo/v0.2.1/SCRIPT.md) · [demo-subject-design](../../specs/frontend/demo-subject-design.md) |
-| S1.0a | **Desktop nav freeze** | Hot-path + silent spawn + paint-before-shipctl + output mirror truncate shipped in **v0.2.1** |
+| S1.0a | **Desktop nav freeze** | Hot-path + silent spawn + paint-before-orbityard + output mirror truncate shipped in **v0.2.1** |
 | S1.2 | **Dashboard honesty polish** | **Slice 1 done** — General health tiles · Signet/Orbit/dirty/step N/M · no “Shipped” — [design](../../specs/frontend/dashboard-honesty-design.md) |
 | S1.2a | **Publish progress clarity** | Done · required · optional/later bands + summary strip — [publish-progress-clarity-design](../../specs/frontend/publish-progress-clarity-design.md) · **shipped Desktop** |
 | S1.2b | **Workflow stage cards + pager** | Dashboard presets → linear Publish stages — [workflow-stages-design](../../specs/frontend/workflow-stages-design.md) · **Desktop slice 1 wired** (L2 dogfood pending) |

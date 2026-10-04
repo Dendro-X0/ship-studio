@@ -2,11 +2,11 @@
 
 **Status:** Active  
 **Updated:** 2026-09-25  
-**Owner:** product + `shipctl` publish / pulse / doctor · band #51 Client honesty **done** (O0–O5) 
+**Owner:** product + `orbityard` publish / pulse / doctor · band #51 Client honesty **done** (O0–O5) 
 
 ## Mission
 
-Ship Studio is a **local portal / guide** for the final mile of many project kinds (OSS cuts, commerce listings, host deploys, desktop Signet, marketplace submits):
+Orbit Yard is a **local portal / guide** for the final mile of many project kinds (OSS cuts, commerce listings, host deploys, desktop Signet, marketplace submits):
 
 1. **Sign** — self-sign (Signet) and graduate (OV / Azure Trusted Signing / notarization)  
 2. **Release** — checksums, TRUST honesty, GitHub Release / Signet release  
@@ -21,7 +21,7 @@ Ship Studio is a **local portal / guide** for the final mile of many project kin
 - Storing secret values in `.ship/`  
 - Finishing OAuth, store review, or DNS without the human  
 
-Developers still create docs and demos elsewhere; Ship Studio cuts the ship.
+Developers still create docs and demos elsewhere; Orbit Yard cuts the ship.
 
 **Scope of service (product boundary):** [`docs/product/SCOPE-OF-SERVICE.md`](../../docs/product/SCOPE-OF-SERVICE.md)
 
@@ -59,7 +59,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 | **31** | **Marketplace submit parity** — `submit.itch` / `submit.epic` docs (Open + Confirm) | Done (first slice) |
 | **32** | **Alt host expand** — `host.render` / `host.digitalocean` dashboard Open URLs | Done (first slice) |
 | **33** | **TUI publish watch** — Publish screen `w` polls local Verify (CLI/Desktop parity) | Done (first slice) |
-| **34** | **MCP publish watch** — `ship_publish_watch` one-shot Verify probe for agents | Done (first slice) |
+| **34** | **MCP publish watch** — `orbit_publish_watch` one-shot Verify probe for agents | Done (first slice) |
 | **35** | **Commerce expand** — `listing.stripe` / `listing.paddle` Open + Confirm | Done (first slice) |
 | **36** | **Pulse cut hints expand** — Now detail cues for host / BaaS / submit / commerce | Done (first slice) |
 | **37** | **Assist notes expand** — checklist cues for hosts / BaaS / commerce / submit + Watch | Done (first slice) |
@@ -96,7 +96,7 @@ Detail panels (Scopes, Env, Sign, Portal, …) open from the current step — no
 
 ## Proof
 
-`cargo test -p shipctl` · `bash scripts/dogfood-advanced-publish.sh` · Desktop Advanced Open/Run on a Signet subject (L3 optional)
+`cargo test -p orbityard` · `bash scripts/dogfood-advanced-publish.sh` · Desktop Advanced Open/Run on a Signet subject (L3 optional)
 
 ## Band #13 acceptance
 

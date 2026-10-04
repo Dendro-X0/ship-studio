@@ -1,6 +1,6 @@
 # License delivery + refund dogfood (W4)
 
-End-to-end path without card data on Ship Studio servers. Paddle holds payment;
+End-to-end path without card data on Orbit Yard servers. Paddle holds payment;
 you issue a **local key file** and email it.
 
 Prereq: [PADDLE-SETUP.md](./PADDLE-SETUP.md) (product · client token · price id · overlay).
@@ -19,7 +19,7 @@ python scripts/issue-license.py issue --email buyer@example.com --order paddle_x
 ```
 
 4. Email the `.license` file to the buyer (template below).  
-5. Buyer saves as `~/.ship/ship-studio.license` (see `/license` on the site).  
+5. Buyer saves as `~/.ship/orbit-yard.license` (see `/license` on the site).  
 6. Buyer downloads the app from GitHub Releases and follows `/docs/start`.
 
 Format: [docs/assets/license/FORMAT.md](../../../docs/assets/license/FORMAT.md).
@@ -30,14 +30,14 @@ Format: [docs/assets/license/FORMAT.md](../../../docs/assets/license/FORMAT.md).
 ### Email template
 
 ```
-Subject: Your Ship Studio Solo license
+Subject: Your Orbit Yard Solo license
 
-Thanks for purchasing Ship Studio.
+Thanks for purchasing Orbit Yard.
 
-Attached is your license key file (ship-studio.license).
+Attached is your license key file (orbit-yard.license).
 Save it to:
-  Windows: %USERPROFILE%\.ship\ship-studio.license
-  macOS/Linux: ~/.ship/ship-studio.license
+  Windows: %USERPROFILE%\.ship\orbit-yard.license
+  macOS/Linux: ~/.ship/orbit-yard.license
 
 Download builds: https://github.com/Dendro-X0/ship-studio/releases
 Docs: https://<your-host>/docs/start

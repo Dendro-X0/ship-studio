@@ -3,7 +3,7 @@
 **Status:** Investigation (extend slice-1 silent-failures; **no code this band**)  
 **Updated:** 2026-09-25  
 **Parents:** [desktop-silent-failures-investigation](./desktop-silent-failures-investigation.md) · [PLATFORMS-AND-PORTAL](../../docs/product/PLATFORMS-AND-PORTAL.md)  
-**Owners:** `apps/desktop/src/main.ts` · `apps/desktop/src-tauri/src/lib.rs` · shipctl interactive CLIs
+**Owners:** `apps/desktop/src/main.ts` · `apps/desktop/src-tauri/src/lib.rs` · orbityard interactive CLIs
 
 ```text
 QUESTION:  After Portal Login CLI / soft-fail toast slice 1, which Desktop paths
@@ -14,8 +14,8 @@ OUTCOME:   Failure-class matrix + evidence for desktop-reliability-design.md
 ## Method
 
 1. Re-read slice-1 investigation (F1–F4) and what shipped in [46384c4](https://github.com/Dendro-X0/ship-studio/commit/46384c4).
-2. Static audit of Desktop `run()` / `run_shipctl` / terminal openers / Env Put / Ritual / loadJsonCmd.
-3. Trace shipctl `secrets::put_secret` and human put for stdin requirements.
+2. Static audit of Desktop `run()` / `run_orbityard` / terminal openers / Env Put / Ritual / loadJsonCmd.
+3. Trace orbityard `secrets::put_secret` and human put for stdin requirements.
 
 ## Slice 1 status (done)
 
@@ -32,11 +32,11 @@ Also already terminal-backed: Publish Open · Launch Open · Human Put (`open_*_
 
 ### R1 — Env Put still headless (F1 sibling) — **slice 1 fixed**
 
-Env Put now calls `open_env_put_terminal` (`shipctl env --provider … --put …` in wt/cmd). Still a fifth terminal opener until slice 2 unifies.
+Env Put now calls `open_env_put_terminal` (`orbityard env --provider … --put …` in wt/cmd). Still a fifth terminal opener until slice 2 unifies.
 
 ### R2 — Terminal opener sprawl + Windows-only — **slice 2 fixed**
 
-All TTY flows use `open_shipctl_terminal(project, args, title?)`. Non-Windows still returns an explicit Err (later band).
+All TTY flows use `open_orbityard_terminal(project, args, title?)`. Non-Windows still returns an explicit Err (later band).
 
 ### R3 — Soft-fail taxonomy incomplete — **slice 2 expanded**
 
@@ -78,12 +78,12 @@ Still blocked without Tauri `--remote-debugging-port`. Out of reliability slices
 | Publish / Launch | Open / Run | **terminal** | OK |
 | Human | Put loop | **terminal** | OK |
 | Env | Load portal | headless JSON | OK if fail toasted when user-clicked |
-| Env | **Put** | **terminal** (`open_shipctl_terminal`) | OK (slices 1–2) |
+| Env | **Put** | **terminal** (`open_orbityard_terminal`) | OK (slices 1–2) |
 | Ritual | Doctor / Guide / Configure / Status / dry-run | headless | OK (json-safe) |
 | Ritual | Sign | headless | OK if Signet non-interactive |
 | Ritual | Deploy / Flow (network) | headless | Prefer terminal when Orbit may prompt; or honest toast “run in terminal” |
 | Tools | Cancel / Copy | local | OK |
-| Vault export | passphrase | `run_shipctl_env` | Keep env-injected passphrase; no prompt echo |
+| Vault export | passphrase | `run_orbityard_env` | Keep env-injected passphrase; no prompt echo |
 
 ## Non-goals (this investigation)
 

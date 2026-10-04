@@ -43,7 +43,7 @@ See [deployment-nav-design](./deployment-nav-design.md).
 | C | GitHub Pages — Open GitHub + Docs only (no PAT portal) |
 | E | Orbit — gated on `orbit_configured`; **Self-host** = Studio local-auto lane ([studio-selfhost-guide-design](./studio-selfhost-guide-design.md)) |
 
-**Tier D** (Render · DO · Heroku · Amplify · Cloud Run · Azure SWA): Advanced Publish `host.*` + `shipctl portal --provider` only — not Platforms cards yet.
+**Tier D** (Render · DO · Heroku · Amplify · Cloud Run · Azure SWA): Advanced Publish `host.*` + `orbityard portal --provider` only — not Platforms cards yet.
 
 ### Official signing (honest)
 

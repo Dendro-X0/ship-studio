@@ -2,17 +2,17 @@
 
 **Status:** Active  
 **Updated:** 2026-09-14  
-**Owner:** `crates/shipctl` (`scopes`, `session`, `envx`) · Desktop
+**Owner:** `crates/orbityard` (`scopes`, `session`, `envx`) · Desktop
 
 ## Vision
 
-Ship Studio is a **local shipping portal**: switch target directories instantly, pick **Web / API / Desktop / Mobile** scopes, sign (self or official), manage ENV/token **hints**, and run a multi-provider deploy assist. Official dashboards remain the place of token **creation**; the bridge never stores secret values or calls vendor HTTPS.
+Orbit Yard is a **local shipping portal**: switch target directories instantly, pick **Web / API / Desktop / Mobile** scopes, sign (self or official), manage ENV/token **hints**, and run a multi-provider deploy assist. Official dashboards remain the place of token **creation**; the bridge never stores secret values or calls vendor HTTPS.
 
 ## Surfaces
 
 | Capability | Mechanism |
 |------------|-----------|
-| Switch projects | Desktop recents + titlebar switcher; `shipctl session` lists known roots |
+| Switch projects | Desktop recents + titlebar switcher; `orbityard session` lists known roots |
 | Scopes | Probe tree (`apps/*`, wrangler, vercel, src-tauri, android/ios/Expo); persist `active_scopes` in `.ship/studio.json` |
 | Deploy by scope | Launch/deploy `run` uses that scope’s `root` + provider args |
 | Self-sign | `signet build` / identity (local) |
@@ -32,5 +32,5 @@ Ship Studio is a **local shipping portal**: switch target directories instantly,
 
 - L1: fixture with `apps/web` + `wrangler.toml` yields web + api scopes  
 - L1b: fixture with `android/` + Expo `app.json` yields Mobile scope  
-- L2: `shipctl scopes` / `shipctl envx` / `shipctl assist` JSON  
+- L2: `orbityard scopes` / `orbityard envx` / `orbityard assist` JSON  
 - L3: Desktop switcher + scope chips + Assist / Env / Sign views

@@ -8,13 +8,14 @@
 - **Uniform host auth vetting** — selecting Cloudflare / Vercel / Netlify / Fly / Railway runs the same `--auth-check` → Login CLI gate as Deploy ([design](./specs/frontend/host-deploy-confirm-design.md))
 - **Host deploy auth gate** — unauthenticated Deploy runs `--auth-check`, opens Login CLI (vendor OAuth), then Retry Deploy ([design](./specs/frontend/host-deploy-confirm-design.md))
 - **Netlify deploy name** — Confirm dialog site name is editable; `hostdeploy --name` maps to `--site` / `--create-site` when unlinked ([design](./specs/frontend/host-deploy-confirm-design.md))
-- **Game butler CLI** — `shipctl butler push --target user/game:channel` (+ MCP `ship_butler_push`); submit.itch detail points at the recipe/spawn path ([design](./specs/backend/game-butler-push-design.md))
-- **Game butler push** — MCP `ship_butler_push` recipe + optional terminal spawn for itch.io (no credentials; Steam/Epic stay Open+Confirm) ([design](./specs/backend/game-butler-push-design.md))
+- **Game butler CLI** — `orbityard butler push --target user/game:channel` (+ MCP `orbit_butler_push`); submit.itch detail points at the recipe/spawn path ([design](./specs/backend/game-butler-push-design.md))
+- **Game butler push** — MCP `orbit_butler_push` recipe + optional terminal spawn for itch.io (no credentials; Steam/Epic stay Open+Confirm) ([design](./specs/backend/game-butler-push-design.md))
 - **Freeze** — annotated tag `freeze/mcp-agent-2026-10-04` marks close-cut OSS + MCP agent path (G1–G4 + skill); Desktop wizards stay frozen
-- **MCP agent skill** — `.cursor/skills/ship-mcp-agent` prefers `ship_*` over Desktop wizards; no secret custody ([design](./specs/backend/mcp-agent-guide-design.md))
-- **MCP S2.4 G3–G4** — `ship_human put:true` bails without TTY (use `ship_env_put`); `ship_vault` schema discourages value/passphrase in agent args ([design](./specs/backend/mcp-assist-contract-design.md))
-- **MCP S2.4 G2** — `ship_env_put` launches (or prints) interactive host Put for a secret NAME; rejects `value`; optional external terminal ([design](./specs/backend/mcp-assist-contract-design.md))
-- **MCP S2.4 G1** — `ship_publish_open` / `ship_publish_verify` / `ship_publish_confirm` / `ship_publish_next` (CLI publish mutations; Confirm remains human attest) ([design](./specs/backend/mcp-assist-contract-design.md))
+- **MCP agent skill** — `.cursor/skills/orbit-yard-mcp-agent` prefers `orbit_*` over Desktop wizards; no secret custody ([design](./specs/backend/mcp-agent-guide-design.md))
+- **Rebrand** — product **Orbit Yard**; CLI/MCP binary **`orbityard`**; MCP tools `orbit_*`; Desktop `orbit-yard-desktop` / `com.dendro.orbityard`. Config dir remains `.ship/` for compatibility. GitHub remote still `Dendro-X0/ship-studio` until renamed.
+- **MCP S2.4 G3–G4** — `orbit_human put:true` bails without TTY (use `orbit_env_put`); `orbit_vault` schema discourages value/passphrase in agent args ([design](./specs/backend/mcp-assist-contract-design.md))
+- **MCP S2.4 G2** — `orbit_env_put` launches (or prints) interactive host Put for a secret NAME; rejects `value`; optional external terminal ([design](./specs/backend/mcp-assist-contract-design.md))
+- **MCP S2.4 G1** — `orbit_publish_open` / `orbit_publish_verify` / `orbit_publish_confirm` / `orbit_publish_next` (CLI publish mutations; Confirm remains human attest) ([design](./specs/backend/mcp-assist-contract-design.md))
 
 ### Fixed
 
@@ -29,7 +30,7 @@
 - **Serving never ends after GIF / Open live** — Cancel serve in Output dock + status bar; cancel invokes Rust directly (Tools `#btn-cancel` no longer required); Esc stops serve
 - **Self-host Deploy never “finishes”** — Deploy is a one-shot check again (~0.1s on Harbor); **Open live** starts `--serve`. The 200s “stuck” timer was the old serve hold, not slow scripts ([design](./specs/backend/selfhost-deploy-finish-fast-design.md))
 - **Self-host Deploy feels “stuck” after check** — busy label flips **Checking… → Serving** when health succeeds (elapsed timer resets); long RUNNING was the intentional serve hold, not slow setup
-- **Self-host Deploy freeze** — `run_shipctl` / `run_shipctl_env` no longer block the Tauri main thread during `selfhost --serve` (was **Not Responding**; Cancel could not run) ([investigation](./specs/backend/selfhost-serve-ui-freeze-investigation.md))
+- **Self-host Deploy freeze** — `run_orbityard` / `run_orbityard_env` no longer block the Tauri main thread during `selfhost --serve` (was **Not Responding**; Cancel could not run) ([investigation](./specs/backend/selfhost-serve-ui-freeze-investigation.md))
 
 ### Added
 
@@ -50,19 +51,19 @@
 - **Demo shelf T6/T7** — `/demo` includes Sign Open + Cloudflare Deploy (Results live URL + Open dashboard); compress recipe for ScreenToGif masters (`_raw/` gitignored) ([SCRIPT](./docs/assets/demo/v0.2.1/SCRIPT.md))
 - **Self-host Start over** — After a finished local run, **Start over** clears Results (replaces a disabled Cancel serve); **Cancel serve** only while serving
 - **Deployment Cancel button** — Self-host: **Cancel serve** (enabled while serving/running). Cloud hosts: **Cancel on dashboard** opens the vendor deep link (Studio does not undeploy SaaS)
-- **Deploy wait animation** — Output dock shows indeterminate rail + spinner + elapsed seconds while `shipctl` runs (selfhost/hostdeploy); Self-host Results pulses while serving
+- **Deploy wait animation** — Output dock shows indeterminate rail + spinner + elapsed seconds while `orbityard` runs (selfhost/hostdeploy); Self-host Results pulses while serving
 - **Host dashboard deep links** — Open dashboard → Workers & Pages / Vercel projects / Netlify projects (Cloudflare Pages project view after a successful Deploy); Sign opens certificates / Partner products — not vendor home ([design](./specs/frontend/host-deploy-confirm-design.md))
 - **Self-host Cancel serve** — Deploy runs `selfhost --serve`; **Cancel serve** on Results/wizard anytime. Cloud cancel stays on vendor dashboard (portal only). Results labels distinguish loopback vs `*.pages.dev` ([design](./specs/frontend/host-deploy-confirm-design.md))
 - **Host deploy confirm + Results isolation** — Deploy opens a confirm dialog (editable Cloudflare project name); Results bay only shows evidence for the selected host (`last_run.host_provider`) ([design](./specs/frontend/host-deploy-confirm-design.md))
 - **Cloudflare Pages create-if-missing** — Deploy auto-runs `wrangler pages project create` then retries when the project is absent (no dashboard-first trip) ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md))
 - **Hosted Troubleshoot — missing project** — wrangler “Pages project does not exist” → `[account]`; toast/Results offer **Open dashboard** + **Retry Deploy** ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md) H4)
 - **Demo shelf v0.2.1 (T1–T5)** — `/demo` points at live Harbor GIFs; T6 Sign Open · T7 Deploy Open remain operator-record ([SCRIPT](./docs/assets/demo/v0.2.1/SCRIPT.md))
-- **Hosted deploy ops H1–H5** — Deployment **Deploy** streams `shipctl hostdeploy` (Cloudflare · Vercel · Netlify); **Results bay** + **Troubleshoot** taxonomy; MCP `ship_hostdeploy` + agent playbook (no secret custody) ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md))
+- **Hosted deploy ops H1–H5** — Deployment **Deploy** streams `orbityard hostdeploy` (Cloudflare · Vercel · Netlify); **Results bay** + **Troubleshoot** taxonomy; MCP `orbit_hostdeploy` + agent playbook (no secret custody) ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md))
 - **Vendor handoff coach — CANCELLED** — in-app coach subtracted after failed product test; Portal Open/Docs restored; host setup stays CLI/agent — [design](./specs/backend/vendor-handoff-coach-design.md)
-- **Desktop reliability slice 4** — Advanced Online Deploy / Flow (with deploy) open `open_shipctl_terminal`; dry-run/doctor stay headless; soft-fail covers auth/login prompts ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
+- **Desktop reliability slice 4** — Advanced Online Deploy / Flow (with deploy) open `open_orbityard_terminal`; dry-run/doctor stay headless; soft-fail covers auth/login prompts ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
 - **Desktop reliability slice 3** — user-initiated Env / Assist / Scopes loads toast `cmdFailDetail` + Preview on fail; bind/pulse stay silent ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
-- **Desktop reliability slice 2** — single `open_shipctl_terminal` for all TTY flows; soft-fail taxonomy covers missing CLI / no put CLI ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
-- **Desktop Env Put terminal** — Env Put opens interactive `shipctl env --put` (same TTY class as Human Put / Portal Login); no headless stdin ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md) slice 1)
+- **Desktop reliability slice 2** — single `open_orbityard_terminal` for all TTY flows; soft-fail taxonomy covers missing CLI / no put CLI ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md))
+- **Desktop Env Put terminal** — Env Put opens interactive `orbityard env --put` (same TTY class as Human Put / Portal Login); no headless stdin ([desktop-reliability-design](./specs/backend/desktop-reliability-design.md) slice 1)
 - **Hosting portal parity (slices 0–4)** — URL hygiene · Fly/Railway Login CLI · Pages≠PAT · Tier A–E docs · detect→Platforms highlight ([hosting-portal-parity-design](./specs/backend/hosting-portal-parity-design.md))
 - **Portal Docs button** — Open goes to vendor settings; Docs opens official tutorials (`docs_url` on portal steps); Cloudflare env Open → Workers & Pages
 - **Portal Open targets** — Cloudflare no longer triples the same API-tokens URL (drop duplicate recover; env → Workers secrets docs); Login CLI only on OAuth rows
@@ -77,7 +78,7 @@
 - **Nested fixture pulse** — bind under a monorepo (e.g. `fixtures/harbor`) no longer inherits parent dirty git; Orbit missing soft-cues only (Signet absence still hard-blocks desktop)
 - **GIF-ready Dashboard polish** — mid-flight headline wins over “Already deployed”; ≤3 status tiles; Local treats Signet-only as ready; stage rail diet (`+N later` → List); Launch hero surface ([gif-ready-polish-design](./specs/frontend/gif-ready-polish-design.md))
 - **Harbor demo fixture** — `fixtures/harbor` (Desktop + Docs + Signet) + `scripts/harbor-reset`; public GIFs bind this, not ship-studio or advanced-dogfood ([demo-subject-design](./specs/frontend/demo-subject-design.md))
-- **Status probe inspection bay** — Sign / Publish: three lane cards (icons · Ready/Guide badges · suggestions · CTAs), checking shimmer + `shipctl pulse · sign-paths` cue; stage checkpoint amber rail ([status-probe-ux-design](./specs/frontend/status-probe-ux-design.md))
+- **Status probe inspection bay** — Sign / Publish: three lane cards (icons · Ready/Guide badges · suggestions · CTAs), checking shimmer + `orbityard pulse · sign-paths` cue; stage checkpoint amber rail ([status-probe-ux-design](./specs/frontend/status-probe-ux-design.md))
 - **Public Publish UX (A+C)** — Stages mode: one primary on the checkpoint card (toolbar keeps Refresh · Watch); Scopes gate embeds detect/save inline with **Confirm & continue** ([public-publish-ux-design](./specs/frontend/public-publish-ux-design.md))
 - **Actionable gate toasts** — pending Next / Verify classify the gate; stderr-only Next failures emit JSON; sticky **FAILED** no longer shown for expected pauses; empty-output toasts include Preview / Retry / Cancel
 - **Verify status layers** — each Publish step carries `verify_status` (`disk` · `local_cli` · `operator_cli` · `human_attest`); Desktop Offline / Watch / Publish hint explain graduated status checks without Studio-held secrets ([verify-status-layers-design](./specs/backend/verify-status-layers-design.md))
@@ -89,18 +90,18 @@
 - **Hosting OAuth web entry** — Portal Cloudflare/Vercel/… OAuth steps now **Sign in (web)** (dashboard/login URL); Login CLI secondary for local CLI creds ([design](./specs/backend/hosting-oauth-web-entry-design.md))
 - **Self-host ≠ hosted Deploy** — `selfhost` last-run / loopback URLs no longer mark Deploy **Ready** / Live / “Already deployed”; pulse signal `selfhost_ok` + Desktop **Self-host** badge ([investigation](./specs/backend/selfhost-vs-hosted-deploy-probe-investigation.md))
 - **Launch auth assist** — oauth / GitHub gates expose **Login CLI** (official CLI in a terminal); Run local uses interactive TTY; `signet identity` Open creates when missing — not “auth elsewhere then return” ([launch-auth-assist-investigation](./specs/backend/launch-auth-assist-investigation.md))
-- **Verify / Watch honesty** — successful local Verify no longer auto-marks Human/OAuth/deploy gates Done (Confirm still required). Fixes MCP `ship_publish_watch` silently advancing Scopes when active scopes exist
+- **Verify / Watch honesty** — successful local Verify no longer auto-marks Human/OAuth/deploy gates Done (Confirm still required). Fixes MCP `orbit_publish_watch` silently advancing Scopes when active scopes exist
 - **Continue toast honesty** — no more `publish · done` when Continue only pauses at a human gate; copy says paused / Confirm next
 
 ### Changed
 
 - **$29 value bar** — hosted deploy ops activated: stream process · live URL · Open dashboard on result · troubleshoot ([design](./specs/backend/hosted-deploy-ops-value-bar-design.md)); H1 Cloudflare CLI Deploy next — not CDP token form-fill
 
-- **Launch choice board (L1–L2)** — Desktop Prep/lanes/Ship-cut UI; shipctl emits `lane` · `optional` · `suggested`; Local intent omits flow/Orbit deploy ([launch-choice-board-design](./specs/frontend/launch-choice-board-design.md))
+- **Launch choice board (L1–L2)** — Desktop Prep/lanes/Ship-cut UI; orbityard emits `lane` · `optional` · `suggested`; Local intent omits flow/Orbit deploy ([launch-choice-board-design](./specs/frontend/launch-choice-board-design.md))
 - **Self-host detect matrix** — plan only with static/opt-in root; Studio monorepo signal; Dockerfile/Compose alone never opens Self-host ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Self-host Publish Auto** — `selfhost.deploy` on General + Advanced (+ Launch); Continue/Verify runs local health and marks Done without Confirm ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Self-host health checks** — Deploy completes on artifact + local HTTP 200 (`selfhost.check` in last-run); optional `--serve` ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
-- **Self-host Deploy stream** — `shipctl selfhost` detects static root, streams phases, writes last-run; Deployment **Deploy** opens Output dock ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
+- **Self-host Deploy stream** — `orbityard selfhost` detects static root, streams phases, writes last-run; Deployment **Deploy** opens Output dock ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Self-host catalog** — Deployment **Self-host** local-auto card (Orbit only when `orbit_configured`) ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Studio self-host (design)** — local-auto lane: stream deploy + non-step checks (disk/CLI verify); Docker cousin, not vendor Confirm; Orbit gated ([studio-selfhost-guide-design](./specs/frontend/studio-selfhost-guide-design.md))
 - **Sign catalog grid** — Official signing cards (Apple · Microsoft · Play · GitHub) restored on Sign, same layout as Deployment / Integrations; Check status paths stay below
@@ -113,13 +114,13 @@
 - **GitHub Release Open** — always `github.com/new` (create repo) + step guide (init → push → tag → CI/CD → release); never bare `/releases/new` 404 or a hard-coded product Releases URL
 - **Scopes Target icons** — generic surface glyphs (desktop · mobile · web · API · container); no Tauri/Node/vendor logos in Targets
 - **Scopes Target labels** — `{Surface} – {Framework}` from detected stack (e.g. `Desktop – Tauri`, `Website – Next.js` / `Static`, `API – Express`); Harbor T1 GIFs use framework titles
-- **Ship Studio overhaul O5** — Harbor Client-honesty checklist + demo SCRIPT note; S1.2m / band #51 closed ([evidence](./docs/handoffs/evidence-harbor-client-honesty.md))
-- **Ship Studio overhaul O4** — Platforms catalog: **Put secrets** primary for CF/Vercel/Netlify; Docs → Learn more; Put-first wizard copy ([overhaul](./specs/backend/ship-studio-overhaul-design.md))
-- **Ship Studio overhaul O3** — MCP assist contract: `ship_*` inventory, key-custody rules, S2.4 gap list ([mcp-assist-contract-design](./specs/backend/mcp-assist-contract-design.md))
-- **Ship Studio overhaul O2** — Tier A (Cloudflare/Vercel/Netlify) env hints are Put-primary plain language; Open≠Docs unit test ([overhaul](./specs/backend/ship-studio-overhaul-design.md))
-- **Ship Studio overhaul O1** — Portal env gates: primary **Put** (CF/Vercel/Netlify) · Open dashboard · Learn more; no coach ([overhaul](./specs/backend/ship-studio-overhaul-design.md) · [gates](./specs/backend/human-gate-catalog-design.md))
-- **Ship Studio overhaul O0** — Client honesty charter + human-gate catalog; roadmap O1–O5; north-star band #51 — [overhaul](./specs/backend/ship-studio-overhaul-design.md) · [gates](./specs/backend/human-gate-catalog-design.md)
-- **Product law — Client · MCP · CLI** — Desktop/TUI = Client; MCP = agent assist (keys human-held); `shipctl` = kernel — [SCOPE Delivery surfaces](./docs/product/SCOPE-OF-SERVICE.md) · [surfaces-cli-tui-desktop](./specs/backend/surfaces-cli-tui-desktop.md)
+- **Orbit Yard overhaul O5** — Harbor Client-honesty checklist + demo SCRIPT note; S1.2m / band #51 closed ([evidence](./docs/handoffs/evidence-harbor-client-honesty.md))
+- **Orbit Yard overhaul O4** — Platforms catalog: **Put secrets** primary for CF/Vercel/Netlify; Docs → Learn more; Put-first wizard copy ([overhaul](./specs/backend/ship-studio-overhaul-design.md))
+- **Orbit Yard overhaul O3** — MCP assist contract: `ship_*` inventory, key-custody rules, S2.4 gap list ([mcp-assist-contract-design](./specs/backend/mcp-assist-contract-design.md))
+- **Orbit Yard overhaul O2** — Tier A (Cloudflare/Vercel/Netlify) env hints are Put-primary plain language; Open≠Docs unit test ([overhaul](./specs/backend/ship-studio-overhaul-design.md))
+- **Orbit Yard overhaul O1** — Portal env gates: primary **Put** (CF/Vercel/Netlify) · Open dashboard · Learn more; no coach ([overhaul](./specs/backend/ship-studio-overhaul-design.md) · [gates](./specs/backend/human-gate-catalog-design.md))
+- **Orbit Yard overhaul O0** — Client honesty charter + human-gate catalog; roadmap O1–O5; north-star band #51 — [overhaul](./specs/backend/ship-studio-overhaul-design.md) · [gates](./specs/backend/human-gate-catalog-design.md)
+- **Product law — Client · MCP · CLI** — Desktop/TUI = Client; MCP = agent assist (keys human-held); `orbityard` = kernel — [SCOPE Delivery surfaces](./docs/product/SCOPE-OF-SERVICE.md) · [surfaces-cli-tui-desktop](./specs/backend/surfaces-cli-tui-desktop.md)
 - **Docs — Desktop reliability design** — command classes J/T/N/L · Env Put terminal · unified opener · soft-fail taxonomy ([investigation](./specs/backend/desktop-reliability-investigation.md) · [design](./specs/backend/desktop-reliability-design.md))
 - **Docs — Hosting portal parity specs** — static audit + vendor tutorial review; tiered improvement plan ([investigation](./specs/backend/hosting-portal-parity-investigation.md) · [design](./specs/backend/hosting-portal-parity-design.md))
 - **Docs — Platforms · Portal · Integrations** — product overview of current Desktop guide surfaces, objectives, and known shortcomings ([PLATFORMS-AND-PORTAL](./docs/product/PLATFORMS-AND-PORTAL.md)); reliability deferred to a design-first slice
@@ -132,7 +133,7 @@
 
 ### Added
 
-- **Publish Continue** — `shipctl publish continue [--chain N]` advances Auto/ready gates (Verify→Confirm→Next); stops at Human/Open. Desktop primary **Continue** (+ Dashboard mid-flight CTA) · Confirm/Next remain for explicit control · `scripts/publish-fast.sh|.ps1` · first-run Desktop intent defaults to **Local** ([publish-fast-path-design](./specs/frontend/publish-fast-path-design.md))
+- **Publish Continue** — `orbityard publish continue [--chain N]` advances Auto/ready gates (Verify→Confirm→Next); stops at Human/Open. Desktop primary **Continue** (+ Dashboard mid-flight CTA) · Confirm/Next remain for explicit control · `scripts/publish-fast.sh|.ps1` · first-run Desktop intent defaults to **Local** ([publish-fast-path-design](./specs/frontend/publish-fast-path-design.md))
 
 ## 0.2.2 — 2026-09-23
 
@@ -147,9 +148,9 @@
 
 ### Fixed
 
-- **Silent shipctl / git spawn** — Windows `CREATE_NO_WINDOW` on Desktop background runs so page loads / Verify / doctor no longer flash a console (Open / Run still opens an intentional terminal)
-- **Installer shipctl preference** — installed / portable sidecar beside the Desktop exe (or under `resources/`) always wins over a newer workspace build by mtime
-- **Nav paint before shipctl** — Publish refresh and related-page loads wait for a paint frame before invoking shipctl
+- **Silent orbityard / git spawn** — Windows `CREATE_NO_WINDOW` on Desktop background runs so page loads / Verify / doctor no longer flash a console (Open / Run still opens an intentional terminal)
+- **Installer orbityard preference** — installed / portable sidecar beside the Desktop exe (or under `resources/`) always wins over a newer workspace build by mtime
+- **Nav paint before orbityard** — Publish refresh and related-page loads wait for a paint frame before invoking orbityard
 - **Output mirror weight** — Output page mirrors only the last ~120KB of the log for snappy opens (full stream remains in the live pane)
 
 ### Added
@@ -169,15 +170,15 @@
 
 ### Added
 
-- **Release v0.2.0** — Windows x64 **NSIS installer** + portable zip (`ship-studio-desktop.exe` + `shipctl.exe`) + SHA256 on GitHub Releases
-- **S0.7 Windows installer** — `tauri build` NSIS (`currentUser`); `shipctl` bundled under `resources/`; `pnpm desktop:installer` / `scripts/stage-desktop.sh --installer`
+- **Release v0.2.0** — Windows x64 **NSIS installer** + portable zip (`orbit-yard-desktop.exe` + `orbityard.exe`) + SHA256 on GitHub Releases
+- **S0.7 Windows installer** — `tauri build` NSIS (`currentUser`); `orbityard` bundled under `resources/`; `pnpm desktop:installer` / `scripts/stage-desktop.sh --installer`
 
 ## 0.1.0 — 2026-09-14
 
 ### Added
 
-- **Release v0.1.0** — Windows x64 portable zip (`ship-studio-desktop.exe` + `shipctl.exe`) + SHA256 on GitHub Releases
-- **CI / Doctor** — Signet is hard-required only when `signet.toml` exists (Tauri-without-init is a note). Unblocks `shipctl doctor --project .` on ubuntu CI for this monorepo; `fixtures/ci-smoke` available for tighter smoke later
+- **Release v0.1.0** — Windows x64 portable zip (`orbit-yard-desktop.exe` + `orbityard.exe`) + SHA256 on GitHub Releases
+- **CI / Doctor** — Signet is hard-required only when `signet.toml` exists (Tauri-without-init is a note). Unblocks `orbityard doctor --project .` on ubuntu CI for this monorepo; `fixtures/ci-smoke` available for tighter smoke later
 - **Website S0.4 / S0.5** — `/pricing` paid delta ($29 vs OSS) + hero disambiguation vs unrelated ship.studio
 - **Polar portal entry URLs** — dashboard / credentials / env Open to distinct pages (OAT + webhook docs, or org deep links when `POLAR_ORGANIZATION_SLUG` is in `.env`)
 - **Desktop Stripe icon** — symbol uses the same 16px sidebar and 22px card slot as the other vendors (the wide wordmark box was shifting the row and shrinking the mark)
@@ -204,20 +205,20 @@
 - **Launch host / BaaS parity** — Guided Launch sequences alt-host dashboards + mobile BaaS provision (Open + Confirm)
 - **Alt host expand (Heroku / Amplify)** — Advanced `host.heroku` / `host.amplify` Open dashboard URLs (deploy stays on vendor CLI/UI)
 - **Launch commerce parity** — Guided Launch lists Gumroad / Lemon / Stripe / Paddle (Open + Confirm) beside Polar
-- **Commerce portal catalog** — Gumroad / Lemon / Stripe / Paddle join Polar as `shipctl portal` providers (dashboard Open; no SKU creation)
-- **Guide notes expand** — `shipctl guide` adds Publish step + host / BaaS / commerce / Watch notes (prefer Publish over Flow)
+- **Commerce portal catalog** — Gumroad / Lemon / Stripe / Paddle join Polar as `orbityard portal` providers (dashboard Open; no SKU creation)
+- **Guide notes expand** — `orbityard guide` adds Publish step + host / BaaS / commerce / Watch notes (prefer Publish over Flow)
 - **Doctor notes expand** — cut-readiness notes for alt hosts / mobile BaaS / Stripe·Paddle + optional flyctl/railway/doctl; Watch cue; missing host CLIs do not fail doctor ok
 - **Assist notes expand** — checklist notes for alt hosts / mobile BaaS / Stripe·Paddle / marketplace submit + Watch cue on Publish step
 - **Pulse cut hints expand** — Dashboard Now mid-publish detail cues for `host.*` / `baas.provision` / `submit.*` / commerce listings
 - **Commerce expand** — Advanced `listing.stripe` / `listing.paddle` Open dashboard URLs + name-only secret catalog (no Payment Link creation)
-- **MCP publish watch** — `ship_publish_watch` one-shot local Verify probe for agents (optional `auto_confirm`; no vendor HTTPS / stdio pollution)
+- **MCP publish watch** — `orbit_publish_watch` one-shot local Verify probe for agents (optional `auto_confirm`; no vendor HTTPS / stdio pollution)
 - **TUI publish watch** — Publish screen `w` toggles local Verify poll (~15s); READY status when Confirm is safe (parity with CLI/Desktop Watch)
 - **Alt host expand** — Advanced `host.render` / `host.digitalocean` Open dashboard URLs (deploy stays on vendor CLI/UI)
 - **Marketplace submit parity** — Advanced `submit.itch` / `submit.epic` open butler / Epic publishing docs (Open + Confirm; no upload from bridge)
 - **Alt host portal** — Advanced `host.fly` / `host.railway` Open dashboard URLs (deploy stays on Fly/Railway CLI/UI)
 - **Steam submit portal** — Advanced `submit.steam` opens Steamworks depot/build docs (Open + Confirm; no Steam API upload)
 - **Mobile BaaS portal** — Advanced `baas.provision` Open URL + Confirm for Firebase / Appwrite / Convex / mobile+Supabase Auth (no vendor HTTPS; Local/General omit)
-- **Publish progress watch** — `shipctl publish watch [--once|--interval-secs|--auto-confirm]` local Verify poller; Desktop Publish **Watch** toggle toasts when Confirm is ready (portal nudge; no vendor HTTPS)
+- **Publish progress watch** — `orbityard publish watch [--once|--interval-secs|--auto-confirm]` local Verify poller; Desktop Publish **Watch** toggle toasts when Confirm is ready (portal nudge; no vendor HTTPS)
 - **PowerShell Advanced dogfood** — `scripts/dogfood-advanced-publish.ps1` for Windows hosts without WSL bash
 - **Desktop busy unlock** — Cancel/Clear always re-enable Publish Refresh; `run()` clears busy in `finally`; 90s stuck hint
 - **Env entry URL honesty** — secret Open URLs match value source or put provider (Vercel-bound names no longer open Cloudflare tokens)
@@ -238,43 +239,43 @@
 - **Package registries** (Advanced) — `listing.npm` / `listing.crates` for publishable packages or `.ship/markets` opt-in
 - **Marketing deploy** (Advanced) — `marketing.deploy` for `apps/website` / GitHub Pages / HOOK preview / markets opt-in
 - **Graduate signing + commerce** (Advanced) — `sign.graduate` · `listing.gumroad` · `listing.lemon` via markets/env opt-in (honesty: no verified-publisher claims)
-- **Graduate / commerce secret catalog** — `shipctl secrets` name-only hints for SIGNET_*/WIN_CERT_*/GUMROAD_*/LEMON_* (never stored in `.ship/`)
+- **Graduate / commerce secret catalog** — `orbityard secrets` name-only hints for SIGNET_*/WIN_CERT_*/GUMROAD_*/LEMON_* (never stored in `.ship/`)
 - **Shipping hub final-mile** — cut order build→trust→graduate→release; `signet graduate notes` Run; `ship.desktop_cut` for desktop-only; doctor “can I cut?” notes
 - **Suite URL sync** (Advanced) — `suite.url_sync` from `.ship/suite.json` sibling env key names (never writes sibling `.env`)
-- **Publish portal** (`shipctl publish` / open / verify / confirm / next) — minute wizard through the full manual ship path
-- Desktop **Publish** view (primary) + TUI Publish screen (`P`) + MCP `ship_publish`
+- **Publish portal** (`orbityard publish` / open / verify / confirm / next) — minute wizard through the full manual ship path
+- Desktop **Publish** view (primary) + TUI Publish screen (`P`) + MCP `orbit_publish`
 - Assist `--start` loads the publish portal; Assist remains the checklist overview
-- **Deploy assist** (`shipctl assist`) + Desktop Assist view — scopes → env → sign → publish
-- **Scopes** (`shipctl scopes` / `set --ids`) — Web / API / Desktop / Mobile / Container directories drive per-scope deploy
-- **ENV portal** (`shipctl env`) — configure / retrieve / create (no secret values)
-- **Sign paths** (`shipctl sign-paths`) — self-sign vs official certs vs store **submit** (ASC / Play / MS)
+- **Deploy assist** (`orbityard assist`) + Desktop Assist view — scopes → env → sign → publish
+- **Scopes** (`orbityard scopes` / `set --ids`) — Web / API / Desktop / Mobile / Container directories drive per-scope deploy
+- **ENV portal** (`orbityard env`) — configure / retrieve / create (no secret values)
+- **Sign paths** (`orbityard sign-paths`) — self-sign vs official certs vs store **submit** (ASC / Play / MS)
 - **General / Advanced modes** — short spine vs full OAuth / listing / submit / DB / CI / container plan
 - **Release surface lanes** — mobile Play/ASC listing, Steam/itch/Epic (opt-in), DB provision (Neon/Supabase/D1/Turso), CI release check, container docs
-- **Project pulse** (`shipctl pulse`) — Dashboard Now from git + `.ship` + deploy signals (skip when already live)
+- **Project pulse** (`orbityard pulse`) — Dashboard Now from git + `.ship` + deploy signals (skip when already live)
 - Desktop project switcher (titlebar recents) + custom frameless chrome + logo
 - Dogfood: `fixtures/advanced-dogfood` + `scripts/dogfood-advanced-*.sh`
-- **Guided launch** (`shipctl launch` / `open` / `run`): adaptive plan through Signet build→release, Polar listing, Orbit deploy
+- **Guided launch** (`orbityard launch` / `open` / `run`): adaptive plan through Signet build→release, Polar listing, Orbit deploy
 - **TUI Launch** screen (`L` / home item): o open/run · v verify · c confirm · n next
 - Desktop Launch **Open / Run** opens a terminal for Sign/OAuth/Deploy steps
 - Verify uses PATH-resolved CLIs (`wrangler.cmd` on Windows) with a 20s timeout
 - Tauri/`signet.toml` projects get Signet steps; worker-only repos skip them
 - Configure defaults `sign_args=[build]` when Tauri or signet.toml is present
 - **Human portal sprint** opens paste-source tabs only (Polar→GitHub); Desktop **Paste in terminal**; `--open-all` for full dashboards
-- **CI** (GitHub Actions): `cargo test -p shipctl` + CLI smoke on `main`
-- **Desktop / TUI / MCP** vault export surfaces (`Export vault`, TUI `v`, `ship_vault`)
+- **CI** (GitHub Actions): `cargo test -p orbityard` + CLI smoke on `main`
+- **Desktop / TUI / MCP** vault export surfaces (`Export vault`, TUI `v`, `orbit_vault`)
 - **Guide** step `vault` (optional encrypted backup after secrets)
-- **`shipctl vault`** encrypted `.km` export (Clavis / Keys Manager `kmvault` v1): `export` / `add` / `list` / `show`
+- **`orbityard vault`** encrypted `.km` export (Clavis / Keys Manager `kmvault` v1): `export` / `add` / `list` / `show`
 - **Portal** for Cloudflare, Vercel, Netlify, GitHub, Polar (entry URLs + OAuth/dashboard navigation)
-- **`shipctl secrets`** paste-assist (wrangler `# Secrets` + empty `.dev.vars`; never stores values)
-- **`shipctl guide`** unified offline checklist; **`--open`** batch-opens entry URLs
-- **`shipctl ship`** one-shot offline prep (guide → configure → flow dry-run; writes `.ship/last-guide.json`)
-- **`shipctl tui`** ratatui wizard (providers, portal, secrets, ship prep)
+- **`orbityard secrets`** paste-assist (wrangler `# Secrets` + empty `.dev.vars`; never stores values)
+- **`orbityard guide`** unified offline checklist; **`--open`** batch-opens entry URLs
+- **`orbityard ship`** one-shot offline prep (guide → configure → flow dry-run; writes `.ship/last-guide.json`)
+- **`orbityard tui`** ratatui wizard (providers, portal, secrets, ship prep)
 - **Desktop** Tauri shell: Wizard / Ship / Guide / Portal / Secrets
-- **MCP**: `ship_guide`, `ship_ship`, `ship_portal`, `ship_secrets`, …
+- **MCP**: `orbit_guide`, `orbit_ship`, `orbit_portal`, `orbit_secrets`, …
 - Doctor reports `portal_providers`, `secret_hint_count`, `provider_clis`
 
 ### Notes
 
 - Bridge does not call vendor HTTPS; OAuth and secret paste stay operator-initiated.
 - Optional vault export uses Argon2id + AES-256-GCM; passphrase via TTY or `SHIP_VAULT_PASSPHRASE`.
-- Signet and Orbit remain separate products — Ship Studio is the bridge + shells.
+- Signet and Orbit remain separate products — Orbit Yard is the bridge + shells.

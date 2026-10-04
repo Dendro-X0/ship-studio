@@ -28,6 +28,6 @@ Next **Deploy** for that host writes a new last-run and clears the dismiss.
 
 | Layer | Check |
 |-------|--------|
-| L1 | `tsc --noEmit` (desktop) · `cargo check -p ship-studio-desktop` if Tauri changed |
+| L1 | `tsc --noEmit` (desktop) · `cargo check -p orbit-yard-desktop` if Tauri changed |
 | L2 | After CF deploy evidence → Clear evidence → Results + Cancel hidden |
 | L2 | Deploy again restores evidence |

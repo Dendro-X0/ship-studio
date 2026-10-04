@@ -1,8 +1,8 @@
-# Ship Studio
+# Orbit Yard
 
 [![CI](https://github.com/Dendro-X0/ship-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/Dendro-X0/ship-studio/actions/workflows/ci.yml)
 
-**Local shipping hub for the final mile** — sign → release → deploy — on three surfaces: **CLI** (JSON/MCP) · **TUI** · **Desktop**. Same `shipctl` engine (Signet + Orbit adapters). Adaptive **Publish** is the spine (Open/Run → Confirm → Next); Scopes / Env / Sign / Portal are detail panels, not a second wizard.
+**Local shipping hub for the final mile** — sign → release → deploy — on three surfaces: **CLI** (JSON/MCP) · **TUI** · **Desktop**. Same `orbityard` engine (Signet + Orbit adapters). Adaptive **Publish** is the spine (Open/Run → Confirm → Next); Scopes / Env / Sign / Portal are detail panels, not a second wizard.
 
 Boot: [docs/START-HERE.md](./docs/START-HERE.md) · **Index:** [docs/README.md](./docs/README.md) · **Scope:** [docs/product/SCOPE-OF-SERVICE.md](./docs/product/SCOPE-OF-SERVICE.md) · Contract: [docs/product/PRODUCT.md](./docs/product/PRODUCT.md) · Manual gates: [docs/product/OPERATOR-NEXT.md](./docs/product/OPERATOR-NEXT.md) · Marketing honesty: [never-say block](./specs/frontend/never-say-block-design.md)
 
@@ -13,21 +13,21 @@ Boot: [docs/START-HERE.md](./docs/START-HERE.md) · **Index:** [docs/README.md](
 ```bash
 git clone https://github.com/Dendro-X0/ship-studio.git
 cd ship-studio
-cargo build -p shipctl --release
+cargo build -p orbityard --release
 
 # Point at the project you are shipping
-./target/release/shipctl ship --project /path/to/project
-./target/release/shipctl guide --project /path/to/project --open
-./target/release/shipctl tui --project /path/to/project
+./target/release/orbityard ship --project /path/to/project
+./target/release/orbityard guide --project /path/to/project --open
+./target/release/orbityard tui --project /path/to/project
 ```
 
-On Windows, binaries are `shipctl.exe` under `target/release/`.
+On Windows, binaries are `orbityard.exe` under `target/release/`.
 
 ## Layout
 
 | Path | Role |
 |------|------|
-| `crates/shipctl` | CLI + TUI + MCP + publish / pulse / portal / secrets / vault |
+| `crates/orbityard` | CLI + TUI + MCP + publish / pulse / portal / secrets / vault |
 | `apps/desktop` | Tauri shell (Publish spine + Related detail panels) |
 | `apps/website` | Official product site (pricing · docs · demo · legal) — [README](./apps/website/README.md) |
 | `docs/` | Front door + shelves (product · dogfood · frontend · handoffs) — [docs/README.md](./docs/README.md) |
@@ -41,7 +41,7 @@ pnpm install
 pnpm dev                          # Tauri + Vite (from repo root)
 # or release stage:
 bash scripts/stage-desktop.sh
-./target/release/ship-studio-desktop.exe
+./target/release/orbit-yard-desktop.exe
 ```
 
 ## Website
@@ -57,15 +57,15 @@ Primary distribution: [GitHub Releases](https://github.com/Dendro-X0/ship-studio
 
 ```bash
 SHIP_VAULT_PASSPHRASE='…' MY_TOKEN='…' \
-  ./target/release/shipctl vault export --out ./ship-secrets.km \
+  ./target/release/orbityard vault export --out ./ship-secrets.km \
   --title GITHUB_TOKEN --value-env MY_TOKEN
 ```
 
 ## Proof
 
 ```bash
-cargo test -p shipctl
-./target/release/shipctl guide --project .
+cargo test -p orbityard
+./target/release/orbityard guide --project .
 bash scripts/dogfood-advanced-publish.sh
 # Windows (no WSL): powershell -File scripts/dogfood-advanced-publish.ps1
 bash scripts/dogfood-offline.sh .

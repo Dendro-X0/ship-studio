@@ -32,4 +32,4 @@ Local intent already drops `submit.*`. General does not include listing/submit.
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl steam_` |
+| L1 | `cargo test -p orbityard steam_` |

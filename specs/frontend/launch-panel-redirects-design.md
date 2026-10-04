@@ -24,5 +24,5 @@ Omit from Launch (live on panels): per-host `host.*`, per-store `submit.*` / `li
 
 ## Proof
 
-- L1: `cargo test -p shipctl` · desktop `tsc`
+- L1: `cargo test -p orbityard` · desktop `tsc`
 - L2: Harbor Launch step count ≪ 22; Open Sign / Open Deployment / no Polar row unless Polar detected

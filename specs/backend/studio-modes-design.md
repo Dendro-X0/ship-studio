@@ -1,7 +1,7 @@
 # Studio modes — General & Advanced
 
 **Status:** Implemented  
-**Owner:** `crates/shipctl` (`publish`) · `apps/desktop`
+**Owner:** `crates/orbityard` (`publish`) · `apps/desktop`
 
 ## Principle
 
@@ -25,21 +25,21 @@ Keep: `doctor`, `scopes` (when multi-dir), `env.sprint`, `configure`, `sign.self
 
 ## Persistence
 
-- Desktop: `localStorage` `ship-studio.mode` = `general` | `advanced`
+- Desktop: `localStorage` `orbit-yard.mode` = `general` | `advanced`
 - Publish state: `.ship/publish.json` field `mode` — changing mode rebuilds the plan (progress for removed steps is not merged)
 
 ## CLI
 
 ```text
-shipctl publish --mode general|advanced [--project .]
-shipctl publish reset --mode …
+orbityard publish --mode general|advanced [--project .]
+orbityard publish reset --mode …
 ```
 
 ## Desktop shell
 
 - Topbar segmented control: General | Advanced
 - `body[data-mode=…]` hides Advanced-only nav (Assist, Launch, Portal, Ritual, Tools) and Deploy toggle in General
-- All `shipctl publish …` invocations pass `--mode`
+- All `orbityard publish …` invocations pass `--mode`
 
 ## Invariants
 
@@ -47,6 +47,6 @@ No vendor HTTPS from bridge; no secret values in `.ship/`.
 
 ## Proof
 
-- L1: `cargo test -p shipctl publish::`
+- L1: `cargo test -p orbityard publish::`
 - L1: `npx tsc --noEmit` in `apps/desktop`
 - L3: Toggle General → shorter Publish list; Advanced → Related + Assist/Tools visible

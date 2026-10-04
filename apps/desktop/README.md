@@ -1,4 +1,4 @@
-# Ship Studio Desktop
+# Orbit Yard Desktop
 
 CodaCtrl-shaped shell for the local Ship bridge.
 
@@ -18,14 +18,14 @@ VS Code / Cursor: **Run and Debug → “Desktop: pnpm dev”**.
 
 ```bash
 bash scripts/stage-desktop.sh
-./target/release/ship-studio-desktop.exe
+./target/release/orbit-yard-desktop.exe
 ```
 
 Or: `pnpm desktop:release` from the repo root.
 
-Bare `cargo build -p ship-studio-desktop` keeps `cfg(dev)` → localhost refused. Use `pnpm dev` / `tauri build` / `stage-desktop.sh`.
+Bare `cargo build -p orbit-yard-desktop` keeps `cfg(dev)` → localhost refused. Use `pnpm dev` / `tauri build` / `stage-desktop.sh`.
 
-Optional env: `SHIPCTL_PATH`, `SIGNET_PATH`, `ORBIT_PATH`.
+Optional env: `ORBITYARD_PATH`, `SIGNET_PATH`, `ORBIT_PATH`.
 
 ## UI
 

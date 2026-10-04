@@ -1,12 +1,12 @@
 [package]
-name = "shipctl"
+name = "orbityard"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Local Ship bridge: configure → Signet → Orbit (CLI + MCP)"
+description = "Orbit Yard — local Signet + Orbit shipping bridge (CLI + MCP)"
 
 [[bin]]
-name = "shipctl"
+name = "orbityard"
 path = "src/main.rs"
 
 [dependencies]

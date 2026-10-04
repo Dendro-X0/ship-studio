@@ -10,7 +10,7 @@
 
 ## Fix
 
-Parity script: `scripts/dogfood-advanced-publish.ps1` — same fixture refresh + Advanced plan id / `desktop_view` asserts, resolves `shipctl.exe` from debug/release (or `SHIPCTL_PATH`).
+Parity script: `scripts/dogfood-advanced-publish.ps1` — same fixture refresh + Advanced plan id / `desktop_view` asserts, resolves `orbityard.exe` from debug/release (or `ORBITYARD_PATH`).
 
 ## Usage
 

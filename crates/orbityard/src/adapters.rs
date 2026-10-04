@@ -187,7 +187,7 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
     }
     if !portal_providers.is_empty() {
         notes.push(format!(
-            "Portal providers: {} — run `shipctl portal` or TUI wizard.",
+            "Portal providers: {} — run `orbityard portal` or TUI wizard.",
             portal_providers.join(", ")
         ));
     }
@@ -201,10 +201,10 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
     }
     if secret_hint_count > 0 {
         notes.push(format!(
-            "{secret_hint_count} secret hint(s) — run `shipctl secrets` to paste via provider CLI."
+            "{secret_hint_count} secret hint(s) — run `orbityard secrets` to paste via provider CLI."
         ));
     }
-    notes.push("Full checklist: `shipctl guide` · one-shot prep: `shipctl ship`".into());
+    notes.push("Full checklist: `orbityard guide` · one-shot prep: `orbityard ship`".into());
     notes.extend(detected.hints.iter().cloned());
 
     // Final-mile readiness (shipping hub band #11).
@@ -349,7 +349,7 @@ pub fn doctor(project: &Path) -> Result<DoctorReport> {
         ));
     }
     notes.push(
-        "Progress nudge: `shipctl publish watch` (CLI) · Desktop Watch · TUI `w` · MCP `ship_publish_watch` — local Verify only."
+        "Progress nudge: `orbityard publish watch` (CLI) · Desktop Watch · TUI `w` · MCP `orbit_publish_watch` — local Verify only."
             .into(),
     );
 
@@ -630,7 +630,7 @@ mod tests {
         use std::sync::atomic::{AtomicU64, Ordering};
         static N: AtomicU64 = AtomicU64::new(0);
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-test-{}-{}-{}",
+            "orbityard-test-{}-{}-{}",
             std::process::id(),
             N.fetch_add(1, Ordering::Relaxed),
             std::time::SystemTime::now()

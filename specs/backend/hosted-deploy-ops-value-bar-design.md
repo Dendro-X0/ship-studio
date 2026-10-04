@@ -23,7 +23,7 @@ PRICE: $29 paid delta = finishable host cut for account-holders without DevOps f
 
 | We earn $29 when | Mechanism |
 |------------------|-----------|
-| Process is visible | Streamed local `wrangler` / `vercel` / `netlify` (like `shipctl selfhost`) |
+| Process is visible | Streamed local `wrangler` / `vercel` / `netlify` (like `orbityard selfhost`) |
 | Result is visible | Hosted URL + pulse `last_run_ok` / Orbit summary (not loopback) |
 | Dashboard shows the project | Open live URL + Open dashboard (account/project deep link) |
 | Failure is actionable | Troubleshoot taxonomy → Login CLI / Sign in (web) / Put / Open dashboard / retry Deploy |
@@ -58,11 +58,11 @@ Copy must never say Studio deploys SaaS *for* you without the local CLI or the d
 
 | Slice | Change | Proof |
 |-------|--------|-------|
-| **H1 — CLI Deploy stream (CF)** | Cloudflare **Deploy** → `shipctl hostdeploy --provider cloudflare`; Pages/Workers detect; streamed wrangler; hosted last-run; auth-fail → Login CLI / Sign in (web) | **Shipped** — L1 hostdeploy tests |
+| **H1 — CLI Deploy stream (CF)** | Cloudflare **Deploy** → `orbityard hostdeploy --provider cloudflare`; Pages/Workers detect; streamed wrangler; hosted last-run; auth-fail → Login CLI / Sign in (web) | **Shipped** — L1 hostdeploy tests |
 | **H2 — Vercel (+ Netlify)** | Same shape for `vercel --prod --yes` / `netlify deploy --prod` | **Shipped** — L1 detect tests |
 | **H3 — Results bay** | Deployment aside shows last deploy evidence (phases · URL · Open live · Open dashboard) from pulse + last-run | **Shipped** — Desktop `plat-results` |
 | **H4 — Troubleshoot taxonomy** | `HostFailClass` + Desktop one primary recovery (Login CLI / Preview / Retry / Open dashboard) on toast + Results bay | **Shipped** — L1 classify tests |
-| **H5 — MCP playbook** | Document `ship_*` sequence for agents (no secret paste); thin `ship_hostdeploy` | **Shipped** — playbook + MCP tool L1 |
+| **H5 — MCP playbook** | Document `ship_*` sequence for agents (no secret paste); thin `orbit_hostdeploy` | **Shipped** — playbook + MCP tool L1 |
 | **H6 — Confirm + isolate Results** | Per-host Results bay; Deploy confirm dialog + `--name` | **Shipped** — [host-deploy-confirm-design](../frontend/host-deploy-confirm-design.md) |
 
 ## Rigor invariants (non-negotiable)
@@ -76,9 +76,9 @@ Copy must never say Studio deploys SaaS *for* you without the local CLI or the d
 
 ## H1 detail (next atomic)
 
-### shipctl
+### orbityard
 
-- Extend or add a hosted deploy entry (prefer reusing Ritual/`deploy` path if present; else thin `shipctl` wrapper that shells to wrangler with streamed phases).  
+- Extend or add a hosted deploy entry (prefer reusing Ritual/`deploy` path if present; else thin `orbityard` wrapper that shells to wrangler with streamed phases).  
 - Detect Pages vs Workers from project layout (Harbor website → Pages).  
 - Last-run: `ok`, `urls` (https only), steps `host.detect` · `host.deploy` · `host.url`, message without secrets.  
 - Exit non-zero on auth → stderr classifiable.
@@ -117,19 +117,19 @@ Copy must never say Studio deploys SaaS *for* you without the local CLI or the d
 
 Missing Pages project: **Deploy auto-runs** `wrangler pages project create <name> --production-branch=main` then retries deploy once (no dashboard trip). Create failure / wrong account still → **Open dashboard** + **Retry**.
 
-shipctl annotates failed last-run messages with `[class]`. Desktop mirrors classification for toast + Results bay **Troubleshoot** + **Retry Deploy**.
+orbityard annotates failed last-run messages with `[class]`. Desktop mirrors classification for toast + Results bay **Troubleshoot** + **Retry Deploy**.
 
 ## H5 detail (shipped)
 
 ### Agent playbook (hosted Path B)
 
 ```text
-1. ship_pulse → confirm project; note deploy signals (not selfhost_ok loopback)
-2. ship_portal provider=cloudflare|vercel|netlify → Sign in (web) / Login CLI URLs
+1. orbit_pulse → confirm project; note deploy signals (not selfhost_ok loopback)
+2. orbit_portal provider=cloudflare|vercel|netlify → Sign in (web) / Login CLI URLs
 3. Human: Login CLI once (Desktop terminal) OR Sign in (web) + Path A dashboard deploy
 4. Prefer Desktop Deployment **Deploy** when auth TTY may appear
-5. Else ship_hostdeploy { project, provider } — streams local wrangler/vercel/netlify
-6. ship_status / ship_pulse → hosted urls · last_run message [class]
+5. Else orbit_hostdeploy { project, provider } — streams local wrangler/vercel/netlify
+6. orbit_status / orbit_pulse → hosted urls · last_run message [class]
 7. On auth → tell human Login CLI / Sign in (web); never paste tokens into chat
 8. Open live / Open dashboard (Desktop) → Publish Live check → human Confirm
 9. Never claim “Studio created your API token” or fill Create Custom Token
@@ -139,8 +139,8 @@ shipctl annotates failed last-run messages with `[class]`. Desktop mirrors class
 
 | Tool | Role |
 |------|------|
-| `ship_hostdeploy` | Thin wrapper on `hostdeploy::run`; provider default `cloudflare`; refuses offline; on Err returns last_run + recovery hint |
-| `ship_deploy` | Still Orbit only — do not use for Cloudflare/Vercel/Netlify hosted cut |
+| `orbit_hostdeploy` | Thin wrapper on `hostdeploy::run`; provider default `cloudflare`; refuses offline; on Err returns last_run + recovery hint |
+| `orbit_deploy` | Still Orbit only — do not use for Cloudflare/Vercel/Netlify hosted cut |
 
 Invariant: no secret custody; Prefer Desktop for interactive login prompts (mcp-assist G5).
 
@@ -148,5 +148,5 @@ Invariant: no secret custody; Prefer Desktop for interactive login prompts (mcp-
 
 | Layer | Check |
 |-------|--------|
-| L1 | `tools_include_ship_hostdeploy` |
+| L1 | `tools_include_orbit_hostdeploy` |
 | Doc | Playbook above + [mcp-assist-contract](./mcp-assist-contract-design.md) hosted section |

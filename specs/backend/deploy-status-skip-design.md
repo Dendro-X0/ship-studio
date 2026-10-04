@@ -1,7 +1,7 @@
 # Deploy status & skip redundant deploy
 
 **Status:** Implemented  
-**Owner:** `crates/shipctl` (`pulse`, `publish`, `config`) · Desktop checklist
+**Owner:** `crates/orbityard` (`pulse`, `publish`, `config`) · Desktop checklist
 
 ## Problem
 
@@ -31,11 +31,11 @@ When `deploy_is_live`:
 
 ## Persistence
 
-- Successful `shipctl deploy` writes `.ship/last-run.json` (including URLs from latest orbit summary when available).
+- Successful `orbityard deploy` writes `.ship/last-run.json` (including URLs from latest orbit summary when available).
 
 ## Proof
 
 - L1: fixture with only `.wrangler/state` → `wrangler_local`, not live  
 - L1: fixture with orbit summary ok + url → `orbit_deployed`, General publish marks deploy + live_check Done  
-- L1: `cargo test -p shipctl pulse:: publish::`  
+- L1: `cargo test -p orbityard pulse:: publish::`  
 - L3: assess-api Dashboard shows workers.dev / Deployed; Publish skips redeploy steps  

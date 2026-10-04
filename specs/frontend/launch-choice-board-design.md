@@ -99,8 +99,8 @@ Launch never asks “login Cloudflare *and* Vercel *and* Netlify.”
 | Slice | Work | Proof |
 |-------|------|--------|
 | **L0** | This design + handoff queue | Spec only |
-| **L1** | Launch view chrome: Band A/B/C layout (Desktop); keep shipctl step ids, regroup in UI | **Done** — Prep collapsed · lane cards · Ship cut |
-| **L2** | shipctl: emit `lane` + `optional` + `suggested` on steps; drop flow/deploy from Launch when Local | **Done** — annotate + Local omits Orbit cut |
+| **L1** | Launch view chrome: Band A/B/C layout (Desktop); keep orbityard step ids, regroup in UI | **Done** — Prep collapsed · lane cards · Ship cut |
+| **L2** | orbityard: emit `lane` + `optional` + `suggested` on steps; drop flow/deploy from Launch when Local | **Done** — annotate + Local omits Orbit cut |
 | **L3** | Payments lane opt-in (studio.json / UI toggle); Integrations hidden until on | **Done** — `launch_payments` · Launch **Payments** checkbox · Harbor no card by default |
 | **L4** | Deployment “primary host” remembered; oauth.hosts verify that host only | **Done** — `primary_host` in studio.json · card/`selectId` persists · soft-open highlights only · Verify checks that provider · [Desktop dogfood](../../docs/handoffs/evidence-harbor-desktop-dogfood.md) |
 

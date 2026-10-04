@@ -2,7 +2,7 @@
 
 **Status:** Active  
 **Updated:** 2026-09-13  
-**Owner:** `crates/shipctl` (`vault_km`)
+**Owner:** `crates/orbityard` (`vault_km`)
 
 ## Goal
 
@@ -19,27 +19,27 @@ Entries use Clavis `entry_type: api` with `title`, `password` (secret value), `u
 ## Commands
 
 ```text
-shipctl vault export --out PATH.km [--project DIR]
+orbityard vault export --out PATH.km [--project DIR]
   # Interactive: passphrase (twice) + name/value pairs
-shipctl vault export --out PATH.km --from-hints --project DIR
+orbityard vault export --out PATH.km --from-hints --project DIR
   # Titles from secret hints; values prompted
-shipctl vault export --out PATH.km --title NAME --value-env ENV
+orbityard vault export --out PATH.km --title NAME --value-env ENV
   # Single-entry scripted export
-shipctl vault export --out PATH.km --entries-file entries.json
+orbityard vault export --out PATH.km --entries-file entries.json
   # Batch: [{title,value,url?,notes?}] — used by Desktop
-shipctl vault add --file PATH.km --title TITLE [--value-env ENV]
-shipctl vault list --file PATH.km
-shipctl vault show --file PATH.km --title TITLE
+orbityard vault add --file PATH.km --title TITLE [--value-env ENV]
+orbityard vault list --file PATH.km
+orbityard vault show --file PATH.km --title TITLE
 ```
 
 ## Surfaces
 
 | Surface | Entry |
 |---------|--------|
-| CLI | `shipctl vault …` |
+| CLI | `orbityard vault …` |
 | TUI | Secrets → `v` → `./ship-secrets.km` |
 | Desktop | **Export vault** (passphrase + paste prompts) |
-| MCP | `ship_vault` action `export` / `list` / `show` |
+| MCP | `orbit_vault` action `export` / `list` / `show` |
 | Guide | step id `vault` after `secrets` |
 
 ## Invariants
@@ -54,4 +54,4 @@ shipctl vault show --file PATH.km --title TITLE
 
 - L1: round-trip encode/decode unit test
 - L2: `vault export` → `vault list` shows titles
-- L3: Desktop **Export vault** / TUI `v` / MCP `ship_vault` / guide step `vault`
+- L3: Desktop **Export vault** / TUI `v` / MCP `orbit_vault` / guide step `vault`

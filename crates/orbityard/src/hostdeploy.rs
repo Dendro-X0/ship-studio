@@ -481,7 +481,7 @@ fn sanitize_project_name(raw: &str) -> String {
     }
     let s = s.trim_matches('-').to_string();
     if s.is_empty() {
-        "ship-studio".into()
+        "orbit-yard".into()
     } else {
         s.chars().take(58).collect()
     }
@@ -492,7 +492,7 @@ fn project_name(project: &Path) -> String {
         project
             .file_name()
             .and_then(|s| s.to_str())
-            .unwrap_or("ship-studio"),
+            .unwrap_or("orbit-yard"),
     )
 }
 
@@ -1287,17 +1287,17 @@ Visit https://harbor.pages.dev/index.html
         fs::create_dir_all(dir.join("dist")).unwrap();
         fs::write(dir.join("dist/index.html"), "<h1>ok</h1>").unwrap();
         let mut plan = detect_netlify(&dir).unwrap();
-        apply_project_name(&mut plan, "Ship Studio Site!");
-        assert_eq!(plan.project_name, "ship-studio-site");
+        apply_project_name(&mut plan, "Orbit Yard Site!");
+        assert_eq!(plan.project_name, "orbit-yard-site");
         let site_idx = plan
             .argv
             .iter()
             .position(|a| a == "--site")
             .expect("--site");
-        assert_eq!(plan.argv.get(site_idx + 1).map(String::as_str), Some("ship-studio-site"));
+        assert_eq!(plan.argv.get(site_idx + 1).map(String::as_str), Some("orbit-yard-site"));
         let create = netlify_create_and_deploy_plan(&plan);
         assert!(create.argv.iter().any(|a| a == "--create-site"));
-        assert!(create.argv.iter().any(|a| a == "ship-studio-site"));
+        assert!(create.argv.iter().any(|a| a == "orbit-yard-site"));
         assert!(is_missing_netlify_site(
             "This folder isn't linked to a project yet\nTo create and deploy in one go, use: netlify deploy --create-site"
         ));

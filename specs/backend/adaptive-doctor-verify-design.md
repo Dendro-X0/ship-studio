@@ -39,4 +39,4 @@
 
 - L1: `doctor_tools_ok` unit matrix (library / desktop Signet / Workers)  
 - L1: verify `legal.baseline` / `trust.pack` after files appear  
-- L2: `cargo test -p shipctl` · dogfood still green  
+- L2: `cargo test -p orbityard` · dogfood still green  

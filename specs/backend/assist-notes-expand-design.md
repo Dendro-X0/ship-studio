@@ -20,4 +20,4 @@ Assist checklist notes mention portal lanes from #28â€“#35 and Watch surfaces â€
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl assist_notes_hosts` |
+| L1 | `cargo test -p orbityard assist_notes_hosts` |

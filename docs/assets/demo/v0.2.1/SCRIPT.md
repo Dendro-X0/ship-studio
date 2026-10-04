@@ -18,7 +18,7 @@ Prove **useful mid-flight shipping**, not “how to install software.” Everyon
 |--------|----------|--------------------|
 | **`fixtures/harbor`** | Lightweight Desktop + Docs (+ Signet) — clean Targets for GIFs | **Primary — always** |
 | `fixtures/advanced-dogfood` | Advanced multipath dogfood (mobile · CI · container · steam) | Engineering only — not Part 1 shelf |
-| **Ship Studio itself** | Engineering dogfood on the real monorepo | **Never for public GIFs** — already signed/deployed |
+| **Orbit Yard itself** | Engineering dogfood on the real monorepo | **Never for public GIFs** — already signed/deployed |
 | **aperio** | Extreme Targets / Advanced Public mid-flight | **Avoid for public GIFs** |
 
 **Rule:** Bind Harbor (`fixtures/harbor`) from the installed Desktop. Run `scripts/harbor-reset` (or wipe `.ship/`) before recording so Scopes / Configure / Sign·Deploy start mid-flight. Prefer **Advanced + Local** for bind + publish check. For **Deployment Open** only, switch intent to **Public** so the Deployment panel is meaningful — still do not run a live deploy.
@@ -67,7 +67,7 @@ Studio keeps **mid-flight order** across surfaces: you Open vendor doors, Confir
 
 ### How to set it
 
-1. Resize the Ship Studio window to about **960×560** (titlebar included). Default app size is larger — shrink before recording.  
+1. Resize the Orbit Yard window to about **960×560** (titlebar included). Default app size is larger — shrink before recording.  
 2. Record **only the app window** (no desktop wallpaper). Optional: cut **before** the browser tab fills the frame, or crop to Studio only.  
 3. Export / convert to GIF at **720×420**, **10 fps**, **8–12 s** per clip.  
 4. Rename once: `06-sign-open.gif` / `07-deploy-open.gif` — avoid `.gif.gif`.
@@ -182,7 +182,7 @@ Part 1 still never shows install / setup. T6 stays Open-only (no paid certs).
 
 ## Presenter line (say or subtitle)
 
-> Ship Studio sequences the final mile — sign, release, deploy — and remembers where you are. Vendors and you still finish the irreversible steps.
+> Orbit Yard sequences the final mile — sign, release, deploy — and remembers where you are. Vendors and you still finish the irreversible steps.
 
 ## Success criteria
 

@@ -1,13 +1,13 @@
 # Polar checkout dogfood (W2)
 
-End-to-end money path without putting card data on Ship Studio servers.
+End-to-end money path without putting card data on Orbit Yard servers.
 
 ## 1. Create the product
 
 1. Open [Polar dashboard](https://polar.sh/dashboard) (sandbox org if available).  
-2. Create product **Ship Studio Solo** — one-time purchase.  
+2. Create product **Orbit Yard Solo** — one-time purchase.  
 3. Copy the **Checkout** link (or Checkout API URL).  
-4. Optional for Ship Studio Portal deep links: set `POLAR_ORGANIZATION_SLUG=<your-org-slug>` in the project `.env` so Open goes to Products / Settings / Webhooks instead of Overview.  
+4. Optional for Orbit Yard Portal deep links: set `POLAR_ORGANIZATION_SLUG=<your-org-slug>` in the project `.env` so Open goes to Products / Settings / Webhooks instead of Overview.  
 
 ## 2. Wire redirect URLs on the Checkout Link
 

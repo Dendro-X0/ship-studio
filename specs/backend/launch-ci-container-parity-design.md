@@ -27,4 +27,4 @@ Guided Launch sequences CI Actions check (`gh run list` read-only) and container
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl launch_ci_container` |
+| L1 | `cargo test -p orbityard launch_ci_container` |

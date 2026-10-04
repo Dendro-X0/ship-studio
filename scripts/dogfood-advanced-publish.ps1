@@ -2,7 +2,7 @@
 # Usage (repo root):
 #   .\scripts\dogfood-advanced-publish.ps1
 #   .\scripts\dogfood-advanced-publish.ps1 -Fixture "E:\path\to\fixture"
-# Optional: $env:SHIPCTL_PATH = "E:\...\shipctl.exe"
+# Optional: $env:ORBITYARD_PATH = "E:\...\orbityard.exe"
 param(
     [string]$Fixture = ""
 )
@@ -66,40 +66,40 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
     }
     $origin = git -C $Fixture remote get-url origin 2>$null
     if (-not $origin) {
-        git -C $Fixture remote add origin "https://github.com/example/ship-studio-dogfood.git" 2>$null | Out-Null
+        git -C $Fixture remote add origin "https://github.com/example/orbit-yard-dogfood.git" 2>$null | Out-Null
     }
 }
 
 function Resolve-Shipctl {
-    if ($env:SHIPCTL_PATH -and (Test-Path $env:SHIPCTL_PATH)) {
-        return (Resolve-Path $env:SHIPCTL_PATH).Path
+    if ($env:ORBITYARD_PATH -and (Test-Path $env:ORBITYARD_PATH)) {
+        return (Resolve-Path $env:ORBITYARD_PATH).Path
     }
     $candidates = @(
-        (Join-Path $Root "target\debug\shipctl.exe"),
-        (Join-Path $Root "target\debug\shipctl"),
-        (Join-Path $Root "target\release\shipctl.exe"),
-        (Join-Path $Root "target\release\shipctl")
+        (Join-Path $Root "target\debug\orbityard.exe"),
+        (Join-Path $Root "target\debug\orbityard"),
+        (Join-Path $Root "target\release\orbityard.exe"),
+        (Join-Path $Root "target\release\orbityard")
     )
     foreach ($c in $candidates) {
         if (Test-Path $c) { return (Resolve-Path $c).Path }
     }
     Push-Location $Root
     try {
-        cargo build -p shipctl | Out-Null
+        cargo build -p orbityard | Out-Null
     } finally {
         Pop-Location
     }
     foreach ($c in $candidates) {
         if (Test-Path $c) { return (Resolve-Path $c).Path }
     }
-    throw "shipctl not found - run cargo build -p shipctl"
+    throw "orbityard not found - run cargo build -p orbityard"
 }
 
-# Prefer a fresh debug build when SHIPCTL_PATH is unset (parity with bash script).
-if (-not $env:SHIPCTL_PATH) {
+# Prefer a fresh debug build when ORBITYARD_PATH is unset (parity with bash script).
+if (-not $env:ORBITYARD_PATH) {
     Push-Location $Root
     try {
-        cargo build -p shipctl | Out-Null
+        cargo build -p orbityard | Out-Null
     } finally {
         Pop-Location
     }
@@ -107,11 +107,11 @@ if (-not $env:SHIPCTL_PATH) {
 
 $Shipctl = Resolve-Shipctl
 Write-Host "Fixture: $Fixture"
-Write-Host "shipctl: $Shipctl"
+Write-Host "orbityard: $Shipctl"
 
 $raw = & $Shipctl publish --mode advanced --project $Fixture 2>$null | Out-String
 if (-not $raw.Trim()) {
-    throw "shipctl publish returned empty output"
+    throw "orbityard publish returned empty output"
 }
 $plan = $raw | ConvertFrom-Json
 $byId = @{}
@@ -190,7 +190,7 @@ if ($miss -ne 0) {
 Write-Host "Advanced dogfood plan OK - bind this folder in Desktop (Advanced mode):"
 Write-Host "  $Fixture"
 
-$debugDesktop = Join-Path $Root "target\debug\ship-studio-desktop.exe"
+$debugDesktop = Join-Path $Root "target\debug\orbit-yard-desktop.exe"
 if ((Test-Path $debugDesktop) -and (Test-Path $Shipctl)) {
     Copy-Item -Force $Shipctl (Join-Path $Root "target\debug\$(Split-Path -Leaf $Shipctl)")
     Write-Host "Staged $(Split-Path -Leaf $Shipctl) next to target/debug desktop."

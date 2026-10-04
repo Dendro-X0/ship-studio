@@ -1,4 +1,4 @@
-# Ship Studio — official website
+# Orbit Yard — official website
 
 Public product surface (marketing · pricing · docs · demo · legal · checkout).  
 Not part of the local Adaptive Publish hub — see `specs/backend/product-website-charter.md`.
@@ -88,8 +88,8 @@ pnpm website:build
 
 ```bash
 netlify login
-shipctl hostdeploy --project apps/website --provider netlify
-# or: shipctl publish → Deploy (after Login CLI)
+orbityard hostdeploy --project apps/website --provider netlify
+# or: orbityard publish → Deploy (after Login CLI)
 ```
 
 Put `PUBLIC_PADDLE_*` on the Netlify site env (not in git) for Solo Buy.

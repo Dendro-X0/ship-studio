@@ -1,15 +1,15 @@
 {
-  "name": "ship-studio",
+  "name": "orbit-yard",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter ship-studio-desktop exec tauri dev",
-    "dev:ui": "pnpm --filter ship-studio-desktop dev",
-    "build:ui": "pnpm --filter ship-studio-desktop build",
-    "desktop:release": "pnpm --filter ship-studio-desktop desktop:release",
-    "desktop:installer": "pnpm --filter ship-studio-desktop desktop:installer",
-    "website:dev": "pnpm --filter ship-studio-website dev",
-    "website:build": "pnpm --filter ship-studio-website build",
-    "website:preview": "pnpm --filter ship-studio-website preview"
+    "dev": "pnpm --filter orbit-yard-desktop exec tauri dev",
+    "dev:ui": "pnpm --filter orbit-yard-desktop dev",
+    "build:ui": "pnpm --filter orbit-yard-desktop build",
+    "desktop:release": "pnpm --filter orbit-yard-desktop desktop:release",
+    "desktop:installer": "pnpm --filter orbit-yard-desktop desktop:installer",
+    "website:dev": "pnpm --filter orbit-yard-website dev",
+    "website:build": "pnpm --filter orbit-yard-website build",
+    "website:preview": "pnpm --filter orbit-yard-website preview"
   },
   "packageManager": "pnpm@9.15.9"
 }

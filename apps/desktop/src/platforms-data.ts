@@ -31,7 +31,7 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
     needsPublic: true,
     deployArgs: "deploy --provider cloudflare",
     steps: [
-      "Deploy streams shipctl hostdeploy (wrangler Pages or Workers) — watch Output for phases.",
+      "Deploy streams orbityard hostdeploy (wrangler Pages or Workers) — watch Output for phases.",
       "Success URL is Cloudflare-hosted (*.pages.dev / workers.dev) — not Self-host loopback.",
       "Not logged in? Login CLI (`wrangler login`) or Sign in (web) — Studio never creates API tokens.",
       "After you delete on the vendor: **Clear evidence** syncs Studio (drops local last-run). **Cancel on dashboard** opens Workers & Pages — Studio never undeploys for you.",
@@ -49,7 +49,7 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
     needsPublic: true,
     deployArgs: "deploy --provider vercel",
     steps: [
-      "Deploy streams shipctl hostdeploy (vercel --prod) — watch Output for phases.",
+      "Deploy streams orbityard hostdeploy (vercel --prod) — watch Output for phases.",
       "Not logged in? Login CLI (`vercel login`) or Sign in (web) — Studio never stores tokens.",
       "Open dashboard → Projects list (or the project when linked). Stop/delete only on Vercel.",
       "Copy the production URL → Publish Live check → Confirm (Studio does not auto-Confirm).",
@@ -67,7 +67,7 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
     needsPublic: true,
     deployArgs: "deploy --provider netlify",
     steps: [
-      "Deploy streams shipctl hostdeploy (netlify deploy --prod) — watch Output for phases.",
+      "Deploy streams orbityard hostdeploy (netlify deploy --prod) — watch Output for phases.",
       "Not logged in? Login CLI (`netlify login`) or Sign in (web) — Studio never stores tokens.",
       "Open dashboard → Projects (site deep-link when known). Stop/delete only on Netlify.",
       "Copy the site URL → Publish Live check → Confirm (Studio does not auto-Confirm).",

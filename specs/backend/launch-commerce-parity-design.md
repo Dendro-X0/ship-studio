@@ -19,4 +19,4 @@ Guided Launch sequences Gumroad / Lemon / Stripe / Paddle listing Open + Confirm
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl launch_commerce` |
+| L1 | `cargo test -p orbityard launch_commerce` |

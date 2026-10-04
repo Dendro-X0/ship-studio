@@ -13,16 +13,16 @@ NOT:      Changing selfhost CLI semantics · moving serve to an external termina
 ## Invariants
 
 1. **Main-thread rule** — No `child.wait()` (or other unbounded block) on the Tauri main thread.  
-2. **Cancel rule** — `cancel_shipctl` remains callable while a run is in flight.  
-3. **API rule** — Frontend `invoke("run_shipctl")` contract unchanged (`CmdResult`).
+2. **Cancel rule** — `cancel_orbityard` remains callable while a run is in flight.  
+3. **API rule** — Frontend `invoke("run_orbityard")` contract unchanged (`CmdResult`).
 
-## Slice 1 — Off-main `run_shipctl`
+## Slice 1 — Off-main `run_orbityard`
 
 | Change | Detail |
 |--------|--------|
-| `run_shipctl` | `#[tauri::command(async)]` (sync body OK — Tauri runs it off main) |
-| `run_shipctl_env` | Same |
-| `cancel_shipctl` | Leave sync + short; kill tree via existing `ActiveRun.pid` |
+| `run_orbityard` | `#[tauri::command(async)]` (sync body OK — Tauri runs it off main) |
+| `run_orbityard_env` | Same |
+| `cancel_orbityard` | Leave sync + short; kill tree via existing `ActiveRun.pid` |
 
 Optional later: true `async fn` + `spawn_blocking` if we add awaits; not required for Slice 1.
 
@@ -36,7 +36,7 @@ Optional later: true `async fn` + `spawn_blocking` if we add awaits; not require
 
 | Layer | Check |
 |-------|--------|
-| L1 | `cargo check -p ship-studio-desktop` |
+| L1 | `cargo check -p orbit-yard-desktop` |
 | L2 | Harbor → Self-host Deploy → click around Deployment UI for ≥10s (no Not Responding) |
 | L2 | Cancel serve → process ends · dock Ready · `selfhostServing` clear |
 | L2 | Esc / Output Cancel still kills mid-serve |

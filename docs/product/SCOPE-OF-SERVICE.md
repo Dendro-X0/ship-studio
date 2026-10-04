@@ -1,4 +1,4 @@
-# Ship Studio — Scope of Service
+# Orbit Yard — Scope of Service
 
 **Status:** Active (product definition)  
 **Updated:** 2026-09-25  
@@ -6,11 +6,11 @@
 
 ## One sentence
 
-Ship Studio is a **local portal and guide** for release work: it sequences the **final mile** (**sign → release → deploy** and adjacent lanes) across many project kinds, runs **scripts for highly automatable steps**, and uses **semi-automated wizards** when official channels require the human — without replacing vendor platforms.
+Orbit Yard is a **local portal and guide** for release work: it sequences the **final mile** (**sign → release → deploy** and adjacent lanes) across many project kinds, runs **scripts for highly automatable steps**, and uses **semi-automated wizards** when official channels require the human — without replacing vendor platforms.
 
 ## Value thesis (why pay vs SaaS starter kits)
 
-Indie and multi-repo operators lose time on **order and human gates**, not on “another template.” Ship Studio earns its price when the **Client** makes **OSS cuts, marketplace listings, host deploys, and commerce gates** finishable without surviving vendor encyclopedias — and when **MCP** lets agents assist without taking custody of keys. Linking Docs is not a product.
+Indie and multi-repo operators lose time on **order and human gates**, not on “another template.” Orbit Yard earns its price when the **Client** makes **OSS cuts, marketplace listings, host deploys, and commerce gates** finishable without surviving vendor encyclopedias — and when **MCP** lets agents assist without taking custody of keys. Linking Docs is not a product.
 
 ---
 
@@ -19,7 +19,7 @@ Indie and multi-repo operators lose time on **order and human gates**, not on �
 | Primary | Secondary (not yet) |
 |---------|---------------------|
 | Solo / small teams with **many repos** (OSS + a few paid products) who need one local hub for diverse release workflows | Large orgs needing multi-tenant cloud control planes |
-| Operators who ship **multi-surface** products (Web/API + desktop Signet + optional stores/commerce) | Teams that want Ship Studio to *replace* Cloudflare / Polar / store consoles |
+| Operators who ship **multi-surface** products (Web/API + desktop Signet + optional stores/commerce) | Teams that want Orbit Yard to *replace* Cloudflare / Polar / store consoles |
 | **Founders / operators who can own vendor accounts** but should not need DevOps fluency to finish a cut (Client pathway) | People seeking full auto-publish without human attestation |
 | Agent-assisted teams (Cursor / MCP) who keep **keys under human control** | People who only need a single `wrangler deploy` with no sequence |
 
@@ -87,7 +87,7 @@ Human remaining work is listed in [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) — tha
 ## Responsibility split
 
 ```text
-┌─ Ship Studio ─────────────────────────────────────────┐
+┌─ Orbit Yard ─────────────────────────────────────────┐
 │ Detect · Plan · Sequence · Orient · Honest Verify     │
 │ Status: disk · local CLI · official CLI probe         │
 │ Local CLI Runs (safe / dry-run / read-only preferred) │
@@ -107,13 +107,13 @@ Human remaining work is listed in [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) — tha
 
 ## Delivery surfaces (Client · MCP · CLI)
 
-Same engine (`shipctl`). Three pathways — like CodaCtrl Studio + CodaCtrl MCP, or Ghidra + Ghidra MCP: humans get a UX client; agents get a protocol; neither replaces the other.
+Same engine (`orbityard`). Three pathways — like CodaCtrl Studio + CodaCtrl MCP, or Ghidra + Ghidra MCP: humans get a UX client; agents get a protocol; neither replaces the other.
 
 | Pathway | Surface today | Role | Fee bar |
 |---------|---------------|------|---------|
 | **Client** | Desktop (Tauri); TUI as terminal client | UX-friendly spine for operators without DevOps fluency — exact next human act, never vendor docs as the path | Charge only if a non-technical account-holder can finish gates without encyclopedic docs |
-| **MCP** | `shipctl mcp` (`ship_*`) | Automated assistance for agents; plan / continue / watch / open gates | Keys and vendor logins stay human-managed; agents orchestrate, they do not own secrets |
-| **CLI** | `shipctl` | Shared **kernel** + power-user/script surface | Not the default buyer story if Client is good; still required under Desktop and MCP |
+| **MCP** | `orbityard mcp` (`ship_*`) | Automated assistance for agents; plan / continue / watch / open gates | Keys and vendor logins stay human-managed; agents orchestrate, they do not own secrets |
+| **CLI** | `orbityard` | Shared **kernel** + power-user/script surface | Not the default buyer story if Client is good; still required under Desktop and MCP |
 
 ```text
 ┌─ Client (Desktop / TUI) ─┐     ┌─ MCP (agents) ─┐
@@ -122,7 +122,7 @@ Same engine (`shipctl`). Three pathways — like CodaCtrl Studio + CodaCtrl MCP,
 └────────────┬─────────────┘     └────────┬───────┘
              └────────────┬───────────────┘
                           ▼
-                   shipctl (CLI kernel)
+                   orbityard (CLI kernel)
          detect · plan · publish · portal · secrets put · …
 ```
 
@@ -130,7 +130,7 @@ Same engine (`shipctl`). Three pathways — like CodaCtrl Studio + CodaCtrl MCP,
 
 1. **Client primary for paid UX** — human gates use [catalog CTA law](../../specs/backend/human-gate-catalog-design.md): Put / Login / exact deep link / Confirm — never “go read Workers Secrets” as the path ([overhaul](../../specs/backend/ship-studio-overhaul-design.md)).  
 2. **MCP assists; humans hold keys** — paste/put and OAuth stay operator-initiated (TTY or vendor UI).  
-3. **CLI is kernel, not the product pitch** — if Client is excellent, most buyers never open a shell; `shipctl` still powers Client + MCP.  
+3. **CLI is kernel, not the product pitch** — if Client is excellent, most buyers never open a shell; `orbityard` still powers Client + MCP.  
 4. **No vendor-onboarding theater** — in-app coaches that still dump people into encyclopedias are **CANCELLED** ([vendor-handoff-coach-design](../../specs/backend/vendor-handoff-coach-design.md)).  
 5. **One spine** — Publish remains the integrated workflow; detail panels open from the current step.
 
@@ -143,7 +143,7 @@ Detail: [surfaces-cli-tui-desktop.md](../../specs/backend/surfaces-cli-tui-deskt
 1. For a bound project, Advanced/General plan matches layout (no nonsense Orbit desktop deploy, no missing CI after release).  
 2. Operator can complete a cut without assembling eight nav destinations by hand.  
 3. Mid-flight state survives restart (`.ship/publish.json`).  
-4. Dogfood: `cargo test -p shipctl` · `scripts/dogfood-advanced-*.sh`.  
+4. Dogfood: `cargo test -p orbityard` · `scripts/dogfood-advanced-*.sh`.  
 5. Real proof: publish at least one of *your* products end-to-end using Studio for sequence.  
 6. **Client honesty:** a founder-owned account can finish a secret/OAuth gate via Put/Login without being stranded on jargon docs as the primary path.
 
@@ -167,4 +167,4 @@ Detail: [surfaces-cli-tui-desktop.md](../../specs/backend/surfaces-cli-tui-deskt
 
 ## Positioning line (release)
 
-> **Ship Studio** — local final-mile hub: Client for humans, MCP for agents, CLI as kernel. Sign → release → deploy, sequenced. Vendors and humans still do the irreversible bits.
+> **Orbit Yard** — local final-mile hub: Client for humans, MCP for agents, CLI as kernel. Sign → release → deploy, sequenced. Vendors and humans still do the irreversible bits.

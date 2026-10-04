@@ -30,7 +30,7 @@ pub fn plan(
 
     let mut steps = vec![FlowStep {
         id: "configure".into(),
-        adapter: "shipctl".into(),
+        adapter: "orbityard".into(),
         args: vec!["configure".into()],
         network: false,
     }];

@@ -2,7 +2,7 @@
 
 **Status:** Design + implement this slice  
 **Updated:** 2026-10-03  
-**Owner:** Desktop Integrations `paddle` + `shipctl` portal/publish/secrets URLs  
+**Owner:** Desktop Integrations `paddle` + `orbityard` portal/publish/secrets URLs  
 **Parent:** [human-gate-catalog-design](./human-gate-catalog-design.md) · [website-paddle-checkout-design](./website-paddle-checkout-design.md)
 
 ## Plan alignment

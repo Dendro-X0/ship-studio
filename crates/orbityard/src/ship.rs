@@ -45,13 +45,13 @@ pub fn run(project: &Path, open: bool) -> Result<ShipPrep> {
 
     let next = vec![
         "Human: complete OAuth / marketplace pages (or re-run with --open)".into(),
-        "Human: shipctl secrets put --provider cloudflare --name <HINT>".into(),
-        "Then: shipctl tui   or   shipctl flow --project .".into(),
+        "Human: orbityard secrets put --provider cloudflare --name <HINT>".into(),
+        "Then: orbityard tui   or   orbityard flow --project .".into(),
         "Desktop: Wizard / Portal / Secrets".into(),
     ];
 
     Ok(ShipPrep {
-        schema: "ship-studio/ship/v1".into(),
+        schema: "orbit-yard/ship/v1".into(),
         project: project.display().to_string(),
         guide: guide_plan,
         configured: true,
@@ -70,7 +70,7 @@ mod tests {
     fn ship_writes_last_guide() {
         static N: AtomicU64 = AtomicU64::new(0);
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-ship-{}-{}",
+            "orbityard-ship-{}-{}",
             std::process::id(),
             N.fetch_add(1, Ordering::Relaxed)
         ));

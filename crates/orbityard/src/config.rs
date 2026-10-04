@@ -176,7 +176,7 @@ pub struct Detected {
     /// Static / opt-in Self-host surface (not Dockerfile-only).
     #[serde(default)]
     pub selfhost: bool,
-    /// This repo / fork layout (`crates/shipctl` + `apps/desktop`).
+    /// This repo / fork layout (`crates/orbityard` + `apps/desktop`).
     #[serde(default)]
     pub studio_monorepo: bool,
     /// Opt-in extra marketplaces (Steam / itch / Epic).
@@ -678,10 +678,10 @@ pub fn probe(project: &Path) -> Detected {
     }
     if !d.wrangler && !d.vercel && !d.netlify && !orbit_configured {
         d.hints
-            .push("No wrangler/vercel/netlify/Orbit config yet — run `shipctl portal` then `orbit configure`.".into());
+            .push("No wrangler/vercel/netlify/Orbit config yet — run `orbityard portal` then `orbit configure`.".into());
     } else {
         d.hints
-            .push("Run `shipctl portal` to open OAuth / token entry points for detected providers.".into());
+            .push("Run `orbityard portal` to open OAuth / token entry points for detected providers.".into());
     }
     d
 }
@@ -1743,21 +1743,21 @@ pub fn intent_for(project: &Path) -> Result<StudioIntent> {
     };
 
     let mut notes = vec![
-        "Put provider tokens in each tool's own local config — shipctl does not store secrets."
+        "Put provider tokens in each tool's own local config — orbityard does not store secrets."
             .into(),
         format!(
             "Default sign_args: {:?} — edit .ship/studio.json to change.",
             sign_args
         ),
-        "Run: shipctl flow --project . --dry-run".into(),
-        "Then: shipctl flow --project .   (add --skip-deploy while offline)".into(),
+        "Run: orbityard flow --project . --dry-run".into(),
+        "Then: orbityard flow --project .   (add --skip-deploy while offline)".into(),
     ];
     notes.extend(detected.hints.clone());
     let wants_signet = detected.tauri || detected.signet_toml;
     let existing_path = existing.as_ref().map(|e| e.sign_path.clone());
 
     Ok(StudioIntent {
-        schema: "ship-studio/v0".into(),
+        schema: "orbit-yard/v0".into(),
         project: project.display().to_string(),
         workflow: vec![
             "doctor".into(),
@@ -1896,7 +1896,7 @@ pub fn read_last_run(project: &Path) -> Result<serde_json::Value> {
         return Ok(serde_json::json!({
             "finished": false,
             "ok": false,
-            "message": "no last-run.json yet — run shipctl flow"
+            "message": "no last-run.json yet — run orbityard flow"
         }));
     }
     let raw = fs::read_to_string(path)?;
@@ -1933,7 +1933,7 @@ mod tests {
     #[test]
     fn detects_release_workflow_filename() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-ci-{}",
+            "orbityard-ci-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1966,7 +1966,7 @@ mod tests {
     #[test]
     fn detects_deploy_workflow_filename() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-deploy-wf-{}",
+            "orbityard-deploy-wf-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1988,7 +1988,7 @@ mod tests {
     #[test]
     fn detects_dockerfile() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-docker-{}",
+            "orbityard-docker-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2006,7 +2006,7 @@ mod tests {
     #[test]
     fn detects_steam_appid_and_markets_file() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-markets-{}",
+            "orbityard-markets-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2026,7 +2026,7 @@ mod tests {
     #[test]
     fn detects_launch_baseline_files() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-legal-{}",
+            "orbityard-legal-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2055,7 +2055,7 @@ mod tests {
     #[test]
     fn detects_npm_and_crates_publishable() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-pkg-{}",
+            "orbityard-pkg-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2105,7 +2105,7 @@ mod tests {
     #[test]
     fn detects_marketing_website_and_pages() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-mkt-{}",
+            "orbityard-mkt-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2119,7 +2119,7 @@ mod tests {
         assert!(!d.marketing_host.is_empty());
 
         let dir2 = std::env::temp_dir().join(format!(
-            "shipctl-mkt2-{}",
+            "orbityard-mkt2-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2134,7 +2134,7 @@ mod tests {
 
         // Bound root *is* the website folder (dogfood bind apps/website).
         let dir3 = std::env::temp_dir().join(format!(
-            "shipctl-mkt-website-{}",
+            "orbityard-mkt-website-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2156,7 +2156,7 @@ mod tests {
     #[test]
     fn detects_public_paddle_env_keys() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-paddle-public-{}",
+            "orbityard-paddle-public-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2176,7 +2176,7 @@ mod tests {
     #[test]
     fn detects_graduate_and_commerce_opt_in() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-grad-{}",
+            "orbityard-grad-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2199,7 +2199,7 @@ mod tests {
     #[test]
     fn detects_creem_and_waffo_opt_in() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-creem-{}",
+            "orbityard-creem-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2218,7 +2218,7 @@ mod tests {
     #[test]
     fn detects_suite_json_siblings() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-suite-{}",
+            "orbityard-suite-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2248,7 +2248,7 @@ mod tests {
     #[test]
     fn detects_pwa_manifest_and_vite_plugin() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-pwa-{}",
+            "orbityard-pwa-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2277,7 +2277,7 @@ mod tests {
     #[test]
     fn detects_huggingface_markets_and_modelcard() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-hf-{}",
+            "orbityard-hf-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -2290,7 +2290,7 @@ mod tests {
         assert!(d.huggingface);
 
         let dir2 = std::env::temp_dir().join(format!(
-            "shipctl-hf-card-{}",
+            "orbityard-hf-card-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())

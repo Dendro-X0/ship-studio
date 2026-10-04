@@ -14,7 +14,7 @@ General vs Advanced only controls **density**. It does not capture **intent**:
 | Operator uses the product privately (e.g. aperio) | Advanced (and even General) still sequences hosted env puts, live deploy, store-shaped honesty gates |
 | Marketing / public demo is a different job | Studio has no way to say “local cut only” without Confirm-skipping noise |
 
-Ship Studio’s scope already excludes marketing/demos. The plan should **subtract** public gates when intent is local — not teach operators to ignore them.
+Orbit Yard’s scope already excludes marketing/demos. The plan should **subtract** public gates when intent is local — not teach operators to ignore them.
 
 ## Goal
 
@@ -35,7 +35,7 @@ Intent is **orthogonal** to General/Advanced:
 ## Detection / persistence
 
 1. **Explicit:** `.ship/studio.json` → `"ship_intent": "local" | "public"`  
-2. **CLI:** `shipctl publish --intent local|public` (and `configure` / Desktop toggle)  
+2. **CLI:** `orbityard publish --intent local|public` (and `configure` / Desktop toggle)  
 3. **Desktop:** topbar or Publish hint control next to General/Advanced — label **Local** / **Public**  
 4. **No silent auto-local** from “empty secrets” alone (too magical). Optional *hint* in Pulse/Doctor: “No Vercel link + empty env keys — consider Local intent.”
 
@@ -76,13 +76,13 @@ Env/secrets `entry_url` for Vercel-bound names must not open Cloudflare token pa
 - Aperio (or Tauri+Vercel fixture) with `--intent local` has **no** `env.sprint` / `deploy.*` / `submit.*`  
 - Same project `--intent public` Advanced still gets hosted steps when signals match  
 - `.ship/studio.json` round-trips intent; Desktop can set it  
-- Unit: local filter matrix · L2: `shipctl publish --intent local --project fixtures/…`  
+- Unit: local filter matrix · L2: `orbityard publish --intent local --project fixtures/…`  
 - Docs: PRODUCT + OPERATOR-NEXT note Local vs Public  
 
 ## Proof
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl` (publish intent filter) |
+| L1 | `cargo test -p orbityard` (publish intent filter) |
 | L2 | publish JSON on aperio `--intent local` vs `public` |
 | L3 | Desktop Local toggle rebuilds Publish list |

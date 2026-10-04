@@ -2,7 +2,7 @@
 
 **Status:** Slice 1 + L2 fixture proof · shipped in **v0.2.3**  
 **Parent:** PRODUCT “few deliberate actions, one spine” · honesty gates stay  
-**Owner:** `crates/shipctl` publish · `apps/desktop` Publish toolbar
+**Owner:** `crates/orbityard` publish · `apps/desktop` Publish toolbar
 
 ## Goal
 
@@ -34,7 +34,7 @@ Secondary: explicit Confirm · Next · Verify remain for power users.
 
 ## Slice 1 (shipped)
 
-1. **`shipctl publish continue`** — one smart advance (Confirm+Next for Auto/Done path; refuse auto-Confirm on Human*).  
+1. **`orbityard publish continue`** — one smart advance (Confirm+Next for Auto/Done path; refuse auto-Confirm on Human*).  
 2. **Desktop primary `Continue`** — calls `continue --chain 12`; Confirm/Next stay visible but secondary. Human pending → Open.  
 3. **`--chain N`** — keep Continue while steps are Auto and Verify ok, stop at Human.  
 4. **Docs / scripts** — `scripts/publish-fast.sh|.ps1` · dogfood one-liner.  
@@ -49,7 +49,7 @@ Secondary: explicit Confirm · Next · Verify remain for power users.
 
 | Layer | Check | Result |
 |-------|--------|--------|
-| L1 | `cargo test -p shipctl continue_` · desktop `tsc` | Pass |
+| L1 | `cargo test -p orbityard continue_` · desktop `tsc` | Pass |
 | L2 | `fixtures/advanced-dogfood` General Local · Continue on scopes → `human_gate` advanced=0 | Pass 2026-09-23 |
 | L2 | Confirm scopes → Continue finishes Auto spine (configure · dry_run) | Pass |
 | L2 | `scripts/publish-fast.sh` same human stop | Pass |

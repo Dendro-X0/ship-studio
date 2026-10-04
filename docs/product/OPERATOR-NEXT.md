@@ -4,13 +4,13 @@
 **Repo:** https://github.com/Dendro-X0/ship-studio  
 **Local path:** `E:/Web Projects/ship-studio`
 
-**Product framing:** Human gates **are the product**, not unfinished bugs. Ship Studio choreographs **Put / Login CLI / exact deep link / Confirm** so operators finish on official platforms — it does not dump you into vendor encyclopedias or fake auto-green. Website pitch: `/honesty`. Catalog: [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md) · Overhaul: [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md).
+**Product framing:** Human gates **are the product**, not unfinished bugs. Orbit Yard choreographs **Put / Login CLI / exact deep link / Confirm** so operators finish on official platforms — it does not dump you into vendor encyclopedias or fake auto-green. Website pitch: `/honesty`. Catalog: [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md) · Overhaul: [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md).
 
 Desktop Platforms · Portal · Integrations (what works, objectives, known gaps): [PLATFORMS-AND-PORTAL.md](./PLATFORMS-AND-PORTAL.md).
 
 ## Publish portal (preferred)
 
-Minute-oriented path: **official platform for the work**, Ship Studio for sequence + verify.
+Minute-oriented path: **official platform for the work**, Orbit Yard for sequence + verify.
 
 **Intent (orthogonal to General/Advanced):**
 
@@ -20,27 +20,27 @@ Minute-oriented path: **official platform for the work**, Ship Studio for sequen
 | **Public** (default) | Hosted final-mile | (none — full adaptive plan) |
 
 ```bash
-./target/release/shipctl.exe publish --mode general --intent local --project "E:/Web Projects/aperio"
-./target/release/shipctl.exe publish --mode advanced --intent public --project "E:/Web Projects/assess-api"
+./target/release/orbityard.exe publish --mode general --intent local --project "E:/Web Projects/aperio"
+./target/release/orbityard.exe publish --mode advanced --intent public --project "E:/Web Projects/assess-api"
 ```
 
 Desktop: topbar **Local | Public** next to General/Advanced. Persists in `.ship/studio.json` (`ship_intent`).
 
 ```bash
 cd "E:/Web Projects/ship-studio"
-./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api"
+./target/release/orbityard.exe publish --mode advanced --project "E:/Web Projects/assess-api"
 # Fast path — burn Auto/ready gates (stops at Human/Open):
-./target/release/shipctl.exe publish --mode general --intent local --project "E:/Web Projects/assess-api" continue --chain 20
+./target/release/orbityard.exe publish --mode general --intent local --project "E:/Web Projects/assess-api" continue --chain 20
 # or: bash scripts/publish-fast.sh "E:/Web Projects/assess-api"
 # Windows: powershell -ExecutionPolicy Bypass -File scripts/publish-fast.ps1 -Project "E:/Web Projects/assess-api"
-./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" open
-./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" verify
+./target/release/orbityard.exe publish --mode advanced --project "E:/Web Projects/assess-api" open
+./target/release/orbityard.exe publish --mode advanced --project "E:/Web Projects/assess-api" verify
 # after paste / listing / live release / deploy on vendor UIs…
-./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" confirm
-./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" next
+./target/release/orbityard.exe publish --mode advanced --project "E:/Web Projects/assess-api" confirm
+./target/release/orbityard.exe publish --mode advanced --project "E:/Web Projects/assess-api" next
 # optional: poll Verify until ready (disk · local CLI · official CLI probe — never Studio HTTPS with secrets)
-./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" watch --once
-./target/release/shipctl.exe publish --mode advanced --project "E:/Web Projects/assess-api" watch --interval-secs 15
+./target/release/orbityard.exe publish --mode advanced --project "E:/Web Projects/assess-api" watch --once
+./target/release/orbityard.exe publish --mode advanced --project "E:/Web Projects/assess-api" watch --interval-secs 15
 ```
 
 **Status layers** (how Verify detects progress without replacing the provider):
@@ -56,7 +56,7 @@ Env/token work stays **Open → official UI → Confirm**. The provider remains 
 
 Desktop: topbar **General** (default) · **Local** (first-run default) · **Publish** · primary **Continue** · Watch toggle · Related opens Env / Sign / Portal / Scopes / Dashboard · **Back to Publish**.  
 TUI: Publish (`P`) → o / v / c / n · **`w` Watch** (local Verify poll, READY when Confirm is safe).  
-MCP: `ship_publish_watch` · `ship_publish_verify` / `open` / `confirm` / `next` (G1) · `ship_env_put` (G2 — spawn TTY, never values). Confirm stays human attest.
+MCP: `orbit_publish_watch` · `orbit_publish_verify` / `open` / `confirm` / `next` (G1) · `orbit_env_put` (G2 — spawn TTY, never values). Confirm stays human attest.
 
 Progress: project `.ship/publish.json` (no secret values).
 
@@ -74,7 +74,7 @@ bash scripts/dogfood-advanced-publish.sh
 bash scripts/dogfood-advanced-walk.sh fixtures/advanced-dogfood
 # Windows without WSL:
 # powershell -File scripts/dogfood-advanced-publish.ps1
-# Desktop: Advanced → bind E:/Web Projects/ship-studio/fixtures/advanced-dogfood
+# Desktop: Advanced → bind E:/Web Projects/orbit-yard/fixtures/advanced-dogfood
 ```
 
 Real repo example: `assess-api` surfaces **db.provision** (D1) + **listing.polar** + oauth/env; deploy steps auto-skip when already live.
@@ -95,7 +95,7 @@ These steps stay on you **by design** — Studio opens the right door and waits 
 | Desktop cut | No Orbit host → Confirm `ship.desktop_cut` on Publish or Launch — Signet release is the deploy |
 | Listing | Polar · Gumroad · Lemon · Stripe · Paddle · npm · crates.io · Hugging Face · Play · ASC · Steam · itch · Epic (URL + confirm; Advanced Publish + Launch) |
 | Steam submit | After listing, Open Steamworks uploading docs (`submit.steam`) and upload depots yourself |
-| itch / Epic submit | After listing: itch → `ship_butler_push` (or Open butler docs); Epic → Open publish docs. Confirm when live. Studio never stores store credentials. |
+| itch / Epic submit | After listing: itch → `orbit_butler_push` (or Open butler docs); Epic → Open publish docs. Confirm when live. Studio never stores store credentials. |
 | Fly / Railway / Render / DO / Heroku / Amplify / Cloud Run / Azure Static | Open dashboard (`host.*`); deploy with their CLI/UI — Studio does not Orbit-deploy them |
 | DB | Provision on Neon/Supabase/D1/Turso console (Publish or Launch `db.provision`); put connection on deploy target |
 | CI | After tag/Signet release, Run `gh run list` from Publish or Launch / confirm GitHub Actions |

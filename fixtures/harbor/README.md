@@ -1,6 +1,6 @@
 # Harbor
 
-Lightweight **demo subject** for Ship Studio — Desktop + Docs (+ Signet). Not a product you sell.
+Lightweight **demo subject** for Orbit Yard — Desktop + Docs (+ Signet). Not a product you sell.
 
 ## What you will see on bind (no prior Harbor work)
 
@@ -17,7 +17,7 @@ Nested under this monorepo → **parent dirty git is ignored**. For demos use in
 
 ## Bind
 
-1. Ship Studio → **Open** → this folder (`fixtures/harbor`).  
+1. Orbit Yard → **Open** → this folder (`fixtures/harbor`).  
 2. Mode **Advanced** · intent **Local**.  
 3. Before GIFs: wipe session state:
 
@@ -31,7 +31,7 @@ bash scripts/harbor-reset.sh
 ## CLI check
 
 ```bash
-cargo run -p shipctl -- scopes --project fixtures/harbor
+cargo run -p orbityard -- scopes --project fixtures/harbor
 # Expect: desktop.desktop · docs.website
 ```
 

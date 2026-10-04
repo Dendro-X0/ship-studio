@@ -7,12 +7,12 @@
 
 ## Product framing
 
-Watch surface parity: CLI · Desktop · TUI · **MCP**. Agents poll `ship_publish_watch` (one local Verify probe per call). Never vendor HTTPS; never auto-Confirm unless `auto_confirm: true`.
+Watch surface parity: CLI · Desktop · TUI · **MCP**. Agents poll `orbit_publish_watch` (one local Verify probe per call). Never vendor HTTPS; never auto-Confirm unless `auto_confirm: true`.
 
 ## Tool
 
 ```text
-ship_publish_watch { project, auto_confirm? }
+orbit_publish_watch { project, auto_confirm? }
 → { ok, message, step_id, finished, prompt, current_index, total, auto_confirmed }
 ```
 
@@ -33,5 +33,5 @@ Uses `publish::watch_probe` (JSON-safe; no stdout pollution of MCP stdio).
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl watch_probe` |
-| L2 | MCP `tools/call` ship_publish_watch (optional) |
+| L1 | `cargo test -p orbityard watch_probe` |
+| L2 | MCP `tools/call` orbit_publish_watch (optional) |

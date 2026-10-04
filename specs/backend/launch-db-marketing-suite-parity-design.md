@@ -27,4 +27,4 @@ Guided Launch sequences database provision, marketing landing deploy, and suite 
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl launch_db_marketing` |
+| L1 | `cargo test -p orbityard launch_db_marketing` |

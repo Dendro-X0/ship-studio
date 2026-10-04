@@ -40,4 +40,4 @@ Advanced + Public only.
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl stripe_paddle` |
+| L1 | `cargo test -p orbityard stripe_paddle` |

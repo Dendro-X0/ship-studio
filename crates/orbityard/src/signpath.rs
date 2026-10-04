@@ -168,7 +168,7 @@ pub fn plan_for(project: &Path) -> SignPortal {
             id: "submit.itch".into(),
             kind: "submit".into(),
             title: "Submit — itch.io butler push".into(),
-            detail: "Push builds with `shipctl butler push --target user/game:channel` (or ship_butler_push) — visible terminal, no credentials stored.".into(),
+            detail: "Push builds with `orbityard butler push --target user/game:channel` (or orbit_butler_push) — visible terminal, no credentials stored.".into(),
             entry_url: Some("https://itch.io/docs/butler/".into()),
             run: None,
         });
@@ -200,7 +200,7 @@ pub fn plan_for(project: &Path) -> SignPortal {
     });
 
     SignPortal {
-        schema: "ship-studio/sign/v1".into(),
+        schema: "orbit-yard/sign/v1".into(),
         project: project.display().to_string(),
         recommended: if wants {
             "self_then_official".into()
@@ -223,7 +223,7 @@ mod tests {
     #[test]
     fn github_release_open_is_create_repo_guide() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-signpath-gh-{}",
+            "orbityard-signpath-gh-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -248,7 +248,7 @@ mod tests {
     #[test]
     fn mobile_sign_portal_splits_certs_and_submit() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-signpath-mobile-{}",
+            "orbityard-signpath-mobile-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -276,7 +276,7 @@ mod tests {
     #[test]
     fn tauri_sign_portal_includes_microsoft_submit() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-signpath-tauri-{}",
+            "orbityard-signpath-tauri-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -302,7 +302,7 @@ mod tests {
     #[test]
     fn steam_sign_portal_includes_depot_submit() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-signpath-steam-{}",
+            "orbityard-signpath-steam-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -328,7 +328,7 @@ mod tests {
     #[test]
     fn itch_epic_sign_portal_includes_submit() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-signpath-markets-{}",
+            "orbityard-signpath-markets-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())

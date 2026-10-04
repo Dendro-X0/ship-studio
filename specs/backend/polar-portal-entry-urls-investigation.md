@@ -1,8 +1,8 @@
 # Polar portal Open → always Overview
 
 **Status:** Implement  
-**Owner:** `crates/shipctl/src/portal.rs`  
-**Surface:** Desktop Portal · `shipctl portal`
+**Owner:** `crates/orbityard/src/portal.rs`  
+**Surface:** Desktop Portal · `orbityard portal`
 
 ## Problem
 
@@ -22,5 +22,5 @@ Slug is read only from project `.env` / `.env.local` / `.dev.vars` (and one-leve
 
 ## Proof
 
-- `cargo test -p shipctl polar_dashboard_steps`
-- `shipctl portal --project . --provider polar --json` → three distinct `entry_url`s
+- `cargo test -p orbityard polar_dashboard_steps`
+- `orbityard portal --project . --provider polar --json` → three distinct `entry_url`s

@@ -2,7 +2,7 @@
 
 **Status:** Active — extend via [hosting-portal-parity-design](./hosting-portal-parity-design.md)  
 **Updated:** 2026-09-25  
-**Owner:** `crates/shipctl` (`portal` module)  
+**Owner:** `crates/orbityard` (`portal` module)  
 **Desktop overview:** [PLATFORMS-AND-PORTAL.md](../../docs/product/PLATFORMS-AND-PORTAL.md)
 
 ## Goal
@@ -27,7 +27,7 @@ See [hosting-portal-parity-design](./hosting-portal-parity-design.md): Fly/Railw
 ## Commands
 
 ```text
-shipctl portal --project . [--provider ID] [--open] [--login]
+orbityard portal --project . [--provider ID] [--open] [--login]
 ```
 
 - Default: JSON plan of steps (offline-safe; URLs are data only).
@@ -38,11 +38,11 @@ shipctl portal --project . [--provider ID] [--open] [--login]
 
 1. Bridge does not call vendor HTTPS APIs itself.
 2. Catalog URLs are versioned constants in `portal.rs` (aligned with Orbit AuthGuide where possible).
-3. Secrets stay in provider CLIs / operator paste — shipctl never stores tokens.
+3. Secrets stay in provider CLIs / operator paste — orbityard never stores tokens.
 4. Multi-provider: when several match, plan lists all; `--provider` filters.
 
 ## Proof
 
 - L1: unit tests for detect + catalog IDs + suggested deploy_args including netlify
-- L2: `shipctl portal --project <tmp>` prints JSON with expected providers
+- L2: `orbityard portal --project <tmp>` prints JSON with expected providers
 - Desktop: Portal button runs `portal` and lists steps; Open uses opener on `entry_url`

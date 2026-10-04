@@ -2,25 +2,25 @@
 
 **Status:** Active — product law  
 **Updated:** 2026-09-25  
-**Owner:** `crates/shipctl` (CLI/MCP kernel) · `apps/desktop` (Client) · `shipctl tui` (terminal Client)  
+**Owner:** `crates/orbityard` (CLI/MCP kernel) · `apps/desktop` (Client) · `orbityard tui` (terminal Client)  
 **Canonical with:** [SCOPE-OF-SERVICE.md](../../docs/product/SCOPE-OF-SERVICE.md) · [PRODUCT.md](../../docs/product/PRODUCT.md)
 
 ## Goal
 
-One shipping engine (`shipctl`), **three pathways**:
+One shipping engine (`orbityard`), **three pathways**:
 
 | Pathway | Surface | Audience |
 |---------|---------|----------|
 | **Client** | Desktop (Tauri); TUI | Humans — including founders without DevOps fluency |
-| **MCP** | `shipctl mcp` | Agents (Cursor, etc.) assisting local release work |
-| **CLI** | `shipctl` | Kernel + scripts + power users |
+| **MCP** | `orbityard mcp` | Agents (Cursor, etc.) assisting local release work |
+| **CLI** | `orbityard` | Kernel + scripts + power users |
 
 Same pattern as **CodaCtrl Studio + CodaCtrl MCP** or **Ghidra + Ghidra MCP**: UX for people, protocol for agents, shared local engine underneath.
 
 ## Invariants
 
-1. Desktop and TUI are thin Clients — no second business logic; they invoke `shipctl`.  
-2. MCP exposes the same contracts (`ship_publish`, `ship_guide`, `ship_portal`, …) — **no secret custody**; put/login remain human-initiated.  
+1. Desktop and TUI are thin Clients — no second business logic; they invoke `orbityard`.  
+2. MCP exposes the same contracts (`orbit_publish`, `orbit_guide`, `orbit_portal`, …) — **no secret custody**; put/login remain human-initiated.  
 3. CLI is the shared kernel. Excellence of the Client may make CLI invisible to buyers; it does not make CLI optional for the architecture.  
 4. Portal semantics: navigate exact next human act (deep link / Put / Login CLI); human does OAuth/env. **Docs is secondary**, never the default setup path.  
 5. Bridge does not call vendor HTTPS with secrets; shells may open URLs / spawn login or put CLIs on operator action.  
@@ -55,6 +55,6 @@ Same pattern as **CodaCtrl Studio + CodaCtrl MCP** or **Ghidra + Ghidra MCP**: U
 
 ## Proof
 
-- L1: `cargo test -p shipctl`  
-- L2: `shipctl portal` JSON · Desktop Portal from same JSON · MCP tool list  
+- L1: `cargo test -p orbityard`  
+- L2: `orbityard portal` JSON · Desktop Portal from same JSON · MCP tool list  
 - Product: SCOPE Delivery surfaces section matches this file  

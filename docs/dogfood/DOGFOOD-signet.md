@@ -6,10 +6,10 @@ Target: `E:/Experimental projects/Self-signed-distribution`
 
 | Step | Result |
 |------|--------|
-| `shipctl doctor` | OK — signet 0.5.17, orbit via sibling `../ship`, `signet.toml` detected |
-| `shipctl configure` | Wrote `.ship/studio.json` (`sign_args`: doctor / later build) |
-| `shipctl flow --offline --skip-deploy` | OK — configure → `signet doctor --json` |
-| `shipctl sign -- build` | OK — release build + Authenticode sign of `target/release/signet.exe` (~1m21s compile) |
+| `orbityard doctor` | OK — signet 0.5.17, orbit via sibling `../ship`, `signet.toml` detected |
+| `orbityard configure` | Wrote `.ship/studio.json` (`sign_args`: doctor / later build) |
+| `orbityard flow --offline --skip-deploy` | OK — configure → `signet doctor --json` |
+| `orbityard sign -- build` | OK — release build + Authenticode sign of `target/release/signet.exe` (~1m21s compile) |
 
 ## Notes
 
@@ -20,9 +20,9 @@ Target: `E:/Experimental projects/Self-signed-distribution`
 ## Reproduce
 
 ```bash
-SHIPCTL="E:/Web Projects/ship-studio/target/release/shipctl.exe"
+ORBITYARD="E:/Web Projects/orbit-yard/target/release/orbityard.exe"
 PROJ="E:/Experimental projects/Self-signed-distribution"
-"$SHIPCTL" doctor --project "$PROJ"
-"$SHIPCTL" flow --project "$PROJ" --offline --skip-deploy
-"$SHIPCTL" sign --project "$PROJ" -- build
+"$ORBITYARD" doctor --project "$PROJ"
+"$ORBITYARD" flow --project "$PROJ" --offline --skip-deploy
+"$ORBITYARD" sign --project "$PROJ" -- build
 ```

@@ -14,7 +14,7 @@ NOT:      Studio-held secrets · auto-Done on Human gates · CDP without attach 
 
 ## Invariants
 
-1. **TTY rule** — If shipctl or a child CLI needs stdin/TTY (put secret, OAuth login, `publish open` vendor CLIs), Desktop opens an interactive terminal. Never `run_shipctl` with `stdin: null` for those.
+1. **TTY rule** — If orbityard or a child CLI needs stdin/TTY (put secret, OAuth login, `publish open` vendor CLIs), Desktop opens an interactive terminal. Never `run_orbityard` with `stdin: null` for those.
 2. **Toast rule** — Non-ok headless runs always surface polished stderr (or a named soft reason). User-initiated loads never fail silently.
 3. **Dock rule** — Sticky **FAILED** only for spawn/crash/cancel-ambiguous hard errors. Soft failures → Ready + err toast.
 4. **One opener** — New interactive flows add args to a shared Tauri helper, not a fifth copy-pasted `open_*_terminal`.
@@ -24,10 +24,10 @@ NOT:      Studio-held secrets · auto-Done on Human gates · CDP without attach 
 
 | Class | Examples | Desktop execution |
 |-------|----------|-------------------|
-| **J — JSON-safe** | `pulse`, `portal` (plan), `env` (plan), `doctor`, `scopes`, `publish` (view/verify JSON) | `run_shipctl` headless |
-| **T — Interactive TTY** | `portal --login`, `env --put` / `secrets put`, `human --put`, `publish open`, `launch open` | `open_shipctl_terminal(args)` |
+| **J — JSON-safe** | `pulse`, `portal` (plan), `env` (plan), `doctor`, `scopes`, `publish` (view/verify JSON) | `run_orbityard` headless |
+| **T — Interactive TTY** | `portal --login`, `env --put` / `secrets put`, `human --put`, `publish open`, `launch open` | `open_orbityard_terminal(args)` |
 | **N — Network may prompt** | `deploy`, `flow` (with deploy), Orbit when logged-out | Prefer **T** on Windows for v1; or J + toast “auth expired — Login CLI / terminal deploy” if detectably non-interactive failure |
-| **L — Local UI only** | Open URL, setView, Cancel, Copy | No shipctl |
+| **L — Local UI only** | Open URL, setView, Cancel, Copy | No orbityard |
 
 Map every button to J / T / N / L in implementation checklist; unmapped = bug.
 
@@ -54,17 +54,17 @@ Hard FAILED: spawn failure, lock poisoned, unexpected panic text, empty fail wit
 Replace four commands with one:
 
 ```text
-open_shipctl_terminal(project, args: Vec<String>, title?: String)
+open_orbityard_terminal(project, args: Vec<String>, title?: String)
 ```
 
-Windows: `wt -d project shipctl …args` → fallback `cmd /C start …`.  
+Windows: `wt -d project orbityard …args` → fallback `cmd /C start …`.  
 Non-Windows (slice later): `x-terminal-emulator` / `osascript` best-effort, or clear Err toast “open a terminal and run: …”.
 
 Keep thin wrappers or migrate call sites to the unified command in one slice.
 
 ### 2. Env Put → class T
 
-`applyEnv` Put button → `open_shipctl_terminal([env, --project, …, --provider, …, --put, name])` (or `secrets put` equivalent). Mirror Human Put toast: “finish paste in the terminal.”
+`applyEnv` Put button → `open_orbityard_terminal([env, --project, …, --provider, …, --put, name])` (or `secrets put` equivalent). Mirror Human Put toast: “finish paste in the terminal.”
 
 ### 3. User-initiated JSON loads
 
@@ -75,7 +75,7 @@ Split `loadJsonCmd`:
 
 ### 4. Ritual N-class policy (slice after Env Put)
 
-Deploy / Flow: open terminal for `shipctl deploy` / `shipctl flow` when Advanced + not Offline; keep dry-run / doctor as J. Document in Ritual hint.
+Deploy / Flow: open terminal for `orbityard deploy` / `orbityard flow` when Advanced + not Offline; keep dry-run / doctor as J. Document in Ritual hint.
 
 ## Slices (ordered)
 
@@ -83,7 +83,7 @@ Deploy / Flow: open terminal for `shipctl deploy` / `shipctl flow` when Advanced
 |-------|--------|-------|
 | **0 — Spec freeze** | This design + investigation; handoff activation; action→class checklist in design | **Done** — specs + handoff |
 | **1 — Env Put terminal** | Put → interactive terminal; toast parity with Human Put | **Done** — `open_env_put_terminal` · L1 tsc + cargo check |
-| **2 — Unified opener + soft taxonomy** | `open_shipctl_terminal`; expand `isSoftCmdFailure`; migrate existing openers | **Done** — L1 tsc · cargo check |
+| **2 — Unified opener + soft taxonomy** | `open_orbityard_terminal`; expand `isSoftCmdFailure`; migrate existing openers | **Done** — L1 tsc · cargo check |
 | **3 — User-initiated load honesty** | Load env / Refresh assist toast on fail | **Done** — `loadJsonCmd({ user })` · L1 tsc |
 | **4 — Ritual N-class** | Deploy/Flow terminal or honest auth-fail copy | **Done** — Advanced+Online → `openShipctlTerminal`; dry-run J · L1 tsc · cargo check |
 | **Later** | Non-Windows terminals · CDP attach recipe · vault UX | Separate bands |
@@ -99,11 +99,11 @@ Deploy / Flow: open terminal for `shipctl deploy` / `shipctl flow` when Advanced
 
 | Layer | Check |
 |-------|--------|
-| L1 | `pnpm exec tsc --noEmit` (desktop) · `cargo check -p ship-studio-desktop` (or desktop package name) |
+| L1 | `pnpm exec tsc --noEmit` (desktop) · `cargo check -p orbit-yard-desktop` (or desktop package name) |
 | L2 | Harbor → Env → Put → terminal opens; paste works in wt/cmd |
 | L2 | Portal Login CLI / Publish Open unchanged |
 | L2 | Missing wrangler → Ready + toast, not sticky FAILED |
-| L2 | Load env with shipctl missing → toast (user path) |
+| L2 | Load env with orbityard missing → toast (user path) |
 
 ## Activation
 

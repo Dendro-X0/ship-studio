@@ -1,7 +1,7 @@
-# CI — shipctl test failure (doctor on monorepo)
+# CI — orbityard test failure (doctor on monorepo)
 
-**Job:** `CI / shipctl test (push)`  
-**Step:** CLI smoke — `shipctl doctor --project .`  
+**Job:** `CI / orbityard test (push)`  
+**Step:** CLI smoke — `orbityard doctor --project .`  
 **Class:** workflow / doctor gate (layout mismatch)  
 **Not:** unit test failure · lockfile · compile
 
@@ -13,7 +13,7 @@ Runner has no Signet on PATH (expected for ubuntu CI without installing Signet).
 
 ## Root cause
 
-Smoke runs Doctor against the **Ship Studio monorepo**, which probes `apps/desktop` as Tauri → `wants_signet` → fails without Signet. That is correct for shipping *a* Tauri product; it is the wrong gate for **tooling CI**.
+Smoke runs Doctor against the **Orbit Yard monorepo**, which probes `apps/desktop` as Tauri → `wants_signet` → fails without Signet. That is correct for shipping *a* Tauri product; it is the wrong gate for **tooling CI**.
 
 Dead-code warning on `load_or_build_with_mode` is noise only (not the exit 1).
 
@@ -25,6 +25,6 @@ Dead-code warning on `load_or_build_with_mode` is noise only (not the exit 1).
 
 ## Proof
 
-- `shipctl doctor --project .` on hub → `ok: true` without Signet when no `signet.toml`
-- `cargo test -p shipctl --locked`
-- CI `shipctl test` green
+- `orbityard doctor --project .` on hub → `ok: true` without Signet when no `signet.toml`
+- `cargo test -p orbityard --locked`
+- CI `orbityard test` green

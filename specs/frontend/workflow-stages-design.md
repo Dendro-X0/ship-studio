@@ -2,7 +2,7 @@
 
 **Status:** Design → implement (slice 1) — **Desktop wired**; L2 dogfood pending  
 **Parent:** PRODUCT portal/guide · Continue honesty · progress clarity  
-**Owner:** `apps/desktop` Dashboard + Publish · presets via existing `--mode` / `--intent` (no new shipctl plan engine in slice 1)
+**Owner:** `apps/desktop` Dashboard + Publish · presets via existing `--mode` / `--intent` (no new orbityard plan engine in slice 1)
 
 ## Goal
 
@@ -19,7 +19,7 @@ Continue / Open / Confirm still own honesty.
 - Auto-Confirm Human / OAuth / deploy / listing  
 - Fake “one-click deploy” cards  
 - New competing nav destinations  
-- Full custom plan graphs in shipctl (later slice)
+- Full custom plan graphs in orbityard (later slice)
 
 ## Workflow cards (slice 1)
 
@@ -66,6 +66,6 @@ Guidelines (examples):
 ## Later
 
 - Persist `workflow_preset` in `.ship/studio.json`  
-- shipctl plan filters per preset (true Deploy-only / Sign-only step sets)  
+- orbityard plan filters per preset (true Deploy-only / Sign-only step sets)  
 - Platform-specific cards (Polar / Steam) from detection  
 - GIF T1 updated to show card pick  

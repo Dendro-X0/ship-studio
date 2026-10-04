@@ -29,4 +29,4 @@ Dashboard Now already prefers mid-publish Continue, but the cut hint only fired 
 ## Proof
 
 - L1: unit — `ci.release` / `listing.npm` detail contains the new cue  
-- L2: `cargo test -p shipctl`  
+- L2: `cargo test -p orbityard`  

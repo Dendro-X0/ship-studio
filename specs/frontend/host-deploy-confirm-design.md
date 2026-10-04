@@ -27,7 +27,7 @@ Show only when `selectedPlatform` matches `last_run.host_provider` (infer from s
 
 ### Confirm dialog (Cloudflare · Vercel · Netlify)
 
-Before `shipctl hostdeploy`:
+Before `orbityard hostdeploy`:
 
 | Control | Cloudflare | Vercel | Netlify |
 |---------|------------|--------|---------|
@@ -71,7 +71,7 @@ Studio never opens the bare marketing home when a list/project deep link exists.
 
 | Action | Behavior |
 |--------|----------|
-| **Deploy** | `shipctl selfhost` (one-shot check) → Ready in seconds |
+| **Deploy** | `orbityard selfhost` (one-shot check) → Ready in seconds |
 | **Open live** | Starts `selfhost --serve` if needed, opens loopback on health ok |
 | **Cancel serve** | Kills serve process (only while serving) |
 

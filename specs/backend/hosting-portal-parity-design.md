@@ -7,7 +7,7 @@
 **Owners:** `portal.rs` · `platforms-data.ts` · (later) pulse → Platforms highlight
 
 ```text
-GOAL:     Hosting lanes in Desktop + shipctl portal match vendor reality:
+GOAL:     Hosting lanes in Desktop + orbityard portal match vendor reality:
           distinct Open · Docs · Login CLI; honest detect; no fake deploy.
 NOT:      Studio-held secrets · vendor HTTPS · one-click deploy · full cloud console clone
 ```
@@ -30,7 +30,7 @@ NOT:      Studio-held secrets · vendor HTTPS · one-click deploy · full cloud 
 2. Open = settings / console UI; Docs = official tutorial; Login CLI = interactive terminal only.
 3. Prefer **browser sign-in** when the operator is already logged into the vendor in their browser; **Login CLI** when they need local CLI credentials (`wrangler` / `vercel` / …). Long-lived tokens remain last resort.
 4. Duplicate `entry_url` across steps for one provider is a bug (see Cloudflare env split).
-5. Desktop actions map to `shipctl portal` / detect / Publish — no parallel secret state.
+5. Desktop actions map to `orbityard portal` / detect / Publish — no parallel secret state.
 
 ## Catalog matrix (target)
 
@@ -63,11 +63,11 @@ Extend `ProviderCatalog` (or parallel host profile) so dashboard-only hosts are 
 - Options (pick one in slice 2):
   - **A:** New portal kind / filter `github_pages` that emits Pages settings + docs steps only; or
   - **B:** Platforms Pages uses Open+Docs only (no Portal steps); GitHub PAT stays under Integrations/Tools or separate “GitHub auth” card.
-- Prefer **B** for smallest honesty win; **A** if we need `shipctl portal --provider …` for Pages.
+- Prefer **B** for smallest honesty win; **A** if we need `orbityard portal --provider …` for Pages.
 
 ### 3. Desktop catalog policy
 
-- Document Tier D as “Advanced Publish / `shipctl portal --provider`” until Platforms expands.
+- Document Tier D as “Advanced Publish / `orbityard portal --provider`” until Platforms expands.
 - Fly/Railway: set `provider: "fly" | "railway"` so Portal steps + Login CLI work once catalog has OAuth.
 - Optional: `deployArgs` hints remain Ritual-only where Orbit does not deploy that host.
 
@@ -99,9 +99,9 @@ Pulse/detect → select matching Platforms card (wrangler → Cloudflare). No au
 
 | Layer | Check |
 |-------|--------|
-| L1 | `cargo test -p shipctl portal::tests` · desktop `tsc` |
+| L1 | `cargo test -p orbityard portal::tests` · desktop `tsc` |
 | L2 | Harbor Public: Cloudflare Open ≠ Docs; Login CLI terminal |
-| L2 | Temp dir with `fly.toml`: `shipctl portal --provider fly` → oauth CLI present; env Docs = secrets URL; no triple identical Open |
+| L2 | Temp dir with `fly.toml`: `orbityard portal --provider fly` → oauth CLI present; env Docs = secrets URL; no triple identical Open |
 | L2 | Platforms GitHub Pages: no `portal failed` / no PAT-only checklist as the primary story |
 
 ## Activation

@@ -1,4 +1,4 @@
-# Ship Studio license file — format v1
+# Orbit Yard license file — format v1
 
 Local, file-based entitlement. Studio does **not** phone home to validate.
 Cloudflare Worker / Polar webhook automation is optional later — W4 ships maintainer
@@ -6,19 +6,19 @@ issuance + buyer delivery (email attachment or download).
 
 ## File name
 
-`ship-studio.license` (JSON)
+`orbit-yard.license` (JSON)
 
 Suggested paths (buyer picks one):
 
-- `%USERPROFILE%\.ship\ship-studio.license` (Windows)
-- `~/.ship/ship-studio.license` (macOS / Linux)
-- Project `.ship/ship-studio.license` (optional per-repo copy)
+- `%USERPROFILE%\.ship\orbit-yard.license` (Windows)
+- `~/.ship/orbit-yard.license` (macOS / Linux)
+- Project `.ship/orbit-yard.license` (optional per-repo copy)
 
 ## Schema
 
 ```json
 {
-  "schema": "ship-studio.license/v1",
+  "schema": "orbit-yard.license/v1",
   "product": "solo",
   "email": "buyer@example.com",
   "order_id": "polar_order_or_checkout_id",
@@ -30,7 +30,7 @@ Suggested paths (buyer picks one):
 
 | Field | Rules |
 |-------|--------|
-| `schema` | Always `ship-studio.license/v1` |
+| `schema` | Always `orbit-yard.license/v1` |
 | `product` | `solo` (only SKU in W4) |
 | `email` | Polar checkout email |
 | `order_id` | Polar order / checkout id |

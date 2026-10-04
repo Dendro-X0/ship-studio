@@ -24,4 +24,4 @@ Keep Continue as primary; hints are detail suffixes only.
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl publish_cut_hints` |
+| L1 | `cargo test -p orbityard publish_cut_hints` |

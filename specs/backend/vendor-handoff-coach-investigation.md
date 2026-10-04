@@ -13,7 +13,7 @@ Portal step **Cloudflare environment / secrets** (ENV badge) exposes **Open** an
 
 | Fact | Where |
 |------|-------|
-| Card title `{label} environment / secrets`, kind `env` | `crates/shipctl/src/portal.rs` portal_step |
+| Card title `{label} environment / secrets`, kind `env` | `crates/orbityard/src/portal.rs` portal_step |
 | Open URL (Cloudflare) | `https://dash.cloudflare.com/?to=/:account/workers-and-pages` |
 | Docs URL | `https://developers.cloudflare.com/workers/configuration/secrets/` |
 | Desktop Open/Docs | `applyPortalPlan` — naked `openUrl` |

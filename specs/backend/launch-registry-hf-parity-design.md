@@ -27,4 +27,4 @@ Guided Launch sequences npm / crates.io / Hugging Face Hub listing Open + Confir
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl launch_registry` |
+| L1 | `cargo test -p orbityard launch_registry` |

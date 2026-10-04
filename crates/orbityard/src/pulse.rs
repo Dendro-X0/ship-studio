@@ -550,13 +550,13 @@ fn deploy_pulse(project: &Path) -> DeployPulse {
                     // `selfhost.deploy` contains "deploy" — excluded via selfhost_run branch.
                     if id.contains("deploy") && ok && signal != "orbit_deployed" {
                         signal = "last_run_ok".into();
-                        detail = "Last shipctl deploy step succeeded.".into();
+                        detail = "Last orbityard deploy step succeeded.".into();
                     }
                 }
             }
             if last_run_ok == Some(true) && signal == "unknown" {
                 signal = "last_run_ok".into();
-                detail = "Last shipctl run succeeded.".into();
+                detail = "Last orbityard run succeeded.".into();
             }
         }
     }
@@ -1048,7 +1048,7 @@ fn decide_now(
     NowPulse {
         title: format!("Pick up {name}"),
         detail: format!(
-            "{git_line} Start the publish portal — you finish vendor UIs; Ship Studio keeps the sequence."
+            "{git_line} Start the publish portal — you finish vendor UIs; Orbit Yard keeps the sequence."
         ),
         primary: action(
             "publish_start",
@@ -1129,7 +1129,7 @@ pub fn for_project(project: &Path) -> Result<ProjectPulse> {
             m.push("Epic");
         }
         let itch_cue = if detected.itch {
-            " itch: `shipctl butler push --target user/game:channel` (or ship_butler_push)."
+            " itch: `orbityard butler push --target user/game:channel` (or orbit_butler_push)."
         } else {
             ""
         };
@@ -1221,7 +1221,7 @@ pub fn for_project(project: &Path) -> Result<ProjectPulse> {
     }
 
     Ok(ProjectPulse {
-        schema: "ship-studio/pulse/v1".into(),
+        schema: "orbit-yard/pulse/v1".into(),
         project: project.display().to_string(),
         name,
         kind,
@@ -1243,7 +1243,7 @@ mod tests {
 
     fn tmp() -> PathBuf {
         std::env::temp_dir().join(format!(
-            "shipctl-pulse-{}",
+            "orbityard-pulse-{}",
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -1258,7 +1258,7 @@ mod tests {
         fs::create_dir_all(&dir).unwrap();
         fs::write(dir.join("wrangler.toml"), "name = \"x\"\n").unwrap();
         let pulse = for_project(&dir).unwrap();
-        assert_eq!(pulse.schema, "ship-studio/pulse/v1");
+        assert_eq!(pulse.schema, "orbit-yard/pulse/v1");
         assert!(pulse.kind.contains("Cloudflare") || pulse.kind.contains("Worker") || !pulse.kind.is_empty());
         assert!(!pulse.now.title.is_empty());
         assert!(!pulse.now.primary.label.is_empty());

@@ -1,5 +1,5 @@
 {
-  "schema": "ship-studio.license/v1",
+  "schema": "orbit-yard.license/v1",
   "product": "solo",
   "email": "buyer@example.com",
   "order_id": "polar_example_order",

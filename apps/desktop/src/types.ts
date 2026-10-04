@@ -1,11 +1,11 @@
-/** Shared Desktop shell types (shipctl JSON surfaces). */
+/** Shared Desktop shell types (orbityard JSON surfaces). */
 
 export type CmdResult = {
   ok: boolean;
   code: number;
   stdout: string;
   stderr: string;
-  shipctl: string;
+  orbityard: string;
   cancelled?: boolean;
 };
 
@@ -297,7 +297,7 @@ export type ProviderWizard = {
   group: string;
   title: string;
   blurb: string;
-  /** shipctl portal provider id — omit when Open/Learn more only (e.g. GitHub Pages). */
+  /** orbityard portal provider id — omit when Open/Learn more only (e.g. GitHub Pages). */
   provider?: string;
   openUrl: string;
   /** Override primary button label (default: Open dashboard). */

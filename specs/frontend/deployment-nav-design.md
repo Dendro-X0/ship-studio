@@ -31,5 +31,5 @@ Platforms section expands Hosting providers as individual sidebar rows. Launch/P
 
 ## Proof
 
-- L1: `apps/desktop` `tsc --noEmit` · `cargo test -p shipctl`
+- L1: `apps/desktop` `tsc --noEmit` · `cargo test -p orbityard`
 - L2: Harbor Launch — one Deployment gate (no oauth.cloudflare/vercel/netlify rows)

@@ -3,7 +3,7 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
-export const UPDATE_SNOOZE_KEY = "ship-studio.update-snooze-tag";
+export const UPDATE_SNOOZE_KEY = "orbit-yard.update-snooze-tag";
 export const RELEASES_LATEST_URL = "https://github.com/Dendro-X0/ship-studio/releases/latest";
 const GITHUB_LATEST_API =
   "https://api.github.com/repos/Dendro-X0/ship-studio/releases/latest";

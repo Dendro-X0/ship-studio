@@ -1,6 +1,6 @@
 # Integrations → Publish handoff — design (S1.10)
 
-**Status:** Shipped (L1 tsc · shipctl listing desktop_view)  
+**Status:** Shipped (L1 tsc · orbityard listing desktop_view)  
 **Updated:** 2026-09-27  
 **Parent:** [improvement-backlog](../../docs/product/improvement-backlog.md) S1.10 · [provider-wizard-setup-design](./provider-wizard-setup-design.md)
 
@@ -21,7 +21,7 @@ NOT: Auto-Confirm · Studio writing secrets · inventing listing steps when unde
 
 Shared helper also used by **Deployment** / **Sign** Continue publishing (prefer `live_check` / sign-ish current gate when present; else generic return toast).
 
-## shipctl
+## orbityard
 
 Commerce `listing.polar|stripe|gumroad|lemon|paddle|creem|waffo` `desktop_view`: **`integrations`** (was `portal`) so Publish Related opens the Integrations catalog.
 
@@ -29,11 +29,11 @@ Commerce `listing.polar|stripe|gumroad|lemon|paddle|creem|waffo` `desktop_view`:
 
 - S1.11 auto-advance Confirm after Open  
 - S1.12 Verify criteria depth  
-- Seeking Publish current via shipctl (no seek API — focus UI + honest toast only)
+- Seeking Publish current via orbityard (no seek API — focus UI + honest toast only)
 
 ## Proof
 
 | Layer | Check |
 |-------|--------|
-| L1 | `apps/desktop` `tsc` · `cargo test -p shipctl` listing desktop_view if touched |
+| L1 | `apps/desktop` `tsc` · `cargo test -p orbityard` listing desktop_view if touched |
 | L2 | Harbor Advanced+Public with Polar detect → Integrations → Continue publishing names `listing.polar` |

@@ -1,8 +1,8 @@
-# CURRENT — Ship Studio
+# CURRENT — Orbit Yard
 
 **Version:** 0.2.3  
 **Updated:** 2026-10-04  
-**Status:** **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** · **Client finishability S1–S3** · official website **Netlify**-bound · itch butler L3 dogfooded.
+**Status:** **Rebrand → Orbit Yard** · **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** still tagged under old name · website ready to redeploy · `orbityard` CLI.
 
 ## Truth pointers
 

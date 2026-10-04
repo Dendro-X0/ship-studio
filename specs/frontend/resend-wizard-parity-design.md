@@ -15,7 +15,7 @@ NOT: Studio sending mail · inventing a listing.resend Publish step · Put witho
 | Control | Resend |
 |---------|--------|
 | Open dashboard | Resend API keys (unchanged) |
-| **Put key** | `shipctl env --provider <detected host> --put RESEND_API_KEY` — needs Cloudflare / Vercel / Netlify detect |
+| **Put key** | `orbityard env --provider <detected host> --put RESEND_API_KEY` — needs Cloudflare / Vercel / Netlify detect |
 | Confirm gate | Prefer Publish `env.sprint` when present (Public intent) |
 | Continue publishing | Same preferred step / handoff as Confirm |
 

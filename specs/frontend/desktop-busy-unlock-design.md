@@ -17,6 +17,6 @@ While `running` is true, Publish **Refresh** and most actions stay disabled. If 
 
 ## Proof
 
-- Manual: start a long `shipctl` → Cancel → Refresh enabled again.  
+- Manual: start a long `orbityard` → Cancel → Refresh enabled again.  
 - Manual: Clear output while busy path → Ready + buttons restored.  
 - `npx tsc --noEmit` in `apps/desktop`  

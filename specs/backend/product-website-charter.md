@@ -62,7 +62,7 @@ Website delivery bands W0–W4 complete. Adaptive hub remains idle unless a new 
 
 | Surface | Role |
 |---------|------|
-| **Ship Studio** (`shipctl` · TUI · Desktop) | Local shipping hub — stays offline-first; does **not** author marketing docs/demos |
+| **Orbit Yard** (`orbityard` · TUI · Desktop) | Local shipping hub — stays offline-first; does **not** author marketing docs/demos |
 | **Official website** (this charter) | Public product presence: pitch · buy · refund · docs · demo |
 
 Studio may later **detect** `apps/website` as `marketing.deploy` for *customer* projects. This repo’s own marketing site is a **sibling product surface**, not an Adaptive Publish lane inside the bridge.
@@ -71,7 +71,7 @@ Studio may later **detect** `apps/website` as `marketing.deploy` for *customer* 
 
 Ship a public site that lets a stranger:
 
-1. Understand what Ship Studio is in one viewport  
+1. Understand what Orbit Yard is in one viewport  
 2. Buy a license / plan with honest checkout  
 3. Request or receive a refund under a published policy  
 4. Read documentation (install · Publish spine · human gates)  
@@ -88,7 +88,7 @@ Ship a public site that lets a stranger:
 | Docs | Publish `docs/product` + START-HERE as MD → site `/docs` | One source of truth; no duplicate prose in Studio |
 | Demo | Silent GIFs + 60–90s scripted walk of Desktop Publish | Obscur-style GIF shelf; no fake “cloud Studio” |
 
-**Avoid first slice:** building a SaaS control plane, storing customer secrets, replacing Paddle’s customer portal, or embedding live `shipctl` in the browser.
+**Avoid first slice:** building a SaaS control plane, storing customer secrets, replacing Paddle’s customer portal, or embedding live `orbityard` in the browser.
 
 ## Site map
 
@@ -158,10 +158,10 @@ PAUSED Adaptive bands (store API upload, k8s, aperio L4) stay parked — website
 
 ## Explicit non-goals (W0–W2)
 
-- Multi-tenant cloud Ship Studio  
+- Multi-tenant cloud Orbit Yard  
 - In-app purchase inside the Tauri shell  
 - Replacing Polar/Stripe customer billing UIs  
-- Authoring demos *inside* `shipctl`  
+- Authoring demos *inside* `orbityard`  
 
 ## Next atomic step (when maintainer says go)
 

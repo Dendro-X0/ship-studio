@@ -2,7 +2,7 @@
 
 **Status:** Design → implement (slice 1)  
 **Parent:** PRODUCT offline-first · portal/guide (never replace providers) · Verify honesty  
-**Owner:** `shipctl` publish `verify_current` / Watch · Desktop Offline + Publish hint  
+**Owner:** `orbityard` publish `verify_current` / Watch · Desktop Offline + Publish hint  
 **Updated:** 2026-09-24
 
 ## Goal
@@ -53,7 +53,7 @@ Do **not** confuse with CI proof layers L1–L4 in other specs.
 
 | Layer | Check |
 |-------|--------|
-| L1 | `cargo test -p shipctl verify_status_` · desktop `tsc` |
+| L1 | `cargo test -p orbityard verify_status_` · desktop `tsc` |
 | L2 | Bind fixture → Publish hint shows Disk/Local CLI/… · Watch toast mentions local Verify |
 
 ## Later

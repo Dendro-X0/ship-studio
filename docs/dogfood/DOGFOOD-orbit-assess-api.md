@@ -6,8 +6,8 @@ Target: `E:/Web Projects/assess-api`
 
 | Step | Result |
 |------|--------|
-| `shipctl doctor` | OK — nested wrangler + `.orbit` detected |
-| `shipctl deploy -- status` | OK |
+| `orbityard doctor` | OK — nested wrangler + `.orbit` detected |
+| `orbityard deploy -- status` | OK |
 | Cloudflare API deploy | OK — `https://assess-api.paf437sywst688.workers.dev` |
 | Worker secrets | **Blocked** — local `GITHUB_TOKEN` / Polar empty; `gh` not logged in. See assess-api `docs/SECRETS-OPS.md` |
 | Health check from this host | **Blocked** — TCP timeout to `*.workers.dev` / Vercel (egress) |

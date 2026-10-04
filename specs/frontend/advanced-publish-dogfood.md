@@ -1,7 +1,7 @@
 # Frontend Spec — Advanced publish dogfood (Desktop)
 
-- **Product:** Ship Studio Desktop  
-- **Depends on:** release-surface gaps #1–#10 (`shipctl` Advanced plan)  
+- **Product:** Orbit Yard Desktop  
+- **Depends on:** release-surface gaps #1–#10 (`orbityard` Advanced plan)  
 - **Spec status:** implement  
 - **Stack:** existing vanilla Tauri UI  
 
@@ -38,8 +38,8 @@ Invariants: General mode still omits these steps; Advanced rebuilds via mode tog
 
 - L2: `bash scripts/dogfood-advanced-publish.sh` — all new step ids + Related `desktop_view`  
 - L2b: `bash scripts/dogfood-advanced-walk.sh <fixture|assess-api>` — Confirm through Advanced; every `desktop_view` ∈ RELATED_VIEW_LABELS  
-- L3: Desktop already running (`ship-studio-desktop` + Vite `:1420`) — Advanced · bind fixture `E:\Temp\ship-studio-dogfood-advanced-*` or `assess-api` · Related / Open / Confirm  
-- Rebuild `cargo build -p shipctl --release` (or newest mtime binary) so Desktop does not use a stale shipctl  
+- L3: Desktop already running (`orbit-yard-desktop` + Vite `:1420`) — Advanced · bind fixture `E:\Temp\orbit-yard-dogfood-advanced-*` or `assess-api` · Related / Open / Confirm  
+- Rebuild `cargo build -p orbityard --release` (or newest mtime binary) so Desktop does not use a stale orbityard  
 
 ### Dogfood evidence (2026-09-15)
 
@@ -48,7 +48,7 @@ Invariants: General mode still omits these steps; Advanced rebuilds via mode tog
 | `fixtures/advanced-dogfood` | listing.* · submit.* · db · ci · container · `deploy.api.root` | related_ok |
 | `assess-api` | db.provision (D1) · listing.polar · oauth · env; deploys skip when live | related_ok |
 
-Desktop resolves the **newest** `shipctl` among sidecar + `target/{debug,release}` (stale sidecar cannot hide a fresh build).
+Desktop resolves the **newest** `orbityard` among sidecar + `target/{debug,release}` (stale sidecar cannot hide a fresh build).
 
 ## Non-goals
 

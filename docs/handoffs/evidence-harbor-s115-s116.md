@@ -2,13 +2,13 @@
 
 **Date:** 2026-09-28  
 **Subject:** `fixtures/harbor`  
-**shipctl:** `target/release/shipctl.exe`  
+**orbityard:** `target/release/orbityard.exe`  
 **Commit under test:** `f24b938`
 
 ## Setup
 
 1. `powershell -ExecutionPolicy Bypass -File scripts/harbor-reset.ps1`
-2. Bind path for Desktop: `E:\Web Projects\ship-studio\fixtures\harbor`
+2. Bind path for Desktop: `E:\Web Projects\orbit-yard\fixtures\harbor`
 
 ## L2 results (CLI)
 

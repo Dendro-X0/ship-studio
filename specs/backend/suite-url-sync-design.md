@@ -27,7 +27,7 @@ After `marketing.deploy`, sibling products (e.g. Strata / Truss / Velocity) stil
 ```
 
 - `path` is relative to the bound project (or absolute).  
-- `env_keys` are **names only** — shipctl never writes values into sibling `.env`.  
+- `env_keys` are **names only** — orbityard never writes values into sibling `.env`.  
 - Missing/invalid JSON → no suite detection.
 
 ### Detection

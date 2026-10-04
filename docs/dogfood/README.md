@@ -20,7 +20,7 @@ bash scripts/publish-fast.sh fixtures/advanced-dogfood --mode general --intent l
 # Windows:
 # powershell -ExecutionPolicy Bypass -File scripts/publish-fast.ps1 -Project fixtures/advanced-dogfood
 # or:
-shipctl publish --mode general --intent local --project . continue --chain 20
+orbityard publish --mode general --intent local --project . continue --chain 20
 ```
 
 Desktop: bind folder → **Continue** (primary). Human gates show **Needs Open**.

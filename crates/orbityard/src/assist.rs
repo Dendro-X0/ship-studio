@@ -92,7 +92,7 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
         AssistStep {
             id: "publish".into(),
             title: "Publish portal — minute wizard".into(),
-            detail: "Open/Run → Confirm → Next — final-mile sign → release → deploy. Optional Watch: CLI `publish watch`, Desktop toggle, TUI `w`, MCP `ship_publish_watch`.".into(),
+            detail: "Open/Run → Confirm → Next — final-mile sign → release → deploy. Optional Watch: CLI `publish watch`, Desktop toggle, TUI `w`, MCP `orbit_publish_watch`.".into(),
             view: "publish".into(),
             ready: has_studio,
         },
@@ -194,7 +194,7 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
             m.push("Epic");
         }
         let itch_cue = if detected.itch {
-            " itch: `shipctl butler push --target user/game:channel` (or ship_butler_push)."
+            " itch: `orbityard butler push --target user/game:channel` (or orbit_butler_push)."
         } else {
             ""
         };
@@ -271,7 +271,7 @@ pub fn plan_for(project: &Path) -> Result<AssistPlan> {
     }
 
     Ok(AssistPlan {
-        schema: "ship-studio/assist/v1".into(),
+        schema: "orbit-yard/assist/v1".into(),
         project: project.display().to_string(),
         sign_path: sign_path.into(),
         scopes: sc.active,
@@ -300,7 +300,7 @@ mod tests {
     #[test]
     fn assist_notes_release_workflow() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-assist-ci-{}",
+            "orbityard-assist-ci-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -324,7 +324,7 @@ mod tests {
     #[test]
     fn assist_notes_registry_dry_run_and_release_list() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-assist-pkg-{}",
+            "orbityard-assist-pkg-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -364,7 +364,7 @@ mod tests {
     #[test]
     fn assist_notes_hosts_baas_commerce_and_submit() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-assist-expand-{}",
+            "orbityard-assist-expand-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())

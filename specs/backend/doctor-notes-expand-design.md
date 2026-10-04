@@ -39,4 +39,4 @@ Missing alt-host CLIs **must not** flip `doctor.ok` false.
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl doctor_notes_hosts` |
+| L1 | `cargo test -p orbityard doctor_notes_hosts` |

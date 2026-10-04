@@ -10,14 +10,14 @@
     />
     <link rel="stylesheet" href="/src/styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ship Studio</title>
+    <title>Orbit Yard</title>
     <script type="module" src="/src/main.ts" defer></script>
   </head>
   <body class="chrome" data-mode="general">
     <div class="titlebar" data-tauri-drag-region>
       <div class="titlebar-brand" data-tauri-drag-region>
         <img class="logo" src="/src/assets/logo.svg" width="22" height="22" alt="" />
-        <span class="titlebar-name" data-tauri-drag-region>Ship Studio</span>
+        <span class="titlebar-name" data-tauri-drag-region>Orbit Yard</span>
         <span class="titlebar-sep" aria-hidden="true">·</span>
         <button type="button" class="titlebar-project" id="chrome-project" title="Switch project">
           <span class="chrome-name" id="chrome-name">Choose a project</span>
@@ -45,10 +45,10 @@
     <div class="app" id="app">
       <aside class="sidebar" aria-label="Primary">
         <div class="sidebar-brand">
-          <img class="logo logo-lg" src="/src/assets/logo.svg" width="36" height="36" alt="Ship Studio" />
+          <img class="logo logo-lg" src="/src/assets/logo.svg" width="36" height="36" alt="Orbit Yard" />
           <div>
             <div class="name-line">
-              <span class="name">Ship Studio</span>
+              <span class="name">Orbit Yard</span>
               <span class="badge">LOCAL</span>
             </div>
             <p class="sub" id="sidebar-session">No project bound</p>
@@ -198,7 +198,7 @@
                 <p class="session-kicker">Session</p>
                 <h2>Bind the repo you’re shipping</h2>
                 <p class="session-lead">
-                  Ship Studio keeps you on official platforms. Open the folder, then we’ll show where you left off.
+                  Orbit Yard keeps you on official platforms. Open the folder, then we’ll show where you left off.
                 </p>
                 <button type="button" id="dash-open" class="primary">Open folder…</button>
                 <div class="dash-recents" id="dash-recents" hidden></div>
@@ -608,7 +608,7 @@
                   <label>Portal steps</label>
                   <p class="hint">
                     Open the entry — OAuth and env values stay manual. Same plan as
-                    <code>shipctl portal</code> / TUI.
+                    <code>orbityard portal</code> / TUI.
                   </p>
                 </div>
                 <div class="portal-actions">
@@ -627,7 +627,7 @@
                   <div>
                     <label>Secret hints</label>
                     <p class="hint">
-                      Names only — paste values in a terminal with <code>shipctl secrets put</code> or TUI.
+                      Names only — paste values in a terminal with <code>orbityard secrets put</code> or TUI.
                       Optional: encrypt a Clavis-compatible <code>.km</code> backup.
                     </p>
                   </div>
@@ -794,7 +794,7 @@
               <button type="button" id="btn-wizard" disabled title="Guide → Portal → Secrets → Configure → dry-run">
                 Wizard
               </button>
-              <button type="button" id="btn-ship" disabled title="shipctl ship — one-shot offline prep">Ship</button>
+              <button type="button" id="btn-ship" disabled title="orbityard ship — one-shot offline prep">Ship</button>
               <button type="button" id="btn-guide" disabled>Guide</button>
               <button type="button" id="btn-configure" disabled>Configure</button>
               <button type="button" id="btn-vault" disabled title="Export encrypted .km vault (Clavis)">
@@ -814,7 +814,7 @@
             </section>
             <p class="hint tools-hint">
               Prefer <strong>Launch</strong> for the guided ship path. Tools are pass-throughs to
-              <code>shipctl</code>. Advanced <strong>Deploy</strong> / <strong>Run flow</strong>
+              <code>orbityard</code>. Advanced <strong>Deploy</strong> / <strong>Run flow</strong>
               (with deploy, Online) open a terminal; dry-run / doctor / status stay headless.
             </p>
           </section>
@@ -835,7 +835,7 @@
                 id="btn-output-cancel"
                 class="danger output-cancel-btn"
                 hidden
-                title="Stop the running shipctl process (Self-host serve / Deploy)"
+                title="Stop the running orbityard process (Self-host serve / Deploy)"
               >
                 Cancel serve
               </button>
@@ -865,7 +865,7 @@
         </section>
 
         <footer class="statusbar">
-          <span id="shipctl-path" title="Resolved shipctl">shipctl: …</span>
+          <span id="orbityard-path" title="Resolved orbityard">orbityard: …</span>
           <div class="statusbar-end">
             <button
               type="button"
@@ -900,7 +900,7 @@
               id="btn-statusbar-cancel"
               class="danger output-cancel-btn"
               hidden
-              title="Stop the running shipctl process"
+              title="Stop the running orbityard process"
             >
               Cancel
             </button>

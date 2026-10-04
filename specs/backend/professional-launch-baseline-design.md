@@ -7,7 +7,7 @@
 
 ## Problem
 
-Across Codactrl / Clavis / Signet / Obscur / Velocity / Strata, professional launch repeatedly stalls on the same local hygiene — missing LICENSE / SECURITY / TRUST, and no sequenced cue to cut a GitHub Release — while Ship Studio already walks OAuth, sign, listing, and deploy. Operators finish vendor work then forget the public trust pack.
+Across Codactrl / Clavis / Signet / Obscur / Velocity / Strata, professional launch repeatedly stalls on the same local hygiene — missing LICENSE / SECURITY / TRUST, and no sequenced cue to cut a GitHub Release — while Orbit Yard already walks OAuth, sign, listing, and deploy. Operators finish vendor work then forget the public trust pack.
 
 ## Scope (first slice)
 

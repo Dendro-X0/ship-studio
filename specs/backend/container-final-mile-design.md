@@ -23,7 +23,7 @@
 
 ## Non-goals
 
-- `docker push` / registry login from shipctl  
+- `docker push` / registry login from orbityard  
 - Kubernetes / Helm / Fly / Railway automation  
 - Mobile store API upload (still deferred)  
 

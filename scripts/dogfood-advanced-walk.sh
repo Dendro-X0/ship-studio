@@ -1,35 +1,35 @@
 #!/usr/bin/env bash
 # L3 spine walk: Confirm through Advanced steps that have desktop_view Related targets.
-# Does not open browsers — proves shipctl state + Related metadata Desktop relies on.
+# Does not open browsers — proves orbityard state + Related metadata Desktop relies on.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT="${1:?usage: $0 <project-path>}"
-SHIPCTL="${SHIPCTL_PATH:-}"
-if [[ -z "$SHIPCTL" ]]; then
+ORBITYARD="${ORBITYARD_PATH:-}"
+if [[ -z "$ORBITYARD" ]]; then
   # Prefer debug (matches dogfood-advanced-publish) so a stale release binary cannot hide new steps.
-  if [[ -x "$ROOT/target/debug/shipctl.exe" ]]; then
-    SHIPCTL="$ROOT/target/debug/shipctl.exe"
-  elif [[ -x "$ROOT/target/debug/shipctl" ]]; then
-    SHIPCTL="$ROOT/target/debug/shipctl"
-  elif [[ -x "$ROOT/target/release/shipctl.exe" ]]; then
-    SHIPCTL="$ROOT/target/release/shipctl.exe"
-  elif [[ -x "$ROOT/target/release/shipctl" ]]; then
-    SHIPCTL="$ROOT/target/release/shipctl"
+  if [[ -x "$ROOT/target/debug/orbityard.exe" ]]; then
+    ORBITYARD="$ROOT/target/debug/orbityard.exe"
+  elif [[ -x "$ROOT/target/debug/orbityard" ]]; then
+    ORBITYARD="$ROOT/target/debug/orbityard"
+  elif [[ -x "$ROOT/target/release/orbityard.exe" ]]; then
+    ORBITYARD="$ROOT/target/release/orbityard.exe"
+  elif [[ -x "$ROOT/target/release/orbityard" ]]; then
+    ORBITYARD="$ROOT/target/release/orbityard"
   else
-    echo "shipctl not found — run cargo build -p shipctl"; exit 1
+    echo "orbityard not found — run cargo build -p orbityard"; exit 1
   fi
 fi
-[[ -x "$SHIPCTL" ]] || { echo "shipctl not found: $SHIPCTL"; exit 1; }
-echo "shipctl: $SHIPCTL"
+[[ -x "$ORBITYARD" ]] || { echo "orbityard not found: $ORBITYARD"; exit 1; }
+echo "orbityard: $ORBITYARD"
 
 echo "==> reset advanced · $PROJECT"
-"$SHIPCTL" publish --mode advanced --project "$PROJECT" reset >/dev/null
+"$ORBITYARD" publish --mode advanced --project "$PROJECT" reset >/dev/null
 
 RELATED_OK=0
 RELATED_FAIL=0
 STEPS_SEEN=0
 while true; do
-  OUT="$("$SHIPCTL" publish --mode advanced --project "$PROJECT")"
+  OUT="$("$ORBITYARD" publish --mode advanced --project "$PROJECT")"
   FINISHED="$(echo "$OUT" | grep -m1 '"finished"' | grep -o 'true\|false' || true)"
   CUR_ID="$(echo "$OUT" | python -c "import sys,json; d=json.load(sys.stdin); c=d.get('current') or {}; print(c.get('id') or '')" 2>/dev/null || true)"
   VIEW="$(echo "$OUT" | python -c "import sys,json; d=json.load(sys.stdin); c=d.get('current') or {}; print(c.get('desktop_view') or '')" 2>/dev/null || true)"
@@ -58,9 +58,9 @@ while true; do
     echo "FAIL too many steps"
     exit 1
   fi
-  "$SHIPCTL" publish --mode advanced --project "$PROJECT" confirm >/dev/null
+  "$ORBITYARD" publish --mode advanced --project "$PROJECT" confirm >/dev/null
   # Stop when confirm completed the plan (avoids double-print of last step).
-  AFTER="$("$SHIPCTL" publish --mode advanced --project "$PROJECT")"
+  AFTER="$("$ORBITYARD" publish --mode advanced --project "$PROJECT")"
   if echo "$AFTER" | grep -m1 '"finished"' | grep -q 'true'; then
     break
   fi

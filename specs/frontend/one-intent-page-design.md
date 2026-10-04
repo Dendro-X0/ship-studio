@@ -7,7 +7,7 @@
 
 ## Problem
 
-Strangers confuse Ship Studio with:
+Strangers confuse Orbit Yard with:
 
 | Lookalike | Why it fails the ICP |
 |-----------|----------------------|

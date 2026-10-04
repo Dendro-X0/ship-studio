@@ -16,7 +16,7 @@ use tauri::Url;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
-/// Hide console windows when the GUI shell spawns `shipctl` / helpers (Windows).
+/// Hide console windows when the GUI shell spawns `orbityard` / helpers (Windows).
 #[cfg(windows)]
 fn silence_console(cmd: &mut Command) {
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
@@ -26,7 +26,7 @@ fn silence_console(cmd: &mut Command) {
 #[cfg(not(windows))]
 fn silence_console(_cmd: &mut Command) {}
 
-/// Tracks the active shipctl process for cancel.
+/// Tracks the active orbityard process for cancel.
 struct ActiveRun {
     pid: AtomicU32,
     cancel_requested: AtomicBool,
@@ -50,7 +50,7 @@ struct CmdResult {
     code: i32,
     stdout: String,
     stderr: String,
-    shipctl: String,
+    orbityard: String,
     cancelled: bool,
 }
 
@@ -68,8 +68,8 @@ struct ShipState {
     last_run: Option<serde_json::Value>,
 }
 
-fn resolve_shipctl() -> Result<PathBuf, String> {
-    if let Ok(p) = std::env::var("SHIPCTL_PATH") {
+fn resolve_orbityard() -> Result<PathBuf, String> {
+    if let Ok(p) = std::env::var("ORBITYARD_PATH") {
         let path = PathBuf::from(p);
         if path.is_file() {
             return Ok(path);
@@ -79,7 +79,7 @@ fn resolve_shipctl() -> Result<PathBuf, String> {
     // Installed / portable layout wins — never lose to a newer repo build by mtime.
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
-            for name in ["shipctl.exe", "shipctl"] {
+            for name in ["orbityard.exe", "orbityard"] {
                 let beside = dir.join(name);
                 if beside.is_file() {
                     return Ok(beside);
@@ -96,10 +96,10 @@ fn resolve_shipctl() -> Result<PathBuf, String> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let repo = manifest_dir.join("../../..");
     for c in [
-        repo.join("target/release/shipctl.exe"),
-        repo.join("target/debug/shipctl.exe"),
-        repo.join("target/release/shipctl"),
-        repo.join("target/debug/shipctl"),
+        repo.join("target/release/orbityard.exe"),
+        repo.join("target/debug/orbityard.exe"),
+        repo.join("target/release/orbityard"),
+        repo.join("target/debug/orbityard"),
     ] {
         if c.is_file() {
             candidates.push(c);
@@ -121,17 +121,17 @@ fn resolve_shipctl() -> Result<PathBuf, String> {
     if let Some((path, _)) = best {
         return Ok(path);
     }
-    which::which("shipctl")
-        .or_else(|_| which::which("shipctl.exe"))
+    which::which("orbityard")
+        .or_else(|_| which::which("orbityard.exe"))
         .map_err(|_| {
-            "shipctl not found. Build shipctl --release, run scripts/stage-desktop, or set SHIPCTL_PATH"
+            "orbityard not found. Build orbityard --release, run scripts/stage-desktop, or set ORBITYARD_PATH"
                 .into()
         })
 }
 
 #[tauri::command]
-fn resolve_shipctl_path() -> Result<String, String> {
-    Ok(resolve_shipctl()?.display().to_string())
+fn resolve_orbityard_path() -> Result<String, String> {
+    Ok(resolve_orbityard()?.display().to_string())
 }
 
 fn ship_dir(project: &Path) -> PathBuf {
@@ -145,7 +145,7 @@ fn read_json_file(path: &Path) -> Result<serde_json::Value, String> {
 
 fn emit_line(app: &AppHandle, stream: &str, text: &str) {
     let _ = app.emit(
-        "shipctl-line",
+        "orbityard-line",
         StreamLine {
             stream: stream.into(),
             text: text.into(),
@@ -196,28 +196,28 @@ fn pick_vault_save(default_name: Option<String>) -> Result<Option<String>, Strin
     Ok(file.map(|p| p.display().to_string()))
 }
 
-/// Open an interactive terminal running `shipctl <args>` in `project`.
+/// Open an interactive terminal running `orbityard <args>` in `project`.
 /// Prefer this for any TTY / stdin flow (login, put, publish open). Windows: wt → cmd start.
 #[tauri::command]
-fn open_shipctl_terminal(
+fn open_orbityard_terminal(
     project: String,
     args: Vec<String>,
     title: Option<String>,
 ) -> Result<(), String> {
-    let shipctl = resolve_shipctl()?;
+    let orbityard = resolve_orbityard()?;
     let project_path = PathBuf::from(&project);
     if !project_path.is_dir() {
         return Err(format!("not a directory: {project}"));
     }
     if args.is_empty() {
-        return Err("shipctl args are required".into());
+        return Err("orbityard args are required".into());
     }
-    let window_title = title.unwrap_or_else(|| "Ship Studio".into());
-    let shipctl_s = shipctl.to_str().unwrap_or("shipctl").to_string();
+    let window_title = title.unwrap_or_else(|| "Orbit Yard".into());
+    let orbityard_s = orbityard.to_str().unwrap_or("orbityard").to_string();
 
     #[cfg(windows)]
     {
-        let mut wt_args = vec!["-d".to_string(), project.clone(), shipctl_s.clone()];
+        let mut wt_args = vec!["-d".to_string(), project.clone(), orbityard_s.clone()];
         wt_args.extend(args.iter().cloned());
         if Command::new("wt").args(&wt_args).spawn().is_ok() {
             return Ok(());
@@ -226,7 +226,7 @@ fn open_shipctl_terminal(
             "/C".to_string(),
             "start".to_string(),
             window_title,
-            shipctl_s,
+            orbityard_s,
         ];
         cmd_args.extend(args);
         Command::new("cmd")
@@ -238,22 +238,22 @@ fn open_shipctl_terminal(
 
     #[cfg(not(windows))]
     {
-        let _ = (&shipctl, &project_path, &args, &window_title);
-        Err("open_shipctl_terminal is implemented for Windows in this build".into())
+        let _ = (&orbityard, &project_path, &args, &window_title);
+        Err("open_orbityard_terminal is implemented for Windows in this build".into())
     }
 }
 
-/// Run shipctl with extra env (used for SHIP_VAULT_PASSPHRASE; values not logged).
+/// Run orbityard with extra env (used for SHIP_VAULT_PASSPHRASE; values not logged).
 /// `async` attribute: must not block the UI thread (`selfhost --serve` waits until Cancel).
 #[tauri::command(async)]
-fn run_shipctl_env(
+fn run_orbityard_env(
     app: AppHandle,
     active: State<'_, ActiveRun>,
     project: String,
     args: Vec<String>,
     env: std::collections::HashMap<String, String>,
 ) -> Result<CmdResult, String> {
-    let (shipctl, mut child) = {
+    let (orbityard, mut child) = {
         let _gate = active
             .gate
             .lock()
@@ -263,7 +263,7 @@ fn run_shipctl_env(
         }
         active.cancel_requested.store(false, Ordering::SeqCst);
 
-        let shipctl = resolve_shipctl()?;
+        let orbityard = resolve_orbityard()?;
         let project_path = Path::new(&project);
         if !project_path.is_dir() {
             return Err(format!("not a directory: {project}"));
@@ -273,10 +273,10 @@ fn run_shipctl_env(
         emit_line(
             &app,
             "meta",
-            &format!("$ {} {}", shipctl.display(), args.join(" ")),
+            &format!("$ {} {}", orbityard.display(), args.join(" ")),
         );
 
-        let mut cmd = Command::new(&shipctl);
+        let mut cmd = Command::new(&orbityard);
         cmd.current_dir(project_path)
             .args(&args)
             .stdin(Stdio::null())
@@ -289,10 +289,10 @@ fn run_shipctl_env(
 
         let child = cmd
             .spawn()
-            .map_err(|e| format!("spawn {}: {e}", shipctl.display()))?;
+            .map_err(|e| format!("spawn {}: {e}", orbityard.display()))?;
 
         active.pid.store(child.id(), Ordering::SeqCst);
-        (shipctl, child)
+        (orbityard, child)
     };
 
     let stdout = child
@@ -332,7 +332,7 @@ fn run_shipctl_env(
 
     let status = child
         .wait()
-        .map_err(|e| format!("wait {}: {e}", shipctl.display()))?;
+        .map_err(|e| format!("wait {}: {e}", orbityard.display()))?;
 
     let cancelled = active.cancel_requested.swap(false, Ordering::SeqCst);
     active.pid.store(0, Ordering::SeqCst);
@@ -353,13 +353,13 @@ fn run_shipctl_env(
         code,
         stdout,
         stderr,
-        shipctl: shipctl.display().to_string(),
+        orbityard: orbityard.display().to_string(),
         cancelled,
     })
 }
 
 #[tauri::command]
-fn cancel_shipctl(app: AppHandle, active: State<'_, ActiveRun>) -> Result<bool, String> {
+fn cancel_orbityard(app: AppHandle, active: State<'_, ActiveRun>) -> Result<bool, String> {
     let pid = active.pid.load(Ordering::SeqCst);
     if pid == 0 {
         return Ok(false);
@@ -373,13 +373,13 @@ fn cancel_shipctl(app: AppHandle, active: State<'_, ActiveRun>) -> Result<bool, 
 
 /// Off main thread — sync `wait()` would freeze the window for long-lived commands.
 #[tauri::command(async)]
-fn run_shipctl(
+fn run_orbityard(
     app: AppHandle,
     active: State<'_, ActiveRun>,
     project: String,
     args: Vec<String>,
 ) -> Result<CmdResult, String> {
-    let (shipctl, mut child) = {
+    let (orbityard, mut child) = {
         let _gate = active
             .gate
             .lock()
@@ -389,7 +389,7 @@ fn run_shipctl(
         }
         active.cancel_requested.store(false, Ordering::SeqCst);
 
-        let shipctl = resolve_shipctl()?;
+        let orbityard = resolve_orbityard()?;
         let project_path = Path::new(&project);
         if !project_path.is_dir() {
             return Err(format!("not a directory: {project}"));
@@ -398,10 +398,10 @@ fn run_shipctl(
         emit_line(
             &app,
             "meta",
-            &format!("$ {} {}", shipctl.display(), args.join(" ")),
+            &format!("$ {} {}", orbityard.display(), args.join(" ")),
         );
 
-        let mut cmd = Command::new(&shipctl);
+        let mut cmd = Command::new(&orbityard);
         cmd.current_dir(project_path)
             .args(&args)
             .stdin(Stdio::null())
@@ -410,10 +410,10 @@ fn run_shipctl(
         silence_console(&mut cmd);
         let child = cmd
             .spawn()
-            .map_err(|e| format!("spawn {}: {e}", shipctl.display()))?;
+            .map_err(|e| format!("spawn {}: {e}", orbityard.display()))?;
 
         active.pid.store(child.id(), Ordering::SeqCst);
-        (shipctl, child)
+        (orbityard, child)
     };
 
     let stdout = child
@@ -453,7 +453,7 @@ fn run_shipctl(
 
     let status = child
         .wait()
-        .map_err(|e| format!("wait {}: {e}", shipctl.display()))?;
+        .map_err(|e| format!("wait {}: {e}", orbityard.display()))?;
 
     let cancelled = active.cancel_requested.swap(false, Ordering::SeqCst);
     active.pid.store(0, Ordering::SeqCst);
@@ -474,7 +474,7 @@ fn run_shipctl(
         code,
         stdout,
         stderr,
-        shipctl: shipctl.display().to_string(),
+        orbityard: orbityard.display().to_string(),
         cancelled,
     })
 }
@@ -523,7 +523,7 @@ fn save_ritual_args(
         serde_json::from_str::<serde_json::Value>(&raw).map_err(|e| e.to_string())?
     } else {
         serde_json::json!({
-            "schema": "ship-studio/v0",
+            "schema": "orbit-yard/v0",
             "project": project,
             "workflow": ["doctor", "configure", "sign (signet)", "deploy (orbit)"],
             "adapters": { "signet": "signet", "orbit": "orbit" },
@@ -566,7 +566,7 @@ fn set_launch_payments(project: String, enabled: bool) -> Result<serde_json::Val
         serde_json::from_str::<serde_json::Value>(&raw).map_err(|e| e.to_string())?
     } else {
         serde_json::json!({
-            "schema": "ship-studio/v0",
+            "schema": "orbit-yard/v0",
             "project": project,
             "workflow": ["doctor", "configure", "sign (signet)", "deploy (orbit)"],
             "adapters": { "signet": "signet", "orbit": "orbit" },
@@ -602,7 +602,7 @@ fn set_primary_host(project: String, host_id: String) -> Result<serde_json::Valu
         serde_json::from_str::<serde_json::Value>(&raw).map_err(|e| e.to_string())?
     } else {
         serde_json::json!({
-            "schema": "ship-studio/v0",
+            "schema": "orbit-yard/v0",
             "project": project,
             "workflow": ["doctor", "configure", "sign (signet)", "deploy (orbit)"],
             "adapters": { "signet": "signet", "orbit": "orbit" },
@@ -682,7 +682,7 @@ fn run_git(project: String, args: Vec<String>) -> Result<CmdResult, String> {
         code: output.status.code().unwrap_or(1),
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),
         stderr: String::from_utf8_lossy(&output.stderr).to_string(),
-        shipctl: "git".into(),
+        orbityard: "git".into(),
         cancelled: false,
     })
 }
@@ -802,16 +802,16 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             pick_project,
             pick_vault_save,
-            open_shipctl_terminal,
+            open_orbityard_terminal,
             run_git,
-            run_shipctl,
-            run_shipctl_env,
-            cancel_shipctl,
+            run_orbityard,
+            run_orbityard_env,
+            cancel_orbityard,
             load_ship_state,
             save_ritual_args,
             set_launch_payments,
             set_primary_host,
-            resolve_shipctl_path,
+            resolve_orbityard_path,
             write_temp_json,
             write_vault_entries_temp,
             delete_path

@@ -1,11 +1,11 @@
-# Frontend Spec — Ship Studio Desktop shell
+# Frontend Spec — Orbit Yard Desktop shell
 
-- **Product:** Ship Studio (Tauri desktop)
+- **Product:** Orbit Yard (Tauri desktop)
 - **Audience:** Solo operators shipping via Signet + Orbit
 - **Reference tier:** CodaCtrl studio shell · Linear restraint
 - **Stack:** Vanilla HTML/CSS/TS (existing Tauri UI — no React/shadcn migration this pass)
 - **Spec status:** approved for implement
-- **API dependency:** existing Tauri commands + `shipctl` (unchanged)
+- **API dependency:** existing Tauri commands + `orbityard` (unchanged)
 - **UX principle:** Minimal actions · one publish spine — detail panels open from the current step, then return
 - **Modes:** General (default, short publish + focused nav) · Advanced (full plan + Assist/Launch/Portal/Ritual/Tools)
 
@@ -27,7 +27,7 @@
 │ Brand LOCAL    ├─ Main view (scroll) ─────────────────────────┤
 │ Nav groups     │                                              │
 │ Bound project  ├─ Output dock ────────────────────────────────┤
-│                └─ Status bar (shipctl · shortcuts) ───────────┘
+│                └─ Status bar (orbityard · shortcuts) ───────────┘
 └────────────────┴──────────────────────────────────────────────┘
 + Command palette (Ctrl+K)
 ```
@@ -35,7 +35,7 @@
 **Project identity (always on):** the bound folder is the session — not a footnote.
 
 - Titlebar primary control: **folder name** (large) + truncated path. Empty: “Choose a project”.
-- Window title: `Ship Studio — {name}` when bound.
+- Window title: `Orbit Yard — {name}` when bound.
 - Sidebar footer: “Working in” + name + full path (mono) + Open / recents.
 - Topbar: view title + crumb `{name} · {path}` so you never lose the repo after navigating.
 - Dashboard first viewport: **Working in {name}** (or bind empty state). No numbered pipeline.
@@ -54,7 +54,7 @@ SHIP
 
 TARGETS
 - detected scopes grouped by kind (api · web · desktop · …)
-- click toggles the deploy/release target (`shipctl scopes set`)
+- click toggles the deploy/release target (`orbityard scopes set`)
 - each target and integration uses a **bundled** SVG from `apps/desktop/src/public/icons` (no icon CDN)
 - manage scopes — full checkbox panel
 
@@ -80,7 +80,7 @@ Command palette filters **views + actions** by title/keywords. Enter runs action
 ### Dashboard
 Purpose: **which repo**, **honest local status** (Signet / Orbit / git / deploy / step N/M), **the next human action**.  
 Layout: session → **status checklist bar** → Now CTA → **health tiles** (General + Advanced).  
-Empty: bind a folder + recents. Bound: `shipctl pulse` fills status bar + Now from git + `.ship` + deploy signals.  
+Empty: bind a folder + recents. Bound: `orbityard pulse` fills status bar + Now from git + `.ship` + deploy signals.  
 Honesty: never “all shipped” from last-run alone; Orbit missing is a soft cue (hard-block only when Signet required and absent).  
 DO NOT: numbered robotic workflow · ignore mid-launch/publish state · call vendor HTTPS for status · hide tool truth behind Advanced.
 
@@ -92,13 +92,13 @@ Auto-load: navigating to Publish with a bound project and no plan calls `refresh
 
 ### Modes (General / Advanced)
 
-Topbar segmented control persists in `localStorage` (`ship-studio.mode`).  
+Topbar segmented control persists in `localStorage` (`orbit-yard.mode`).  
 `body[data-mode=general|advanced]` drives CSS:
 
 | General | Advanced |
 |---------|----------|
 | Nav: Dashboard, Publish, Sign, Env, Targets, Integrations, Output | + Assist, Launch, Portal, Ritual, Tools |
-| Publish plan via `shipctl publish --mode general` | `--mode advanced` |
+| Publish plan via `orbityard publish --mode general` | `--mode advanced` |
 | Hide Deploy toggle; keep Offline | Full toggles |
 
 Switching mode rebuilds the publish plan (`publish reset` semantics) and toasts.
@@ -127,7 +127,7 @@ Secondary row under Switch — **independent** helpers, not peers of the publish
 | Human portal | Bound | Portal view · start Human sprint (opens Polar→GitHub sources) |
 | Portal | Bound | Load full portal plan |
 | Env | Bound | Env / tokens view + refresh |
-| Set up Polar | Bound · **Advanced** · **Public** | Portal filtered to `polar` via `shipctl portal --provider polar` |
+| Set up Polar | Bound · **Advanced** · **Public** | Portal filtered to `polar` via `orbityard portal --provider polar` |
 | Switch project | Always | Existing `#now-switch` |
 
 Honesty: Set up Polar opens dashboard steps only — operator creates checkout/refunds on polar.sh; Studio does not write `PUBLIC_POLAR_*`.
@@ -154,7 +154,7 @@ Own nav item — not nested inside Portal. Groups:
 
 | Group | Wizards | Behavior |
 |-------|---------|----------|
-| Payments | Polar · Stripe · Gumroad · Lemon · Paddle | Checklist + **Open dashboard**. Public intent required. Optional **Portal steps** loads `shipctl portal --provider`. |
+| Payments | Polar · Stripe · Gumroad · Lemon · Paddle | Checklist + **Open dashboard**. Public intent required. Optional **Portal steps** loads `orbityard portal --provider`. |
 | Email | Resend | Checklist + open `https://resend.com/api-keys`. Put `RESEND_API_KEY` on the deploy host via Env — never paste the value in Studio. |
 
 Dashboard **Set up Polar** and the `polar` chip open this view on the Polar wizard (Advanced + Public).
@@ -175,8 +175,8 @@ Fixed `#toast-host` above the status/output chrome (z-index above dock, below cm
 
 | Kind | When |
 |------|------|
-| ok | Bind project, publish/launch plan loaded, non-quiet shipctl success, copy, save ritual, open path |
-| err | shipctl fail/cancel (non-quiet), open-path denied, bind/save errors |
+| ok | Bind project, publish/launch plan loaded, non-quiet orbityard success, copy, save ritual, open path |
+| err | orbityard fail/cancel (non-quiet), open-path denied, bind/save errors |
 | info | Switcher opened (“Choose a project”), quiet ops stay silent |
 
 DO NOT: toast every `pulse`/`scopes` quiet refresh · block the UI · replace Output dock.
@@ -203,5 +203,5 @@ Visual: full-bleed dark overlay (above toast, below cmdk). Panel: wide `min(920p
 
 - L3: `pnpm dev` — Dashboard **Set up Polar** (Advanced+Public) · clickable detect chips · `#now-quick` secondaries
 - L3: `pnpm dev` — Output **Preview** · search finds JSON keys · Enter cycles matches · Esc closes
-- L2: `cargo run -p shipctl -- publish --mode advanced --project <dogfood-fixture>` lists new step ids
+- L2: `cargo run -p orbityard -- publish --mode advanced --project <dogfood-fixture>` lists new step ids
 - Existing button IDs remain clickable after redesign

@@ -23,7 +23,7 @@ OVERHAUL:   **Done O0–O5** — [ship-studio-overhaul-design](../../specs/backe
 | Job | Surface | Ready? |
 |-----|---------|--------|
 | **Help the operator set up Polar / Stripe / … for their product** | Desktop **Integrations** → Payments wizard → Open vendor → Put `PUBLIC_*` / host secrets **outside** Studio → Continue publishing → Confirm listing | **Yes** — guide path |
-| **Sell Ship Studio Solo on the official website** | `apps/website` Paddle.js overlay (`PUBLIC_PADDLE_*`) | **Wired** — live overlay needs sandbox/live tokens in host env (not git). Polar E2E stays deferred. |
+| **Sell Orbit Yard Solo on the official website** | `apps/website` Paddle.js overlay (`PUBLIC_PADDLE_*`) | **Wired** — live overlay needs sandbox/live tokens in host env (not git). Polar E2E stays deferred. |
 
 Do not conflate them. Integrations is for *their* commerce; website Buy is for *this* product’s license.
 
@@ -31,7 +31,7 @@ Do not conflate them. Integrations is for *their* commerce; website Buy is for *
 
 Publish’s **inspection bay** (Self-sign · Official signing · Deploy) used to dead-end into Sign paths or “Use Local.” Operators need a **catalog** like Payments/Email: pick a lane, get a short checklist, open the real console, then continue the Publish spine.
 
-Ship Studio remains a **portal and guide**. Vendor UIs stay authoritative.
+Orbit Yard remains a **portal and guide**. Vendor UIs stay authoritative.
 
 ## Host tiers (parity model)
 
@@ -40,7 +40,7 @@ Ship Studio remains a **portal and guide**. Vendor UIs stay authoritative.
 | **A — Orbit deploy** | Cloudflare · Vercel · Netlify | Catalog + Portal Login CLI | Detect · OAuth · token · env Open≠Docs |
 | **B — CLI host** | Fly · Railway | Catalog + Portal Login CLI | OAuth · (Railway tokens) · secrets/variables Docs |
 | **C — Pages** | GitHub Pages | Catalog Open+Docs only | No Pages→PAT conflation; `github` portal for auth/CI |
-| **D — Advanced host** | Render · DigitalOcean · Heroku · Amplify · Cloud Run · Azure SWA | **Not** in Platforms catalog yet | `shipctl portal --provider` · Advanced Publish `host.*` |
+| **D — Advanced host** | Render · DigitalOcean · Heroku · Amplify · Cloud Run · Azure SWA | **Not** in Platforms catalog yet | `orbityard portal --provider` · Advanced Publish `host.*` |
 | **E — Local Orbit** | Orbit | Catalog · Ritual/Tools | No portal id |
 
 Detail + slices: [hosting-portal-parity-design](../../specs/backend/hosting-portal-parity-design.md).
@@ -71,17 +71,17 @@ Specs: [platforms-catalog-design](../../specs/frontend/platforms-catalog-design.
 | Payments | Polar · Stripe · Gumroad · Lemon · Paddle · Creem · Waffo | Open → create listing → put `PUBLIC_*` / host secrets **outside** Studio → Continue publishing → Confirm |
 | Email | Resend | Open API keys → Env Put on host → test on Resend → Confirm if Publish asks |
 
-### Portal (`portal` view · `shipctl portal`)
+### Portal (`portal` view · `orbityard portal`)
 
 | Behavior | Detail |
 |----------|--------|
 | Plan | Offline JSON steps per detected / filtered provider |
 | **Open** | Vendor **settings** UI (`entry_url`) |
 | **Docs** | Official tutorial (`docs_url`) — not a substitute for Open |
-| **Login CLI** | Interactive terminal (`open_shipctl_terminal`) for OAuth rows only |
+| **Login CLI** | Interactive terminal (`open_orbityard_terminal`) for OAuth rows only |
 | Recover rows | Omitted when create URL ≡ token URL (no triple Cloudflare API-tokens links) |
 
-Backend catalog: [provider-portal-design](../../specs/backend/provider-portal-design.md) · `crates/shipctl/src/portal.rs` · [hosting-portal-parity](../../specs/backend/hosting-portal-parity-design.md)
+Backend catalog: [provider-portal-design](../../specs/backend/provider-portal-design.md) · `crates/orbityard/src/portal.rs` · [hosting-portal-parity](../../specs/backend/hosting-portal-parity-design.md)
 
 ### Supporting Desktop behaviors (same arc)
 
@@ -99,7 +99,7 @@ Backend catalog: [provider-portal-design](../../specs/backend/provider-portal-de
 2. **Open ≠ Docs** — settings UI vs official tutorials stay separate actions.
 3. **Honesty** — no Studio-held secrets; no auto-Done on Human/OAuth/deploy; Local can omit hosted Live check.
 4. **Shared picker** — any future “pick a provider” panel reuses the catalog utility.
-5. **CLI parity** — Desktop actions must map to `shipctl portal` / `env` / `publish` without inventing parallel state.
+5. **CLI parity** — Desktop actions must map to `orbityard portal` / `env` / `publish` without inventing parallel state.
 
 ## Known shortcomings (do not patch in isolation)
 
@@ -133,7 +133,7 @@ Dashboard workflow card → Publish checkpoint
 
 | Layer | Check |
 |-------|--------|
-| L1 | `cargo test -p shipctl portal::tests` · desktop `tsc` |
+| L1 | `cargo test -p orbityard portal::tests` · desktop `tsc` |
 | L2 | Harbor Local: paced Continue · Platforms Orbit Open (no Portal steps) |
 | L2 | Harbor Desktop dogfood — Publish copy · Payments toggle · primary host — [evidence](../handoffs/evidence-harbor-desktop-dogfood.md) |
 

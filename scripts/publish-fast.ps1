@@ -8,20 +8,20 @@ param(
 )
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$Shipctl = $env:SHIPCTL_PATH
+$Shipctl = $env:ORBITYARD_PATH
 if (-not $Shipctl) {
   foreach ($c in @(
-    "$Root\target\debug\shipctl.exe",
-    "$Root\target\release\shipctl.exe"
+    "$Root\target\debug\orbityard.exe",
+    "$Root\target\release\orbityard.exe"
   )) {
     if (Test-Path $c) { $Shipctl = $c; break }
   }
 }
 if (-not $Shipctl) {
   Push-Location $Root
-  cargo build -p shipctl | Out-Null
+  cargo build -p orbityard | Out-Null
   Pop-Location
-  $Shipctl = "$Root\target\debug\shipctl.exe"
+  $Shipctl = "$Root\target\debug\orbityard.exe"
 }
 & $Shipctl publish --mode $Mode --intent $Intent --project $Project continue --chain $Chain
 exit $LASTEXITCODE

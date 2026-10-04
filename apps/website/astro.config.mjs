@@ -12,7 +12,7 @@ function rehypeRewriteDocLinks() {
 }
 
 export default defineConfig({
-  site: "https://shipstudio.dev",
+  site: "https://orbityard.dev",
   output: "static",
   trailingSlash: "never",
   vite: {

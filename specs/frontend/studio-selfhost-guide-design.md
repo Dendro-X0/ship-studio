@@ -102,7 +102,7 @@ Publish progress: mark `selfhost.deploy` **Done** from verify — same honesty a
 |-------|------|-------|
 | **0 — Spec** | This file + handoff queue | Review |
 | **1 — Catalog honesty** | Self-host card; gate Orbit; Docker-cousin blurb | **Done** (L1 `tsc`) |
-| **2 — Stream Deploy** | Wire Deploy → local command + terminal stream | **Done** — `shipctl selfhost` + Deployment Deploy; L1 tests · Harbor static |
+| **2 — Stream Deploy** | Wire Deploy → local command + terminal stream | **Done** — `orbityard selfhost` + Deployment Deploy; L1 tests · Harbor static |
 | **3 — Non-step checks** | Health/artifact/last-run → auto Done | **Done** — bind + GET 200 · `selfhost.check` in last-run |
 | **4 — Publish Auto step** | `selfhost.deploy` Continue path when signals present | **Done** — General+Advanced · Launch parity · verify runs selfhost |
 | **5 — Detect matrix** | Studio monorepo · static preview · optional compose-up without stealing Dockerfile layouts | **Done** — `plan_eligible` · opt-in root · Dockerfile-only skips |
@@ -114,14 +114,14 @@ Publish progress: mark `selfhost.deploy` **Done** from verify — same honesty a
 |---------|--------|
 | Catalog / blurb | `apps/desktop/src/platforms-data.ts` |
 | Stream UI | Desktop Ritual/terminal + Deployment wizard |
-| Run + verify | `shipctl` deploy/selfhost + verify layers |
+| Run + verify | `orbityard` deploy/selfhost + verify layers |
 | Plan step | `publish.rs` / `launch.rs` Auto step |
 
 ## Proof (band done)
 
 | Layer | Check |
 |-------|--------|
-| L1 | `tsc` · `cargo test -p shipctl` selfhost units |
+| L1 | `tsc` · `cargo test -p orbityard` selfhost units |
 | L2 | Harbor Deployment → Self-host **Deploy** streams; Done without Confirm |
 | L2 | Fail health → stays not-done; no false Live |
 | L2 | Dockerfile project still prefers container lane, not Self-host stealing |

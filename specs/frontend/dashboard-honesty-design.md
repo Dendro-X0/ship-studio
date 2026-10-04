@@ -33,7 +33,7 @@ Change:   General sees health tiles · no “Shipped” · Orbit missing soft cu
 
 ## Non-goals
 
-- New pulse fields or shipctl JSON  
+- New pulse fields or orbityard JSON  
 - Fake green “all shipped” aggregate  
 - Vendor HTTPS status probes  
 - Moving Now / workflow cards
@@ -53,7 +53,7 @@ Change:   General sees health tiles · no “Shipped” · Orbit missing soft cu
 
 | Layer | Check |
 |-------|--------|
-| L1 | `pnpm --filter ship-studio-desktop build` (tsc) |
+| L1 | `pnpm --filter orbit-yard-desktop build` (tsc) |
 | L2 | Harbor bind · Local: Signet/Orbit/Git pills visible in General · status bar shows tools |
 | L2 | Mid-flight: step `N/M` in checklist · no “Shipped” / “all shipped” |
 

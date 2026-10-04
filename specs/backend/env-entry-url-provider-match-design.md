@@ -17,4 +17,4 @@ Vercel-bound empty keys (`ANTHROPIC_API_KEY`, `CRON_SECRET`, …) opened the wro
 
 ## Proof
 
-`cargo test -p shipctl` — `source_url_*` / secrets vercel fixture tests  
+`cargo test -p orbityard` — `source_url_*` / secrets vercel fixture tests  

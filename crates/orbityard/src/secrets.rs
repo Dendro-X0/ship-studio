@@ -48,11 +48,11 @@ pub fn plan_for(project: &Path, filter: Option<ProviderId>) -> Result<SecretsPla
     dedupe_hints(&mut hints);
 
     let mut notes = vec![
-        "Paste values into the provider CLI — shipctl never stores secret values.".into(),
-        "Run: shipctl secrets put --project . --provider cloudflare --name <NAME>".into(),
+        "Paste values into the provider CLI — orbityard never stores secret values.".into(),
+        "Run: orbityard secrets put --project . --provider cloudflare --name <NAME>".into(),
         "Or use TUI → Secrets → Enter to put the selected hint.".into(),
         "Graduate / Gumroad / Lemon / Stripe / Paddle rows are name-only catalogs — set in CI or vendor dashboards, not .ship/.".into(),
-        "Optional backup: shipctl vault export --out ship-secrets.km --from-hints".into(),
+        "Optional backup: orbityard vault export --out ship-secrets.km --from-hints".into(),
     ];
     if detect_empty {
         notes.insert(
@@ -62,7 +62,7 @@ pub fn plan_for(project: &Path, filter: Option<ProviderId>) -> Result<SecretsPla
     }
 
     Ok(SecretsPlan {
-        schema: "ship-studio/secrets/v1".into(),
+        schema: "orbit-yard/secrets/v1".into(),
         project: project.display().to_string(),
         hints,
         notes,
@@ -93,7 +93,7 @@ fn graduate_commerce_catalog_hints(
                 name: name.into(),
                 source: "catalog · graduate".into(),
                 put_cli: vec![
-                    "shipctl".into(),
+                    "orbityard".into(),
                     "portal".into(),
                     "--provider".into(),
                     "github".into(),
@@ -124,7 +124,7 @@ fn graduate_commerce_catalog_hints(
                     name: n,
                     source: src,
                     put_cli: vec![
-                        "shipctl".into(),
+                        "orbityard".into(),
                         "portal".into(),
                         "--provider".into(),
                         "github".into(),
@@ -152,7 +152,7 @@ fn graduate_commerce_catalog_hints(
                 name: name.into(),
                 source: "catalog · gumroad".into(),
                 put_cli: vec![
-                    "shipctl".into(),
+                    "orbityard".into(),
                     "portal".into(),
                     "--provider".into(),
                     "gumroad".into(),
@@ -176,7 +176,7 @@ fn graduate_commerce_catalog_hints(
                 name: name.into(),
                 source: "catalog · lemon".into(),
                 put_cli: vec![
-                    "shipctl".into(),
+                    "orbityard".into(),
                     "portal".into(),
                     "--provider".into(),
                     "lemon".into(),
@@ -201,7 +201,7 @@ fn graduate_commerce_catalog_hints(
                 name: name.into(),
                 source: "catalog · stripe".into(),
                 put_cli: vec![
-                    "shipctl".into(),
+                    "orbityard".into(),
                     "portal".into(),
                     "--provider".into(),
                     "stripe".into(),
@@ -234,7 +234,7 @@ fn graduate_commerce_catalog_hints(
                 name: name.into(),
                 source: "catalog · paddle".into(),
                 put_cli: vec![
-                    "shipctl".into(),
+                    "orbityard".into(),
                     "portal".into(),
                     "--provider".into(),
                     "paddle".into(),
@@ -260,7 +260,7 @@ fn graduate_commerce_catalog_hints(
                 name: name.into(),
                 source: "catalog · creem".into(),
                 put_cli: vec![
-                    "shipctl".into(),
+                    "orbityard".into(),
                     "portal".into(),
                     "--provider".into(),
                     "creem".into(),
@@ -286,7 +286,7 @@ fn graduate_commerce_catalog_hints(
                 name: name.into(),
                 source: "catalog · waffo".into(),
                 put_cli: vec![
-                    "shipctl".into(),
+                    "orbityard".into(),
                     "portal".into(),
                     "--provider".into(),
                     "waffo".into(),
@@ -491,7 +491,7 @@ fn put_cli_for(id: ProviderId, name: &str) -> Vec<String> {
         | ProviderId::Paddle
         | ProviderId::Creem
         | ProviderId::Waffo => vec![
-            "shipctl".into(),
+            "orbityard".into(),
             "portal".into(),
             "--provider".into(),
             id.as_str().into(),
@@ -500,7 +500,7 @@ fn put_cli_for(id: ProviderId, name: &str) -> Vec<String> {
     }
 }
 
-/// Interactive put — value is entered in the child CLI, not captured by shipctl.
+/// Interactive put — value is entered in the child CLI, not captured by orbityard.
 pub fn put_secret(project: &Path, provider: ProviderId, name: &str) -> Result<i32> {
     if name.is_empty() || name == "<NAME>" {
         bail!("pass a real secret name with --name");
@@ -510,13 +510,13 @@ pub fn put_secret(project: &Path, provider: ProviderId, name: &str) -> Result<i3
     }
     if provider.is_commerce() {
         bail!(
-            "{} has no secret put CLI — open the commerce dashboard, then `shipctl secrets put --provider cloudflare|vercel|netlify --name …`",
+            "{} has no secret put CLI — open the commerce dashboard, then `orbityard secrets put --provider cloudflare|vercel|netlify --name …`",
             provider.label()
         );
     }
     if provider.is_db() {
         bail!(
-            "{} has no secret put CLI — open the vendor console, then `shipctl secrets put --provider cloudflare|vercel|netlify --name …`",
+            "{} has no secret put CLI — open the vendor console, then `orbityard secrets put --provider cloudflare|vercel|netlify --name …`",
             provider.label()
         );
     }
@@ -829,7 +829,7 @@ mod tests {
 
     fn tempfile_dir() -> PathBuf {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-secrets-{}-{}",
+            "orbityard-secrets-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)

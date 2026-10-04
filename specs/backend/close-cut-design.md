@@ -16,7 +16,7 @@
 
 The project is **finished** when:
 
-1. **OSS sequencer is the product.** v0.2.3 GitHub Releases + `shipctl` CLI/TUI/MCP + Desktop Publish. Clone/build is enough.
+1. **OSS sequencer is the product.** v0.2.3 GitHub Releases + `orbityard` CLI/TUI/MCP + Desktop Publish. Clone/build is enough.
 2. **No more Client features** for “simplify Vercel/Paddle.” Freeze portal expansion.
 3. **Website matches that.** Primary CTA = GitHub Releases. Paddle Buy stays env-gated; empty env is not an unfinished blocker.
 4. **Legal matches that.** Terms/privacy state: MIT software, no public paid sale on this site until checkout env + real policies exist. Remove “W0 placeholder before public sale” as if sale were the remaining ticket.

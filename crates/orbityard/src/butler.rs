@@ -54,7 +54,7 @@ pub fn push_launch(
                 butler_path: None,
                 spawned: false,
                 hint: format!(
-                    "butler not on PATH — install from {BUTLER_DOCS} then re-run `shipctl butler push` or ship_butler_push"
+                    "butler not on PATH — install from {BUTLER_DOCS} then re-run `orbityard butler push` or orbit_butler_push"
                 ),
                 docs_url: Some(BUTLER_DOCS.into()),
             });
@@ -72,7 +72,7 @@ pub fn push_launch(
 
     let mut spawned = false;
     if spawn {
-        spawned = spawn_terminal("Ship Studio butler push", &recipe, &project)?;
+        spawned = spawn_terminal("Orbit Yard butler push", &recipe, &project)?;
     }
 
     Ok(ButlerLaunch {
@@ -186,7 +186,7 @@ mod tests {
     #[test]
     fn rejects_empty_target() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-butler-empty-{}",
+            "orbityard-butler-empty-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -201,7 +201,7 @@ mod tests {
     #[test]
     fn ambiguous_dist_and_build_requires_dir() {
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-butler-ambig-{}",
+            "orbityard-butler-ambig-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -220,7 +220,7 @@ mod tests {
         // real PATH. If butler is installed locally, ok may be true; assert shape either way
         // only when we get ok:false OR ok:true with recipe.
         let dir = std::env::temp_dir().join(format!(
-            "shipctl-butler-miss-{}",
+            "orbityard-butler-miss-{}",
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())

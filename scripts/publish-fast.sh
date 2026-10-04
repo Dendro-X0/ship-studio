@@ -18,17 +18,17 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-SHIPCTL="${SHIPCTL_PATH:-}"
-if [[ -z "$SHIPCTL" ]]; then
-  if [[ -x "$ROOT/target/debug/shipctl.exe" ]]; then SHIPCTL="$ROOT/target/debug/shipctl.exe"
-  elif [[ -x "$ROOT/target/debug/shipctl" ]]; then SHIPCTL="$ROOT/target/debug/shipctl"
-  elif [[ -x "$ROOT/target/release/shipctl.exe" ]]; then SHIPCTL="$ROOT/target/release/shipctl.exe"
-  elif [[ -x "$ROOT/target/release/shipctl" ]]; then SHIPCTL="$ROOT/target/release/shipctl"
+ORBITYARD="${ORBITYARD_PATH:-}"
+if [[ -z "$ORBITYARD" ]]; then
+  if [[ -x "$ROOT/target/debug/orbityard.exe" ]]; then ORBITYARD="$ROOT/target/debug/orbityard.exe"
+  elif [[ -x "$ROOT/target/debug/orbityard" ]]; then ORBITYARD="$ROOT/target/debug/orbityard"
+  elif [[ -x "$ROOT/target/release/orbityard.exe" ]]; then ORBITYARD="$ROOT/target/release/orbityard.exe"
+  elif [[ -x "$ROOT/target/release/orbityard" ]]; then ORBITYARD="$ROOT/target/release/orbityard"
   else
-    (cd "$ROOT" && cargo build -p shipctl)
-    SHIPCTL="$ROOT/target/debug/shipctl"
-    [[ -x "${SHIPCTL}.exe" ]] && SHIPCTL="${SHIPCTL}.exe"
+    (cd "$ROOT" && cargo build -p orbityard)
+    ORBITYARD="$ROOT/target/debug/orbityard"
+    [[ -x "${ORBITYARD}.exe" ]] && ORBITYARD="${ORBITYARD}.exe"
   fi
 fi
 
-exec "$SHIPCTL" publish --mode "$MODE" --intent "$INTENT" --project "$PROJECT" continue --chain "$CHAIN" "${EXTRA[@]}"
+exec "$ORBITYARD" publish --mode "$MODE" --intent "$INTENT" --project "$PROJECT" continue --chain "$CHAIN" "${EXTRA[@]}"

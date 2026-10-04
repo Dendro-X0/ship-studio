@@ -2,14 +2,14 @@
 
 **Status:** Investigation (no code this band)  
 **Updated:** 2026-09-25  
-**Owner:** `crates/shipctl` (`portal` · `config` detect) + Desktop Platforms catalog  
+**Owner:** `crates/orbityard` (`portal` · `config` detect) + Desktop Platforms catalog  
 **Product:** [PLATFORMS-AND-PORTAL.md](../../docs/product/PLATFORMS-AND-PORTAL.md)  
 **Parents:** [provider-portal-design](./provider-portal-design.md) · [platforms-catalog-design](../frontend/platforms-catalog-design.md) · [desktop-silent-failures-investigation](./desktop-silent-failures-investigation.md)
 
 ```text
 QUESTION:  What do we claim to support for hosting, what does the code actually do,
            and what do official vendor docs imply we should open / run / document?
-OUTCOME:   Evidence for a design slice — no Desktop/shipctl diffs in this file.
+OUTCOME:   Evidence for a design slice — no Desktop/orbityard diffs in this file.
 ```
 
 ## Method
@@ -25,7 +25,7 @@ OUTCOME:   Evidence for a design slice — no Desktop/shipctl diffs in this file
 | Surface | Hosting-related IDs |
 |---------|---------------------|
 | **Desktop Platforms** (`platforms-data.ts`) | Orbit · Cloudflare · Vercel · Netlify · GitHub Pages · Fly · Railway |
-| **`shipctl portal` ProviderId** | Cloudflare · Vercel · Netlify · Github · Fly · Railway · Render · DigitalOcean · Heroku · Amplify · CloudRun · AzureStatic (+ non-host commerce/DB/BaaS) |
+| **`orbityard portal` ProviderId** | Cloudflare · Vercel · Netlify · Github · Fly · Railway · Render · DigitalOcean · Heroku · Amplify · CloudRun · AzureStatic (+ non-host commerce/DB/BaaS) |
 | **Publish `host.*` gates** (`launch.rs`) | Fly · Railway · Render · DigitalOcean · Heroku · Amplify · CloudRun · AzureStatic |
 
 **Mismatch A — Desktop vs portal:** Platforms lists Orbit (no `ProviderId`) and omits Render / DO / Heroku / Amplify / Cloud Run / Azure SWA even though portal + Advanced Publish already know them.

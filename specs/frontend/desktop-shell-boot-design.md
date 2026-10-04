@@ -31,7 +31,7 @@ Windows custom-protocol origin: `http://shipboot.localhost/` (Tauri/WebView2). O
 
 | Layer | Check |
 |-------|-------|
-| L1 | `cargo check -p ship-studio-desktop` |
+| L1 | `cargo check -p orbit-yard-desktop` |
 | L2 | Open boot URL / kill Vite → branded waiting page, not Edge |
 | L3 | Start Vite again → auto-navigate to app without restart |
 

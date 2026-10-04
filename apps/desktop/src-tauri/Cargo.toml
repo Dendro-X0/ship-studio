@@ -1,7 +1,7 @@
 [package]
-name = "ship-studio-desktop"
+name = "orbit-yard-desktop"
 version = "0.2.3"
-description = "Ship Studio — local Signet+Orbit bridge shell"
+description = "Orbit Yard — local Signet+Orbit bridge shell"
 authors = ["Dendro-X0"]
 edition = "2021"
 

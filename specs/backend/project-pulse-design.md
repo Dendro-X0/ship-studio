@@ -2,7 +2,7 @@
 
 **Status:** Active  
 **Updated:** 2026-09-14  
-**Owner:** `crates/shipctl` (`pulse`) · Desktop Dashboard / Now
+**Owner:** `crates/orbityard` (`pulse`) · Desktop Dashboard / Now
 
 ## Problem
 
@@ -42,13 +42,13 @@ API / Worker stacks must not show **Blocked: Tools missing** solely because Orbi
 ## Commands
 
 ```text
-shipctl pulse [--project .]
+orbityard pulse [--project .]
 ```
 
-MCP: `ship_pulse`. Desktop bind + Dashboard refresh call pulse and drive Now + health + quick actions.
+MCP: `orbit_pulse`. Desktop bind + Dashboard refresh call pulse and drive Now + health + quick actions.
 
 ## Proof
 
 - L1: fixture with `.git` dirty + launch.json mid-step  
-- L2: `shipctl pulse` JSON shape  
+- L2: `orbityard pulse` JSON shape  
 - L3: Desktop Now title matches current publish/launch step after bind  

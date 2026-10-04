@@ -2,14 +2,14 @@
 
 **Status:** Active (living checklist)  
 **Updated:** 2026-09-15  
-**Owner:** product + `shipctl` publish/scopes/sign/portal  
+**Owner:** product + `orbityard` publish/scopes/sign/portal  
 **Spine:** Do not rewrite Publish — extend adaptive plans from this matrix.
 
 ## Purpose
 
-Enumerate every shipping task operators care about — desktop/mobile signing, backend/API/DB hosting, self vs official signing, marketplace submission — and mark what Ship Studio already sequences vs what remains a gap or non-goal.
+Enumerate every shipping task operators care about — desktop/mobile signing, backend/API/DB hosting, self vs official signing, marketplace submission — and mark what Orbit Yard already sequences vs what remains a gap or non-goal.
 
-Ship Studio stays a **local sequencing portal**: detect → adaptive plan → Open/Run (vendor UI or local CLI) → Confirm → Next. Bridge never calls vendor HTTPS; `.ship/` never stores secret values.
+Orbit Yard stays a **local sequencing portal**: detect → adaptive plan → Open/Run (vendor UI or local CLI) → Confirm → Next. Bridge never calls vendor HTTPS; `.ship/` never stores secret values.
 
 ## Non-goals (v0)
 
@@ -89,7 +89,7 @@ Legend: **I** = implemented step/UI · **U** = URL / open-only · **G** = gap ·
 
 See `studio-modes-design.md`.
 
-## Task catalog (human work Ship Studio sequences)
+## Task catalog (human work Orbit Yard sequences)
 
 ### A. Identity & tools
 1. Bind project folder  
@@ -166,7 +166,7 @@ Do **not** invent a parallel wizard. Each item = detection signals + adaptive `b
 2. Add detection in `config::probe` / `scopes` / `portal` as needed.  
 3. Add adaptive steps in `publish::build_plan_for` (+ General filter if short-path).  
 4. Wire Desktop Related / Sign / Env only if `desktop_view` already exists or add one.  
-5. Proof: L1 fixture · L2 `shipctl publish` · L3 Desktop General/Advanced.  
+5. Proof: L1 fixture · L2 `orbityard publish` · L3 Desktop General/Advanced.  
 
 ## Related specs
 

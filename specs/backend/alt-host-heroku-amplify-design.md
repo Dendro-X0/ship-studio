@@ -29,4 +29,4 @@ Portal `ProviderId::{Heroku, Amplify}`. Local/General omit.
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl host_heroku` |
+| L1 | `cargo test -p orbityard host_heroku` |

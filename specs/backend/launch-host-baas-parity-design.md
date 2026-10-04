@@ -19,4 +19,4 @@ Guided Launch sequences alt-host dashboards and mobile BaaS provision beside com
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl launch_host` |
+| L1 | `cargo test -p orbityard launch_host` |

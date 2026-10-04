@@ -7,7 +7,7 @@
 
 ## Product framing (maintainer)
 
-Ship Studio remains a **portal**, not a vendor replacement:
+Orbit Yard remains a **portal**, not a vendor replacement:
 
 - Guides operators to the **official** surface for APIs, DBs, mobile backends, signing, store/Steam listing & submit  
 - Human still completes OAuth, review, DNS, live publish  
@@ -38,7 +38,7 @@ Operator: Confirm → Next
 ### CLI
 
 ```text
-shipctl publish watch [--mode …] [--intent …] [--project …]
+orbityard publish watch [--mode …] [--intent …] [--project …]
   [--interval-secs 15] [--once] [--auto-confirm]
 ```
 
@@ -49,7 +49,7 @@ shipctl publish watch [--mode …] [--intent …] [--project …]
 ### Desktop
 
 - Publish toolbar **Watch** toggle  
-- While on: poll every 15s via `shipctl publish watch --once` (skips while another command is busy)  
+- While on: poll every 15s via `orbityard publish watch --once` (skips while another command is busy)  
 - On transition to verify-ok: toast “Step ready — Confirm” + Confirm button emphasis  
 - Off by default; Local/Public unchanged  
 
@@ -62,7 +62,7 @@ shipctl publish watch [--mode …] [--intent …] [--project …]
 
 ## Acceptance (first slice)
 
-- [x] `shipctl publish watch --once` returns verify result for current step  
+- [x] `orbityard publish watch --once` returns verify result for current step  
 - [x] Unit: watch once on sticky `legal.baseline` after LICENSE+SECURITY  
 - [x] Desktop: Watch toggle polls and toasts (L3 manual OK)  
 
@@ -76,6 +76,6 @@ shipctl publish watch [--mode …] [--intent …] [--project …]
 
 | Layer | Command |
 |-------|---------|
-| L1 | `cargo test -p shipctl publish::tests::watch_once` |
-| L2 | `shipctl publish watch --once --project <subject>` |
+| L1 | `cargo test -p orbityard publish::tests::watch_once` |
+| L2 | `orbityard publish watch --once --project <subject>` |
 | L3 | Desktop Watch on Publish (manual) |

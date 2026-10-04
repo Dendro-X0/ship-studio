@@ -2,21 +2,21 @@
 
 **Status:** Active  
 **Updated:** 2026-09-15  
-**Owner:** `crates/shipctl` (`secrets` module)
+**Owner:** `crates/orbityard` (`secrets` module)
 
 ## Goal
 
-After portal opens the credential page, help the operator **paste** values into the correct provider CLI — without shipctl storing secrets on disk.
+After portal opens the credential page, help the operator **paste** values into the correct provider CLI — without orbityard storing secrets on disk.
 
 ## Commands
 
 ```text
-shipctl secrets --project . [--provider ID] [--open]
-shipctl secrets put --project . --provider cloudflare --name GITHUB_TOKEN
+orbityard secrets --project . [--provider ID] [--open]
+orbityard secrets put --project . --provider cloudflare --name GITHUB_TOKEN
 ```
 
 - `secrets`: JSON plan of hinted names + put CLI + entry URL (offline-safe).
-- `secrets put`: interactive provider CLI (value typed/pasted in terminal; not logged by shipctl).
+- `secrets put`: interactive provider CLI (value typed/pasted in terminal; not logged by orbityard).
 - `--open`: open provider token/env entry URL once.
 
 ## Hint sources (priority)
@@ -55,5 +55,5 @@ shipctl secrets put --project . --provider cloudflare --name GITHUB_TOKEN
 
 - L1: parse secrets comment + empty `.dev.vars` keys unit tests
 - L1b: markets `graduate`+`gumroad` → secrets plan includes catalog names
-- L2: `shipctl secrets --project <fixture>` JSON
+- L2: `orbityard secrets --project <fixture>` JSON
 - TUI/Desktop: Secrets action surfaces same plan

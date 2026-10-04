@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Stage portable desktop pair: ship-studio-desktop.exe + shipctl.exe side by side.
-# With --installer: also build NSIS setup.exe (bundles resources/shipctl.exe).
+# Stage portable desktop pair: orbit-yard-desktop.exe + orbityard.exe side by side.
+# With --installer: also build NSIS setup.exe (bundles resources/orbityard.exe).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -12,16 +12,16 @@ for arg in "$@"; do
   esac
 done
 
-echo "==> cargo build -p shipctl --release"
-cargo build -p shipctl --release
+echo "==> cargo build -p orbityard --release"
+cargo build -p orbityard --release
 
-SHIPCTL_SRC="$ROOT/target/release/shipctl.exe"
-if [[ ! -f "$SHIPCTL_SRC" ]]; then
-  SHIPCTL_SRC="$ROOT/target/release/shipctl"
+ORBITYARD_SRC="$ROOT/target/release/orbityard.exe"
+if [[ ! -f "$ORBITYARD_SRC" ]]; then
+  ORBITYARD_SRC="$ROOT/target/release/orbityard"
 fi
 mkdir -p apps/desktop/src-tauri/resources
-cp -f "$SHIPCTL_SRC" apps/desktop/src-tauri/resources/shipctl.exe
-echo "==> staged resources/shipctl.exe for installer / resource resolve"
+cp -f "$ORBITYARD_SRC" apps/desktop/src-tauri/resources/orbityard.exe
+echo "==> staged resources/orbityard.exe for installer / resource resolve"
 
 cd apps/desktop
 export COREPACK_ENABLE=0
@@ -34,21 +34,21 @@ else
 fi
 cd "$ROOT"
 
-DESKTOP="$ROOT/target/release/ship-studio-desktop.exe"
-SHIPCTL="$ROOT/target/release/shipctl.exe"
+DESKTOP="$ROOT/target/release/orbit-yard-desktop.exe"
+ORBITYARD="$ROOT/target/release/orbityard.exe"
 if [[ ! -f "$DESKTOP" ]]; then
-  DESKTOP="$ROOT/target/release/ship-studio-desktop"
-  SHIPCTL="$ROOT/target/release/shipctl"
+  DESKTOP="$ROOT/target/release/orbit-yard-desktop"
+  ORBITYARD="$ROOT/target/release/orbityard"
 fi
 
 DESKTOP_DIR="$(dirname "$DESKTOP")"
-if [[ "$(cd "$(dirname "$SHIPCTL")" && pwd)/$(basename "$SHIPCTL")" != "$(cd "$DESKTOP_DIR" && pwd)/$(basename "$SHIPCTL")" ]]; then
-  cp -f "$SHIPCTL" "$DESKTOP_DIR/"
+if [[ "$(cd "$(dirname "$ORBITYARD")" && pwd)/$(basename "$ORBITYARD")" != "$(cd "$DESKTOP_DIR" && pwd)/$(basename "$ORBITYARD")" ]]; then
+  cp -f "$ORBITYARD" "$DESKTOP_DIR/"
 else
-  echo "==> shipctl already beside desktop exe"
+  echo "==> orbityard already beside desktop exe"
 fi
 echo "==> staged:"
-ls -la "$DESKTOP" "$DESKTOP_DIR/$(basename "$SHIPCTL")" 2>/dev/null || true
+ls -la "$DESKTOP" "$DESKTOP_DIR/$(basename "$ORBITYARD")" 2>/dev/null || true
 
 if [[ "$BUNDLE_INSTALLER" -eq 1 ]]; then
   NSIS_DIR="$ROOT/target/release/bundle/nsis"

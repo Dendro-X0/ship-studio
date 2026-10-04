@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Issue or revoke Ship Studio Solo license key files (W4).
+"""Issue or revoke Orbit Yard Solo license key files (W4).
 
 Ledger: .ship-licenses/ledger.jsonl (gitignored).
 Stable keys when SHIP_LICENSE_SECRET is set; otherwise random (sandbox OK).
@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LEDGER_DIR = ROOT / ".ship-licenses"
 LEDGER = LEDGER_DIR / "ledger.jsonl"
-SCHEMA = "ship-studio.license/v1"
+SCHEMA = "orbit-yard.license/v1"
 PRODUCT = "solo"
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no I/O/0/1
 
@@ -73,7 +73,7 @@ def cmd_issue(args: argparse.Namespace) -> int:
         "status": "active",
     }
 
-    out = Path(args.out) if args.out else Path(f"ship-studio-{order_id}.license")
+    out = Path(args.out) if args.out else Path(f"orbit-yard-{order_id}.license")
     out.write_text(json.dumps(license_doc, indent=2) + "\n", encoding="utf-8")
     append_ledger({"event": "issue", "at": utc_now(), **license_doc, "path": str(out.resolve())})
 
@@ -106,13 +106,13 @@ def cmd_revoke(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="Ship Studio license issue/revoke (W4)")
+    p = argparse.ArgumentParser(description="Orbit Yard license issue/revoke (W4)")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    issue = sub.add_parser("issue", help="Mint a ship-studio.license JSON file")
+    issue = sub.add_parser("issue", help="Mint an orbit-yard.license JSON file")
     issue.add_argument("--email", required=True)
     issue.add_argument("--order", required=True, help="Polar order / checkout id")
-    issue.add_argument("--out", default="", help="Output path (default ship-studio-<order>.license)")
+    issue.add_argument("--out", default="", help="Output path (default orbit-yard-<order>.license)")
     issue.set_defaults(func=cmd_issue)
 
     revoke = sub.add_parser("revoke", help="Record revoke after Polar refund")

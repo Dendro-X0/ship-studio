@@ -1,19 +1,19 @@
 /** Desktop shell constants (nav · storage · action ids). */
 
-export const LAST_PROJECT_KEY = "ship-studio.last-project";
-export const RECENT_KEY = "ship-studio.recent-projects";
-export const OFFLINE_KEY = "ship-studio.offline";
-export const DEPLOY_KEY = "ship-studio.include-deploy";
-export const MODE_KEY = "ship-studio.mode";
-export const INTENT_KEY = "ship-studio.intent";
+export const LAST_PROJECT_KEY = "orbit-yard.last-project";
+export const RECENT_KEY = "orbit-yard.recent-projects";
+export const OFFLINE_KEY = "orbit-yard.offline";
+export const DEPLOY_KEY = "orbit-yard.include-deploy";
+export const MODE_KEY = "orbit-yard.mode";
+export const INTENT_KEY = "orbit-yard.intent";
 /** "1" = show bottom output dock; unset/0 = hidden (default). */
-export const OUTPUT_DOCK_KEY = "ship-studio.output-dock";
+export const OUTPUT_DOCK_KEY = "orbit-yard.output-dock";
 /** stages | list — Publish UI presentation */
-export const PUBLISH_UI_KEY = "ship-studio.publish-ui";
+export const PUBLISH_UI_KEY = "orbit-yard.publish-ui";
 /** Last dashboard workflow card id */
-export const WORKFLOW_KEY = "ship-studio.workflow";
+export const WORKFLOW_KEY = "orbit-yard.workflow";
 /** Collapsed/open state for sidebar nav sections */
-export const NAV_SECTIONS_KEY = "ship-studio.nav-sections";
+export const NAV_SECTIONS_KEY = "orbit-yard.nav-sections";
 export const MAX_RECENT = 6;
 
 export const ACTION_IDS = [
@@ -113,7 +113,7 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
   },
   output: {
     title: "Output",
-    desc: "Full console for the active shipctl stream.",
+    desc: "Full console for the active orbityard stream.",
   },
 };
 

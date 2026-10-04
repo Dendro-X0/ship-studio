@@ -1,4 +1,4 @@
-# Ship Studio overhaul — design
+# Orbit Yard overhaul — design
 
 **Status:** **Done** — O0–O5 closed ([evidence-harbor-client-honesty](../../docs/handoffs/evidence-harbor-client-honesty.md))  
 **Updated:** 2026-09-25  
@@ -22,8 +22,8 @@ Breadth (Adaptive lanes, Platforms catalog, reliability TTY) already shipped. Th
 | Pathway | Surface | Role |
 |---------|---------|------|
 | **Client** | Desktop · TUI | UX spine; must pass honesty criterion 6 |
-| **MCP** | `shipctl mcp` | Agent assist; no key custody |
-| **CLI** | `shipctl` | Shared kernel |
+| **MCP** | `orbityard mcp` | Agent assist; no key custody |
+| **CLI** | `orbityard` | Shared kernel |
 
 Detail: [surfaces-cli-tui-desktop.md](./surfaces-cli-tui-desktop.md).
 

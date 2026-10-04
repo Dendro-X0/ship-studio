@@ -14,7 +14,7 @@ Public demos fail when recorded on **ship-studio** (already signed/deployed) or 
 |---------|------|
 | **`fixtures/harbor`** | **Canonical demo + GIF shelf** — Desktop + Docs (+ Signet), mid-flight friendly |
 | `fixtures/advanced-dogfood` | Advanced multipath dogfood only (CI · mobile · container · steam …) |
-| Ship Studio monorepo | Engineering dogfood — **not** public Part 1 GIFs |
+| Orbit Yard monorepo | Engineering dogfood — **not** public Part 1 GIFs |
 | aperio / personal apps | Forbidden on public clips |
 
 Harbor is a **stage set**, not a product to sell.
@@ -43,7 +43,7 @@ No wrangler · android · Dockerfile · markets — keeps Targets to **Desktop �
 
 | Layer | Check |
 |-------|--------|
-| L1 | `shipctl scopes --project fixtures/harbor` → `desktop.desktop` · `docs.website` |
+| L1 | `orbityard scopes --project fixtures/harbor` → `desktop.desktop` · `docs.website` |
 | L2 | Desktop bind → Targets Desktop + Docs; probe not all-Ready after reset |
 | L3 | T1–T4 GIFs use Harbor path only |
 

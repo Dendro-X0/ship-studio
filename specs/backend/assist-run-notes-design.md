@@ -26,4 +26,4 @@ Assist notes still described CI as “confirm Actions” and omitted registry dr
 
 - L1: CI fixture note mentions `gh run list`  
 - L1: npm+crates fixture notes mention dry-run  
-- L2: `cargo test -p shipctl`  
+- L2: `cargo test -p orbityard`  
