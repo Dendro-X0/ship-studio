@@ -8,7 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "desktop": "tauri dev",
+    "desktop": "bash ../../scripts/ensure-orbityard-resource.sh && tauri dev",
     "desktop:release": "bash ../../scripts/stage-desktop.sh",
     "desktop:installer": "bash ../../scripts/stage-desktop.sh --installer"
   },

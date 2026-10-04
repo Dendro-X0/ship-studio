@@ -2,7 +2,7 @@
   "name": "orbit-yard",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter orbit-yard-desktop exec tauri dev",
+    "dev": "bash scripts/ensure-orbityard-resource.sh && pnpm --filter orbit-yard-desktop run desktop",
     "dev:ui": "pnpm --filter orbit-yard-desktop dev",
     "build:ui": "pnpm --filter orbit-yard-desktop build",
     "desktop:release": "pnpm --filter orbit-yard-desktop desktop:release",
