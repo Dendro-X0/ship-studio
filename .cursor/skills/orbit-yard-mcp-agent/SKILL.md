@@ -1,7 +1,7 @@
 ---
 name: orbit-yard-mcp-agent
 description: >-
-  Guide Orbit Yard release work via orbityard MCP (orbit_* tools): next publish
+  Guide Orbit Yard release work via orbityard MCP (yard_* tools): next publish
   gate, exact vendor URLs, env Put launch, local Verify. Use when shipping,
   deploying, signing, putting secrets, or validating an Orbit Yard / orbityard
   project — prefer MCP over Desktop Integrations wizards.
