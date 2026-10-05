@@ -509,12 +509,16 @@ fn find_wrangler_toml(project: &Path) -> Option<PathBuf> {
 }
 
 fn find_pages_dir(project: &Path) -> Option<PathBuf> {
+    // Prefer built Astro/Vite output (`…/dist`) before source folders that rarely have index.html.
     let candidates = [
+        "apps/website/dist",
         "apps/website",
+        "apps/docs/dist",
         "apps/docs",
+        "apps/web/dist",
+        "apps/web",
         "public",
         "dist",
-        "apps/web",
         ".",
     ];
     for rel in candidates {
@@ -622,21 +626,78 @@ pub fn detect_vercel(project: &Path) -> Result<HostPlan> {
 
 pub fn detect_netlify(project: &Path) -> Result<HostPlan> {
     let project_name = project_name(project);
-    let has_marker = project.join("netlify.toml").is_file()
-        || project.join(".netlify").is_dir()
-        || project.join("apps/website/netlify.toml").is_file();
+
+    // Monorepo root: apps/website/netlify.toml
+    let website = project.join("apps/website");
+    if website.join("netlify.toml").is_file() {
+        return netlify_plan_for_package(project, &website, project_name);
+    }
+    // Already bound to the website package (Targets → Deploy / subdirectory bind).
+    if project.join("netlify.toml").is_file() {
+        return netlify_plan_for_package(project, project, project_name);
+    }
+
     let Some(dir) = find_pages_dir(project) else {
         bail!(
             "hostdeploy netlify: no static index.html \
-             (tried apps/website, public, dist). Add a publish directory."
+             (tried apps/website/dist, apps/website, public, dist). Add a publish directory."
         );
     };
-    let _ = has_marker; // marker optional — dir is enough for first prod deploy
     let asset_rel = rel_display(project, &dir);
     Ok(HostPlan {
         provider: "netlify".into(),
         lane: "prod".into(),
         cwd: project.to_path_buf(),
+        asset_rel: asset_rel.clone(),
+        project_name,
+        argv: vec![
+            "deploy".into(),
+            "--prod".into(),
+            "--dir".into(),
+            asset_rel,
+            "--no-build".into(),
+        ],
+        cli: "netlify".into(),
+    })
+}
+
+fn netlify_plan_for_package(
+    root: &Path,
+    package: &Path,
+    project_name: String,
+) -> Result<HostPlan> {
+    let (cwd, asset_rel): (PathBuf, String) = if package.join("dist").join("index.html").is_file() {
+        (package.to_path_buf(), "dist".into())
+    } else if package.join("index.html").is_file() {
+        (package.to_path_buf(), ".".into())
+    } else if let Some(dir) = find_pages_dir(root) {
+        let asset_rel = rel_display(root, &dir);
+        return Ok(HostPlan {
+            provider: "netlify".into(),
+            lane: "prod".into(),
+            cwd: root.to_path_buf(),
+            asset_rel: asset_rel.clone(),
+            project_name,
+            argv: vec![
+                "deploy".into(),
+                "--prod".into(),
+                "--dir".into(),
+                asset_rel,
+                "--no-build".into(),
+            ],
+            cli: "netlify".into(),
+        });
+    } else {
+        bail!(
+            "hostdeploy netlify: netlify.toml found but no index.html \
+             (build the site first — expected dist/index.html). \
+             Run: pnpm --filter orbit-yard-website build"
+        );
+    };
+    Ok(HostPlan {
+        provider: "netlify".into(),
+        lane: "prod".into(),
+        cwd,
         asset_rel: asset_rel.clone(),
         project_name,
         argv: vec![
@@ -1279,6 +1340,30 @@ Visit https://harbor.pages.dev/index.html
         assert_eq!(plan.provider, "netlify");
         assert!(plan.argv.iter().any(|a| a == "--prod"));
         assert!(plan.argv.iter().any(|a| a == "public"));
+    }
+
+    #[test]
+    fn detect_netlify_monorepo_website_dist() {
+        let dir = tmp();
+        fs::create_dir_all(dir.join("apps/website/dist")).unwrap();
+        fs::write(dir.join("apps/website/netlify.toml"), "[build]\npublish = \"dist\"\n").unwrap();
+        fs::write(dir.join("apps/website/dist/index.html"), "<h1>ok</h1>").unwrap();
+        let plan = detect_netlify(&dir).unwrap();
+        assert_eq!(plan.provider, "netlify");
+        assert_eq!(plan.cwd, dir.join("apps/website"));
+        assert_eq!(plan.asset_rel, "dist");
+        assert!(plan.argv.iter().any(|a| a == "dist"));
+    }
+
+    #[test]
+    fn detect_netlify_when_project_is_website_package() {
+        let dir = tmp();
+        fs::create_dir_all(dir.join("dist")).unwrap();
+        fs::write(dir.join("netlify.toml"), "[build]\npublish = \"dist\"\n").unwrap();
+        fs::write(dir.join("dist/index.html"), "<h1>ok</h1>").unwrap();
+        let plan = detect_netlify(&dir).unwrap();
+        assert_eq!(plan.cwd, dir);
+        assert_eq!(plan.asset_rel, "dist");
     }
 
     #[test]

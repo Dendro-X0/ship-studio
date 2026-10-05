@@ -850,7 +850,7 @@ function scopesGridHtml(plan: ScopePlan | null): string {
             </label>
             <div class="scope-card-actions">
               <button type="button" class="ghost scope-open-folder" data-relative="${escapeHtml(relative)}" title="Open this target folder">Folder</button>
-              <button type="button" class="ghost scope-open-deploy" data-provider="${escapeHtml(provider)}" title="Open Deployment for this target">Deploy</button>
+              <button type="button" class="ghost scope-open-deploy" data-provider="${escapeHtml(provider)}" data-relative="${escapeHtml(relative)}" title="Open Deployment for this target">Deploy</button>
             </div>
           </div>`;
     })
@@ -897,10 +897,31 @@ async function openScopeFolder(relative: string | undefined) {
   }
 }
 
-function openScopeDeployment(provider: string | null | undefined) {
+function openScopeDeployment(
+  provider: string | null | undefined,
+  relative?: string | null,
+) {
+  // Hosted targets need Public + network; Targets Deploy should unlock that path.
+  const platformId = platformIdForScopeProvider(provider);
+  const needsHost =
+    platformId === "cloudflare" ||
+    platformId === "vercel" ||
+    platformId === "netlify" ||
+    platformId === "fly" ||
+    platformId === "railway";
+  if (needsHost) {
+    ensureHostingReady({ toastOk: true });
+  }
+  const focusAbs = relative ? scopeAbsolutePath(relative) : null;
+  if (focusAbs && needsHost && isHostedCliDeployCard(platformId)) {
+    // Remember subdirectory for the upcoming Deploy stream (Website Astro → apps/website).
+    lastDeployFocusProject = focusAbs;
+  } else {
+    lastDeployFocusProject = null;
+  }
   openPlatformsCatalog({
     preferGroup: "Hosting",
-    selectId: platformIdForScopeProvider(provider),
+    selectId: platformId,
   });
 }
 
@@ -917,7 +938,7 @@ function wireScopeGridActions(root: ParentNode | null) {
     btn.addEventListener("click", (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-      openScopeDeployment(btn.dataset.provider);
+      openScopeDeployment(btn.dataset.provider, btn.dataset.relative);
     });
   });
 }
@@ -2944,6 +2965,41 @@ function platformLocked(wiz: (typeof PLATFORM_WIZARDS)[number]): boolean {
   return Boolean(wiz.needsPublic && shipIntent() !== "public");
 }
 
+/** Clear Offline + switch to Public so hosted Deploy can start. */
+function ensureHostingReady(opts?: { toastOk?: boolean }): boolean {
+  let changed = false;
+  if (offline()) {
+    const el = offlineEl();
+    if (el) {
+      el.checked = false;
+      syncDeployToggle();
+      changed = true;
+    }
+  }
+  if (shipIntent() !== "public") {
+    applyShipIntent("public");
+    changed = true;
+  }
+  if (changed && opts?.toastOk !== false) {
+    toast("Public intent · Online — hosted Deploy unlocked", "ok", 4000);
+  }
+  return true;
+}
+
+function toastHostingNeedsPublic(onReady: () => void) {
+  toast("Hosting providers need Public intent — or Use Local for desktop-only", "info", 10000, [
+    {
+      id: "switch-public",
+      label: "Switch to Public",
+      icon: "continue",
+      run: () => {
+        ensureHostingReady();
+        onReady();
+      },
+    },
+  ]);
+}
+
 function renderIntegrations() {
   const host = document.querySelector<HTMLElement>("#integrations-catalog");
   if (!host) return;
@@ -3311,6 +3367,8 @@ let selfhostServing = false;
 /** Open live asked for serve — open loopback when health ok streams. */
 let pendingSelfhostOpenLive = false;
 let lastHostDeployName = "";
+/** Absolute path for Targets → Deploy (e.g. apps/website) — used as hostdeploy project cwd. */
+let lastDeployFocusProject: string | null = null;
 let pendingHostDeployWiz: ProviderWizard | null = null;
 
 function isCloudHostedUrl(u: string): boolean {
@@ -4224,11 +4282,6 @@ async function ensureProviderCliAuth(
   return false;
 }
 
-/** @deprecated name kept for call sites — use ensureProviderCliAuth */
-async function ensureHostCliAuth(wiz: ProviderWizard): Promise<boolean> {
-  return ensureProviderCliAuth(wiz, { context: "deploy" });
-}
-
 async function runHostedCliDeploy(
   wiz: ProviderWizard,
   opts?: { name?: string; skipConfirm?: boolean },
@@ -4260,9 +4313,16 @@ async function runHostedCliDeploy(
   if (name && (wiz.id === "cloudflare" || wiz.id === "netlify")) {
     args.push("--name", name);
   }
+  const focus =
+    lastDeployFocusProject && lastDeployFocusProject.length > 0
+      ? lastDeployFocusProject
+      : undefined;
   const result = await run(args, {
     quietToast: true,
+    projectOverride: focus,
   });
+  // One-shot focus — next Deploy from root uses the bound monorepo again.
+  lastDeployFocusProject = null;
   if (!result) return;
   await refreshShipState();
   await refreshSessionNow();
@@ -7389,9 +7449,11 @@ async function run(
     silent?: boolean;
     quietToast?: boolean;
     busyLabel?: string;
+    /** Override bound project (e.g. Targets → Deploy on apps/website). */
+    projectOverride?: string;
   },
 ): Promise<CmdResult | undefined> {
-  const project = projectPath();
+  const project = opts?.projectOverride ?? projectPath();
   if (!project) {
     show("Open a project folder first.");
     return;
@@ -7799,12 +7861,17 @@ window.addEventListener("DOMContentLoaded", () => {
     const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
     if (!wiz) return;
     if (platformLocked(wiz)) {
-      toast("Hosting providers need Public intent — or Use Local for desktop-only", "info");
+      toastHostingNeedsPublic(() => {
+        void document.querySelector<HTMLButtonElement>("#plat-open")?.click();
+      });
       return;
     }
     if (!projectPath()) {
       toast("Bind a project first", "info");
       return;
+    }
+    if (offline() && isHostedCliDeployCard(wiz.id)) {
+      ensureHostingReady({ toastOk: true });
     }
     if (wiz.id === "selfhost") {
       selfhostResultsDismissed = false;
