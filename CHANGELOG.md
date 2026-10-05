@@ -24,6 +24,7 @@ First **Orbit Yard**-branded GitHub Release (`orbityard` CLI · `yard_*` MCP · 
 
 ### Fixed
 
+- **CI smoke** — `orbityard doctor` may exit 1 when host CLIs are absent (e.g. Netlify on Ubuntu CI); smoke prints the report and continues to `guide`
 - **Netlify monorepo Deploy** — detect `apps/website/dist`; toast Switch to Public; Targets Deploy aims at app folder
 - **Deployment soft-open** — Opening Deployment (nav / Launch related) no longer writes `primary_host`; only explicit card click or chip/`selectId` persists ([dogfood](./docs/handoffs/evidence-harbor-desktop-dogfood.md))
 - **Never-say block (S1.3)** — Ban table for site + READMEs; `/demo` T7 caption drops “One click” deploy claim ([design](./specs/frontend/never-say-block-design.md))
