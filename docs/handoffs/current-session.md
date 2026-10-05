@@ -2,25 +2,25 @@
 
 **Updated:** 2026-10-04  
 **Branch:** `main`  
-**Status:** Plan ready — **v0.2.4 Orbit Yard cut**. Portal/Integrations still PAUSED.
+**Status:** **v0.2.4 shipped** — https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.4
 
 ## Next Atomic Step
 
-**v0.2.4 release cut** — follow [v0.2.4-release-plan](../../specs/backend/v0.2.4-release-plan.md): commit `yard_setup` → bump 0.2.4 → test/build → `gh release create` → point site Download at the tag.
+**Idle** — set Netlify env `PUBLIC_DOWNLOAD_URL=https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.4` if Download still points at Releases root / v0.2.3. Optional polish below; do not grow Integrations chrome.
 
-| After tag (optional) | When |
+| Option | When |
 |--------|------|
 | Confirm Live check on Publish | After Open live looks right |
 | Rename Netlify site `ship-studio-website` → `orbit-yard` | Cosmetic URL only |
 | Put PUBLIC_PADDLE_* on Netlify env | Before Solo Buy on the live site |
 | Paddle Solo dogfood | Stays PAUSED until explicit reopen |
-| Rename GitHub repo `ship-studio` → `orbit-yard` | After v0.2.4 is live |
+| Rename GitHub repo `ship-studio` → `orbit-yard` | After you’re happy with the live site |
 
 ## Design queue (not coding until activated)
 
 | Item | Spec |
 |------|------|
-| **v0.2.4 release cut** | [v0.2.4-release-plan](../../specs/backend/v0.2.4-release-plan.md) (**active**) |
+| **v0.2.4 release cut** | [v0.2.4-release-plan](../../specs/backend/v0.2.4-release-plan.md) (**shipped**) |
 | S3.1 Agent setup / human key confirm | [agent-setup-human-confirm-design](../../specs/backend/agent-setup-human-confirm-design.md) (**`yard_setup` shipped**) |
 | S1.6 Cafe / FAQ | [cafe-faq-design](../../specs/frontend/cafe-faq-design.md) (**shipped**) |
 | S1.5 Human gates product | [operator-next-product-design](../../specs/frontend/operator-next-product-design.md) (**shipped**) |
@@ -46,7 +46,7 @@
 
 | Surface | State |
 |---------|--------|
-| OSS / GitHub Releases tool | Ready (v0.2.3 + Desktop dogfood); rebrand pending new release tag |
+| OSS / GitHub Releases tool | **v0.2.4** Orbit Yard brand — [release](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.4) |
 | Customer Payments/Integrations **guide** | Polar · Stripe · Gumroad · Lemon · Paddle · Creem · Waffo |
 | Paid Solo checkout on the website | **Optional** — env-gated; not the close-cut |
 
@@ -54,6 +54,7 @@
 
 | Band | Link |
 |------|------|
+| **v0.2.4 Orbit Yard cut** | Release + installer/zip · CI smoke soft-doctor · [plan](../../specs/backend/v0.2.4-release-plan.md) |
 | **Agent setup / human key confirm** | `yard_setup` brief · skill minutes loop · [agent-setup-human-confirm-design](../../specs/backend/agent-setup-human-confirm-design.md) |
 | **Rebrand → Orbit Yard** | Product · `orbityard` CLI · `yard_*` MCP · Desktop/website · skill `orbit-yard-mcp-agent`; `.ship/` config dir kept |
 | **Uniform CLI host auth vetting** | select CF/Vercel/Netlify/Fly/Railway → Login CLI |
