@@ -1,25 +1,26 @@
 # MCP agent guide — Client thin, agents open + validate
 
-**Status:** Design — G1–G4 + project skill shipped; Client thin  
+**Status:** Design — G1–G4 + `yard_setup` + project skill shipped; Client thin  
 **Updated:** 2026-10-04  
 **Owner:** `orbityard mcp` (`crates/orbityard/src/mcp.rs`)  
-**Parent:** [mcp-assist-contract-design](./mcp-assist-contract-design.md) · [close-cut-design](./close-cut-design.md) · [human-gate-catalog-design](./human-gate-catalog-design.md)
+**Parent:** [mcp-assist-contract-design](./mcp-assist-contract-design.md) · [agent-setup-human-confirm-design](./agent-setup-human-confirm-design.md) · [close-cut-design](./close-cut-design.md) · [human-gate-catalog-design](./human-gate-catalog-design.md)
 
 ## Plan alignment
 
 - Maintainer: keep **Desktop streamlined**; put “guide to the page + help validate” on **MCP / agents**, not more Client wizards.
 - **CANCELLED:** Vendor handoff coach (in-app overlay / CDP form-fill).
 - **PAUSED:** Portal / Integrations UX expansion on Desktop.
-- **In scope:** Agents call `ship_*` → exact `entry_url` · tell human what to do on that page · `yard_pulse` / `yard_publish` / `yard_publish_watch` for **local** validation.
+- **In scope:** Agents call `yard_*` → exact `entry_url` · tell human what to do on that page · `yard_setup` / `yard_pulse` / `yard_publish` / `yard_publish_watch` for **local** validation.
 - **Out of scope:** Agent creates API keys, pastes secrets, finishes OAuth, uploads Steam depots, auto-Confirms live publish.
 
 ## Why this is the remaining product
 
 Easy vendors (Vercel, Polar) need a URL + official CLI. Hard vendors still own token-create. A second Client loses. An agent in the editor the operator already uses can:
 
-1. `yard_portal` / `yard_guide` → **one URL** (not encyclopedia).
-2. Say the field name (e.g. default payment link, Polar checkout URL).
-3. After the human returns: `yard_pulse` / `yard_publish` / doctor — **validate the project**, not the vendor account.
+1. `yard_setup` → phase + human action + secret **NAME** (not value).
+2. `yard_portal` / `yard_guide` → **one URL** (not encyclopedia).
+3. Say the field name (e.g. default payment link, Polar checkout URL).
+4. After the human returns: `yard_pulse` / `yard_publish` / doctor — **validate the project**, not the vendor account.
 
 Same kernel as CLI. No new shell.
 
@@ -30,7 +31,7 @@ Desktop stays: bind folder · Publish spine · Deploy (official CLI) · Open das
 ## Agent loop (canon)
 
 ```text
-1. yard_doctor / yard_pulse     → local tools + signals
+1. yard_setup / yard_doctor / yard_pulse → phase + human action + local signals
 2. yard_publish                 → required next gate (read-only)
 3. yard_portal | yard_guide     → entry_url for that gate (open=true only if human wants browser)
 4. Human does vendor UI / Login CLI / Put in a real TTY

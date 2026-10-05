@@ -2,8 +2,13 @@
 
 ## Unreleased
 
+## 0.2.4 — 2026-10-04
+
+First **Orbit Yard**-branded GitHub Release (`orbityard` CLI · `yard_*` MCP · Desktop). Close-cut freeze remains; this tag catches rebrand + post-freeze finishability on Downloads.
+
 ### Added
 
+- **Agent setup brief (`yard_setup`)** — minutes-to-launch MCP JSON (`orbit-yard/setup/v1`): phase, human action, entry URL, secret **NAME** only, next tools ([design](./specs/backend/agent-setup-human-confirm-design.md))
 - **Client finishability S1–S3** — detect `PUBLIC_PADDLE_*` + website marketing; catalog diet; unbound `platforms.host`; official site bound to **Netlify** (`apps/website/netlify.toml`) ([design](./specs/backend/client-finishability-design.md))
 - **Uniform host auth vetting** — selecting Cloudflare / Vercel / Netlify / Fly / Railway runs the same `--auth-check` → Login CLI gate as Deploy ([design](./specs/frontend/host-deploy-confirm-design.md))
 - **Host deploy auth gate** — unauthenticated Deploy runs `--auth-check`, opens Login CLI (vendor OAuth), then Retry Deploy ([design](./specs/frontend/host-deploy-confirm-design.md))
@@ -11,7 +16,7 @@
 - **Game butler CLI** — `orbityard butler push --target user/game:channel` (+ MCP `yard_butler_push`); submit.itch detail points at the recipe/spawn path ([design](./specs/backend/game-butler-push-design.md))
 - **Game butler push** — MCP `yard_butler_push` recipe + optional terminal spawn for itch.io (no credentials; Steam/Epic stay Open+Confirm) ([design](./specs/backend/game-butler-push-design.md))
 - **Freeze** — annotated tag `freeze/mcp-agent-2026-10-04` marks close-cut OSS + MCP agent path (G1–G4 + skill); Desktop wizards stay frozen
-- **MCP agent skill** — `.cursor/skills/orbit-yard-mcp-agent` prefers `orbit_*` over Desktop wizards; no secret custody ([design](./specs/backend/mcp-agent-guide-design.md))
+- **MCP agent skill** — `.cursor/skills/orbit-yard-mcp-agent` prefers `yard_*` over Desktop wizards; no secret custody ([design](./specs/backend/mcp-agent-guide-design.md))
 - **Rebrand** — product **Orbit Yard**; CLI/MCP binary **`orbityard`**; MCP tools **`yard_*`** (not `orbit_*`, to avoid Orbit engine confusion); Desktop `orbit-yard-desktop` / `com.dendro.orbityard`. Config dir remains `.ship/` for compatibility. GitHub remote still `Dendro-X0/ship-studio` until renamed.
 - **MCP S2.4 G3–G4** — `yard_human put:true` bails without TTY (use `yard_env_put`); `yard_vault` schema discourages value/passphrase in agent args ([design](./specs/backend/mcp-assist-contract-design.md))
 - **MCP S2.4 G2** — `yard_env_put` launches (or prints) interactive host Put for a secret NAME; rejects `value`; optional external terminal ([design](./specs/backend/mcp-assist-contract-design.md))
@@ -19,6 +24,7 @@
 
 ### Fixed
 
+- **Netlify monorepo Deploy** — detect `apps/website/dist`; toast Switch to Public; Targets Deploy aims at app folder
 - **Deployment soft-open** — Opening Deployment (nav / Launch related) no longer writes `primary_host`; only explicit card click or chip/`selectId` persists ([dogfood](./docs/handoffs/evidence-harbor-desktop-dogfood.md))
 - **Never-say block (S1.3)** — Ban table for site + READMEs; `/demo` T7 caption drops “One click” deploy claim ([design](./specs/frontend/never-say-block-design.md))
 - **Dashboard honesty (S1.2)** — Health tiles in General; Signet/Orbit/dirty/step N/M; no “Shipped” / fake all-done ([design](./specs/frontend/dashboard-honesty-design.md))

@@ -2,23 +2,26 @@
 
 **Updated:** 2026-10-04  
 **Branch:** `main`  
-**Status:** **Rebrand to Orbit Yard** — product, CLI `orbityard`, MCP `orbit_*`, Desktop/website strings. Deploy website next.
+**Status:** Plan ready — **v0.2.4 Orbit Yard cut**. Portal/Integrations still PAUSED.
 
 ## Next Atomic Step
 
-**Deploy Orbit Yard website** (Netlify) after local `pnpm website:build` looks right — then claim `orbityard.dev` if desired.
+**v0.2.4 release cut** — follow [v0.2.4-release-plan](../../specs/backend/v0.2.4-release-plan.md): commit `yard_setup` → bump 0.2.4 → test/build → `gh release create` → point site Download at the tag.
 
-| Option | When |
+| After tag (optional) | When |
 |--------|------|
-| Rename GitHub repo `ship-studio` → `orbit-yard` | After website live; update clone URLs |
-| Live Netlify deploy | Auth + site name; tip: product is Orbit Yard |
+| Confirm Live check on Publish | After Open live looks right |
+| Rename Netlify site `ship-studio-website` → `orbit-yard` | Cosmetic URL only |
 | Put PUBLIC_PADDLE_* on Netlify env | Before Solo Buy on the live site |
 | Paddle Solo dogfood | Stays PAUSED until explicit reopen |
+| Rename GitHub repo `ship-studio` → `orbit-yard` | After v0.2.4 is live |
 
 ## Design queue (not coding until activated)
 
 | Item | Spec |
 |------|------|
+| **v0.2.4 release cut** | [v0.2.4-release-plan](../../specs/backend/v0.2.4-release-plan.md) (**active**) |
+| S3.1 Agent setup / human key confirm | [agent-setup-human-confirm-design](../../specs/backend/agent-setup-human-confirm-design.md) (**`yard_setup` shipped**) |
 | S1.6 Cafe / FAQ | [cafe-faq-design](../../specs/frontend/cafe-faq-design.md) (**shipped**) |
 | S1.5 Human gates product | [operator-next-product-design](../../specs/frontend/operator-next-product-design.md) (**shipped**) |
 | S1.4 One intent page | [one-intent-page-design](../../specs/frontend/one-intent-page-design.md) (**shipped**) |
@@ -51,7 +54,8 @@
 
 | Band | Link |
 |------|------|
-| **Rebrand → Orbit Yard** | Product · `orbityard` CLI · `orbit_*` MCP · Desktop/website · skill `orbit-yard-mcp-agent`; `.ship/` config dir kept |
+| **Agent setup / human key confirm** | `yard_setup` brief · skill minutes loop · [agent-setup-human-confirm-design](../../specs/backend/agent-setup-human-confirm-design.md) |
+| **Rebrand → Orbit Yard** | Product · `orbityard` CLI · `yard_*` MCP · Desktop/website · skill `orbit-yard-mcp-agent`; `.ship/` config dir kept |
 | **Uniform CLI host auth vetting** | select CF/Vercel/Netlify/Fly/Railway → Login CLI |
 | **Website Netlify bind (S3)** | `apps/website/netlify.toml` |
 | **Client finishability S1–S2** | [client-finishability-design](../../specs/backend/client-finishability-design.md) |

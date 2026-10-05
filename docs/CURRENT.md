@@ -1,8 +1,8 @@
 # CURRENT — Orbit Yard
 
-**Version:** 0.2.3  
+**Version:** 0.2.4  
 **Updated:** 2026-10-04  
-**Status:** **Rebrand → Orbit Yard** · **[Release v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)** still tagged under old name · website ready to redeploy · `orbityard` CLI.
+**Status:** **Cutting v0.2.4** — first Orbit Yard-branded Release. Plan: [v0.2.4-release-plan](../specs/backend/v0.2.4-release-plan.md).
 
 ## Truth pointers
 
@@ -23,7 +23,7 @@
 
 | Kind | Ready? | Notes |
 |------|--------|-------|
-| OSS tool (download · dogfood · docs) | **Yes** | v0.2.3 · Harbor Desktop dogfood · demo shelf |
+| OSS tool (download · dogfood · docs) | **Cutting** | v0.2.4 Orbit Yard brand · Harbor Desktop dogfood · demo shelf |
 | Guide users’ payments / integrations | **Yes (guide)** | Integrations wizards — Open → Put **outside** Studio → Confirm |
 | Sell Solo on the website | **Optional** | Overlay env-gated · not required for OSS done |
 

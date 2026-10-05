@@ -100,6 +100,7 @@ fn tools() -> Vec<Value> {
             "Publish portal status (minute wizard, read-only). Mutations: yard_publish_open / yard_publish_verify / yard_publish_confirm / yard_publish_next.",
             false,
         ),
+        tool_setup(),
         tool_publish_open(),
         tool_publish_verify(),
         tool_publish_confirm(),
@@ -203,6 +204,18 @@ fn tool_vault() -> Value {
                 }
             },
             "required": ["action"]
+        }
+    })
+}
+
+fn tool_setup() -> Value {
+    json!({
+        "name": "yard_setup",
+        "description": "Minutes-to-launch setup brief for agents: current phase, what the human must do (create key / Login CLI / Put / Confirm), entry_url + secret NAME only, and which yard_* tools to call next. Read-only. Never returns secret values.",
+        "inputSchema": {
+            "type": "object",
+            "properties": publish_common_props(json!({})),
+            "required": ["project"]
         }
     })
 }
@@ -634,6 +647,11 @@ fn call_tool(params: Value) -> Result<Value> {
             let state = publish::load_or_build_with_options(&project, mode, intent)?;
             serde_json::to_value(publish::view(&state))?
         }
+        "yard_setup" => {
+            let (mode, intent) = publish_args(&args);
+            let state = publish::load_or_build_with_options(&project, mode, intent)?;
+            serde_json::to_value(publish::setup_brief(&state))?
+        }
         "yard_publish_open" => {
             let (mode, intent) = publish_args(&args);
             let _ = publish::load_or_build_with_options(&project, mode, intent)?;
@@ -835,6 +853,7 @@ mod tests {
             .filter_map(|t| t.get("name").and_then(|n| n.as_str()))
             .collect();
         for n in [
+            "yard_setup",
             "yard_publish_open",
             "yard_publish_verify",
             "yard_publish_confirm",
@@ -844,6 +863,33 @@ mod tests {
         ] {
             assert!(names.contains(&n), "{n} missing in {names:?}");
         }
+    }
+
+    #[test]
+    fn setup_brief_mcp_returns_v1() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-mcp-setup-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = std::fs::create_dir_all(&dir);
+        std::fs::write(dir.join("package.json"), r#"{"name":"mcp-setup"}"#).unwrap();
+        let params = json!({
+            "name": "yard_setup",
+            "arguments": { "project": dir.to_string_lossy() }
+        });
+        let wrapped = call_tool(params).expect("setup tool");
+        let text = wrapped["content"][0]["text"].as_str().expect("text");
+        let body: Value = serde_json::from_str(text).expect("json");
+        assert_eq!(body["schema"], "orbit-yard/setup/v1");
+        assert!(body.get("phase").and_then(|p| p.as_str()).is_some(), "{body}");
+        assert!(body.get("human").is_some(), "{body}");
+        assert!(body["agent"]["next_tools"].as_array().is_some_and(|a| !a.is_empty()));
+        let never = body["agent"]["never"].as_array().expect("never");
+        assert!(never.iter().any(|v| v.as_str() == Some("pass secret values")));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

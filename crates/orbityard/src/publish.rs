@@ -1685,6 +1685,319 @@ pub fn view(state: &PublishState) -> PublishView {
     }
 }
 
+/// Agent setup brief — names/URLs/tools only; never secret values.
+/// Spec: `specs/backend/agent-setup-human-confirm-design.md`
+#[derive(Debug, Serialize)]
+pub struct SetupBrief {
+    pub schema: String,
+    pub project: String,
+    pub intent: ShipIntent,
+    pub mode: StudioMode,
+    pub minutes_remaining: u32,
+    pub phase: String,
+    pub human: SetupHuman,
+    pub agent: SetupAgent,
+    pub publish: SetupPublishRef,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SetupHuman {
+    pub action: String,
+    pub title: String,
+    pub detail: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entry_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub secret_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SetupAgent {
+    pub next_tools: Vec<String>,
+    pub never: Vec<&'static str>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SetupPublishRef {
+    pub current_index: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub step_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub step_title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub step_kind: Option<String>,
+}
+
+pub fn setup_brief(state: &PublishState) -> SetupBrief {
+    let v = view(state);
+    let never = vec![
+        "pass secret values",
+        "claim OAuth done without Verify",
+        "auto-Confirm live deploy or store submit",
+    ];
+
+    let Some(cur) = &v.current else {
+        return SetupBrief {
+            schema: "orbit-yard/setup/v1".into(),
+            project: v.project,
+            intent: v.intent,
+            mode: v.mode,
+            minutes_remaining: 0,
+            phase: "done".into(),
+            human: SetupHuman {
+                action: "none".into(),
+                title: "No publish steps".into(),
+                detail: "Bind a project folder and run yard_publish / yard_setup again.".into(),
+                entry_url: None,
+                secret_name: None,
+                provider: None,
+            },
+            agent: SetupAgent {
+                next_tools: vec!["yard_doctor".into(), "yard_publish".into()],
+                never,
+            },
+            publish: SetupPublishRef {
+                current_index: 0,
+                step_id: None,
+                step_title: None,
+                step_kind: None,
+            },
+        };
+    };
+
+    if v.finished {
+        return SetupBrief {
+            schema: "orbit-yard/setup/v1".into(),
+            project: v.project,
+            intent: v.intent,
+            mode: v.mode,
+            minutes_remaining: 0,
+            phase: "done".into(),
+            human: SetupHuman {
+                action: "none".into(),
+                title: "Publish spine finished".into(),
+                detail: "All gates done or skipped. Optional: live URL check on the host dashboard."
+                    .into(),
+                entry_url: cur.entry_url.clone(),
+                secret_name: None,
+                provider: None,
+            },
+            agent: SetupAgent {
+                next_tools: vec!["yard_pulse".into(), "yard_status".into()],
+                never,
+            },
+            publish: SetupPublishRef {
+                current_index: v.current_index,
+                step_id: Some(cur.id.clone()),
+                step_title: Some(cur.title.clone()),
+                step_kind: Some(format!("{:?}", cur.kind).to_ascii_lowercase()),
+            },
+        };
+    }
+
+    let first_put = secrets::plan_for(Path::new(&state.project), None)
+        .ok()
+        .map(|plan| human::put_queue_public(&plan.hints))
+        .and_then(|q| q.into_iter().next());
+
+    let (phase, human, next_tools) = match cur.kind {
+        PubKind::Oauth => (
+            "auth",
+            SetupHuman {
+                action: "login_cli".into(),
+                title: cur.title.clone(),
+                detail: format!(
+                    "{} Use yard_publish_open so Login CLI / Sign in (web) runs in a visible TTY.",
+                    cur.detail
+                ),
+                entry_url: cur.entry_url.clone(),
+                secret_name: None,
+                provider: provider_from_step_id(&cur.id),
+            },
+            vec![
+                "yard_publish_open".into(),
+                "yard_publish_verify".into(),
+                "yard_publish_confirm".into(),
+            ],
+        ),
+        PubKind::Human if cur.id == "env.sprint" || cur.id.starts_with("env.") => {
+            let (secret_name, provider, entry_url) = match &first_put {
+                Some(h) => (
+                    Some(h.name.clone()),
+                    Some(h.provider.clone()),
+                    h.entry_url.clone().or_else(|| cur.entry_url.clone()),
+                ),
+                None => (None, None, cur.entry_url.clone()),
+            };
+            let detail = if let Some(name) = &secret_name {
+                format!(
+                    "Create the token on the vendor page, then Put NAME `{name}` via yard_env_put (spawn:true). Never paste the value into chat."
+                )
+            } else {
+                cur.detail.clone()
+            };
+            (
+                "secret_put",
+                SetupHuman {
+                    action: if secret_name.is_some() {
+                        "create_key".into()
+                    } else {
+                        "put".into()
+                    },
+                    title: cur.title.clone(),
+                    detail,
+                    entry_url,
+                    secret_name,
+                    provider,
+                },
+                {
+                    let mut t = vec!["yard_publish_open".into()];
+                    if first_put.is_some() {
+                        t.push("yard_env_put".into());
+                    }
+                    t.push("yard_publish_verify".into());
+                    t.push("yard_publish_confirm".into());
+                    t
+                },
+            )
+        }
+        PubKind::Human if cur.id == "db.provision" || cur.id.starts_with("db.") => (
+            "configure",
+            SetupHuman {
+                action: "open_dashboard".into(),
+                title: cur.title.clone(),
+                detail: cur.detail.clone(),
+                entry_url: cur.entry_url.clone(),
+                secret_name: first_put.as_ref().map(|h| h.name.clone()),
+                provider: first_put.as_ref().map(|h| h.provider.clone()),
+            },
+            vec![
+                "yard_publish_open".into(),
+                "yard_env_put".into(),
+                "yard_publish_confirm".into(),
+            ],
+        ),
+        PubKind::Human | PubKind::List => (
+            "confirm",
+            SetupHuman {
+                action: "confirm".into(),
+                title: cur.title.clone(),
+                detail: format!(
+                    "{} Finish on the official page, then Confirm so the agent can Next.",
+                    cur.detail
+                ),
+                entry_url: cur.entry_url.clone(),
+                secret_name: None,
+                provider: None,
+            },
+            vec![
+                "yard_publish_open".into(),
+                "yard_publish_verify".into(),
+                "yard_publish_confirm".into(),
+                "yard_publish_next".into(),
+            ],
+        ),
+        PubKind::Deploy => (
+            "deploy",
+            SetupHuman {
+                action: "confirm".into(),
+                title: cur.title.clone(),
+                detail: format!(
+                    "{} Prefer Desktop Deploy or yard_hostdeploy after Login CLI. Confirm only after the human attests the live cut.",
+                    cur.detail
+                ),
+                entry_url: cur.entry_url.clone(),
+                secret_name: None,
+                provider: provider_from_step_id(&cur.id),
+            },
+            vec![
+                "yard_publish_open".into(),
+                "yard_hostdeploy".into(),
+                "yard_publish_verify".into(),
+                "yard_publish_confirm".into(),
+            ],
+        ),
+        PubKind::Sign | PubKind::Check => (
+            "verify",
+            SetupHuman {
+                action: "none".into(),
+                title: cur.title.clone(),
+                detail: cur.detail.clone(),
+                entry_url: cur.entry_url.clone(),
+                secret_name: None,
+                provider: None,
+            },
+            vec![
+                "yard_publish_open".into(),
+                "yard_publish_verify".into(),
+                "yard_publish_confirm".into(),
+                "yard_publish_next".into(),
+            ],
+        ),
+        PubKind::Auto if cur.id == "configure" || cur.id == "doctor" => (
+            "configure",
+            SetupHuman {
+                action: "none".into(),
+                title: cur.title.clone(),
+                detail: "Agent can Open/Verify this gate locally — no key paste.".into(),
+                entry_url: None,
+                secret_name: None,
+                provider: None,
+            },
+            vec![
+                "yard_publish_open".into(),
+                "yard_publish_verify".into(),
+                "yard_publish_next".into(),
+            ],
+        ),
+        PubKind::Auto => (
+            "verify",
+            SetupHuman {
+                action: "none".into(),
+                title: cur.title.clone(),
+                detail: cur.detail.clone(),
+                entry_url: cur.entry_url.clone(),
+                secret_name: None,
+                provider: None,
+            },
+            vec![
+                "yard_publish_open".into(),
+                "yard_publish_verify".into(),
+                "yard_publish_next".into(),
+            ],
+        ),
+    };
+
+    SetupBrief {
+        schema: "orbit-yard/setup/v1".into(),
+        project: v.project,
+        intent: v.intent,
+        mode: v.mode,
+        minutes_remaining: v.minutes_remaining,
+        phase: phase.into(),
+        human,
+        agent: SetupAgent { next_tools, never },
+        publish: SetupPublishRef {
+            current_index: v.current_index,
+            step_id: Some(cur.id.clone()),
+            step_title: Some(cur.title.clone()),
+            step_kind: Some(format!("{:?}", cur.kind).to_ascii_lowercase()),
+        },
+    }
+}
+
+fn provider_from_step_id(id: &str) -> Option<String> {
+    let lower = id.to_ascii_lowercase();
+    for p in ["cloudflare", "vercel", "netlify", "fly", "railway", "github"] {
+        if lower.contains(p) {
+            return Some(p.into());
+        }
+    }
+    None
+}
+
 pub fn open_current(project: &Path) -> Result<PublishView> {
     let mut state = load_state(project, true, None, None)?;
     let idx = state.current;
