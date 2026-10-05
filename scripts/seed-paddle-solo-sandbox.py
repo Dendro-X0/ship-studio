@@ -18,7 +18,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ENV_PATH = ROOT / "apps" / "website" / ".env"
 BASE = "https://sandbox-api.paddle.com"
-PRODUCT_NAME = "Ship Studio Solo"
+PRODUCT_NAME = "Orbit Yard Solo"
+LEGACY_PRODUCT_NAMES = ("Ship Studio Solo", "Orbit Yard Solo")
+CLIENT_TOKEN_NAME = "Orbit Yard website overlay"
+LEGACY_TOKEN_NAMES = ("Ship Studio website overlay", "Orbit Yard website overlay")
+
 
 
 def die(msg: str, code: int = 1) -> None:
@@ -84,9 +88,19 @@ def list_all(key: str, path: str, extra: dict | None = None) -> list:
 
 def upsert_catalog(key: str) -> tuple[str, str]:
     products = list_all(key, "/products", {"include": "prices"})
-    existing = next((p for p in products if p.get("name") == PRODUCT_NAME), None)
+    existing = next(
+        (p for p in products if p.get("name") in LEGACY_PRODUCT_NAMES),
+        None,
+    )
     if existing:
         product_id = existing["id"]
+        if existing.get("name") != PRODUCT_NAME:
+            paddle(
+                "PATCH",
+                f"/products/{product_id}",
+                key,
+                {"name": PRODUCT_NAME},
+            )
         prices = existing.get("prices") or []
         one_time = next(
             (
@@ -105,7 +119,7 @@ def upsert_catalog(key: str) -> tuple[str, str]:
             key,
             {
                 "product_id": product_id,
-                "description": "Ship Studio Solo one-time USD",
+                "description": "Orbit Yard Solo one-time USD",
                 "unit_price": {"amount": "2900", "currency_code": "USD"},
             },
         )
@@ -128,7 +142,7 @@ def upsert_catalog(key: str) -> tuple[str, str]:
         key,
         {
             "product_id": product_id,
-            "description": "Ship Studio Solo one-time USD",
+            "description": "Orbit Yard Solo one-time USD",
             "unit_price": {"amount": "2900", "currency_code": "USD"},
         },
     )
@@ -141,7 +155,7 @@ def upsert_client_token(key: str) -> str:
         (
             t
             for t in tokens
-            if t.get("status") == "active" and t.get("name") == "Ship Studio website overlay"
+            if t.get("status") == "active" and t.get("name") in LEGACY_TOKEN_NAMES
         ),
         None,
     )
@@ -152,7 +166,7 @@ def upsert_client_token(key: str) -> str:
         "/client-tokens",
         key,
         {
-            "name": "Ship Studio website overlay",
+            "name": CLIENT_TOKEN_NAME,
             "description": "Paddle.js overlay on /pricing (sandbox).",
         },
     )

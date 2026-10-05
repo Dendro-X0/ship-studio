@@ -94,8 +94,28 @@ Issue a license only after you see the paid transaction.
 
 Same sandbox API key can drive Paddle’s MCP for catalog. It does **not** replace overlay env or the default payment link.
 
-1. `setx PADDLE_SANDBOX_API_KEY "pdl_sdbx_…"` · restart Cursor.  
-2. MCP: `paddle-sandbox` · `paddle-docs`. Approve each `execute`.  
-3. Still need `PUBLIC_PADDLE_*` in `apps/website/.env` (seed or paste).
+### Windows (Git Bash + Cursor)
+
+Paddle’s MCP wizard expects the key in your **shell profile**, not in chat:
+
+```bash
+# ~/.bashrc or ~/.bash_profile — one line, your pdl_sdbx_… key
+export PADDLE_SANDBOX_API_KEY="pdl_sdbx_…"
+```
+
+Then **restart Cursor** so `paddle-sandbox` MCP picks it up (Connectors → MCP → confirm server is green).
+
+Optional duplicate for Windows User env (seed script in a new cmd after setx):
+
+```bash
+setx PADDLE_SANDBOX_API_KEY "pdl_sdbx_…"
+```
+
+### After the key is visible
+
+1. `python scripts/seed-paddle-solo-sandbox.py` → writes `PUBLIC_PADDLE_*` into `apps/website/.env`  
+2. Set `PUBLIC_SUPPORT_EMAIL=` in that same `.env` (refund page + success email)  
+3. Default payment link → `http://localhost:4321`  
+4. `pnpm website:dev` → `/pricing` → test card `4242…`
 
 Desktop Integrations Paddle is a **guide**. Solo sale is this overlay + this env file.

@@ -2,19 +2,22 @@
 
 **Updated:** 2026-10-04  
 **Branch:** `main`  
-**Status:** **v0.2.4 shipped** — https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.4
+**Status:** **W4 payment + refund setup** reopened — sandbox Solo overlay first. Portal/Integrations UX still PAUSED.
 
 ## Next Atomic Step
 
-**Idle** — set Netlify env `PUBLIC_DOWNLOAD_URL=https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.4` if Download still points at Releases root / v0.2.3. Optional polish below; do not grow Integrations chrome.
+**Paddle Solo sandbox setup** — follow [PADDLE-SETUP.md](../../apps/website/docs/PADDLE-SETUP.md) · dogfood [LICENSE-REFUND-DOGFOOD.md](../../apps/website/docs/LICENSE-REFUND-DOGFOOD.md).
+
+1. Create sandbox API key (`pdl_sdbx_…`) at https://sandbox-vendors.paddle.com/authentication (`product.write` · `price.write` · `client_token.write`)
+2. `setx PADDLE_SANDBOX_API_KEY "pdl_sdbx_…"` → new terminal → `python scripts/seed-paddle-solo-sandbox.py`
+3. Dashboard: **default payment link** → `http://localhost:4321` (and live site origin when ready)
+4. `pnpm website:dev` → `/pricing` test card `4242…` → then license issue / refund revoke dogfood
 
 | Option | When |
 |--------|------|
+| Put `PUBLIC_PADDLE_*` on Netlify | After local sandbox buy works |
 | Confirm Live check on Publish | After Open live looks right |
-| Rename Netlify site `ship-studio-website` → `orbit-yard` | Cosmetic URL only |
-| Put PUBLIC_PADDLE_* on Netlify env | Before Solo Buy on the live site |
-| Paddle Solo dogfood | Stays PAUSED until explicit reopen |
-| Rename GitHub repo `ship-studio` → `orbit-yard` | After you’re happy with the live site |
+| Rename Netlify site / GitHub repo | Cosmetic — after Solo path works |
 
 ## Design queue (not coding until activated)
 
@@ -33,7 +36,7 @@
 | Band | Rule |
 |------|------|
 | **Vendor handoff coach** | **CANCELLED** |
-| **Paddle Solo API keys / overlay dogfood** | **PAUSED** — maintainer halt |
+| **Paddle Solo API keys / overlay dogfood** | **ACTIVE** — maintainer reopened for W4 payment + refund setup |
 | **Portal / Integrations UX expansion** | **PAUSED** — obstacle-course verdict |
 | Polar paid checkout E2E | Deferred — Polar is not the Solo processor |
 | aperio Advanced L4 | Parked |
