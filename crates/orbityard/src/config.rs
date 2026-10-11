@@ -173,6 +173,15 @@ pub struct Detected {
     pub dockerfile: bool,
     #[serde(default)]
     pub compose: bool,
+    /// Umami analytics compose / layout (`analytics.umami` Get-live lane).
+    #[serde(default)]
+    pub umami: bool,
+    /// Flowsint OSINT compose / layout (`osint.flowsint` Get-live lane).
+    #[serde(default)]
+    pub flowsint: bool,
+    /// Medusa commerce layout (`commerce.medusa` Get-live lane).
+    #[serde(default)]
+    pub medusa: bool,
     /// Static / opt-in Self-host surface (not Dockerfile-only).
     #[serde(default)]
     pub selfhost: bool,
@@ -391,6 +400,9 @@ pub fn probe(project: &Path) -> Detected {
     detect_alt_hosts(project, &mut d);
     detect_ci_release(project, &mut d);
     detect_container(project, &mut d);
+    detect_umami(project, &mut d);
+    detect_flowsint(project, &mut d);
+    detect_medusa(project, &mut d);
     d.studio_monorepo = crate::selfhost::is_studio_monorepo(project);
     d.selfhost = crate::selfhost::plan_eligible(project);
     detect_markets(project, &mut d);
@@ -529,6 +541,24 @@ pub fn probe(project: &Path) -> Detected {
             d.release_workflows.join(", ")
         ));
     }
+    if d.umami {
+        d.hints.push(
+            "Umami analytics layout — Get-live: ensure secrets → Deploy compose → Open Admin (not Self-host static)."
+                .into(),
+        );
+    }
+    if d.flowsint {
+        d.hints.push(
+            "Flowsint OSINT layout — Get-live: ensure multi-env secrets → Deploy compose.prod → Open App (not Integrations)."
+                .into(),
+        );
+    }
+    if d.medusa {
+        d.hints.push(
+            "Medusa commerce layout — Get-live: medusa ensure → medusa deploy → Open Admin (not Integrations / payment-plugin coach)."
+                .into(),
+        );
+    }
     if d.container {
         let mut bits = Vec::new();
         if d.dockerfile {
@@ -537,15 +567,17 @@ pub fn probe(project: &Path) -> Detected {
         if d.compose {
             bits.push("Compose");
         }
-        d.hints.push(format!(
-            "Container layout ({}) — Advanced `container.build` Runs local docker; `container.deploy` is push docs + Confirm (never auto-push).",
-            if bits.is_empty() {
-                "docker".into()
-            } else {
-                bits.join(" · ")
-            }
-        ));
-        if !d.selfhost {
+        if !d.umami && !d.flowsint {
+            d.hints.push(format!(
+                "Container layout ({}) — Advanced `container.build` Runs local docker; `container.deploy` is push docs + Confirm (never auto-push).",
+                if bits.is_empty() {
+                    "docker".into()
+                } else {
+                    bits.join(" · ")
+                }
+            ));
+        }
+        if !d.selfhost && !d.umami && !d.flowsint {
             d.hints.push(
                 "No Self-host static surface — Dockerfile/Compose alone does not open the Self-host lane."
                     .into(),
@@ -880,6 +912,279 @@ fn detect_container(project: &Path, d: &mut Detected) {
     d.dockerfile = has_dockerfile(project);
     d.compose = has_compose(project);
     d.container = d.dockerfile || d.compose;
+}
+
+/// Umami Get-live — compose image markers or `.ship/layout` opt-in ([umami-get-live-design]).
+fn detect_umami(project: &Path, d: &mut Detected) {
+    let from_compose = compose_mentions_umami(project);
+    let from_layout = layout_is_umami(project);
+    if from_compose || from_layout {
+        d.umami = true;
+    }
+    if from_compose {
+        d.compose = true;
+        d.container = true;
+    }
+}
+
+fn layout_is_umami(project: &Path) -> bool {
+    let path = config_ship_layout_path(project);
+    let Ok(raw) = fs::read_to_string(&path) else {
+        return false;
+    };
+    let t = raw.trim().to_ascii_lowercase();
+    t == "analytics.umami"
+        || t.contains("\"analytics.umami\"")
+        || t.contains("'analytics.umami'")
+        || t.lines().any(|l| l.trim() == "analytics.umami")
+}
+
+fn config_ship_layout_path(project: &Path) -> PathBuf {
+    ship_dir(project).join("layout")
+}
+
+fn compose_mentions_umami(project: &Path) -> bool {
+    const NAMES: &[&str] = &[
+        "docker-compose.yml",
+        "docker-compose.yaml",
+        "compose.yml",
+        "compose.yaml",
+    ];
+    for name in NAMES {
+        let path = project.join(name);
+        if let Ok(raw) = fs::read_to_string(&path) {
+            if compose_body_is_umami(&raw) {
+                return true;
+            }
+        }
+    }
+    // One level down (e.g. deploy/compose.yml)
+    let Ok(entries) = fs::read_dir(project) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+        for name in NAMES {
+            let c = path.join(name);
+            if let Ok(raw) = fs::read_to_string(&c) {
+                if compose_body_is_umami(&raw) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+fn compose_body_is_umami(raw: &str) -> bool {
+    let lower = raw.to_ascii_lowercase();
+    lower.contains("umami-software/umami")
+        || lower.contains("docker.umami.is")
+        || lower.contains("ghcr.io/umami-software/umami")
+}
+
+/// Flowsint Get-live — compose image / monorepo dirs / `.ship/layout` ([flowsint-get-live-design]).
+fn detect_flowsint(project: &Path, d: &mut Detected) {
+    let from_compose = compose_mentions_flowsint(project);
+    let from_dirs = flowsint_monorepo_dirs(project);
+    let from_layout = layout_is_flowsint(project);
+    if from_compose || from_dirs || from_layout {
+        d.flowsint = true;
+    }
+    if from_compose {
+        d.compose = true;
+        d.container = true;
+    }
+}
+
+fn layout_is_flowsint(project: &Path) -> bool {
+    let path = config_ship_layout_path(project);
+    let Ok(raw) = fs::read_to_string(&path) else {
+        return false;
+    };
+    let t = raw.trim().to_ascii_lowercase();
+    t == "osint.flowsint"
+        || t.contains("\"osint.flowsint\"")
+        || t.contains("'osint.flowsint'")
+        || t.lines().any(|l| l.trim() == "osint.flowsint")
+}
+
+fn flowsint_monorepo_dirs(project: &Path) -> bool {
+    project.join("flowsint-app").is_dir()
+        && project.join("flowsint-api").is_dir()
+        && project.join("flowsint-core").is_dir()
+}
+
+fn compose_mentions_flowsint(project: &Path) -> bool {
+    const NAMES: &[&str] = &[
+        "docker-compose.prod.yml",
+        "docker-compose.prod.yaml",
+        "docker-compose.yml",
+        "docker-compose.yaml",
+        "compose.yml",
+        "compose.yaml",
+    ];
+    for name in NAMES {
+        let path = project.join(name);
+        if let Ok(raw) = fs::read_to_string(&path) {
+            if compose_body_is_flowsint(&raw) {
+                return true;
+            }
+        }
+    }
+    let Ok(entries) = fs::read_dir(project) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+        for name in NAMES {
+            let c = path.join(name);
+            if let Ok(raw) = fs::read_to_string(&c) {
+                if compose_body_is_flowsint(&raw) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+fn compose_body_is_flowsint(raw: &str) -> bool {
+    let lower = raw.to_ascii_lowercase();
+    lower.contains("ghcr.io/reconurge/flowsint-app")
+        || lower.contains("ghcr.io/reconurge/flowsint-api")
+        || lower.contains("reconurge/flowsint-app")
+        || lower.contains("reconurge/flowsint-api")
+        || (lower.contains("flowsint-app") && lower.contains("flowsint-api"))
+        || (lower.contains("container_name: flowsint-") && lower.contains("neo4j"))
+}
+
+/// Medusa Get-live — config / `@medusajs/*` deps / `.ship/layout` ([owned-commerce-medusa-study]).
+fn detect_medusa(project: &Path, d: &mut Detected) {
+    let from_config = medusa_config_present(project);
+    let from_deps = package_has_medusa_dep(project);
+    let from_scripts = medusa_scripts_and_api(project);
+    let from_layout = layout_is_medusa(project);
+    if from_config || from_deps || from_scripts || from_layout {
+        d.medusa = true;
+    }
+}
+
+fn layout_is_medusa(project: &Path) -> bool {
+    let path = config_ship_layout_path(project);
+    let Ok(raw) = fs::read_to_string(&path) else {
+        return false;
+    };
+    let t = raw.trim().to_ascii_lowercase();
+    t == "commerce.medusa"
+        || t.contains("\"commerce.medusa\"")
+        || t.contains("'commerce.medusa'")
+        || t.lines().any(|l| l.trim() == "commerce.medusa")
+}
+
+fn medusa_config_present(project: &Path) -> bool {
+    const NAMES: &[&str] = &[
+        "medusa-config.js",
+        "medusa-config.ts",
+        "medusa-config.mjs",
+        "medusa-config.cjs",
+    ];
+    for name in NAMES {
+        if project.join(name).is_file() {
+            return true;
+        }
+    }
+    // Monorepo: apps/backend/medusa-config.ts etc.
+    let Ok(entries) = fs::read_dir(project) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+        for name in NAMES {
+            if path.join(name).is_file() {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn package_has_medusa_dep(project: &Path) -> bool {
+    let candidates = [
+        project.join("package.json"),
+        project.join("apps/backend/package.json"),
+        project.join("backend/package.json"),
+    ];
+    for path in candidates {
+        if package_json_has_medusa(&path) {
+            return true;
+        }
+    }
+    false
+}
+
+fn package_json_has_medusa(path: &Path) -> bool {
+    let Ok(raw) = fs::read_to_string(path) else {
+        return false;
+    };
+    let Ok(v) = serde_json::from_str::<serde_json::Value>(&raw) else {
+        return false;
+    };
+    let Some(obj) = v.as_object() else {
+        return false;
+    };
+    for key in ["dependencies", "devDependencies", "peerDependencies"] {
+        let Some(deps) = obj.get(key).and_then(|d| d.as_object()) else {
+            continue;
+        };
+        if deps.contains_key("@medusajs/medusa") || deps.contains_key("@medusajs/framework") {
+            return true;
+        }
+    }
+    false
+}
+
+/// Corroborate: `src/api` + package scripts mentioning `medusa develop` / `medusa start`.
+fn medusa_scripts_and_api(project: &Path) -> bool {
+    let has_api = project.join("src/api").is_dir()
+        || project.join("apps/backend/src/api").is_dir()
+        || project.join("backend/src/api").is_dir();
+    if !has_api {
+        return false;
+    }
+    let pkg_paths = [
+        project.join("package.json"),
+        project.join("apps/backend/package.json"),
+        project.join("backend/package.json"),
+    ];
+    for path in pkg_paths {
+        let Ok(raw) = fs::read_to_string(&path) else {
+            continue;
+        };
+        let Ok(v) = serde_json::from_str::<serde_json::Value>(&raw) else {
+            continue;
+        };
+        let Some(scripts) = v.get("scripts").and_then(|s| s.as_object()) else {
+            continue;
+        };
+        for val in scripts.values() {
+            let Some(s) = val.as_str() else { continue };
+            let sl = s.to_ascii_lowercase();
+            if sl.contains("medusa develop") || sl.contains("medusa start") {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 fn detect_markets(project: &Path, d: &mut Detected) {
@@ -2001,6 +2306,204 @@ mod tests {
         assert!(d.container);
         assert!(d.dockerfile);
         assert!(!d.compose);
+        assert!(!d.umami);
+    }
+
+    #[test]
+    fn detects_umami_compose_image() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-umami-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("docker-compose.yml"),
+            "services:\n  umami:\n    image: ghcr.io/umami-software/umami:postgresql-latest\n",
+        )
+        .unwrap();
+        let d = probe(&dir);
+        assert!(d.umami);
+        assert!(d.compose);
+        assert!(d.container);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_umami_layout_file() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-umami-layout-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".ship/layout"), "analytics.umami\n").unwrap();
+        let d = probe(&dir);
+        assert!(d.umami);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_flowsint_compose_prod_image() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-flowsint-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("docker-compose.prod.yml"),
+            "services:\n  app:\n    image: ghcr.io/reconurge/flowsint-app:latest\n  api:\n    image: ghcr.io/reconurge/flowsint-api:latest\n",
+        )
+        .unwrap();
+        let d = probe(&dir);
+        assert!(d.flowsint);
+        assert!(d.compose);
+        assert!(d.container);
+        assert!(!d.umami);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_flowsint_monorepo_dirs() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-flowsint-dirs-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("flowsint-app")).unwrap();
+        fs::create_dir_all(dir.join("flowsint-api")).unwrap();
+        fs::create_dir_all(dir.join("flowsint-core")).unwrap();
+        let d = probe(&dir);
+        assert!(d.flowsint);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_flowsint_layout_file() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-flowsint-layout-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".ship/layout"), "osint.flowsint\n").unwrap();
+        let d = probe(&dir);
+        assert!(d.flowsint);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_flowsint_fixture() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../fixtures/flowsint-osint");
+        let d = probe(&fixture);
+        assert!(
+            d.flowsint,
+            "fixtures/flowsint-osint should probe flowsint=true"
+        );
+    }
+
+    #[test]
+    fn detects_medusa_config_file() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-medusa-cfg-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("medusa-config.ts"), "module.exports = {}\n").unwrap();
+        let d = probe(&dir);
+        assert!(d.medusa);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_medusa_package_dep() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-medusa-dep-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("package.json"),
+            r#"{"name":"shop","dependencies":{"@medusajs/framework":"^2.0.0"}}"#,
+        )
+        .unwrap();
+        let d = probe(&dir);
+        assert!(d.medusa);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_medusa_layout_file() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-medusa-layout-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".ship/layout"), "commerce.medusa\n").unwrap();
+        let d = probe(&dir);
+        assert!(d.medusa);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn does_not_detect_stripe_alone_as_medusa() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-stripe-not-medusa-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("package.json"),
+            r#"{"name":"pay","dependencies":{"stripe":"^14.0.0"}}"#,
+        )
+        .unwrap();
+        let d = probe(&dir);
+        assert!(!d.medusa);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_medusa_fixture() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../fixtures/medusa-commerce");
+        let d = probe(&fixture);
+        assert!(
+            d.medusa,
+            "fixtures/medusa-commerce should probe medusa=true"
+        );
     }
 
     #[test]

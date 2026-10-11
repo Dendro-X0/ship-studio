@@ -13,13 +13,15 @@ pnpm website:dev
 # → http://localhost:4321
 ```
 
-## Paddle checkout (Studio Solo)
+## Paddle checkout (optional Solo Buy on this site)
 
-Full dogfood steps: [docs/PADDLE-SETUP.md](./docs/PADDLE-SETUP.md).
+Operator path: **Paddle dashboard → `apps/website/.env` → Put on host → Redeploy**.  
+Full checklist: [docs/PADDLE-SETUP.md](./docs/PADDLE-SETUP.md).
 
 ```bash
 cp apps/website/.env.example apps/website/.env
-# set PUBLIC_PADDLE_CLIENT_TOKEN + PUBLIC_PADDLE_PRICE_ID (sandbox first)
+# PUBLIC_PADDLE_CLIENT_TOKEN + PUBLIC_PADDLE_PRICE_ID (sandbox first)
+# then pnpm website:dev → /pricing test card → Put env on host + Deploy
 ```
 
 | Variable | Purpose |
@@ -33,7 +35,7 @@ cp apps/website/.env.example apps/website/.env
 | `PUBLIC_SUPPORT_EMAIL` | Refund / support mailto |
 | `PUBLIC_DOWNLOAD_URL` | GitHub releases |
 
-Until token and price id are set, Buy stays disabled with a setup note. Overlay success redirects to `/checkout/success`.
+Until token and price id are set, Buy stays disabled with a setup note. Overlay success redirects to `/checkout/success`. Soft-no: not Integrations-as-product; commercial ADMIT stays cancelled until explicit reopen.
 
 ## Never-say (S1.3)
 
@@ -77,19 +79,19 @@ python scripts/issue-license.py revoke --order paddle_xxx
 
 Format: `docs/assets/license/FORMAT.md`. Ledger: `.ship-licenses/` (gitignored).
 
-## Build · deploy (Netlify)
+## Build · deploy
 
 ```bash
 pnpm website:build
 # Static output: apps/website/dist
 ```
 
-**Host:** Netlify (`netlify.toml`). Link the monorepo with Base directory `apps/website`, or from that folder:
+**Self-beta live host:** Cloudflare Pages project **ship-studio** (`https://ship-studio.pages.dev`).  
+**Alternate:** Netlify (`netlify.toml` · base directory `apps/website`).
 
 ```bash
-netlify login
-orbityard hostdeploy --project apps/website --provider netlify
-# or: orbityard publish → Deploy (after Login CLI)
+orbityard hostdeploy --project apps/website --provider cloudflare --name ship-studio
+# or Netlify: orbityard hostdeploy --project apps/website --provider netlify
 ```
 
-Put `PUBLIC_PADDLE_*` on the Netlify site env (not in git) for Solo Buy.
+Put `PUBLIC_PADDLE_*` (and support/download) on the **same** host env before/with Deploy — Astro inlines `PUBLIC_*` at build time. Never commit `.env`.

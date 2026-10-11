@@ -101,12 +101,14 @@ fn tools() -> Vec<Value> {
             false,
         ),
         tool_setup(),
+        tool_resume(),
         tool_publish_open(),
         tool_publish_verify(),
         tool_publish_confirm(),
         tool_publish_next(),
         tool_publish_watch(),
         tool_env_put(),
+        tool_env_import(),
         tool_butler_push(),
         tool(
             "yard_scopes",
@@ -211,7 +213,19 @@ fn tool_vault() -> Value {
 fn tool_setup() -> Value {
     json!({
         "name": "yard_setup",
-        "description": "Minutes-to-launch setup brief for agents: current phase, what the human must do (create key / Login CLI / Put / Confirm), entry_url + secret NAME only, and which yard_* tools to call next. Read-only. Never returns secret values.",
+        "description": "Minutes-to-launch setup brief with founder spine (Open→Host→Login→Deploy→Open live). When paused=true, STOP and prompt the human; wait for resume, then yard_resume. Never Integrations-as-Get-live. Never returns secret values.",
+        "inputSchema": {
+            "type": "object",
+            "properties": publish_common_props(json!({})),
+            "required": ["project"]
+        }
+    })
+}
+
+fn tool_resume() -> Value {
+    json!({
+        "name": "yard_resume",
+        "description": "Call after the human says they finished a pause gate (Login CLI / create key / Put). Runs local Verify and returns still_paused / need_confirm / next_tools. Never Confirms irreversible gates — use yard_publish_confirm after human attests.",
         "inputSchema": {
             "type": "object",
             "properties": publish_common_props(json!({})),
@@ -289,14 +303,14 @@ fn publish_common_props(mut extra: Value) -> Value {
 fn tool_env_put() -> Value {
     json!({
         "name": "yard_env_put",
-        "description": "Launch (or print) interactive host Put for a secret NAME on cloudflare|vercel|netlify. Never accepts a secret value. Prefer spawn:true so a visible terminal prompts the human.",
+        "description": "Launch (or print) interactive host Put for a secret NAME on cloudflare|vercel|netlify|fly|railway. Never accepts a secret value. Prefer spawn:true so a visible terminal prompts the human.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "project": { "type": "string", "description": "Absolute project path" },
                 "provider": {
                     "type": "string",
-                    "description": "cloudflare | vercel | netlify"
+                    "description": "cloudflare | vercel | netlify | fly | railway"
                 },
                 "name": {
                     "type": "string",
@@ -308,6 +322,49 @@ fn tool_env_put() -> Value {
                 }
             },
             "required": ["project", "provider", "name"]
+        }
+    })
+}
+
+fn tool_env_import() -> Value {
+    json!({
+        "name": "yard_env_import",
+        "description": "Import selected local .env / .dev.vars names to the host CLI (Tier A+B). Pass file/pack path and optional name list only — never secret values. dry_run:true lists names. Prefer Desktop Import env… when the human should confirm checkboxes.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "project": { "type": "string", "description": "Absolute project path (monorepo root)" },
+                "provider": {
+                    "type": "string",
+                    "description": "cloudflare | vercel | netlify | fly | railway"
+                },
+                "file": {
+                    "type": "string",
+                    "description": "Root-relative env file (e.g. apps/website/.env)"
+                },
+                "pack": {
+                    "type": "string",
+                    "description": "Optional pack id / rel dir (alternative to file)"
+                },
+                "names": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Optional NAME list to put (omit = all eligible nonempty)"
+                },
+                "dry_run": {
+                    "type": "boolean",
+                    "description": "List candidate names only (default true under MCP for safety)"
+                },
+                "yes": {
+                    "type": "boolean",
+                    "description": "Required true to put (non-dry-run). Never pass values."
+                },
+                "host_name": {
+                    "type": "string",
+                    "description": "Optional host project/site name (Cloudflare Pages --project-name). Defaults to folder basename when omitted."
+                }
+            },
+            "required": ["project", "provider"]
         }
     })
 }
@@ -380,18 +437,18 @@ fn tool_portal() -> Value {
 fn tool_hostdeploy() -> Value {
     json!({
         "name": "yard_hostdeploy",
-        "description": "Stream local vendor CLI deploy (wrangler/vercel/netlify) via orbityard hostdeploy. Writes hosted last-run URLs. Prefer Desktop Deployment Deploy when auth prompts may appear. Never stores secrets; does not fill Create Token. On auth fail tell human: Login CLI or Sign in (web).",
+        "description": "Stream local vendor CLI deploy (wrangler/vercel/netlify/fly/railway) via orbityard hostdeploy. Writes hosted last-run URLs. Prefer Desktop Deployment Deploy when auth prompts may appear. Never stores secrets; does not fill Create Token. On auth/link fail tell human: Login CLI or fly launch / railway link.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "project": { "type": "string", "description": "Absolute project path" },
                 "provider": {
                     "type": "string",
-                    "description": "cloudflare | vercel | netlify (default cloudflare)"
+                    "description": "cloudflare | vercel | netlify | fly | railway (default cloudflare)"
                 },
                 "name": {
                     "type": "string",
-                    "description": "Optional Pages/site project name override"
+                    "description": "Optional Pages/site/app project name override"
                 }
             },
             "required": ["project"]
@@ -652,6 +709,11 @@ fn call_tool(params: Value) -> Result<Value> {
             let state = publish::load_or_build_with_options(&project, mode, intent)?;
             serde_json::to_value(publish::setup_brief(&state))?
         }
+        "yard_resume" => {
+            let (mode, intent) = publish_args(&args);
+            let _ = publish::load_or_build_with_options(&project, mode, intent)?;
+            serde_json::to_value(publish::resume_after_human(&project)?)?
+        }
         "yard_publish_open" => {
             let (mode, intent) = publish_args(&args);
             let _ = publish::load_or_build_with_options(&project, mode, intent)?;
@@ -721,6 +783,54 @@ fn call_tool(params: Value) -> Result<Value> {
                 .and_then(|v| v.as_bool())
                 .unwrap_or(true);
             serde_json::to_value(envx::put_launch(&project, provider, name, spawn)?)?
+        }
+        "yard_env_import" => {
+            if args.get("value").is_some() || args.get("values").is_some() {
+                anyhow::bail!(
+                    "yard_env_import never accepts secret values — pass file/pack + names only"
+                );
+            }
+            let provider = args
+                .get("provider")
+                .and_then(|p| p.as_str())
+                .context("yard_env_import requires provider")?;
+            let id = portal::ProviderId::parse(provider)?;
+            let file = args.get("file").and_then(|f| f.as_str()).map(PathBuf::from);
+            let pack = args.get("pack").and_then(|p| p.as_str());
+            let names: Vec<String> = args
+                .get("names")
+                .and_then(|n| n.as_array())
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                        .collect()
+                })
+                .unwrap_or_default();
+            let dry_run = args
+                .get("dry_run")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true);
+            let yes = args.get("yes").and_then(|v| v.as_bool()).unwrap_or(false);
+            let host_name = args
+                .get("host_name")
+                .or_else(|| args.get("hostName"))
+                .and_then(|v| v.as_str());
+            if !dry_run && !yes {
+                anyhow::bail!(
+                    "refusing non-dry-run import without yes:true — confirm names first (dry_run)"
+                );
+            }
+            let report = secrets::import_env_to_host(
+                &project,
+                id,
+                file.as_deref(),
+                pack,
+                &names,
+                dry_run,
+                yes && !dry_run,
+                host_name,
+            )?;
+            serde_json::to_value(report)?
         }
         "yard_butler_push" => {
             let target = args
@@ -842,6 +952,7 @@ mod tests {
             .filter_map(|t| t.get("name").and_then(|n| n.as_str()))
             .collect();
         assert!(names.contains(&"yard_hostdeploy"), "{names:?}");
+        assert!(names.contains(&"yard_env_import"), "{names:?}");
         assert!(names.contains(&"yard_pulse"));
     }
 
@@ -854,11 +965,13 @@ mod tests {
             .collect();
         for n in [
             "yard_setup",
+            "yard_resume",
             "yard_publish_open",
             "yard_publish_verify",
             "yard_publish_confirm",
             "yard_publish_next",
             "yard_env_put",
+            "yard_env_import",
             "yard_butler_push",
         ] {
             assert!(names.contains(&n), "{n} missing in {names:?}");
@@ -886,9 +999,81 @@ mod tests {
         assert_eq!(body["schema"], "orbit-yard/setup/v1");
         assert!(body.get("phase").and_then(|p| p.as_str()).is_some(), "{body}");
         assert!(body.get("human").is_some(), "{body}");
+        assert!(body.get("paused").and_then(|p| p.as_bool()).is_some(), "{body}");
+        assert_eq!(body["spine"]["schema"], "orbit-yard/spine/v1");
+        assert!(body["spine"]["step"].as_u64().is_some_and(|n| (1..=5).contains(&n)), "{body}");
+        assert!(body["spine"]["path"].as_str().is_some_and(|p| p.contains("Open live")), "{body}");
+        assert!(body["agent"]["instruction"].as_str().is_some_and(|s| !s.is_empty()));
         assert!(body["agent"]["next_tools"].as_array().is_some_and(|a| !a.is_empty()));
         let never = body["agent"]["never"].as_array().expect("never");
         assert!(never.iter().any(|v| v.as_str() == Some("pass secret values")));
+        assert!(never
+            .iter()
+            .any(|v| v.as_str() == Some("use Integrations as the Get live path")));
+        if body["paused"].as_bool() == Some(true) {
+            let prompt = body["pause"]["prompt"].as_str().unwrap_or("");
+            assert!(
+                prompt.contains("Current Publish gate"),
+                "{prompt}"
+            );
+            assert!(prompt.contains("Founder spine"), "{prompt}");
+            assert!(body["pause"].get("current_gate").and_then(|g| g.as_str()).is_some());
+            assert!(body["pause"].get("integrations_ok").and_then(|v| v.as_bool()).is_some());
+        }
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn setup_pause_on_harbor_names_publish_gate() {
+        let harbor = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/harbor");
+        if !harbor.is_dir() {
+            return;
+        }
+        let params = json!({
+            "name": "yard_setup",
+            "arguments": { "project": harbor.to_string_lossy(), "mode": "general", "intent": "public" }
+        });
+        let wrapped = call_tool(params).expect("setup harbor");
+        let text = wrapped["content"][0]["text"].as_str().expect("text");
+        let body: Value = serde_json::from_str(text).expect("json");
+        if body["paused"].as_bool() != Some(true) {
+            return;
+        }
+        let prompt = body["pause"]["prompt"].as_str().unwrap_or("");
+        assert!(prompt.contains("Current Publish gate `"), "{prompt}");
+        assert!(prompt.contains("Founder spine"), "{prompt}");
+        assert_eq!(body["spine"]["schema"], "orbit-yard/spine/v1");
+        let gate = body["pause"]["current_gate"].as_str().unwrap_or("");
+        assert!(!gate.is_empty(), "{body}");
+        if gate == "scopes" {
+            assert_eq!(body["pause"]["integrations_ok"], false);
+            assert!(prompt.contains("Integrations is not this gate"), "{prompt}");
+            assert_eq!(body["spine"]["step"], 2);
+        }
+    }
+
+    #[test]
+    fn resume_mcp_returns_v1() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-mcp-resume-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = std::fs::create_dir_all(&dir);
+        std::fs::write(dir.join("package.json"), r#"{"name":"mcp-resume"}"#).unwrap();
+        let params = json!({
+            "name": "yard_resume",
+            "arguments": { "project": dir.to_string_lossy() }
+        });
+        let wrapped = call_tool(params).expect("resume tool");
+        let text = wrapped["content"][0]["text"].as_str().expect("text");
+        let body: Value = serde_json::from_str(text).expect("json");
+        assert_eq!(body["schema"], "orbit-yard/resume/v1");
+        assert!(body.get("still_paused").and_then(|p| p.as_bool()).is_some(), "{body}");
+        assert!(body.get("setup").is_some(), "{body}");
+        assert!(body["next_tools"].as_array().is_some_and(|a| !a.is_empty()));
         let _ = std::fs::remove_dir_all(&dir);
     }
 

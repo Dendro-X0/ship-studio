@@ -6,20 +6,22 @@
 
 ## Mission
 
-Orbit Yard is a **local portal / guide** for the final mile of many project kinds (OSS cuts, commerce listings, host deploys, desktop Signet, marketplace submits):
+Orbit Yard is a **local ops / deploy tool** for the final mile (**sign → GitHub/Signet release → host deploy**). Commerce listings and payment/email **integrations** are **not** the hub.
 
 1. **Sign** — self-sign (Signet) and graduate (OV / Azure Trusted Signing / notarization)  
 2. **Release** — checksums, TRUST honesty, GitHub Release / Signet release  
-3. **Deploy** — Orbit for Web/API; desktop cut is Signet release (+ optional marketing host)
+3. **Deploy** — host CLI for Web/API (Cloudflare / Vercel / Netlify / … after **you** logged in); desktop cut is Signet release
 
-**How it helps without replacing providers:** scripts + **Continue** for highly automatable gates; Open → Confirm wizards for official channels. **Verify** detects status via graduated layers (disk · local CLI · official CLI probe · human attest) — the provider remains authority for irreversible done ([verify-status-layers-design](./verify-status-layers-design.md)). Operators should rarely miss a gate or reassemble the release from memory across 30+ repos.
+**How it helps:** scripts + **Continue** for automatable gates; Open → Confirm for **this deploy/sign**, not Polar onboarding. **Verify** uses disk · local CLI · official CLI probe · human attest. [Pivot](./ops-deploy-pivot-design.md).
 
 ## Explicitly not the hub’s job
 
 - Product documentation sites, feature demos, GIF authoring, narrative marketing copy  
-- Replacing Cloudflare / Vercel / Apple / Play / Gumroad UIs  
+- Replacing Cloudflare / Vercel / Apple / Play UIs  
+- **Third-party integration setup** (Polar / Paddle / Stripe / …)  
 - Storing secret values in `.ship/`  
 - Finishing OAuth, store review, or DNS without the human  
+- Operating **Orbit billing or Orbit cloud** as a fake-seamless vendor  
 
 Developers still create docs and demos elsewhere; Orbit Yard cuts the ship.
 

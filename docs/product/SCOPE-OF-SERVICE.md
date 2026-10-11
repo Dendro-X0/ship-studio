@@ -6,24 +6,22 @@
 
 ## One sentence
 
-Orbit Yard is a **local portal and guide** for release work: it sequences the **final mile** (**sign → release → deploy** and adjacent lanes) across many project kinds, runs **scripts for highly automatable steps**, and uses **semi-automated wizards** when official channels require the human — without replacing vendor platforms.
+Orbit Yard is a **local ops and deployment tool**: it sequences **this project’s** final mile (**sign → release → deploy**), runs scripts for steps that are actually automatable, and pauses for human login/keys on **host and signing** gates — without a third-party **integrations** product.
 
-## Value thesis (why pay vs SaaS starter kits)
+## Value thesis (honest)
 
-Indie and multi-repo operators lose time on **order and human gates**, not on “another template.” Orbit Yard earns its price when the **Client** makes **OSS cuts, marketplace listings, host deploys, and commerce gates** finishable without surviving vendor encyclopedias — and when **MCP** lets agents assist without taking custody of keys. Linking Docs is not a product.
+There is **no commercial “why pay vs DevOps SaaS”** that survives contact with GitHub, host dashboards, and vendor lock-in. Integrations-as-product failed; ops/deploy as a **company** would compete with existing DevOps tools and lose on surface area. [Commercial failure](../../specs/backend/commercial-product-failed-design.md).
+
+What remains is **personal/OSS ops**: sequence **this** repo’s sign → release → deploy for the maintainer. That can be useful software. It is **not** a product company.
 
 ---
 
 ## Who we serve
 
-| Primary | Secondary (not yet) |
-|---------|---------------------|
-| Solo / small teams with **many repos** (OSS + a few paid products) who need one local hub for diverse release workflows | Large orgs needing multi-tenant cloud control planes |
-| Operators who ship **multi-surface** products (Web/API + desktop Signet + optional stores/commerce) | Teams that want Orbit Yard to *replace* Cloudflare / Polar / store consoles |
-| **Founders / operators who can own vendor accounts** but should not need DevOps fluency to finish a cut (Client pathway) | People seeking full auto-publish without human attestation |
-| Agent-assisted teams (Cursor / MCP) who keep **keys under human control** | People who only need a single `wrangler deploy` with no sequence |
-
-Power users who already live in **Signet / Orbit / gh** remain welcome; they are not the only ICP. The Client must not assume CLI literacy.
+| Primary | Secondary (not a business) |
+|---------|----------------------------|
+| **Maintainer / personal OSS** — many local repos, sign → release → deploy | “Charge because we wrap Polar” — **failed** |
+| Operators who already have GitHub + a host CLI | Teams buying a DevOps platform — they already have GitHub Actions / Vercel / Netlify |
 
 ---
 
@@ -35,7 +33,7 @@ Probe a **local project directory** for shipping signals (Wrangler/Vercel/Netlif
 
 ### 2. Plan
 
-Build an **Adaptive Publish plan** (General = short path; Advanced = full OAuth / listing / submit / CI / container / marketing / suite):
+Build an **Adaptive Publish plan** (General = short path; Advanced = signing / host / CI / container — **not** commerce onboarding):
 
 - Ordered steps with honest detail  
 - Related `desktop_view` to the right detail panel  
@@ -72,13 +70,14 @@ Progress lives in project `.ship/publish.json` (no secret values). Desktop shows
 
 | Category | Examples |
 |----------|----------|
-| **Content / marketing** | Product docs sites, feature demos, GIF authoring, narrative copy |
+| **Third-party integrations product** | Polar / Paddle / Stripe / Gumroad / Lemon / Creem / Waffo / email **setup**; commerce listing wizards; “complete checkout in Studio” ([ops-deploy pivot](../../specs/backend/ops-deploy-pivot-design.md)) |
+| **Own billing or cloud** | Seamless vendor setup would require **Orbit-operated** payments or hosting — out of scope; would be a derivative Orbit service, not an unofficial Polar path |
 | **Vendor replacement** | Replacing Cloudflare, Vercel, Apple, Play, Gumroad, Steam UIs |
 | **Finishing without the human** | OAuth completion, store review, DNS cutover, certificate purchase |
 | **Dangerous automation** | Registry push, live package publish, store API upload, k8s controllers |
 | **Secret custody as product** | Becoming the team’s password manager (vault export is optional backup only) |
 | **Build-system replacement** | Rewriting Signet / Orbit / provider CLIs inside this repo |
-| **Portfolio SaaS (v0)** | Multi-root cloud hub, paid unlock bands, hosted multi-tenant control plane |
+| **Portfolio SaaS / paid unlock** | Multi-root cloud hub, Solo Buy, competing with DevOps vendors as a company ([commercial failure](../../specs/backend/commercial-product-failed-design.md)) |
 
 Human remaining work is listed in [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) — that checklist is **part of the service boundary**, not a backlog of Studio bugs.
 

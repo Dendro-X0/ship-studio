@@ -26,6 +26,7 @@ Agents: boot [START-HERE.md](./START-HERE.md) → handoff **Next Atomic Step** o
 | Shelf | Files | Use |
 |-------|-------|-----|
 | [product/](./product/README.md) | 5+ | Scope, contract, [Platforms·Portal](./product/PLATFORMS-AND-PORTAL.md), operator checklist, [improvement backlog](./product/improvement-backlog.md) |
+| [business/](./business/README.md) | 5 | Value compounding · growth under constraints · agent business boot |
 | [dogfood/](./dogfood/README.md) | 3 | Offline / Signet / Orbit walk scripts |
 | [frontend/](./frontend/README.md) | 1 | Desktop shell contract |
 | [handoffs/](./handoffs/README.md) | live + evidence | Continuity · L3 proof |

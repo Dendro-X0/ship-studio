@@ -7,23 +7,19 @@
 **Hosting improvement plan:** [hosting-portal-parity-design](../../specs/backend/hosting-portal-parity-design.md)
 
 ```text
-OBJECTIVE:  One place to pick a host / store / payment / email lane, finish the
-            human gate (Put / Login / exact Open), return to Publish → Confirm —
-            without Studio holding secrets or pretending to deploy / notarize / charge.
-SHIPPED:    Platforms catalog · Integrations Payments/Email wizards · Portal Open/Docs/Login CLI ·
-            Launch Payments opt-in · Deployment primary_host · Harbor Desktop dogfood
-NOT YET:    Full host Tier D catalog parity · Studio Solo live Paddle overlay dogfood · Studio-owned OAuth success
-OVERHAUL:   **Done O0–O5** — [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md) ·
-            [human-gate-catalog-design](../../specs/backend/human-gate-catalog-design.md) ·
-            [Harbor evidence](../handoffs/evidence-harbor-client-honesty.md)
+OBJECTIVE:  Ops / deploy — pick a **host** (and signing), Login CLI / Put deploy env,
+            return to Publish → Confirm. **Not** a Polar/Paddle/email integrations product.
+SHIPPED:    Platforms catalog · Portal Open/Login CLI · host deploy lanes (historical Payments UI leftover)
+NOT YET:    Subtract Integrations Payments/Email surface ([ops-deploy-pivot](../../specs/backend/ops-deploy-pivot-design.md))
+CANCELLED:  Third-party integration setup as a Studio job
 ```
 
 ## Two different “payments” jobs
 
 | Job | Surface | Ready? |
 |-----|---------|--------|
-| **Help the operator set up Polar / Stripe / … for their product** | Desktop **Integrations** → Payments wizard → Open vendor → Put `PUBLIC_*` / host secrets **outside** Studio → Continue publishing → Confirm listing | **Yes** — guide path |
-| **Sell Orbit Yard Solo on the official website** | `apps/website` Paddle.js overlay (`PUBLIC_PADDLE_*`) | **Wired** — live overlay needs sandbox/live tokens in host env (not git). Polar E2E stays deferred. |
+| **Bookmark Polar / Stripe / … dashboards** | Desktop **Integrations** → Open vendor (optional). **Setup happens in the vendor UI.** Studio does not complete Polar/Paddle onboarding. | **Thin** — expansion **PAUSED**. Maintainer Polar worked **without** Studio. |
+| **Sell Orbit Yard Solo on the official website** | Optional Buy — **not** Paddle dogfood ([without Paddle](../../specs/backend/solo-commerce-without-paddle-design.md)) | **Optional** — OSS download is enough |
 
 Do not conflate them. Integrations is for *their* commerce; website Buy is for *this* product’s license.
 
@@ -33,12 +29,14 @@ Publish’s **inspection bay** (Self-sign · Official signing · Deploy) used to
 
 Orbit Yard remains a **portal and guide**. Vendor UIs stay authoritative.
 
+**Structure before proceed:** Deployment / Sign wizards show a structure banner. Hard Deploy lanes (Self-host · Umami · Flowsint · Medusa · Cloudflare · Vercel · Netlify · Fly · Railway) block spawn when the bound folder does not match detect. Soft notes (Pages · Orbit docs · Sign Open) warn without blocking Open. Spec: [structure-proceed-gate-design](../../specs/backend/structure-proceed-gate-design.md).
+
 ## Host tiers (parity model)
 
 | Tier | Hosts | Desktop Platforms | Portal / Publish |
 |------|-------|-------------------|------------------|
-| **A — Orbit deploy** | Cloudflare · Vercel · Netlify | Catalog + Portal Login CLI | Detect · OAuth · token · env Open≠Docs |
-| **B — CLI host** | Fly · Railway | Catalog + Portal Login CLI | OAuth · (Railway tokens) · secrets/variables Docs |
+| **A — Orbit deploy** | Cloudflare · Vercel · Netlify | Catalog + Portal Login CLI · Import env / Deploy all-in-one · live URL toast (P1) | Detect · OAuth · token · env Open≠Docs · Put CLI · Vercel `--project` name |
+| **B — CLI host** | Fly · Railway | Catalog + Portal Login CLI · **Import env / Put** · **Deploy** · Troubleshoot bay (P1) | OAuth · secrets/variables via CLI stdin · `[link]` gate · Fly URL from `app =` |
 | **C — Pages** | GitHub Pages | Catalog Open+Docs only | No Pages→PAT conflation; `github` portal for auth/CI |
 | **D — Advanced host** | Render · DigitalOcean · Heroku · Amplify · Cloud Run · Azure SWA | **Not** in Platforms catalog yet | `orbityard portal --provider` · Advanced Publish `host.*` |
 | **E — Local Orbit** | Orbit | Catalog · Ritual/Tools | No portal id |
@@ -57,7 +55,7 @@ Detail + slices: [hosting-portal-parity-design](../../specs/backend/hosting-port
 - Shared chrome with Integrations: `provider-catalog.ts` (grid · wizard aside).
 - Probe CTAs: **Choose host** / **Choose platform** open this catalog (Hosting vs Official signing preference).
 - Orbit has **no** Portal provider id — Open dashboard / Ritual deploy only (avoids `unknown provider 'orbit'`).
-- Fly / Railway: Portal Login CLI (`fly auth login` / `railway login`) + kind-aware Docs (secrets / variables).
+- Fly / Railway: Portal Login CLI + **Deploy** (hostdeploy after human `fly launch` / `railway link`) + **Import env…** / Put — values never in `.ship/`; `[link]` if config missing.
 - GitHub Pages: **no** Portal steps — Open GitHub + Docs (Pages tutorial); PAT/`gh` auth stays on Portal → GitHub.
 - Probe **Choose host** selects the detected host when known (wrangler → Cloudflare, etc.).
 - Detect chips for wrangler / vercel / netlify / fly / railway / pages / orbit open Platforms on that card (github chip still opens Portal auth).

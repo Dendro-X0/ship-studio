@@ -31,6 +31,12 @@ export type Detected = {
   polar?: boolean;
   yard_configured?: boolean;
   selfhost?: boolean;
+  /** Umami analytics compose / analytics.umami layout */
+  umami?: boolean;
+  /** Flowsint OSINT compose / osint.flowsint layout */
+  flowsint?: boolean;
+  /** Medusa commerce / commerce.medusa layout */
+  medusa?: boolean;
   studio_monorepo?: boolean;
   fly?: boolean;
   railway?: boolean;

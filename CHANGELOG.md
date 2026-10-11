@@ -2,6 +2,65 @@
 
 ## Unreleased
 
+### Added
+
+- **Medusa Desktop (M4)** — On-this-machine card · hard structure gate · Deploy/Open Admin · results bay isolation ([design](./specs/backend/medusa-get-live-design.md))
+- **Medusa deploy (M3)** — `orbityard medusa deploy` ensure → compose up → Admin `/health` · last-run `…:9000/app` · Publish `medusa.deploy` + `medusa.admin_login` · deps-only named gate ([design](./specs/backend/medusa-get-live-design.md))
+- **Medusa ensure (M2)** — `orbityard medusa ensure` rotates JWT/COOKIE · compose wires `DATABASE_URL` · never prints values · never writes Stripe keys ([design](./specs/backend/medusa-get-live-design.md))
+- **Medusa detect (M1)** — probe `medusa` from `medusa-config` / `@medusajs/*` / `.ship/layout` · fixture `fixtures/medusa-commerce` · soft-no Stripe-alone ([design](./specs/backend/medusa-get-live-design.md))
+- **Host deploy env import** — `orbityard secrets --import-env` (Tier A) + `--list-packs` / `--pack` for monorepos; Desktop **Import env…** pack grid → name confirm → Push (+ optional Deploy); values never in `.ship/` ([design](./specs/backend/host-deploy-env-import-design.md))
+- **Deploy all-in-one panel** — Deploy picks target (web/API folder) + optional `.env` pack, optional import-then-deploy; clearer toast when Desktop runs a stale `orbityard` without `--list-packs`
+- **Env pack path fix** — import uses monorepo-root `--file apps/website/.env` (not `--pack` under Deploy focus cwd); CLI basename fallback when cwd is the app folder
+- **Env import rigor (slice 6)** — import uses Deploy-card host only (no pack-host redirect); CLI PATH preflight `[missing_cli]` (hostdeploy resolve; Windows prefers `.cmd`); put child timeout; pack≠card mismatch defaults Import off; import failure offers **Deploy without import**
+- **Env import slice 7** — Deploy affinity defaults; **Switch to {host} Deploy** on pack mismatch; name checklist before Push & Deploy
+- **Env import Tier B (slice 8)** — Fly / Railway Put + `--import-env` (`fly secrets set NAME=-` · `railway variable set NAME --stdin`); pack hints from `fly.toml` / railway markers; Desktop Import env… (no fake Deploy-after)
+- **Host automation dual path** — Desktop Deploy wizard + MCP share local vendor CLI kernel; `yard_env_import`; Fly/Railway `hostdeploy`; Pages `wrangler pages secret`; explicit `[link]` gates ([design](./specs/backend/host-automation-dual-path-design.md))
+- **Host XOR value/UX polish band** — productization restart = first public host URL certainty (research 127); Integrations/DevOps GTM stay CANCELLED ([design](./specs/backend/host-xor-value-ux-polish-design.md))
+- **One-gate orientation** — pause copy names `Current Publish gate \`id\``; Integrations is not that gate unless listing/marketing/env.sprint; Desktop banner on Integrations ([design](./specs/backend/one-gate-orientation-design.md))
+- **Agent pause / resume** — `yard_setup` sets `paused` + `pause.prompt` at auth/key/Put/Confirm; **`yard_resume`** after the human says they finished (local Verify; never auto-Confirms) ([design](./specs/backend/agent-pause-resume-design.md))
+
+### Fixed
+
+- **Project recents history** — MRU up to 32; sidebar shows 3 equal-width buttons; **All projects…** dialog with search; × remove; prune missing paths ([design](./specs/backend/project-recents-history-design.md))
+- **Structure proceed gate (UX law)** — hard block Deploy when layout ≠ lane (Umami · Self-host · CF/Vercel/Netlify/Fly/Railway); soft notes on Pages/Sign/Ritual/Import env; product contract ([design](./specs/backend/structure-proceed-gate-design.md))
+- **Deployment catalog sections** — **On this machine** (Self-host / Umami) separate from **Cloud hosts** (PaaS) so local runtime is not a cloud marketplace lump
+- **Flowsint Desktop (F4)** — On-this-machine card · hard structure gate · Deploy/Open App · Publish `flowsint.deploy` + `flowsint.register` Confirm ([design](./specs/backend/flowsint-get-live-design.md))
+- **Flowsint deploy (F3)** — `orbityard flowsint deploy` runs ensure → `compose -f docker-compose.prod.yml up -d` → App proof at `:5173` (+ optional API `/health`) · volume reset once ([design](./specs/backend/flowsint-get-live-design.md))
+- **Flowsint ensure (F2)** — `orbityard flowsint ensure` rotates AUTH_SECRET / vault / Neo4j / Postgres across root + module `.env` copies (never prints values) ([design](./specs/backend/flowsint-get-live-design.md))
+- **Flowsint detect (F1)** — probe `flowsint` from compose.prod images / monorepo dirs / `.ship/layout` · fixture `fixtures/flowsint-osint` ([design](./specs/backend/flowsint-get-live-design.md))
+- **Compose pack helpers (G0)** — shared `compose_pack` (Docker PATH · compose CLI · HTTP proof · volume recovery); Umami deploy uses it ([peers](./specs/backend/get-live-compose-packs-from-peers-design.md))
+- **Flowsint Get-live (F0 study)** — multi-env ensure + compose.prod contracts; soft-no enricher Integrations ([design](./specs/backend/flowsint-get-live-design.md))
+- **Get-live compose packs (peer study)** — FreeLLMAPI / Flowsint as Umami-class layouts; soft-no Integrations revival ([design](./specs/backend/get-live-compose-packs-from-peers-design.md))
+- **Umami Deploy recovery** — when Admin never comes up after compose, detect Prisma **P3009** / failed migrate in container logs and run **`compose down -v` once**, then retry (stale fixture volume after teardown no longer looks like a mysterious studio failure)
+- **Umami compose fallback** — `umami deploy` uses `docker-compose` when the `docker compose` plugin is missing (common Windows PATH)
+- **Umami Docker PATH (Desktop)** — find `docker.exe` via User PATH / Docker Desktop bins when the GUI process PATH is stale; clearer Deploy error toast
+- **Umami Get-live U3** — Desktop Umami hosting card · Deploy/Open Admin · Publish `umami.deploy` + `umami.admin_password` Confirm ([design](./specs/backend/umami-get-live-design.md))
+- **Umami Get-live U2** — `orbityard umami deploy` runs compose up + Admin heartbeat + last-run URL ([design](./specs/backend/umami-get-live-design.md))
+- **Umami Get-live U1** — `orbityard umami ensure` writes strong `UMAMI_*` into `.env` (never prints values) ([design](./specs/backend/umami-get-live-design.md))
+- **Umami Get-live U0** — detect `analytics.umami` / Umami compose image · fixture `fixtures/umami-analytics` · no Desktop film until U3 ([design](./specs/backend/umami-get-live-design.md))
+- **Presentation trust model** — Gift Download = full trial; Soft-L3 = maintainer self-record (no stranger gate); R4 demo re-record next ([design](./specs/backend/presentation-readiness-design.md) · [Soft-L3 note](./docs/handoffs/maintainer-soft-l3-get-live.md))
+- **Presentation readiness R1–R2** — Gift-first Download CTAs; `/demo` honesty vs CURRENT 0.2.4 ([design](./specs/backend/presentation-readiness-design.md))
+- **Market signals + H1 draft** — reference only until presentable ([MARKET-SIGNALS](./docs/business/MARKET-SIGNALS-2026.md) · [H1-OFFER](./docs/business/H1-OFFER-DRAFT.md))
+- **Client pain → fastest path** — Gift certainty → hitch H1 → layouts on pull ([design](./specs/backend/client-pain-fastest-path-design.md))
+- **Owned commerce Medusa study** — Go (parked): user-owned Medusa Get-live under founder spine; not Stripe/Integrations revival; 146 offer honesty ([design](./specs/backend/owned-commerce-medusa-study-design.md))
+- **Paddle Sandbox Checkout Pass** — live `/pricing` overlay → test card → success (“You’re in.”); default link = Pages origin; rebuild+hostdeploy for `PUBLIC_*` ([evidence](./docs/handoffs/evidence-paddle-sandbox-checkout-20261007.md))
+- **Paddle setup docs** — dashboard default link = Pages origin (localhost often rejected); static cut needs `pnpm website:build` then hostdeploy (Import env alone insufficient for `PUBLIC_*`) ([PADDLE-SETUP](./apps/website/docs/PADDLE-SETUP.md))
+- **F3 Run B Desktop stopwatch** — Get-live Deploy path timed Pass (20 s · HTTP 200 on Pages) + F1/F2 UI inventory ([evidence](./docs/handoffs/evidence-f3-stranger-20min-20261007.md))
+- **Founder minimal spine F5** — Dashboard Next ship from local recents (prefer unshipped); Deploy toast secondary; MAX_RECENT 8; no cloud hub (S1.17) ([design](./specs/backend/founder-minimal-spine-design.md))
+- **Founder minimal spine F4** — `yard_setup.spine` (Open→Host→Login→Deploy→Open live); pause prompt names spine N/5; MCP skill Get-live ritual ([evidence](./docs/handoffs/evidence-f4-mcp-collaborator-ritual-20261007.md))
+- **Founder minimal spine F3** — Stranger 20-min Get live script + timed CLI Pass (~20 s auth→URL on Cloudflare Pages) ([script](./docs/handoffs/stranger-20min-get-live-script.md) · [evidence](./docs/handoffs/evidence-f3-stranger-20min-20261007.md))
+- **Founder minimal spine F2** — Deploy/Import fail: one recovery CTA (no peer Retry/Preview/Login menu); results hint `Next:` ([design](./specs/backend/founder-minimal-spine-design.md))
+- **Founder minimal spine F1** — Dashboard Get live primary + five-step legend (Open → Host → Login → Deploy → Open live); strategy lock for solo/indie/SMB local stack ([design](./specs/backend/founder-minimal-spine-design.md))
+- **Host XOR S5 soft-no map** — Integrations banner + nav copy: not required to ship; Pricing soft-no (not CI/Ops/payment processor); FAQ/home/honesty leftovers ([design](./specs/backend/host-xor-value-ux-polish-design.md))
+- **Host XOR S2 single next-gate** — General: one loud primary (Publish Confirm when ready · Deployment Deploy/Open live); peer Portal/Env/Put/docs demoted or Advanced-only ([design](./specs/backend/host-xor-value-ux-polish-design.md))
+- **Host XOR S1 outcome contract** — General surfaces speak founder job: done = public URL (or named gate); website hero “First public URL — honest gates”; Dashboard Get live / Sign only cards ([design](./specs/backend/host-xor-value-ux-polish-design.md))
+- **Provider parity P1** — Vercel Deploy name → `vercel --project`; URL fallbacks for Netlify/Vercel/Fly when CLI omits https; Fly app name from `fly.toml`; Desktop Fly/Railway results bay + Troubleshoot; Open live recognizes `fly.dev` / `railway.app` ([design](./specs/backend/provider-parity-p1-design.md))
+- **Deploy live URL certainty** — hostdeploy prints JSON report; strip ANSI for URL parse; Pages default `https://{name}.pages.dev` when CLI omits URL; Desktop toast **Open live** + URL text (host XOR S3)
+- **Env import empty keys** — greyed rows labeled `empty in .env` with ready/empty counts (not a broken selector)
+- **Env import polish (S10)** — strip ANSI from put errors; ensure Cloudflare Pages project before secrets (create-if-missing); tag `[missing_project]`; clearer Deploy-first toast
+- **Env import dogfood (CF Pages)** — `secrets --import-env --host-name` maps Deploy project name to `wrangler pages secret put --project-name` (was folder basename); put report includes scrubbed CLI stderr; mismatch toast offers Switch + Deploy without import
+- **Download CTA truth sync (S4)** — website `downloadUrl()` fallback points at `releases/tag/v0.2.4` (match CURRENT; Netlify env still overrides)
+
 ## 0.2.4 — 2026-10-04
 
 First **Orbit Yard**-branded GitHub Release (`orbityard` CLI · `yard_*` MCP · Desktop). Close-cut freeze remains; this tag catches rebrand + post-freeze finishability on Downloads.

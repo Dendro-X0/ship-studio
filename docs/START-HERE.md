@@ -2,17 +2,17 @@
 
 **One front door.** Do not search all of `/docs`.
 
-_Last updated: 2026-09-28_
+_Last updated: 2026-10-10_
 
 ---
 
 ## Read in this order
 
 1. **[CURRENT.md](./CURRENT.md)** — version · idle/active · PAUSED bands
-2. **[handoffs/current-session.md](./handoffs/current-session.md)** — Next Atomic Step only
-3. **[product/SCOPE-OF-SERVICE.md](./product/SCOPE-OF-SERVICE.md)** — service boundary
-4. **[product/OPERATOR-NEXT.md](./product/OPERATOR-NEXT.md)** — human gates still on you
-5. **[product/PLATFORMS-AND-PORTAL.md](./product/PLATFORMS-AND-PORTAL.md)** — when working Platforms / Portal / Integrations (what works · objectives · known gaps)
+2. **[handoffs/current-session.md](./handoffs/current-session.md)** — Next Atomic Step only (**P1b v0.2.5 cut** — not another pack)
+3. **[business/ROADMAP.md](./business/ROADMAP.md)** — finish-line phases · anti-stuck rule
+4. **[product/SCOPE-OF-SERVICE.md](./product/SCOPE-OF-SERVICE.md)** — service boundary
+5. **[product/PLATFORMS-AND-PORTAL.md](./product/PLATFORMS-AND-PORTAL.md)** — Platforms / Portal when needed
 
 That is enough for most sessions.
 
@@ -33,6 +33,7 @@ Extend lanes: [../specs/backend/release-surface-map.md](../specs/backend/release
 | Shelf | When to open |
 |-------|----------------|
 | [product/README.md](./product/README.md) | Scope · contract · operator checklist · [improvement backlog](./product/improvement-backlog.md) |
+| [business/README.md](./business/README.md) | Value compounding · growth strategy (not Integrations GTM) |
 | [dogfood/README.md](./dogfood/README.md) | Walk scripts / paste paths |
 | [frontend/README.md](./frontend/README.md) | Desktop shell |
 | [handoffs/README.md](./handoffs/README.md) | Continuity + L3 evidence |

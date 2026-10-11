@@ -96,10 +96,11 @@ export function paintProviderWizard(opts: {
   const showPut = Boolean(putVisible);
   if (putBtn) {
     putBtn.hidden = !showPut;
-    putBtn.classList.toggle("primary", showPut);
+    // Caller (paintPlatformWizard) owns .primary for S2 single-gate loudness.
+    putBtn.classList.remove("primary");
   }
   if (openBtn) {
-    openBtn.classList.toggle("primary", !showPut);
+    openBtn.classList.remove("primary");
   }
   if (openLinksEl) {
     const links = entry.openLinks ?? [];

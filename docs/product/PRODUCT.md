@@ -4,13 +4,12 @@
 **Updated:** 2026-09-25  
 
 **Scope of service (who / what / boundary):** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md)  
-**Platforms · Portal · Integrations (Desktop guide surfaces):** [PLATFORMS-AND-PORTAL.md](./PLATFORMS-AND-PORTAL.md)
+**Platforms · Portal** (deploy/sign detail; Integrations **not** a product): [PLATFORMS-AND-PORTAL.md](./PLATFORMS-AND-PORTAL.md) · [ops-deploy pivot](../../specs/backend/ops-deploy-pivot-design.md)
 
 ```text
-GOAL:     Local shipping hub — Client for humans, MCP for agents, CLI as kernel;
-          final-mile sign → release → deploy; human gates per overhaul O1–O5
-NOT:      Product docs/demo authoring · replace vendor UIs · store secrets ·
-          finish OAuth/store review without the human · in-app coach theater
+GOAL:     Local **ops / deploy** tool for the maintainer — not a commercial DevOps SKU
+NOT:      Company thesis · third-party **integration** product · compete with GitHub/Vercel as GTM ·
+          replace vendor UIs · store secrets · finish OAuth without the human · coach theater
 RUNTIME:  Local + offline-first (bridge never requires network; open/login/put are operator-initiated; Verify/Watch = graduated status layers, not Studio-held secrets)
 SHELLS:   Client = Desktop (+ TUI) · MCP = orbityard mcp · CLI = orbityard kernel
 PROOF:    cargo test -p orbityard · scripts/dogfood-advanced-*.sh|.ps1 · Desktop Publish Advanced
@@ -35,7 +34,9 @@ Full definition: [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · Human gates: [O
 
 ## UX principle — minimal actions, one spine
 
-Access a wide range of shipping functions through **few deliberate actions**. Orbit Yard is a **portal and guide**, not a replacement for official providers. Prefer **Continue** / scripts for highly automatable gates; **Open → Confirm** wizards only for official-channel work. Publish is the integrated workflow. Operators pick a **workflow card** on the Dashboard (Sign only · Sign and deploy · Publish to platforms · Deploy focus), then follow a **linear stage pager** on Publish — one checkpoint, guideline, and primary action at a time ([workflow-stages-design](../../specs/frontend/workflow-stages-design.md)). The Publish surface should always answer: **what’s done**, **what’s required next**, and **what’s optional/later** ([publish-progress-clarity-design](../../specs/frontend/publish-progress-clarity-design.md)). Scopes, Env, Sign, Portal, Ritual, and Tools are **detail panels** opened from the current publish step (`desktop_view`), not competing start points.
+Access a wide range of shipping functions through **few deliberate actions**. Orbit Yard is an **ops and deploy** tool, not a replacement for official providers and **not** a Polar/Paddle setup product. Prefer **Continue** / scripts for automatable gates; **Open → Confirm** only for **host login and this deploy**. Publish is the workflow. Operators pick a **workflow card** on the Dashboard (Sign only · Sign and deploy · Publish to platforms · Deploy focus), then follow a **linear stage pager** on Publish — one checkpoint, guideline, and primary action at a time ([workflow-stages-design](../../specs/frontend/workflow-stages-design.md)). The Publish surface should always answer: **what’s done**, **what’s required next**, and **what’s optional/later** ([publish-progress-clarity-design](../../specs/frontend/publish-progress-clarity-design.md)). Scopes, Env, Sign, Portal, Ritual, and Tools are **detail panels** opened from the current publish step (`desktop_view`), not competing start points.
+
+**UX guarantee — structure before proceed:** Before Studio runs a project-shaped action (Deploy / compose / hostdeploy / Ritual Orbit deploy), it checks that the bound folder matches the chosen lane. Mismatch → banner + toast with the reason; hard lanes do **not** spawn CLI theater. Soft lanes (Pages Open, Sign Open, Import env note) warn but still allow browsing. Contract: [structure-proceed-gate-design](../../specs/backend/structure-proceed-gate-design.md).
 
 **Modes:** **General** (default) — shortest publish plan + focused nav. **Advanced** — full OAuth/official-sign/listing plan + Assist/Launch/Portal/Ritual/Tools. See `specs/backend/studio-modes-design.md`.
 
@@ -43,7 +44,7 @@ Access a wide range of shipping functions through **few deliberate actions**. Or
 
 **Operator profile:** indie / multi-repo (many OSS + a few commercial) — same tool across cuts, marketplaces, deploys; value vs SaaS starter kits is **practical release utility**, not another template. See [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md).
 
-DO NOT: make operators reassemble the release from eight peer nav destinations · force Assist → Scopes → Env → Sign → Portal → Publish as the happy path · auto-Confirm OAuth/deploy/store gates · flatten every Advanced lane as equally mandatory · claim to replace Cloudflare / Polar / store consoles.
+DO NOT: make operators reassemble the release from eight peer nav destinations · force Assist → Scopes → Env → Sign → Portal → Publish as the happy path · auto-Confirm OAuth/deploy/store gates · flatten every Advanced lane as equally mandatory · claim to replace Cloudflare / Polar / store consoles · claim Studio **completes** Polar/Paddle/Stripe setup (vendor dashboard only; [integrations-setup-is-not-the-product](../../specs/backend/integrations-setup-is-not-the-product-design.md)).
 ## Architecture
 
 ```text

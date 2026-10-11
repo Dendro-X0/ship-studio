@@ -59,6 +59,7 @@ const buyHref = "/pricing";
       <li>Pretending OAuth or store review finished because a spinner stopped</li>
       <li>Holding API tokens so Studio can “just deploy”</li>
       <li>Calling human gates “remaining work” in the marketing sense — they are the finishable cut</li>
+      <li>Selling Integrations or a DevOps suite as the product — optional deep links only; the job is one live URL</li>
     </ul>
 
     <p class="note">
@@ -71,10 +72,10 @@ const buyHref = "/pricing";
     </p>
 
     <div class="intent-cta">
-      <a class="btn btn-primary" href="/docs/human-gates">Read human gates</a>
+      <a class="btn btn-primary" href={downloadUrl()}>Download</a>
+      <a class="btn" href="/docs/human-gates">Read human gates</a>
       <a class="btn" href="/demo">Watch demo</a>
       <a class="btn" href={buyHref}>Pricing</a>
-      <a class="btn" href={downloadUrl()}>Download</a>
     </div>
   </section>
 </BaseLayout>

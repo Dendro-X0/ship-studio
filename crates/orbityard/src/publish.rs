@@ -130,7 +130,15 @@ pub fn infer_verify_status(id: &str, kind: &PubKind) -> VerifyStatus {
         }
         PubKind::Oauth => VerifyStatus::HumanAttest,
         PubKind::List => VerifyStatus::HumanAttest,
-        PubKind::Auto if id == "doctor" || id == "selfhost.deploy" => VerifyStatus::LocalCli,
+        PubKind::Auto
+            if id == "doctor"
+                || id == "selfhost.deploy"
+                || id == "umami.deploy"
+                || id == "flowsint.deploy"
+                || id == "medusa.deploy" =>
+        {
+            VerifyStatus::LocalCli
+        }
         PubKind::Sign => VerifyStatus::LocalCli,
         PubKind::Deploy => VerifyStatus::LocalCli,
         PubKind::Check if id == "live_check" => VerifyStatus::LocalCli,
@@ -312,6 +320,12 @@ fn is_general_step(step: &PubStep) -> bool {
         || id == "platforms.host"
         || id == "sign.self.build"
         || id == "selfhost.deploy"
+        || id == "umami.deploy"
+        || id == "umami.admin_password"
+        || id == "flowsint.deploy"
+        || id == "flowsint.register"
+        || id == "medusa.deploy"
+        || id == "medusa.admin_login"
 }
 
 fn is_local_intent_step(step: &PubStep, env_required: bool) -> bool {
@@ -1272,6 +1286,93 @@ fn build_plan_for(project: &Path, mode: StudioMode, intent: ShipIntent) -> Resul
         ));
     }
 
+    if detected.umami {
+        steps.push(step(
+            "umami.deploy",
+            "Umami — compose up + Admin heartbeat",
+            PubKind::Auto,
+            "Run orbityard umami deploy (ensure secrets → docker compose → Admin URL). Docker required.",
+            2,
+            None,
+            Some(vec![
+                "orbityard".into(),
+                "umami".into(),
+                "deploy".into(),
+                "--project".into(),
+                ".".into(),
+            ]),
+            Some("platforms"),
+        ));
+        steps.push(step(
+            "umami.admin_password",
+            "Umami — change default admin password",
+            PubKind::Human,
+            "Open Admin, change the default login password, then Confirm. Studio never sets the password for you.",
+            2,
+            Some("http://127.0.0.1:3000".into()),
+            None,
+            Some("platforms"),
+        ));
+    }
+
+    if detected.flowsint {
+        steps.push(step(
+            "flowsint.deploy",
+            "Flowsint — compose.prod + App proof",
+            PubKind::Auto,
+            "Run orbityard flowsint deploy (ensure multi-env → compose.prod → App URL). Docker required.",
+            3,
+            None,
+            Some(vec![
+                "orbityard".into(),
+                "flowsint".into(),
+                "deploy".into(),
+                "--project".into(),
+                ".".into(),
+            ]),
+            Some("platforms"),
+        ));
+        steps.push(step(
+            "flowsint.register",
+            "Flowsint — create local account",
+            PubKind::Human,
+            "Open App, register at /register (no default credentials), then Confirm. Enricher keys stay in Flowsint’s vault.",
+            2,
+            Some("http://127.0.0.1:5173/register".into()),
+            None,
+            Some("platforms"),
+        ));
+    }
+
+    if detected.medusa {
+        steps.push(step(
+            "medusa.deploy",
+            "Medusa — compose + Admin health",
+            PubKind::Auto,
+            "Run orbityard medusa deploy (ensure → compose deps → Admin /health). Soft-no: payment plugins stay vendor dashboards.",
+            4,
+            None,
+            Some(vec![
+                "orbityard".into(),
+                "medusa".into(),
+                "deploy".into(),
+                "--project".into(),
+                ".".into(),
+            ]),
+            Some("platforms"),
+        ));
+        steps.push(step(
+            "medusa.admin_login",
+            "Medusa — create / sign in Admin",
+            PubKind::Human,
+            "Open Admin, create or sign in, then Confirm. Orbit does not finish Stripe/Connect.",
+            2,
+            Some("http://127.0.0.1:9000/app".into()),
+            None,
+            Some("platforms"),
+        ));
+    }
+
     steps.push(step(
         "dry_run",
         "Dry-run — configure → sign → deploy plan",
@@ -1685,8 +1786,19 @@ pub fn view(state: &PublishState) -> PublishView {
     }
 }
 
+/// Founder Get-live spine (1–5) — agents map the current gate here, not Integrations.
+/// Spec: `specs/backend/founder-minimal-spine-design.md` F4
+#[derive(Debug, Serialize, Clone)]
+pub struct FounderSpine {
+    pub schema: String,
+    /// 1 Open project · 2 Choose host · 3 Login once · 4 Env + Deploy · 5 Open live · Confirm
+    pub step: u8,
+    pub label: String,
+    pub path: &'static str,
+}
+
 /// Agent setup brief — names/URLs/tools only; never secret values.
-/// Spec: `specs/backend/agent-setup-human-confirm-design.md`
+/// Spec: `specs/backend/agent-setup-human-confirm-design.md` · `agent-pause-resume-design.md`
 #[derive(Debug, Serialize)]
 pub struct SetupBrief {
     pub schema: String,
@@ -1695,9 +1807,29 @@ pub struct SetupBrief {
     pub mode: StudioMode,
     pub minutes_remaining: u32,
     pub phase: String,
+    /// When true, agents MUST stop and prompt the human; resume via `yard_resume`.
+    pub paused: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pause: Option<PauseGate>,
+    /// Current step on the founder five-step Get-live spine.
+    pub spine: FounderSpine,
     pub human: SetupHuman,
     pub agent: SetupAgent,
     pub publish: SetupPublishRef,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PauseGate {
+    pub schema: String,
+    pub reason: String,
+    pub wait_for: String,
+    pub prompt: String,
+    pub resume_tool: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_gate: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub desktop_view: Option<String>,
+    pub integrations_ok: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -1715,6 +1847,8 @@ pub struct SetupHuman {
 
 #[derive(Debug, Serialize)]
 pub struct SetupAgent {
+    /// STOP until human resumes, or continue with next_tools.
+    pub instruction: String,
     pub next_tools: Vec<String>,
     pub never: Vec<&'static str>,
 }
@@ -1728,24 +1862,222 @@ pub struct SetupPublishRef {
     pub step_title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub step_kind: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub desktop_view: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ResumeReport {
+    pub schema: String,
+    pub still_paused: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verified: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verify_message: Option<String>,
+    pub need_confirm: bool,
+    pub message: String,
+    pub setup: SetupBrief,
+    pub next_tools: Vec<String>,
+}
+
+fn agent_never() -> Vec<&'static str> {
+    vec![
+        "pass secret values",
+        "claim OAuth done without Verify",
+        "auto-Confirm live deploy or store submit",
+        "continue tools while paused without human resume",
+        "use Integrations as the Get live path",
+        "skip yard_resume after the human says they finished",
+    ]
+}
+
+const FOUNDER_SPINE_PATH: &str = "Open → Host → Login → Deploy → Open live";
+
+fn founder_spine(
+    step: u8,
+    label: impl Into<String>,
+) -> FounderSpine {
+    FounderSpine {
+        schema: "orbit-yard/spine/v1".into(),
+        step,
+        label: label.into(),
+        path: FOUNDER_SPINE_PATH,
+    }
+}
+
+/// Map publish gate → founder Get-live spine step (F4).
+fn founder_spine_for(
+    step_id: Option<&str>,
+    desktop_view: Option<&str>,
+    phase: &str,
+    human_action: &str,
+) -> FounderSpine {
+    let id = step_id.unwrap_or("");
+    let view = desktop_view.unwrap_or("");
+
+    if phase == "done" && id.is_empty() {
+        return founder_spine(1, "Open project");
+    }
+    if phase == "done" {
+        return founder_spine(5, "Open live · Confirm");
+    }
+
+    if id == "scopes"
+        || view == "scopes"
+        || id.contains("primary_host")
+        || id.contains("intent")
+        || (view == "platforms" && phase == "configure")
+    {
+        return founder_spine(2, "Choose host");
+    }
+
+    if human_action == "login_cli"
+        || phase == "auth"
+        || id.contains("oauth")
+        || id.contains("login")
+        || id.ends_with(".auth")
+    {
+        return founder_spine(3, "Login once");
+    }
+
+    // Proof before Env+Deploy so ids like `deploy.live` map to step 5.
+    if id == "umami.admin_password" || (id.contains("live") && id.contains("umami")) {
+        return founder_spine(5, "Open Admin · Confirm");
+    }
+    if id == "umami.deploy" {
+        return founder_spine(4, "Env + Deploy");
+    }
+    if id == "flowsint.register" {
+        return founder_spine(5, "Open App · Confirm");
+    }
+    if id == "flowsint.deploy" {
+        return founder_spine(4, "Env + Deploy");
+    }
+    if id == "medusa.admin_login" {
+        return founder_spine(5, "Open Admin · Confirm");
+    }
+    if id == "medusa.deploy" {
+        return founder_spine(4, "Env + Deploy");
+    }
+    if id.contains("live")
+        || id.starts_with("listing.")
+        || id.starts_with("marketing.")
+        || id.starts_with("submit.")
+    {
+        return founder_spine(5, "Open live · Confirm");
+    }
+
+    if phase == "secret_put"
+        || phase == "deploy"
+        || id.starts_with("env.")
+        || id.starts_with("host.")
+        || (id.contains("deploy") && !id.contains("live"))
+        || human_action == "put"
+        || human_action == "create_key"
+    {
+        return founder_spine(4, "Env + Deploy");
+    }
+
+    if human_action == "confirm" || phase == "confirm" {
+        return founder_spine(5, "Open live · Confirm");
+    }
+
+    if view == "platforms" {
+        return founder_spine(4, "Env + Deploy");
+    }
+
+    match phase {
+        "configure" => founder_spine(2, "Choose host"),
+        "verify" => founder_spine(5, "Open live · Confirm"),
+        _ => founder_spine(2, "Choose host"),
+    }
+}
+
+fn integrations_ok_for_gate(step_id: Option<&str>) -> bool {
+    let id = step_id.unwrap_or("");
+    id.starts_with("listing.") || id.starts_with("marketing.") || id == "env.sprint"
+}
+
+fn attach_pause(mut brief: SetupBrief) -> SetupBrief {
+    let action = brief.human.action.as_str();
+    let paused = action != "none" && brief.phase != "done";
+    // Refresh spine from the filled publish/human fields (constructors may pass a placeholder).
+    brief.spine = founder_spine_for(
+        brief.publish.step_id.as_deref(),
+        brief.publish.desktop_view.as_deref(),
+        &brief.phase,
+        action,
+    );
+    brief.paused = paused;
+    if paused {
+        let gate = brief.publish.step_id.clone().unwrap_or_else(|| "unknown".into());
+        let commerce = integrations_ok_for_gate(Some(gate.as_str()));
+        let spine_cue = format!(
+            "Founder spine {}/5 ({}) — {}.",
+            brief.spine.step, brief.spine.label, brief.spine.path
+        );
+        let stay = if commerce {
+            "Integrations is allowed for this listing/env gate — then Confirm on Publish."
+        } else {
+            "Stay on Publish / Deployment for Get live. Integrations is not this gate."
+        };
+        let mut prompt = format!(
+            "{spine_cue} Current Publish gate `{gate}`: {} — {}. {stay}",
+            brief.human.title, brief.human.detail
+        );
+        if let Some(url) = &brief.human.entry_url {
+            prompt.push_str(&format!(" Open: {url}."));
+        }
+        if let Some(name) = &brief.human.secret_name {
+            prompt.push_str(&format!(" Put NAME `{name}` only (never the value)."));
+        }
+        prompt.push_str(" When finished, tell the agent to resume.");
+        brief.pause = Some(PauseGate {
+            schema: "orbit-yard/pause/v1".into(),
+            reason: "human_gate".into(),
+            wait_for: action.into(),
+            prompt,
+            resume_tool: "yard_resume".into(),
+            current_gate: Some(gate),
+            desktop_view: brief.publish.desktop_view.clone(),
+            integrations_ok: commerce,
+        });
+        brief.agent.instruction = format!(
+            "STOP. Show pause.prompt (founder spine {}/5 · one Publish gate). Do not send the operator to Integrations unless pause.integrations_ok. Wait for resume, then yard_resume.",
+            brief.spine.step
+        );
+    } else {
+        brief.pause = None;
+        brief.agent.instruction = if brief.phase == "done" {
+            format!(
+                "Publish spine idle or finished — founder spine {}/5 ({}). No human pause.",
+                brief.spine.step, brief.spine.label
+            )
+        } else {
+            format!(
+                "Continue with agent.next_tools — founder spine {}/5 ({}).",
+                brief.spine.step, brief.spine.label
+            )
+        };
+    }
+    brief
 }
 
 pub fn setup_brief(state: &PublishState) -> SetupBrief {
     let v = view(state);
-    let never = vec![
-        "pass secret values",
-        "claim OAuth done without Verify",
-        "auto-Confirm live deploy or store submit",
-    ];
+    let never = agent_never();
 
     let Some(cur) = &v.current else {
-        return SetupBrief {
+        return attach_pause(SetupBrief {
             schema: "orbit-yard/setup/v1".into(),
             project: v.project,
             intent: v.intent,
             mode: v.mode,
             minutes_remaining: 0,
             phase: "done".into(),
+            paused: false,
+            pause: None,
+            spine: founder_spine(1, "Open project"),
             human: SetupHuman {
                 action: "none".into(),
                 title: "No publish steps".into(),
@@ -1755,6 +2087,7 @@ pub fn setup_brief(state: &PublishState) -> SetupBrief {
                 provider: None,
             },
             agent: SetupAgent {
+                instruction: String::new(),
                 next_tools: vec!["yard_doctor".into(), "yard_publish".into()],
                 never,
             },
@@ -1763,18 +2096,22 @@ pub fn setup_brief(state: &PublishState) -> SetupBrief {
                 step_id: None,
                 step_title: None,
                 step_kind: None,
+                desktop_view: None,
             },
-        };
+        });
     };
 
     if v.finished {
-        return SetupBrief {
+        return attach_pause(SetupBrief {
             schema: "orbit-yard/setup/v1".into(),
             project: v.project,
             intent: v.intent,
             mode: v.mode,
             minutes_remaining: 0,
             phase: "done".into(),
+            paused: false,
+            pause: None,
+            spine: founder_spine(5, "Open live · Confirm"),
             human: SetupHuman {
                 action: "none".into(),
                 title: "Publish spine finished".into(),
@@ -1785,6 +2122,7 @@ pub fn setup_brief(state: &PublishState) -> SetupBrief {
                 provider: None,
             },
             agent: SetupAgent {
+                instruction: String::new(),
                 next_tools: vec!["yard_pulse".into(), "yard_status".into()],
                 never,
             },
@@ -1793,8 +2131,9 @@ pub fn setup_brief(state: &PublishState) -> SetupBrief {
                 step_id: Some(cur.id.clone()),
                 step_title: Some(cur.title.clone()),
                 step_kind: Some(format!("{:?}", cur.kind).to_ascii_lowercase()),
+                desktop_view: cur.desktop_view.clone(),
             },
-        };
+        });
     }
 
     let first_put = secrets::plan_for(Path::new(&state.project), None)
@@ -1970,22 +2309,100 @@ pub fn setup_brief(state: &PublishState) -> SetupBrief {
         ),
     };
 
-    SetupBrief {
+    attach_pause(SetupBrief {
         schema: "orbit-yard/setup/v1".into(),
         project: v.project,
         intent: v.intent,
         mode: v.mode,
         minutes_remaining: v.minutes_remaining,
         phase: phase.into(),
+        paused: false,
+        pause: None,
+        // attach_pause recomputes from publish + human + phase
+        spine: founder_spine(2, "Choose host"),
         human,
-        agent: SetupAgent { next_tools, never },
+        agent: SetupAgent {
+            instruction: String::new(),
+            next_tools,
+            never,
+        },
         publish: SetupPublishRef {
             current_index: v.current_index,
             step_id: Some(cur.id.clone()),
             step_title: Some(cur.title.clone()),
             step_kind: Some(format!("{:?}", cur.kind).to_ascii_lowercase()),
+            desktop_view: cur.desktop_view.clone(),
         },
-    }
+    })
+}
+
+/// After the human says they finished a pause gate — local Verify + next guidance.
+/// Never Confirms; irreversible gates still need `yard_publish_confirm`.
+/// Spec: `specs/backend/agent-pause-resume-design.md`
+pub fn resume_after_human(project: &Path) -> Result<ResumeReport> {
+    let (verified, verify_message) = match verify_current(project) {
+        Ok((ok, msg, _)) => (Some(ok), Some(msg)),
+        Err(err) => (None, Some(format!("{err:#}"))),
+    };
+    let state = load_state(project, true, None, None)?;
+    let setup = setup_brief(&state);
+    let need_confirm = matches!(
+        setup.human.action.as_str(),
+        "confirm" | "login_cli" | "create_key" | "put" | "open_dashboard"
+    ) && verified != Some(false);
+
+    let (still_paused, message, next_tools) = if setup.phase == "done" || !setup.paused {
+        (
+            false,
+            "No human pause — continue with next_tools.".into(),
+            setup.agent.next_tools.clone(),
+        )
+    } else if need_confirm
+        && (verified == Some(true)
+            || matches!(
+                setup.human.action.as_str(),
+                "confirm" | "login_cli" | "create_key" | "put" | "open_dashboard"
+            ))
+    {
+        (
+            true,
+            format!(
+                "Human returned. Ask them to Confirm “{}”, then call yard_publish_confirm → yard_publish_next.",
+                setup.human.title
+            ),
+            vec![
+                "yard_publish_confirm".into(),
+                "yard_publish_next".into(),
+                "yard_setup".into(),
+            ],
+        )
+    } else {
+        (
+            true,
+            format!(
+                "Still paused on “{}”. Re-check the vendor step, or Open/Put again, then resume.",
+                setup.human.title
+            ),
+            {
+                let mut t = setup.agent.next_tools.clone();
+                if !t.iter().any(|x| x == "yard_resume") {
+                    t.push("yard_resume".into());
+                }
+                t
+            },
+        )
+    };
+
+    Ok(ResumeReport {
+        schema: "orbit-yard/resume/v1".into(),
+        still_paused,
+        verified,
+        verify_message,
+        need_confirm: still_paused && need_confirm && verified != Some(false),
+        message,
+        next_tools,
+        setup,
+    })
 }
 
 fn provider_from_step_id(id: &str) -> Option<String> {
@@ -2111,6 +2528,95 @@ pub fn verify_current(project: &Path) -> Result<(bool, String, PublishView)> {
                 Ok(r) => (false, r.message),
                 Err(e) => (false, format!("{e:#}")),
             }
+        }
+        PubKind::Auto if step.id == "umami.deploy" => {
+            match crate::umami::deploy(project) {
+                Ok(r) if r.ok => (
+                    true,
+                    r.admin_url
+                        .map(|u| format!("umami Admin ok · {u}"))
+                        .unwrap_or_else(|| r.message),
+                ),
+                Ok(r) => (false, r.message),
+                Err(e) => (false, format!("{e:#}")),
+            }
+        }
+        PubKind::Human if step.id == "umami.admin_password" => {
+            let ok = config::read_last_run(project)
+                .ok()
+                .map(|v| {
+                    v.get("ok").and_then(|x| x.as_bool()).unwrap_or(false)
+                        && v.get("host_provider").and_then(|x| x.as_str()) == Some("umami")
+                })
+                .unwrap_or(false);
+            (
+                ok,
+                if ok {
+                    "Admin was reachable — Confirm after you changed the default password".into()
+                } else {
+                    "Deploy Umami first (Admin heartbeat), change password in the UI, then Confirm"
+                        .into()
+                },
+            )
+        }
+        PubKind::Auto if step.id == "flowsint.deploy" => {
+            match crate::flowsint::deploy(project) {
+                Ok(r) if r.ok => (
+                    true,
+                    r.app_url
+                        .map(|u| format!("flowsint App ok · {u}"))
+                        .unwrap_or_else(|| r.message),
+                ),
+                Ok(r) => (false, r.message),
+                Err(e) => (false, format!("{e:#}")),
+            }
+        }
+        PubKind::Auto if step.id == "medusa.deploy" => {
+            match crate::medusa::deploy(project) {
+                Ok(r) if r.ok => (
+                    true,
+                    r.admin_url
+                        .map(|u| format!("medusa Admin ok · {u}"))
+                        .unwrap_or_else(|| r.message),
+                ),
+                Ok(r) => (false, r.message),
+                Err(e) => (false, format!("{e:#}")),
+            }
+        }
+        PubKind::Human if step.id == "medusa.admin_login" => {
+            let ok = config::read_last_run(project)
+                .ok()
+                .map(|v| {
+                    v.get("ok").and_then(|x| x.as_bool()).unwrap_or(false)
+                        && v.get("host_provider").and_then(|x| x.as_str()) == Some("medusa")
+                })
+                .unwrap_or(false);
+            (
+                ok,
+                if ok {
+                    "Admin was reachable — Confirm after you create/sign in (payments stay vendor dashboards)"
+                        .into()
+                } else {
+                    "Deploy Medusa first (Admin /health), create/sign in, then Confirm".into()
+                },
+            )
+        }
+        PubKind::Human if step.id == "flowsint.register" => {
+            let ok = config::read_last_run(project)
+                .ok()
+                .map(|v| {
+                    v.get("ok").and_then(|x| x.as_bool()).unwrap_or(false)
+                        && v.get("host_provider").and_then(|x| x.as_str()) == Some("flowsint")
+                })
+                .unwrap_or(false);
+            (
+                ok,
+                if ok {
+                    "App was reachable — Confirm after you registered at /register".into()
+                } else {
+                    "Deploy Flowsint first (App proof), register in the UI, then Confirm".into()
+                },
+            )
         }
         PubKind::Human if step.id == "scopes" => {
             let plan = scopes::plan_for(project);
@@ -3382,6 +3888,113 @@ mod tests {
     }
 
     #[test]
+    fn umami_publish_steps_general() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-publish-umami-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".ship/layout"), "analytics.umami\n").unwrap();
+        fs::write(
+            dir.join("docker-compose.yml"),
+            "services:\n  umami:\n    image: ghcr.io/umami-software/umami:postgresql-latest\n",
+        )
+        .unwrap();
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(
+            general.steps.iter().any(|s| s.id == "umami.deploy"),
+            "missing umami.deploy: {:?}",
+            general.steps.iter().map(|s| &s.id).collect::<Vec<_>>()
+        );
+        assert!(general.steps.iter().any(|s| s.id == "umami.admin_password"));
+        let dep = general
+            .steps
+            .iter()
+            .find(|s| s.id == "umami.deploy")
+            .unwrap();
+        assert_eq!(dep.kind, PubKind::Auto);
+        assert_eq!(dep.verify_status, VerifyStatus::LocalCli);
+        let run = dep.run.as_ref().expect("umami run");
+        assert_eq!(run.get(1).map(String::as_str), Some("umami"));
+        assert_eq!(run.get(2).map(String::as_str), Some("deploy"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn flowsint_publish_steps_general() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-publish-flowsint-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".ship/layout"), "osint.flowsint\n").unwrap();
+        fs::write(
+            dir.join("docker-compose.prod.yml"),
+            "services:\n  app:\n    image: ghcr.io/reconurge/flowsint-app:latest\n  api:\n    image: ghcr.io/reconurge/flowsint-api:latest\n",
+        )
+        .unwrap();
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(
+            general.steps.iter().any(|s| s.id == "flowsint.deploy"),
+            "missing flowsint.deploy: {:?}",
+            general.steps.iter().map(|s| &s.id).collect::<Vec<_>>()
+        );
+        assert!(general.steps.iter().any(|s| s.id == "flowsint.register"));
+        let dep = general
+            .steps
+            .iter()
+            .find(|s| s.id == "flowsint.deploy")
+            .unwrap();
+        assert_eq!(dep.kind, PubKind::Auto);
+        assert_eq!(dep.verify_status, VerifyStatus::LocalCli);
+        let run = dep.run.as_ref().expect("flowsint run");
+        assert_eq!(run.get(1).map(String::as_str), Some("flowsint"));
+        assert_eq!(run.get(2).map(String::as_str), Some("deploy"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn medusa_publish_steps_general() {
+        let dir = std::env::temp_dir().join(format!(
+            "orbityard-publish-medusa-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join(".ship")).unwrap();
+        fs::write(dir.join(".ship/layout"), "commerce.medusa\n").unwrap();
+        fs::write(dir.join("medusa-config.ts"), "module.exports = {}\n").unwrap();
+        let general = load_or_build_with_mode(&dir, StudioMode::General).unwrap();
+        assert!(
+            general.steps.iter().any(|s| s.id == "medusa.deploy"),
+            "missing medusa.deploy: {:?}",
+            general.steps.iter().map(|s| &s.id).collect::<Vec<_>>()
+        );
+        assert!(general.steps.iter().any(|s| s.id == "medusa.admin_login"));
+        let dep = general
+            .steps
+            .iter()
+            .find(|s| s.id == "medusa.deploy")
+            .unwrap();
+        assert_eq!(dep.kind, PubKind::Auto);
+        assert_eq!(dep.verify_status, VerifyStatus::LocalCli);
+        let run = dep.run.as_ref().expect("medusa run");
+        assert_eq!(run.get(1).map(String::as_str), Some("medusa"));
+        assert_eq!(run.get(2).map(String::as_str), Some("deploy"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn selfhost_deploy_general_and_advanced() {
         let dir = std::env::temp_dir().join(format!(
             "orbityard-publish-selfhost-{}",
@@ -4354,5 +4967,20 @@ mod tests {
             infer_verify_status("listing.steam", &PubKind::List),
             VerifyStatus::HumanAttest
         );
+    }
+
+    #[test]
+    fn founder_spine_maps_get_live_gates() {
+        let open = founder_spine_for(None, None, "done", "none");
+        assert_eq!(open.step, 1);
+        let host = founder_spine_for(Some("scopes"), Some("scopes"), "configure", "confirm");
+        assert_eq!(host.step, 2);
+        let login = founder_spine_for(Some("oauth.cloudflare"), None, "auth", "login_cli");
+        assert_eq!(login.step, 3);
+        let deploy = founder_spine_for(Some("host.cloudflare"), Some("platforms"), "deploy", "confirm");
+        assert_eq!(deploy.step, 4);
+        let live = founder_spine_for(Some("deploy.live"), None, "confirm", "confirm");
+        assert_eq!(live.step, 5);
+        assert!(login.path.contains("Open live"));
     }
 }

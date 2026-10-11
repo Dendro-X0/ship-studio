@@ -740,6 +740,30 @@ img {
   font-family: var(--font-mono);
 }
 
+.soft-no {
+  margin: 1rem 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--warn) 45%, var(--line));
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+}
+
+.soft-no-kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--warn);
+}
+
+.soft-no-body {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink, var(--text));
+}
+
 .intent-kicker {
   margin: 0 0 0.35rem;
   font-size: 0.72rem;

@@ -3,10 +3,13 @@
 mod adapters;
 mod assist;
 mod butler;
+mod compose_pack;
 mod config;
 mod envx;
 mod flow;
+mod flowsint;
 mod guide;
+mod medusa;
 mod hostdeploy;
 mod human;
 mod launch;
@@ -18,6 +21,7 @@ mod scopes;
 mod secrets;
 mod selfhost;
 mod ship;
+mod umami;
 mod signpath;
 mod tui;
 mod vault_km;
@@ -109,6 +113,30 @@ enum Commands {
         /// Interactively put this secret name (requires --provider).
         #[arg(long)]
         put: Option<String>,
+        /// Import KEY=VALUE from a local .env / .dev.vars to the host CLI (requires --provider).
+        #[arg(long, default_value_t = false)]
+        import_env: bool,
+        /// List monorepo env packs only (paths + counts — never values).
+        #[arg(long, default_value_t = false)]
+        list_packs: bool,
+        /// Env file path (default: host-hint match or first pack).
+        #[arg(long)]
+        file: Option<PathBuf>,
+        /// Pack id or scope dir (e.g. apps/website or apps/website/.env).
+        #[arg(long)]
+        pack: Option<String>,
+        /// List candidate names only — never push values.
+        #[arg(long, default_value_t = false)]
+        dry_run: bool,
+        /// Confirm push after Desktop/operator review (required for non-dry import).
+        #[arg(long, default_value_t = false)]
+        yes: bool,
+        /// Limit import to these names (repeatable). Empty = all eligible non-denied.
+        #[arg(long = "name")]
+        names: Vec<String>,
+        /// Host project/site name (Cloudflare Pages `--project-name`, etc.).
+        #[arg(long)]
+        host_name: Option<String>,
     },
     /// Guided launch: open entry → verify → next until product ship.
     Launch {
@@ -192,6 +220,21 @@ enum Commands {
         #[arg(long, default_value_t = false)]
         serve: bool,
     },
+    /// Umami analytics Get-live — ensure secrets · deploy (compose).
+    Umami {
+        #[command(subcommand)]
+        action: UmamiCmd,
+    },
+    /// Flowsint OSINT Get-live — ensure multi-env secrets · deploy (compose.prod).
+    Flowsint {
+        #[command(subcommand)]
+        action: FlowsintCmd,
+    },
+    /// Medusa commerce Get-live — ensure env secrets · deploy (compose + Admin proof).
+    Medusa {
+        #[command(subcommand)]
+        action: MedusaCmd,
+    },
     /// Hosted CLI deploy (Cloudflare / Vercel / Netlify) — streams; writes hosted last-run.
     Hostdeploy {
         #[arg(long, default_value = ".")]
@@ -236,6 +279,48 @@ enum Commands {
     },
     /// Stdio MCP server (tools: doctor, configure, portal, sign, deploy, flow, status).
     Mcp,
+}
+
+#[derive(Subcommand, Debug)]
+enum UmamiCmd {
+    /// Create or repair `.env` with strong UMAMI_* secrets (never prints values).
+    Ensure {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+    },
+    /// `docker compose up -d` + wait Admin heartbeat · writes last-run URL.
+    Deploy {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum FlowsintCmd {
+    /// Create or repair root (+ module) `.env` with strong secrets (never prints values).
+    Ensure {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+    },
+    /// `docker compose -f docker-compose.prod.yml up -d` + wait App URL · writes last-run.
+    Deploy {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum MedusaCmd {
+    /// Create or repair `.env` with strong JWT/COOKIE secrets (never prints values).
+    Ensure {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+    },
+    /// Compose up (when present) + wait Admin `/health` · writes last-run URL.
+    Deploy {
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -458,12 +543,39 @@ fn main() -> Result<()> {
             provider,
             open,
             put,
+            import_env,
+            list_packs,
+            file,
+            pack,
+            dry_run,
+            yes,
+            names,
+            host_name,
         } => {
             let filter = provider
                 .as_deref()
                 .map(portal::ProviderId::parse)
                 .transpose()?;
-            if let Some(name) = put {
+            if list_packs {
+                let report = secrets::list_env_packs(&project)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            } else if import_env {
+                let id = filter.context("--import-env requires --provider")?;
+                let report = secrets::import_env_to_host(
+                    &project,
+                    id,
+                    file.as_deref(),
+                    pack.as_deref(),
+                    &names,
+                    dry_run,
+                    yes,
+                    host_name.as_deref(),
+                )?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+                if !dry_run && report.put.iter().any(|p| !p.ok) {
+                    bail!("one or more secrets failed to put — see report (names only)");
+                }
+            } else if let Some(name) = put {
                 let id = filter.context("--put requires --provider")?;
                 let code = secrets::put_secret(&project, id, &name)?;
                 if code != 0 {
@@ -846,6 +958,54 @@ fn main() -> Result<()> {
         Commands::Selfhost { project, serve } => {
             let _ = selfhost::run(&project, selfhost::SelfhostOpts { serve })?;
         }
+        Commands::Umami { action } => match action {
+            UmamiCmd::Ensure { project } => {
+                let report = umami::ensure(&project)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+                if !report.ok {
+                    bail!("{}", report.message);
+                }
+            }
+            UmamiCmd::Deploy { project } => {
+                let report = umami::deploy(&project)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+                if !report.ok {
+                    bail!("{}", report.message);
+                }
+            }
+        },
+        Commands::Flowsint { action } => match action {
+            FlowsintCmd::Ensure { project } => {
+                let report = flowsint::ensure(&project)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+                if !report.ok {
+                    bail!("{}", report.message);
+                }
+            }
+            FlowsintCmd::Deploy { project } => {
+                let report = flowsint::deploy(&project)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+                if !report.ok {
+                    bail!("{}", report.message);
+                }
+            }
+        },
+        Commands::Medusa { action } => match action {
+            MedusaCmd::Ensure { project } => {
+                let report = medusa::ensure(&project)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+                if !report.ok {
+                    bail!("{}", report.message);
+                }
+            }
+            MedusaCmd::Deploy { project } => {
+                let report = medusa::deploy(&project)?;
+                println!("{}", serde_json::to_string_pretty(&report)?);
+                if !report.ok {
+                    bail!("{}", report.message);
+                }
+            }
+        },
         Commands::Hostdeploy {
             project,
             provider,
@@ -859,7 +1019,9 @@ fn main() -> Result<()> {
                     bail!("{}", report.message);
                 }
             } else {
-                let _ = hostdeploy::run(&project, &provider, name.as_deref())?;
+                let report = hostdeploy::run(&project, &provider, name.as_deref())?;
+                // Desktop parses urls / ok for Open live toast (stream lines come first).
+                println!("{}", serde_json::to_string_pretty(&report)?);
             }
         }
         Commands::Butler { action } => match action {

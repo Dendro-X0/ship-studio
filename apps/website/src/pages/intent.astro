@@ -12,11 +12,11 @@ const buyHref = "/pricing";
 >
   <section class="section intent-page">
     <p class="intent-kicker">Intent</p>
-    <h1>Multi-surface final-mile — not CI theater.</h1>
+    <h1>Get live without hiring an Ops desk.</h1>
     <p class="lead">
-      Orbit Yard is a <strong>local portal and guide</strong> for the last mile of a cut:
-      <strong>sign → release → deploy</strong> (and adjacent human gates). It sequences work
-      across CLI, TUI, and Desktop. It does not replace Cloudflare, Polar, Apple, or your CI.
+      Orbit Yard is a <strong>local guide</strong> for the last mile:
+      <strong>sign → release → get a public URL</strong> (and honest human gates). Done when the
+      site is live — or the named gate says so. It does not replace Cloudflare, Polar, Apple, or your CI.
     </p>
 
     <h2>Who it’s for</h2>
@@ -66,10 +66,10 @@ const buyHref = "/pricing";
     </p>
 
     <div class="intent-cta">
-      <a class="btn btn-primary" href="/demo">Watch demo</a>
+      <a class="btn btn-primary" href={downloadUrl()}>Download</a>
+      <a class="btn" href="/demo">Watch demo</a>
       <a class="btn" href="/docs">Docs</a>
       <a class="btn" href={buyHref}>Pricing</a>
-      <a class="btn" href={downloadUrl()}>Download</a>
     </div>
   </section>
 </BaseLayout>

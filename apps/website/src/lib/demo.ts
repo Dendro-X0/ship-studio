@@ -1,4 +1,8 @@
-/** Silent GIF shelf for /demo — live Harbor clips (docs/assets/demo/v0.2.1). */
+/**
+ * Silent GIF shelf for /demo — Harbor clips under `public/demo/v0.2.1/`.
+ * Download/CURRENT is v0.2.4; shelf stays labeled until R4 re-record
+ * ([presentation-readiness-design](../../../../specs/backend/presentation-readiness-design.md)).
+ */
 
 export type DemoStage = {
   id: string;
@@ -52,7 +56,7 @@ export const DEMO_STAGES: DemoStage[] = [
     id: "deploy-open",
     title: "Deployment · Deploy",
     caption:
-      "Deploy streams wrangler on this machine; Results show the live URL — Open dashboard to finish on Cloudflare.",
+      "Get live: Deploy streams on this machine; Results show the live URL — Open live / dashboard to verify.",
     src: `/demo/${DEMO_VERSION}/07-deploy-open.gif`,
   },
 ];

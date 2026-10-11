@@ -2,6 +2,8 @@
 
 export const LAST_PROJECT_KEY = "orbit-yard.last-project";
 export const RECENT_KEY = "orbit-yard.recent-projects";
+/** path → ISO timestamp of last Get-live / publish finish (local only · F5) */
+export const SHIPPED_AT_KEY = "orbit-yard.shipped-at";
 export const OFFLINE_KEY = "orbit-yard.offline";
 export const DEPLOY_KEY = "orbit-yard.include-deploy";
 export const MODE_KEY = "orbit-yard.mode";
@@ -14,7 +16,10 @@ export const PUBLISH_UI_KEY = "orbit-yard.publish-ui";
 export const WORKFLOW_KEY = "orbit-yard.workflow";
 /** Collapsed/open state for sidebar nav sections */
 export const NAV_SECTIONS_KEY = "orbit-yard.nav-sections";
-export const MAX_RECENT = 6;
+/** Indie multi-repo — local recents only (no cloud hub) */
+export const MAX_RECENT = 32;
+/** Sidebar / dashboard chips — 2–3 equal-width rows; rest via All projects… dialog */
+export const RECENT_PILL_MAX = 3;
 
 export const ACTION_IDS = [
   "btn-doctor",
@@ -89,7 +94,7 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
   },
   launch: {
     title: "Launch",
-    desc: "Optional choice board — open Sign / Deployment / Integrations, then Confirm. Prefer Publish for the checklist.",
+    desc: "Optional choice board — prefer Publish for the checklist. Sign / Deployment / Integrations are secondary.",
   },
   portal: {
     title: "Portal",
@@ -97,11 +102,11 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
   },
   integrations: {
     title: "Integrations",
-    desc: "Payment and email wizards — open the vendor, then confirm here.",
+    desc: "Optional vendor deep links — not required to ship. Prefer Publish / Deployment for the live URL.",
   },
   platforms: {
     title: "Deployment",
-    desc: "Hosting hosts — Put / Login CLI / Open dashboard. Official signing is under Sign.",
+    desc: "On this machine (Self-host / Umami) · Cloud hosts — Deploy / Login CLI / dashboard. Sign is separate.",
   },
   ritual: {
     title: "Ritual",

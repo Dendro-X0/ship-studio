@@ -14,6 +14,8 @@ import {
   OUTPUT_DOCK_KEY,
   PUBLISH_UI_KEY,
   RECENT_KEY,
+  RECENT_PILL_MAX,
+  SHIPPED_AT_KEY,
   WORKFLOW_KEY,
   NAV_SECTIONS_KEY,
   RELATED_VIEW_LABELS,
@@ -29,7 +31,24 @@ import {
   INTEGRATION_HOST_PUT,
   INTEGRATION_PUBLISH_STEP,
 } from "./integrations-data";
-import { PLATFORM_GROUPS, PLATFORM_WIZARDS, SIGN_GROUPS, hostingCatalogEntries, signingCatalogEntries } from "./platforms-data";
+import {
+  CLOUD_HOST_GROUP,
+  PLATFORM_GROUPS,
+  PLATFORM_WIZARDS,
+  SIGN_GROUPS,
+  deployPreferGroup,
+  hostingCatalogEntries,
+  isDeployCatalogGroup,
+  signingCatalogEntries,
+} from "./platforms-data";
+import {
+  evaluateStructureGate,
+  flowsintFixtureGuessPath,
+  isHardStructureLane,
+  medusaFixtureGuessPath,
+  umamiFixtureGuessPath,
+  type StructureGate,
+} from "./structure-gate";
 import {
   paintProviderWizard,
   renderProviderCatalogGrid,
@@ -131,8 +150,8 @@ function applyShipIntent(intent: ShipIntent, opts?: { rebuild?: boolean }) {
       }
       toast(
         intent === "local"
-          ? "Local intent — hosted env/deploy omitted"
-          : "Public intent — hosted final-mile when detected",
+          ? "Local — done on this PC (no public URL required)"
+          : "Public — done when you have a public URL on your host",
         "ok",
       );
       await refreshSessionNow();
@@ -152,8 +171,8 @@ function syncIntentCue() {
   el.hidden = false;
   el.textContent =
     shipIntent() === "local"
-      ? "Local — sign and ship on this machine; hosted env, deploy, and store listings stay off the plan."
-      : "Public — hosted deploy and commerce listings appear when this repo has those signals.";
+      ? "Local — done = signed/shipped on this machine (no public URL)."
+      : "Public — done = public URL on your host (or the named gate you Confirm).";
 }
 
 function applyStudioMode(mode: StudioMode, opts?: { rebuild?: boolean }) {
@@ -178,7 +197,12 @@ function applyStudioMode(mode: StudioMode, opts?: { rebuild?: boolean }) {
           /* ignore */
         }
       }
-      toast(mode === "general" ? "General mode — minimal publish" : "Advanced mode — full path", "ok");
+      toast(
+        mode === "general"
+          ? "General — one loud next gate (done = public URL)"
+          : "Advanced — full path and peer tools",
+        "ok",
+      );
       await refreshSessionNow();
     })();
   }
@@ -418,7 +442,7 @@ function setProjectUi(on: boolean) {
   syncBackToPublish();
 }
 
-/** Continue is the fast path; Confirm/Next stay for explicit control. */
+/** Continue is the fast path; Confirm/Next stay for explicit control. S2: one loud primary. */
 function syncPublishGateButtons() {
   const continueBtn = document.querySelector<HTMLButtonElement>("#btn-publish-continue");
   const confirmBtn = document.querySelector<HTMLButtonElement>("#btn-publish-confirm");
@@ -440,18 +464,26 @@ function syncPublishGateButtons() {
       kind === "list" ||
       kind === "check" ||
       (kind === "sign" && (cur?.id ?? "").includes("release") && !(cur?.id ?? "").includes("dry")));
+  const confirmReady = confirmBtn.classList.contains("watch-ready");
   confirmBtn.disabled = !on || running || !pending;
   nextBtn.disabled = !on || running || !done;
   if (continueBtn) {
     continueBtn.disabled = !on || running || finished || (!pending && !done);
-    continueBtn.classList.add("primary");
     continueBtn.textContent = humanGate ? "Open this step" : "Continue";
     continueBtn.title = humanGate
       ? "Open this step first, then Confirm"
       : "Continue automatic checks (stops when you need to act)";
   }
-  confirmBtn.classList.toggle("primary", false);
+  // S2 — only one green button: Confirm when the gate is ready; else Continue/Open.
+  const loudConfirm = humanGate && pending && confirmReady;
+  if (continueBtn) {
+    continueBtn.classList.toggle("primary", !loudConfirm);
+    continueBtn.classList.toggle("gate-secondary", loudConfirm);
+  }
+  confirmBtn.classList.toggle("primary", loudConfirm);
+  confirmBtn.classList.toggle("gate-secondary", !loudConfirm);
   nextBtn.classList.toggle("primary", false);
+  nextBtn.classList.add("gate-secondary");
   if (!pending) confirmBtn.classList.remove("watch-ready");
 }
 
@@ -596,31 +628,44 @@ const WORKFLOW_PRESETS: Record<
     mode: "general",
     intent: "local",
     label: "Sign only",
-    toast: "Sign only — Local · General. One checkpoint at a time on Publish.",
-    preview: "About 6 steps · ~15 min · no hosted deploy",
+    toast: "Sign only — done on this PC (no public URL).",
+    preview: "~6 steps · local signed build · no public URL",
   },
   sign_deploy: {
     mode: "general",
     intent: "public",
-    label: "Sign and deploy",
-    toast: "Sign and deploy — Public · General. Hosted final-mile when detected.",
-    preview: "About 8 steps · ~20 min · hosted final-mile when detected",
+    label: "Sign and get live",
+    toast: "Sign and get live — done when you have a public URL.",
+    preview: "~8 steps · sign, then live URL on your host",
   },
   publish_platform: {
     mode: "advanced",
     intent: "public",
-    label: "Publish to platforms",
-    toast: "Publish to platforms — Advanced · Public. Listings and store gates included.",
-    preview: "About 15 steps · ~45 min · listings and stores",
+    label: "Publish to stores",
+    toast: "Publish to stores — Advanced · Confirm each listing/store gate.",
+    preview: "~15 steps · listings and store review",
   },
   deploy_only: {
     mode: "general",
     intent: "public",
-    label: "Deploy focus",
-    toast: "Deploy focus — Public · General. Confirm still required at deploy gates.",
-    preview: "About 7 steps · ~18 min · Confirm still required at deploy",
+    label: "Get live",
+    toast: "Get live — Open → Host → Login → Deploy → Open live.",
+    preview: "Primary · host → Deploy → public URL → Confirm",
   },
 };
+
+function getLiveToastForDetected(): string {
+  if (lastDetected?.medusa) {
+    return "Get live — Medusa: Deploy compose → Open Admin → Confirm login.";
+  }
+  if (lastDetected?.flowsint) {
+    return "Get live — Flowsint: Deploy compose.prod → Open App → Confirm register.";
+  }
+  if (lastDetected?.umami) {
+    return "Get live — Umami: Deploy compose → Open Admin → Confirm password.";
+  }
+  return WORKFLOW_PRESETS.deploy_only.toast;
+}
 
 let stageFocusIndex = 0;
 /** True while Continue walks Auto gates one-at-a-time with dwell. */
@@ -733,12 +778,15 @@ function stageGuideline(step: {
   }
   if (kind === "oauth" || kind === "list" || kind === "deploy" || kind === "check") {
     if ((step.id ?? "") === "live_check") {
-      return `${layerPrefix}Needs a live URL or deploy evidence. If this is a desktop-only cut, switch intent to Local (Live check is omitted).`;
+      return `${layerPrefix}Outcome: open your public URL (or Deploy first). Desktop-only? Switch to Local — Live check is omitted.`;
+    }
+    if (kind === "deploy") {
+      return `${layerPrefix}Get live on your host — Deploy, then Open live. Confirm when the URL works.`;
     }
     if (kind === "oauth") {
-      return `${layerPrefix}Sign in (web) opens the vendor dashboard; Login CLI only when you need local CLI credentials. Verify when done, then Confirm.`;
+      return `${layerPrefix}Sign in at the host (web), or Login CLI for local credentials. Verify, then Confirm.`;
     }
-    return `${layerPrefix}Open portal if you need the vendor UI, then Confirm.`;
+    return `${layerPrefix}Finish this step on the vendor site if needed, then Confirm.`;
   }
   if (kind === "sign" && id.includes("release") && !id.includes("dry")) {
     return `${layerPrefix}Run local Signet for this cut, then Confirm when the artifact is ready.`;
@@ -920,7 +968,6 @@ function openScopeDeployment(
     lastDeployFocusProject = null;
   }
   openPlatformsCatalog({
-    preferGroup: "Hosting",
     selectId: platformId,
   });
 }
@@ -1209,7 +1256,7 @@ function renderPublishStage(view: PublishView | null) {
       primaryBtn.dataset.stageAction = "intent_local";
       primaryBtn.disabled = busy;
       primaryBtn.title =
-        "Public Live check needs a hosted URL. Local omits deploy/live check for desktop-only cuts.";
+        "Public: done needs a public URL. Local omits Live check for desktop-only cuts.";
     } else if (isScopesStep(focus) && primary.action === "confirm") {
       const checked = document.querySelectorAll("#stage-scope-grid [data-scope-id]:checked").length;
       const hasActive = checked > 0 || (lastScopes?.active?.length ?? 0) > 0;
@@ -1283,7 +1330,7 @@ async function startWorkflow(id: WorkflowId) {
     setView("publish");
     await refreshPublish();
   }
-  toast(preset.toast, "ok", 4500);
+  toast(id === "deploy_only" ? getLiveToastForDetected() : preset.toast, "ok", 4500);
   await refreshSessionNow();
 }
 
@@ -1775,7 +1822,7 @@ async function openLaunchCurrentGate() {
   const related = (cur?.desktop_view ?? "").trim();
   if (related && RELATED_VIEW_LABELS[related]) {
     if (related === "platforms") {
-      openPlatformsCatalog({ preferGroup: "Hosting" });
+      openPlatformsCatalog();
     } else if (related === "integrations") {
       setView("integrations");
       renderIntegrations();
@@ -1992,7 +2039,6 @@ function bindStatusProbeActions(host: HTMLElement) {
       }
       if (action === "choose-host") {
         openPlatformsCatalog({
-          preferGroup: "Hosting",
           selectId: preferredHostingPlatformId(lastDetected) ?? "selfhost",
         });
         return;
@@ -2489,14 +2535,14 @@ function commandItems(): CmdItem[] {
       title: "Go to Deployment",
       keywords: "deploy host vercel cloudflare netlify selfhost orbit fly railway pages hosting",
       group: "Navigate",
-      run: () => openPlatformsCatalog({ preferGroup: "Hosting" }),
+      run: () => openPlatformsCatalog(),
     },
     {
       id: "nav-selfhost",
       title: "Self-host (Deployment)",
       keywords: "selfhost local auto stream docker cousin",
       group: "Navigate",
-      run: () => openPlatformsCatalog({ preferGroup: "Hosting", selectId: "selfhost" }),
+      run: () => openPlatformsCatalog({ selectId: "selfhost" }),
     },
     {
       id: "nav-ritual",
@@ -2873,6 +2919,7 @@ function syncProjectIdentity() {
     }
   }
   syncNowQuick();
+  paintNextShip();
 }
 
 function setCtaLabel(btn: HTMLButtonElement, label: string) {
@@ -2889,8 +2936,10 @@ function syncNowQuick() {
   const quick = document.querySelector<HTMLElement>("#now-quick");
   const polarBtn = document.querySelector<HTMLButtonElement>("#now-polar");
   const bound = Boolean(projectPath());
-  if (quick) quick.hidden = !bound;
-  if (polarBtn) polarBtn.hidden = !canShowPolarSetup();
+  // S2 — General: peer Portal/Env strip stays Advanced-only (CSS + hidden).
+  const general = studioMode() === "general";
+  if (quick) quick.hidden = !bound || general;
+  if (polarBtn) polarBtn.hidden = !canShowPolarSetup() || general;
   for (const id of ["now-human", "now-portal", "now-env", "now-polar"] as const) {
     const btn = document.querySelector<HTMLButtonElement>(`#${id}`);
     if (btn) btn.disabled = !bound || running;
@@ -3019,6 +3068,52 @@ function renderIntegrations() {
     },
   });
   paintIntegrationWizard();
+  syncIntegrationsOrientation();
+}
+
+/** S3.3 — Integrations is not the current Publish gate unless listing/marketing/env.sprint. */
+function publishIntegrationsOk(stepId: string | undefined): boolean {
+  const id = stepId ?? "";
+  return id.startsWith("listing.") || id.startsWith("marketing.") || id === "env.sprint";
+}
+
+function syncIntegrationsOrientation() {
+  const banner = document.querySelector<HTMLElement>("#int-gate-orient");
+  const text = document.querySelector("#int-gate-orient-text");
+  if (!banner || !text) return;
+  const cur = lastPublish?.current;
+  const id = cur?.id ?? "";
+  const show =
+    Boolean(cur) &&
+    !lastPublish?.finished &&
+    (cur?.status ?? "").toLowerCase() !== "done" &&
+    !publishIntegrationsOk(id);
+  banner.hidden = !show;
+  if (show) {
+    text.textContent = `Current Publish gate: ${cur?.title ?? id}. Soft no — Integrations is not this step; use Publish / Deployment.`;
+  }
+}
+
+function goToCurrentPublishGate() {
+  const related = (lastPublish?.current?.desktop_view ?? "").trim();
+  if (related === "scopes") {
+    setView("scopes");
+    const project = projectPath();
+    if (project) {
+      void loadJsonCmd(["scopes", "--project", project]).then((plan) => {
+        applyScopes(plan as ScopePlan | null);
+      });
+    }
+    toast("Current gate is Scopes — save Targets, then Back to Publish → Confirm", "info", 6000);
+    return;
+  }
+  if (related === "platforms") {
+    openPlatformsCatalog();
+    toast("Current gate is host login / deploy — finish on Deployment, then Confirm on Publish", "info", 6000);
+    return;
+  }
+  setView("publish");
+  toast("Current gate is on Publish — Open / Confirm there", "info", 5000);
 }
 
 function selectIntegration(id: string) {
@@ -3056,12 +3151,18 @@ function paintIntegrationWizard() {
     openLinksEl: document.querySelector<HTMLElement>("#int-open-links"),
   });
   const putBtn = document.querySelector<HTMLButtonElement>("#int-put");
+  const openBtn = document.querySelector<HTMLButtonElement>("#int-open");
   if (putBtn && putName) {
     putBtn.textContent = putHost ? `Put ${putName}` : "Put key (need host)";
     putBtn.title = putHost
       ? `Put ${putName} on ${putHost} — paste only in the terminal`
       : "Detect Cloudflare, Vercel, or Netlify first — Put targets the deploy host";
     putBtn.disabled = !putHost || !projectPath();
+    putBtn.classList.add("primary");
+    openBtn?.classList.remove("primary");
+  } else {
+    putBtn?.classList.remove("primary");
+    openBtn?.classList.add("primary");
   }
   const doneEl = document.querySelector<HTMLElement>("#int-wizard-done");
   if (doneEl) {
@@ -3083,7 +3184,7 @@ function preferredEnvPutHost(detected?: Detected | null): string | null {
 
 function preferredHostingPlatformId(detected?: Detected | null): string | null {
   if (!detected) return null;
-  // Orbit-deploy hosts first (Tier A), then CLI hosts, Pages, Orbit, Self-host.
+  // Orbit-deploy hosts first (Tier A), then CLI hosts, Pages, Orbit, Umami, Self-host.
   if (detected.wrangler) return "cloudflare";
   if (detected.vercel) return "vercel";
   if (detected.netlify) return "netlify";
@@ -3094,6 +3195,9 @@ function preferredHostingPlatformId(detected?: Detected | null): string | null {
   }
   if (detected.marketing_host === "pages") return "github-pages";
   if (detected.yard_configured) return "orbit";
+  if (detected.medusa) return "medusa";
+  if (detected.flowsint) return "flowsint";
+  if (detected.umami) return "umami";
   return "selfhost";
 }
 
@@ -3182,6 +3286,7 @@ function paintSignWizard() {
     stepsEl: document.querySelector("#sign-wizard-steps"),
     openBtn: document.querySelector<HTMLButtonElement>("#sign-open"),
   });
+  paintSignStructureGate(wiz?.id);
 }
 
 function deployCatalogEntries() {
@@ -3204,7 +3309,7 @@ function renderPlatforms() {
     entries,
     groups: PLATFORM_GROUPS,
     selectedId: selectedPlatform,
-    preferGroup: "Hosting",
+    preferGroup: deployPreferGroup(selectedPlatform),
     iconHtml: providerIconHtml,
     onSelect: (id) => {
       selectPlatform(id);
@@ -3263,13 +3368,23 @@ function lastRunHostProvider(): string | null {
   if (tagged) return tagged;
   const steps = lastRunState?.steps ?? [];
   if (steps.some((s) => (s.id ?? "").startsWith("selfhost"))) return "selfhost";
+  if (steps.some((s) => (s.id ?? "").startsWith("medusa"))) return "medusa";
+  if (steps.some((s) => (s.id ?? "").startsWith("flowsint"))) return "flowsint";
+  if (steps.some((s) => (s.id ?? "").startsWith("umami"))) return "umami";
   const blob = `${lastRunState?.message ?? ""}\n${steps.map((s) => s.detail ?? "").join("\n")}`.toLowerCase();
   if (blob.includes("selfhost")) return "selfhost";
+  if (blob.includes("medusa")) return "medusa";
+  if (blob.includes("flowsint")) return "flowsint";
+  if (blob.includes("umami")) return "umami";
   if (blob.includes("cloudflare") || blob.includes("wrangler") || blob.includes("pages.dev")) {
     return "cloudflare";
   }
   if (blob.includes("vercel")) return "vercel";
   if (blob.includes("netlify")) return "netlify";
+  if (blob.includes("fly.dev") || blob.includes("fly.io") || /\bfly\b/.test(blob)) {
+    return "fly";
+  }
+  if (blob.includes("railway")) return "railway";
   if (blob.includes("orbit") || (steps.some((s) => s.id === "deploy") && blob.includes("orbit"))) {
     return "orbit";
   }
@@ -3281,6 +3396,9 @@ function resultsBayMatchesCard(wiz: ProviderWizard | null): boolean {
   const hp = lastRunHostProvider();
   if (!hp) return false;
   if (wiz.id === "selfhost") return hp === "selfhost";
+  if (wiz.id === "medusa") return hp === "medusa";
+  if (wiz.id === "flowsint") return hp === "flowsint";
+  if (wiz.id === "umami") return hp === "umami";
   if (wiz.id === "orbit") return hp === "orbit";
   const id = (wiz.provider ?? wiz.id).toLowerCase();
   return hp === id || hp === wiz.id;
@@ -3370,6 +3488,43 @@ let lastHostDeployName = "";
 /** Absolute path for Targets → Deploy (e.g. apps/website) — used as hostdeploy project cwd. */
 let lastDeployFocusProject: string | null = null;
 let pendingHostDeployWiz: ProviderWizard | null = null;
+/** Relative scope dir for Deploy dialog (e.g. apps/website). */
+let pendingHostDeployTargetRel = "";
+let pendingHostDeployEnvPackId = "";
+let pendingHostDeployPacks: EnvPack[] = [];
+/** Restore target/pack after Switch-to-hint Deploy. */
+let pendingHostDeployRestore: { targetRel: string; packId: string } | null = null;
+let pendingEnvImportWiz: ProviderWizard | null = null;
+let pendingEnvImportFile = "";
+let pendingEnvImportPackId = "";
+let pendingEnvImportPackDir = "";
+
+type EnvImportCandidate = { name?: string; empty?: boolean; denied?: boolean };
+type EnvPack = {
+  id?: string;
+  label?: string;
+  kind?: string;
+  rel_dir?: string;
+  file?: string;
+  host_hint?: string | null;
+  key_count?: number;
+  nonempty_count?: number;
+};
+type EnvImportReport = {
+  schema?: string;
+  provider?: string;
+  file?: string;
+  packs?: EnvPack[];
+  candidates?: EnvImportCandidate[];
+  put?: { name?: string; ok?: boolean; code?: number; error?: string | null }[];
+  skipped?: { name?: string; reason?: string }[];
+  dry_run?: boolean;
+  notes?: string[];
+};
+type EnvPacksReport = {
+  schema?: string;
+  packs?: EnvPack[];
+};
 
 function isCloudHostedUrl(u: string): boolean {
   const l = u.toLowerCase();
@@ -3378,7 +3533,11 @@ function isCloudHostedUrl(u: string): boolean {
     l.includes(".workers.dev") ||
     l.includes("vercel.app") ||
     l.includes("netlify.app") ||
-    l.includes("netlify.com")
+    l.includes("netlify.com") ||
+    l.includes(".fly.dev") ||
+    l.includes(".fly.io") ||
+    l.includes("railway.app") ||
+    l.includes("up.railway.app")
   );
 }
 
@@ -3643,14 +3802,26 @@ function paintDeployResultsBay() {
 
   const match = resultsBayMatchesCard(wiz);
   const selfhost = isSelfhostLocalEvidence(lastPulse) && wiz?.id === "selfhost";
-  const hostedOk = deployEvidenceFromPulse(lastPulse) && match && wiz?.id !== "selfhost";
+  const umamiOk = match && wiz?.id === "umami" && lastRunHostProvider() === "umami";
+  const flowsintOk = match && wiz?.id === "flowsint" && lastRunHostProvider() === "flowsint";
+  const medusaOk = match && wiz?.id === "medusa" && lastRunHostProvider() === "medusa";
+  const hostedOk =
+    deployEvidenceFromPulse(lastPulse) &&
+    match &&
+    wiz?.id !== "selfhost" &&
+    wiz?.id !== "umami" &&
+    wiz?.id !== "flowsint" &&
+    wiz?.id !== "medusa";
   const detail = match
     ? (lastPulse?.deploy?.detail ?? lastRunState?.message ?? "")
     : "";
-  // Hard isolate: Self-host = loopback only; cloud cards never show loopback; never cross *.pages.dev onto Self-host.
+  // Hard isolate: Self-host / Umami / Flowsint / Medusa = loopback only; cloud cards never show loopback.
   const urls = !match
     ? []
-    : wiz?.id === "selfhost"
+    : wiz?.id === "selfhost" ||
+        wiz?.id === "umami" ||
+        wiz?.id === "flowsint" ||
+        wiz?.id === "medusa"
       ? (lastPulse?.deploy?.urls ?? lastRunState?.urls ?? [])
           .filter((u) => isLoopbackDeployUrl(u) && !isCloudHostedUrl(u))
           .slice(0, 1)
@@ -3658,16 +3829,25 @@ function paintDeployResultsBay() {
   const allSteps = match ? (lastRunState?.steps ?? []) : [];
   const hostSteps = allSteps.filter((s) => (s.id ?? "").startsWith("host."));
   const selfhostSteps = allSteps.filter((s) => (s.id ?? "").startsWith("selfhost"));
+  const umamiSteps = allSteps.filter((s) => (s.id ?? "").startsWith("umami"));
+  const flowsintSteps = allSteps.filter((s) => (s.id ?? "").startsWith("flowsint"));
+  const medusaSteps = allSteps.filter((s) => (s.id ?? "").startsWith("medusa"));
   const steps =
     wiz?.id === "selfhost"
       ? selfhostSteps
-      : hostSteps.length
-        ? hostSteps
-        : allSteps.filter((s) => s.id === "deploy");
+      : wiz?.id === "umami"
+        ? umamiSteps
+        : wiz?.id === "flowsint"
+          ? flowsintSteps
+          : wiz?.id === "medusa"
+            ? medusaSteps
+            : hostSteps.length
+              ? hostSteps
+              : allSteps.filter((s) => s.id === "deploy");
 
   // Prefer card-relevant evidence only (never cross-host Live URL).
   let show = false;
-  if (wiz?.group === "Hosting" && match) {
+  if (wiz && isDeployCatalogGroup(wiz.group) && match) {
     if (wiz.id === "selfhost") {
       if (selfhostResultsDismissed) {
         show = selfhostServing;
@@ -3678,10 +3858,18 @@ function paintDeployResultsBay() {
           Boolean(urls.length) ||
           selfhostServing;
       }
+    } else if (wiz.id === "umami") {
+      show = umamiOk || umamiSteps.length > 0 || Boolean(urls.length);
+    } else if (wiz.id === "flowsint") {
+      show = flowsintOk || flowsintSteps.length > 0 || Boolean(urls.length);
+    } else if (wiz.id === "medusa") {
+      show = medusaOk || medusaSteps.length > 0 || Boolean(urls.length);
     } else if (
       wiz.id === "cloudflare" ||
       wiz.id === "vercel" ||
-      wiz.id === "netlify"
+      wiz.id === "netlify" ||
+      wiz.id === "fly" ||
+      wiz.id === "railway"
     ) {
       if (cloudEvidenceClearedProvider === hostProviderKey(wiz)) {
         show = false;
@@ -3691,7 +3879,9 @@ function paintDeployResultsBay() {
           hostSteps.length > 0 ||
           urls.length > 0 ||
           (lastRunState?.ok === false &&
-            /hostdeploy|wrangler|vercel|netlify/i.test(lastRunState.message ?? ""));
+            /hostdeploy|wrangler|vercel|netlify|fly|railway/i.test(
+              lastRunState.message ?? "",
+            ));
       }
     } else {
       show = hostedOk || urls.length > 0;
@@ -3714,20 +3904,42 @@ function paintDeployResultsBay() {
     kickerEl.textContent =
       wiz?.id === "selfhost"
         ? "Last self-host (local)"
-        : wiz?.id === "cloudflare"
-          ? "Last Cloudflare deploy"
-          : wiz?.id === "vercel"
-            ? "Last Vercel deploy"
-            : wiz?.id === "netlify"
-              ? "Last Netlify deploy"
-              : "Last deploy";
+        : wiz?.id === "umami"
+          ? "Last Umami deploy (local)"
+          : wiz?.id === "flowsint"
+            ? "Last Flowsint deploy (local)"
+            : wiz?.id === "medusa"
+              ? "Last Medusa deploy (local)"
+              : wiz?.id === "cloudflare"
+              ? "Last Cloudflare deploy"
+              : wiz?.id === "vercel"
+                ? "Last Vercel deploy"
+                : wiz?.id === "netlify"
+                  ? "Last Netlify deploy"
+                  : wiz?.id === "fly"
+                    ? "Last Fly deploy"
+                    : wiz?.id === "railway"
+                      ? "Last Railway deploy"
+                      : "Last deploy";
   }
 
   let status = "No deploy evidence for this host yet.";
   if (wiz?.id === "selfhost" && selfhostServing) {
     status = "Self-host serving on this machine — Cancel serve to stop.";
+  } else if (wiz?.id === "umami" && (umamiOk || urls.length)) {
+    status =
+      detail ||
+      "Umami Admin heartbeat ok — Open Admin, change the default password, Confirm on Publish.";
+  } else if (wiz?.id === "flowsint" && (flowsintOk || urls.length)) {
+    status =
+      detail ||
+      "Flowsint App proof ok — Open App, register at /register, Confirm on Publish.";
+  } else if (wiz?.id === "medusa" && (medusaOk || urls.length)) {
+    status =
+      detail ||
+      "Medusa Admin health ok — Open Admin, create/sign in, Confirm on Publish.";
   } else if (hostedOk) {
-    status = detail || "Cloud host evidence — Confirm Live check on Publish when ready.";
+    status = detail || "Public URL evidence — Confirm Live check on Publish when ready.";
   } else if (selfhost) {
     status = detail || "Self-host local check ok — loopback only (not a cloud host).";
   } else if (lastRunState && lastRunState.ok === false && match) {
@@ -3763,10 +3975,25 @@ function paintDeployResultsBay() {
     if (primaryUrl && wiz?.id === "selfhost") {
       urlLabelEl.hidden = false;
       urlLabelEl.textContent = "Local loopback URL (Self-host — not Cloudflare)";
+    } else if (primaryUrl && wiz?.id === "umami") {
+      urlLabelEl.hidden = false;
+      urlLabelEl.textContent = "Umami Admin (local Docker — not a cloud host)";
+    } else if (primaryUrl && wiz?.id === "flowsint") {
+      urlLabelEl.hidden = false;
+      urlLabelEl.textContent = "Flowsint App (local Docker — not a cloud host)";
+    } else if (primaryUrl && wiz?.id === "medusa") {
+      urlLabelEl.hidden = false;
+      urlLabelEl.textContent = "Medusa Admin (local Docker — not a cloud host)";
     } else if (primaryUrl && wiz?.id === "cloudflare") {
       urlLabelEl.hidden = false;
       urlLabelEl.textContent = "Cloudflare Pages / Workers URL (not Self-host)";
-    } else if (primaryUrl && (wiz?.id === "vercel" || wiz?.id === "netlify")) {
+    } else if (
+      primaryUrl &&
+      (wiz?.id === "vercel" ||
+        wiz?.id === "netlify" ||
+        wiz?.id === "fly" ||
+        wiz?.id === "railway")
+    ) {
       urlLabelEl.hidden = false;
       urlLabelEl.textContent = `${wiz.title} production URL (not Self-host)`;
     } else {
@@ -3786,6 +4013,12 @@ function paintDeployResultsBay() {
   if (liveBtn) {
     liveBtn.hidden = !primaryUrl;
     liveBtn.dataset.url = primaryUrl;
+    liveBtn.textContent =
+      wiz?.id === "umami" || wiz?.id === "medusa"
+        ? "Open Admin"
+        : wiz?.id === "flowsint"
+          ? "Open App"
+          : "Open live";
   }
   if (dashBtn) {
     const dash = hostDashboardUrl(wiz);
@@ -3815,7 +4048,12 @@ function paintDeployResultsBay() {
     wiz &&
     failed &&
     !selfhostServing &&
-    (wiz.id === "cloudflare" || wiz.id === "vercel" || wiz.id === "netlify" || wiz.id === "selfhost")
+    (wiz.id === "cloudflare" ||
+      wiz.id === "vercel" ||
+      wiz.id === "netlify" ||
+      wiz.id === "fly" ||
+      wiz.id === "railway" ||
+      wiz.id === "selfhost")
   ) {
     const recovery = classifyHostDeployFailure(
       `${detail}\n${lastRunState?.message ?? ""}`,
@@ -3826,20 +4064,17 @@ function paintDeployResultsBay() {
     troubleBtn.dataset.action = recovery.action;
     troubleBtn.dataset.kind = recovery.kind;
     hintEl.hidden = false;
-    hintEl.textContent =
-      wiz.id === "cloudflare" || wiz.id === "vercel" || wiz.id === "netlify"
-        ? `${recovery.hint} Stop/delete on the vendor dashboard — Studio is portal-only for cloud cancels.`
-        : recovery.hint;
-    // Secondary: Retry after human creates project / fixes auth on dashboard.
-    if (retryBtn) {
-      const showRetry =
-        recovery.kind === "account" ||
-        recovery.kind === "network" ||
-        recovery.kind === "unknown" ||
-        recovery.kind === "build" ||
-        recovery.action === "retry_deploy";
-      retryBtn.hidden = !showRetry || wiz.id === "selfhost";
-    }
+    // F2 — one recovery: hint names Next; no peer Retry (Troubleshoot is the CTA).
+    const cloudCancelNote =
+      wiz.id === "cloudflare" ||
+      wiz.id === "vercel" ||
+      wiz.id === "netlify" ||
+      wiz.id === "fly" ||
+      wiz.id === "railway"
+        ? " Cancel/delete stays on the vendor dashboard."
+        : "";
+    hintEl.textContent = `Next: ${recovery.hint}${cloudCancelNote}`;
+    if (retryBtn) retryBtn.hidden = true;
   } else if (troubleBtn && hintEl) {
     troubleBtn.hidden = true;
     troubleBtn.dataset.action = "";
@@ -3861,16 +4096,147 @@ function paintDeployResultsBay() {
   }
 }
 
+/** Spec: structure-proceed-gate-design — wire module actions to Desktop bind/pick. */
+function structureGateToastActions(gate: StructureGate): ToastAction[] {
+  if (gate.ok) return [];
+  return gate.actions.map((a) => ({
+    id: a.id,
+    label: a.label,
+    icon: a.icon,
+    run: () => {
+      if (a.id === "structure-open-project") {
+        void invoke<string | null>("pick_project").then((p) => {
+          if (p) void bindProject(p, true);
+        });
+        return;
+      }
+      if (a.id === "structure-bind-fixture") {
+        const fixture =
+          selectedPlatform === "medusa"
+            ? medusaFixtureGuessPath(projectPath())
+            : selectedPlatform === "flowsint"
+              ? flowsintFixtureGuessPath(projectPath())
+              : umamiFixtureGuessPath(projectPath());
+        if (fixture) void bindProject(fixture, true);
+      }
+    },
+  }));
+}
+
+function paintStructureGateBanner(
+  hostId: string,
+  kickerId: string,
+  reasonId: string,
+  actionsId: string,
+  laneId: string | null | undefined,
+) {
+  const host = document.querySelector<HTMLElement>(`#${hostId}`);
+  const kicker = document.querySelector(`#${kickerId}`);
+  const reasonEl = document.querySelector(`#${reasonId}`);
+  const actionsEl = document.querySelector<HTMLElement>(`#${actionsId}`);
+  if (!host || !reasonEl || !actionsEl) return;
+  if (!laneId) {
+    host.hidden = true;
+    return;
+  }
+  const gate = evaluateStructureGate(laneId, lastDetected, { projectPath: projectPath() });
+  if (!gate) {
+    host.hidden = true;
+    host.removeAttribute("data-state");
+    reasonEl.textContent = "";
+    actionsEl.innerHTML = "";
+    return;
+  }
+  host.hidden = false;
+  host.dataset.state = gate.ok ? "ok" : gate.mode === "soft" ? "soft" : "blocked";
+  if (kicker) {
+    kicker.textContent = gate.ok
+      ? "Structure · ok"
+      : gate.mode === "soft"
+        ? "Structure · note"
+        : "Structure · blocked";
+  }
+  reasonEl.textContent = gate.ok ? gate.summary : gate.reason;
+  actionsEl.innerHTML = "";
+  if (!gate.ok) {
+    for (const a of structureGateToastActions(gate)) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = a.label;
+      btn.addEventListener("click", () => a.run());
+      actionsEl.appendChild(btn);
+    }
+  }
+}
+
+function paintDeployStructureGate(wizId: string | null | undefined) {
+  paintStructureGateBanner(
+    "plat-structure-gate",
+    "plat-structure-kicker",
+    "plat-structure-reason",
+    "plat-structure-actions",
+    wizId,
+  );
+}
+
+function paintSignStructureGate(laneId: string | null | undefined) {
+  paintStructureGateBanner(
+    "sign-structure-gate",
+    "sign-structure-kicker",
+    "sign-structure-reason",
+    "sign-structure-actions",
+    laneId,
+  );
+}
+
+/** Quiet doctor refresh, then hard-block spawn CTAs when structure ≠ lane. */
+async function assertStructureProceed(
+  laneId: string,
+  opts?: { paintDeploy?: boolean; paintSign?: boolean },
+): Promise<boolean> {
+  const project = projectPath();
+  if (!project) {
+    toast("Bind a project first", "info");
+    return false;
+  }
+  const result = await run(["doctor", "--project", project], {
+    quietToast: true,
+    quietHeader: true,
+    busyLabel: "Checking structure…",
+  });
+  if (result?.stdout) {
+    const report = parseDoctor(result.stdout);
+    if (report) applyDoctor(report);
+  }
+  if (opts?.paintDeploy !== false) paintDeployStructureGate(laneId);
+  if (opts?.paintSign) paintSignStructureGate(laneId);
+  const gate = evaluateStructureGate(laneId, lastDetected, { projectPath: project });
+  if (!gate) return true;
+  if (gate.ok) return true;
+  if (gate.mode === "soft") {
+    toast(gate.reason, "info", 10000, structureGateToastActions(gate));
+    return true;
+  }
+  toast(gate.reason, "err", 14000, structureGateToastActions(gate));
+  return false;
+}
+
 function paintPlatformWizard() {
   const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform) ?? null;
   const showLocal =
-    wiz?.group === "Hosting" && wiz.id !== "selfhost" && shipIntent() === "public";
+    wiz?.group === CLOUD_HOST_GROUP && shipIntent() === "public";
   const showPut = Boolean(wiz?.provider && providerHasEnvPut(wiz.provider));
   const cliDeploy =
     wiz?.id === "selfhost" ||
+    wiz?.id === "umami" ||
+    wiz?.id === "flowsint" ||
+    wiz?.id === "medusa" ||
     wiz?.id === "cloudflare" ||
     wiz?.id === "vercel" ||
-    wiz?.id === "netlify";
+    wiz?.id === "netlify" ||
+    wiz?.id === "fly" ||
+    wiz?.id === "railway";
+  const general = studioMode() === "general";
   paintProviderWizard({
     entry: wiz,
     panel: document.querySelector<HTMLElement>("#platforms-wizard"),
@@ -3879,22 +4245,46 @@ function paintPlatformWizard() {
     stepsEl: document.querySelector("#plat-wizard-steps"),
     openBtn: document.querySelector<HTMLButtonElement>("#plat-open"),
     secondaryBtn: document.querySelector<HTMLButtonElement>("#plat-portal-steps"),
-    secondaryVisible: Boolean(wiz?.provider && isPortalProvider(wiz.provider)),
+    secondaryVisible:
+      !general && Boolean(wiz?.provider && isPortalProvider(wiz.provider)),
     docsBtn: document.querySelector<HTMLButtonElement>("#plat-docs"),
     putBtn: document.querySelector<HTMLButtonElement>("#plat-put"),
-    // Deploy stays primary; Put remains available without stealing primary.
+    // Put as wizard primary only when there is no Deploy CTA (non–CLI-host cards).
     putVisible: showPut && !cliDeploy,
   });
+  paintDeployStructureGate(wiz?.id);
+  const structureGate = wiz
+    ? evaluateStructureGate(wiz.id, lastDetected, { projectPath: projectPath() })
+    : null;
+  const structureBlocked = Boolean(
+    structureGate && !structureGate.ok && structureGate.mode === "hard",
+  );
   const putBtn = document.querySelector<HTMLButtonElement>("#plat-put");
+  const importBtn = document.querySelector<HTMLButtonElement>("#plat-import-env");
   const openBtn = document.querySelector<HTMLButtonElement>("#plat-open");
   const dashBtn = document.querySelector<HTMLButtonElement>("#plat-dashboard");
+  const liveBtn = document.querySelector<HTMLButtonElement>("#plat-open-live");
+  const troubleBtn = document.querySelector<HTMLButtonElement>("#plat-troubleshoot");
+  // Clear peer primaries — S2 assigns exactly one loud CTA.
+  for (const b of [putBtn, openBtn, importBtn, dashBtn, liveBtn, troubleBtn]) {
+    b?.classList.remove("primary");
+  }
+  if (openBtn && wiz && isHardStructureLane(wiz.id)) {
+    openBtn.disabled = structureBlocked;
+    openBtn.title = structureBlocked
+      ? "Fix structure (see banner) before Deploy"
+      : "";
+  } else if (openBtn) {
+    openBtn.disabled = false;
+  }
   if (putBtn) {
     putBtn.hidden = !showPut;
-    putBtn.classList.toggle("primary", showPut && !cliDeploy);
   }
-  if (openBtn) {
-    openBtn.classList.toggle("primary", cliDeploy || !showPut);
+  if (importBtn) {
+    importBtn.hidden = !showPut;
+    importBtn.classList.add("gate-secondary");
   }
+  if (putBtn) putBtn.classList.add("gate-secondary");
   if (dashBtn) {
     dashBtn.hidden = !(
       wiz?.id === "cloudflare" ||
@@ -3904,15 +4294,39 @@ function paintPlatformWizard() {
       wiz?.id === "railway" ||
       wiz?.id === "github-pages"
     );
+    dashBtn.classList.add("gate-secondary");
   }
   const cancelServeBtn = document.querySelector<HTMLButtonElement>("#plat-cancel-deploy");
   if (cancelServeBtn) {
     // Visibility set in paintPlatCancelButtons
   }
   const localBtn = document.querySelector<HTMLButtonElement>("#plat-use-local");
-  if (localBtn) localBtn.hidden = !showLocal;
+  if (localBtn) {
+    localBtn.hidden = !showLocal;
+    localBtn.classList.add("gate-secondary");
+  }
   paintDeployResultsBay();
   paintPlatCancelButtons(wiz, !(document.querySelector<HTMLElement>("#plat-results")?.hidden ?? true));
+  // S2/F2 loudness: one recovery on fail → Open live (URL) → Deploy → Put.
+  const resultsHidden =
+    document.querySelector<HTMLElement>("#plat-results")?.hidden ?? true;
+  const troubleLoud = Boolean(troubleBtn && !troubleBtn.hidden && !resultsHidden);
+  const liveLoud = Boolean(liveBtn && !liveBtn.hidden && liveBtn.dataset.url);
+  const retryBtnLoud = document.querySelector<HTMLButtonElement>("#plat-retry-deploy");
+  if (retryBtnLoud) retryBtnLoud.classList.add("gate-secondary");
+  if (troubleLoud && troubleBtn) {
+    troubleBtn.classList.add("primary");
+    troubleBtn.classList.remove("gate-secondary");
+  } else if (liveLoud && liveBtn) {
+    liveBtn.classList.add("primary");
+  } else if (openBtn && (cliDeploy || !showPut)) {
+    openBtn.classList.add("primary");
+  } else if (putBtn && showPut && !cliDeploy) {
+    putBtn.classList.remove("gate-secondary");
+    putBtn.classList.add("primary");
+  } else if (openBtn) {
+    openBtn.classList.add("primary");
+  }
 }
 
 function routeDetectChip(label: string) {
@@ -3922,23 +4336,23 @@ function routeDetectChip(label: string) {
       setupPolarPortal();
       return;
     case "wrangler":
-      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "cloudflare" });
+      openPlatformsCatalog({ selectId: "cloudflare" });
       return;
     case "vercel":
-      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "vercel" });
+      openPlatformsCatalog({ selectId: "vercel" });
       return;
     case "netlify":
-      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "netlify" });
+      openPlatformsCatalog({ selectId: "netlify" });
       return;
     case "fly":
-      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "fly" });
+      openPlatformsCatalog({ selectId: "fly" });
       return;
     case "railway":
-      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "railway" });
+      openPlatformsCatalog({ selectId: "railway" });
       return;
     case "pages":
     case "github pages":
-      openPlatformsCatalog({ preferGroup: "Hosting", selectId: "github-pages" });
+      openPlatformsCatalog({ selectId: "github-pages" });
       return;
     case "github":
       // Auth/CI — Portal GitHub, not Pages card.
@@ -3954,11 +4368,20 @@ function routeDetectChip(label: string) {
       return;
     case "orbit":
       if (lastDetected?.yard_configured) {
-        openPlatformsCatalog({ preferGroup: "Hosting", selectId: "orbit" });
+        openPlatformsCatalog({ selectId: "orbit" });
       } else {
-        openPlatformsCatalog({ preferGroup: "Hosting", selectId: "selfhost" });
+        openPlatformsCatalog({ selectId: "selfhost" });
         toast("Orbit only when this repo is Orbit-configured — Self-host is the local lane", "info", 4500);
       }
+      return;
+    case "umami":
+      openPlatformsCatalog({ selectId: "umami" });
+      return;
+    case "flowsint":
+      openPlatformsCatalog({ selectId: "flowsint" });
+      return;
+    case "medusa":
+      openPlatformsCatalog({ selectId: "medusa" });
       return;
     default:
       setView("portal");
@@ -3974,6 +4397,7 @@ type HostFailClass =
   | "network"
   | "account"
   | "detect"
+  | "link"
   | "unknown";
 
 type HostRecovery = {
@@ -3986,19 +4410,55 @@ type HostRecovery = {
 /** H4 — mirror orbityard hostdeploy::classify_host_failure (one primary recovery). */
 function classifyHostDeployFailure(text: string, provider = "cloudflare"): HostRecovery {
   const l = text.toLowerCase();
-  const cli =
-    provider === "vercel" ? "vercel" : provider === "netlify" ? "netlify" : "wrangler";
+  const loginCmd =
+    provider === "vercel"
+      ? "vercel login"
+      : provider === "netlify"
+        ? "netlify login"
+        : provider === "fly"
+          ? "fly auth login"
+          : provider === "railway"
+            ? "railway login"
+            : "wrangler login";
   const install =
     provider === "vercel"
       ? "npm i -g vercel"
       : provider === "netlify"
         ? "npm i -g netlify-cli"
-        : "npm i -g wrangler";
+        : provider === "fly"
+          ? "install flyctl"
+          : provider === "railway"
+            ? "npm i -g @railway/cli"
+            : "npm i -g wrangler";
 
+  if (
+    l.includes("[link]") ||
+    l.includes("fly launch") ||
+    l.includes("railway link") ||
+    l.includes("railway init") ||
+    (l.includes("no fly.toml") && l.includes("launch"))
+  ) {
+    const hint =
+      provider === "fly"
+        ? "No fly.toml yet — run `fly launch` in the app folder (human), then Retry Deploy."
+        : provider === "railway"
+          ? "Not linked — run `railway link` or `railway init` (human), then Retry Deploy."
+          : "Host project not linked — finish vendor link/init (human), then Retry Deploy.";
+    return {
+      kind: "link",
+      action: "preview_log",
+      label: "Preview log",
+      hint,
+    };
+  }
   if (
     l.includes("not on path") ||
     ((l.includes("not found") || l.includes("cannot find") || l.includes("no such file")) &&
-      (l.includes("wrangler") || l.includes("vercel") || l.includes("netlify"))) ||
+      (l.includes("wrangler") ||
+        l.includes("vercel") ||
+        l.includes("netlify") ||
+        l.includes("fly") ||
+        l.includes("railway"))) ||
     l.includes("is not recognized") ||
     l.includes("program not found")
   ) {
@@ -4014,7 +4474,7 @@ function classifyHostDeployFailure(text: string, provider = "cloudflare"): HostR
     l.includes("no static index") ||
     l.includes("no vercel.json") ||
     l.includes("detect failed") ||
-    /hostdeploy (cloudflare|vercel|netlify): no /.test(l)
+    /hostdeploy (cloudflare|vercel|netlify|fly|railway): no /.test(l)
   ) {
     return {
       kind: "detect",
@@ -4024,7 +4484,7 @@ function classifyHostDeployFailure(text: string, provider = "cloudflare"): HostR
     };
   }
   if (
-    /not logged in|please log in|login required|wrangler login|vercel login|netlify login|authentication error|unauthorized|missing credentials|auth required|re-authenticate|no existing credentials|not authenticated|\[auth\]|sign in \(web\)|run login cli/i.test(
+    /not logged in|please log in|login required|wrangler login|vercel login|netlify login|fly auth login|railway login|authentication error|unauthorized|missing credentials|auth required|re-authenticate|no existing credentials|not authenticated|\[auth\]|sign in \(web\)|run login cli/i.test(
       l,
     )
   ) {
@@ -4032,7 +4492,7 @@ function classifyHostDeployFailure(text: string, provider = "cloudflare"): HostR
       kind: "auth",
       action: "login_cli",
       label: "Login CLI",
-      hint: `Sign in with Login CLI (${cli} login) or Sign in (web). Studio never creates API tokens.`,
+      hint: `Sign in with Login CLI (${loginCmd}) or Sign in (web). Studio never creates API tokens.`,
     };
   }
   if (
@@ -4079,7 +4539,7 @@ function classifyHostDeployFailure(text: string, provider = "cloudflare"): HostR
     };
   }
   // Tag from last-run message: [...kind]
-  const tag = /\[(auth|missing_cli|build|network|account|detect|unknown)\]/.exec(l);
+  const tag = /\[(auth|missing_cli|build|network|account|detect|link|unknown)\]/.exec(l);
   if (tag?.[1] === "auth") {
     return classifyHostDeployFailure("auth required wrangler login", provider);
   }
@@ -4098,11 +4558,17 @@ function classifyHostDeployFailure(text: string, provider = "cloudflare"): HostR
   if (tag?.[1] === "detect") {
     return classifyHostDeployFailure("hostdeploy cloudflare: no wrangler.toml", provider);
   }
+  if (tag?.[1] === "link") {
+    return classifyHostDeployFailure(
+      "hostdeploy fly: no fly.toml — run `fly launch` [link]",
+      provider,
+    );
+  }
   return {
     kind: "unknown",
     action: "preview_log",
     label: "Preview log",
-    hint: "Deploy failed — see Output, then Open dashboard or Retry Deploy.",
+    hint: "Deploy failed — open Output, fix if needed, then Deploy again from the host card.",
   };
 }
 
@@ -4133,16 +4599,798 @@ function runHostRecoveryAction(
 }
 
 function isHostedCliDeployCard(id: string): boolean {
-  return id === "cloudflare" || id === "vercel" || id === "netlify";
+  return (
+    id === "cloudflare" ||
+    id === "vercel" ||
+    id === "netlify" ||
+    id === "fly" ||
+    id === "railway"
+  );
+}
+
+function showHostDeployStep(step: "setup" | "names") {
+  const setup = document.querySelector<HTMLElement>("#host-deploy-step-setup");
+  const names = document.querySelector<HTMLElement>("#host-deploy-step-names");
+  if (setup) setup.hidden = step !== "setup";
+  if (names) names.hidden = step !== "names";
 }
 
 function closeHostDeployDialog() {
   const dlg = document.querySelector<HTMLElement>("#host-deploy-dialog");
   if (dlg) dlg.hidden = true;
   pendingHostDeployWiz = null;
+  pendingHostDeployTargetRel = "";
+  pendingHostDeployEnvPackId = "";
+  pendingHostDeployPacks = [];
+  const targets = document.querySelector("#host-deploy-targets");
+  if (targets) targets.innerHTML = "";
+  const packs = document.querySelector("#host-deploy-env-packs");
+  if (packs) packs.innerHTML = "";
+  const warnEl = document.querySelector<HTMLElement>("#host-deploy-import-mismatch");
+  if (warnEl) {
+    warnEl.hidden = true;
+    warnEl.textContent = "";
+  }
+  const switchBtn = document.querySelector<HTMLButtonElement>("#host-deploy-switch-hint");
+  if (switchBtn) switchBtn.hidden = true;
+  const importList = document.querySelector("#host-deploy-import-list");
+  if (importList) importList.innerHTML = "";
+  showHostDeployStep("setup");
 }
 
-function openHostDeployDialog(wiz: ProviderWizard) {
+function staleOrbityardCliHint(stderr: string, stdout: string): boolean {
+  const blob = `${stderr}\n${stdout}`;
+  return /unexpected argument ['`]?--list-packs/i.test(blob);
+}
+
+function hostDeployPackHint(): string {
+  const pack = pendingHostDeployPacks.find(
+    (p) => (p.id || p.file) === pendingHostDeployEnvPackId,
+  );
+  return (pack?.host_hint || "").toString().toLowerCase();
+}
+
+function hostDeployImportMismatch(provider: string): boolean {
+  const hint = hostDeployPackHint();
+  return (
+    Boolean(pendingHostDeployEnvPackId) &&
+    Boolean(hint) &&
+    providerHasEnvPut(hint) &&
+    hint !== provider
+  );
+}
+
+function bindHostDeploySwitchHint(hint: string) {
+  const switchBtn = document.querySelector<HTMLButtonElement>("#host-deploy-switch-hint");
+  if (!switchBtn) return;
+  const title =
+    PLATFORM_WIZARDS.find((w) => (w.provider || w.id).toLowerCase() === hint)?.title || hint;
+  switchBtn.textContent = `Switch to ${title} Deploy`;
+  switchBtn.onclick = () => {
+    const targetRel = pendingHostDeployTargetRel;
+    const packId = pendingHostDeployEnvPackId;
+    const wiz = PLATFORM_WIZARDS.find((w) => (w.provider || w.id).toLowerCase() === hint);
+    closeHostDeployDialog();
+    if (!wiz || !isHostedCliDeployCard(wiz.id)) {
+      toast(`No Deploy dialog for ${hint} — use Import env… on that card`, "info", 6000);
+      if (wiz) selectPlatform(wiz.id);
+      return;
+    }
+    pendingHostDeployRestore = { targetRel, packId };
+    selectPlatform(wiz.id);
+    void openHostDeployDialog(wiz);
+  };
+}
+
+/** Pack host_hint ≠ Deploy card → warn + default Import off + Switch CTA (slice 6–7). */
+function syncHostDeployImportMismatch(provider: string) {
+  const importCb = document.querySelector<HTMLInputElement>("#host-deploy-import-env");
+  const warnEl = document.querySelector<HTMLElement>("#host-deploy-import-mismatch");
+  const switchBtn = document.querySelector<HTMLButtonElement>("#host-deploy-switch-hint");
+  const pack = pendingHostDeployPacks.find(
+    (p) => (p.id || p.file) === pendingHostDeployEnvPackId,
+  );
+  const hint = hostDeployPackHint();
+  const mismatch = hostDeployImportMismatch(provider);
+  if (warnEl) {
+    warnEl.hidden = !mismatch;
+    warnEl.textContent = mismatch
+      ? `Pack hints ${hint}; import uses ${provider} (this Deploy card). Leave Import off unless you mean that.`
+      : "";
+  }
+  if (switchBtn) {
+    switchBtn.hidden = !mismatch;
+    if (mismatch) bindHostDeploySwitchHint(hint);
+  }
+  if (!importCb || importCb.disabled) return;
+  if (mismatch) {
+    importCb.checked = false;
+  } else if ((pack?.nonempty_count ?? 0) > 0) {
+    importCb.checked = true;
+  } else {
+    importCb.checked = false;
+  }
+}
+
+function firstImportPutError(report: EnvImportReport | null): string {
+  if (!report?.put?.length) return "";
+  for (const p of report.put) {
+    if (p && p.ok === false && p.error) return polishImportErrorText(String(p.error));
+  }
+  return "";
+}
+
+/** Strip leftover ANSI / trim for toast (CLI also scrubs; belt-and-suspenders). */
+function polishImportErrorText(raw: string): string {
+  let t = raw
+    .replace(/\u001b\[[0-9;]*[A-Za-z]/g, "")
+    .replace(/\[[0-9;]*m/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (/logs were written/i.test(t)) {
+    t = t.replace(/\s*Logs were written to[^.]*\.?/gi, "").trim();
+  }
+  return t.slice(0, 160);
+}
+
+function importErrorIsMissingProject(text: string, stderr = "", stdout = ""): boolean {
+  const blob = `${text}\n${stderr}\n${stdout}`;
+  return (
+    /\[missing_project\]/i.test(blob) ||
+    (/does not exist/i.test(blob) && /project/i.test(blob))
+  );
+}
+
+function parseEnvImportReport(stdout: string): EnvImportReport | null {
+  try {
+    return JSON.parse(stdout.trim() || "{}") as EnvImportReport;
+  } catch {
+    return null;
+  }
+}
+
+type HostDeployReportJson = {
+  ok?: boolean;
+  provider?: string;
+  lane?: string;
+  urls?: string[];
+  message?: string;
+};
+
+type UmamiDeployReportJson = {
+  ok?: boolean;
+  admin_url?: string | null;
+  heartbeat_ok?: boolean;
+  message?: string;
+};
+
+type FlowsintDeployReportJson = {
+  ok?: boolean;
+  app_url?: string | null;
+  api_health_ok?: boolean;
+  message?: string;
+};
+
+type MedusaDeployReportJson = {
+  ok?: boolean;
+  admin_url?: string | null;
+  heartbeat_ok?: boolean;
+  message?: string;
+};
+
+/** Last JSON object in umami deploy stdout (stream lines precede the report). */
+function parseUmamiDeployReport(stdout: string): UmamiDeployReportJson | null {
+  const trimmed = (stdout || "").trim();
+  if (!trimmed) return null;
+  const tryParse = (s: string): UmamiDeployReportJson | null => {
+    try {
+      const obj = JSON.parse(s) as UmamiDeployReportJson;
+      if (obj && typeof obj === "object" && ("admin_url" in obj || "heartbeat_ok" in obj)) {
+        return obj;
+      }
+    } catch {
+      /* not json */
+    }
+    return null;
+  };
+  const direct = tryParse(trimmed);
+  if (direct) return direct;
+  const start = trimmed.lastIndexOf("{");
+  if (start >= 0) return tryParse(trimmed.slice(start));
+  return null;
+}
+
+/** Last JSON object in flowsint deploy stdout (stream lines precede the report). */
+function parseFlowsintDeployReport(stdout: string): FlowsintDeployReportJson | null {
+  const trimmed = (stdout || "").trim();
+  if (!trimmed) return null;
+  const tryParse = (s: string): FlowsintDeployReportJson | null => {
+    try {
+      const obj = JSON.parse(s) as FlowsintDeployReportJson;
+      if (obj && typeof obj === "object" && ("app_url" in obj || "api_health_ok" in obj)) {
+        return obj;
+      }
+    } catch {
+      /* not json */
+    }
+    return null;
+  };
+  const direct = tryParse(trimmed);
+  if (direct) return direct;
+  const start = trimmed.lastIndexOf("{");
+  if (start >= 0) return tryParse(trimmed.slice(start));
+  return null;
+}
+
+/** Last JSON object in medusa deploy stdout (stream lines precede the report). */
+function parseMedusaDeployReport(stdout: string): MedusaDeployReportJson | null {
+  const trimmed = (stdout || "").trim();
+  if (!trimmed) return null;
+  const tryParse = (s: string): MedusaDeployReportJson | null => {
+    try {
+      const obj = JSON.parse(s) as MedusaDeployReportJson;
+      if (obj && typeof obj === "object" && ("admin_url" in obj || "heartbeat_ok" in obj)) {
+        return obj;
+      }
+    } catch {
+      /* not json */
+    }
+    return null;
+  };
+  const direct = tryParse(trimmed);
+  if (direct) return direct;
+  const start = trimmed.lastIndexOf("{");
+  if (start >= 0) return tryParse(trimmed.slice(start));
+  return null;
+}
+
+/** Last JSON object in hostdeploy stdout (stream lines precede the report). */
+function parseHostDeployReport(stdout: string): HostDeployReportJson | null {
+  const trimmed = (stdout || "").trim();
+  if (!trimmed) return null;
+  const tryParse = (s: string): HostDeployReportJson | null => {
+    try {
+      const obj = JSON.parse(s) as HostDeployReportJson;
+      if (obj && typeof obj === "object" && Array.isArray(obj.urls)) return obj;
+    } catch {
+      /* not json */
+    }
+    return null;
+  };
+  const whole = tryParse(trimmed);
+  if (whole) return whole;
+  const idx = trimmed.lastIndexOf("\n{");
+  const start = idx >= 0 ? idx + 1 : trimmed.lastIndexOf("{");
+  if (start < 0) return null;
+  return tryParse(trimmed.slice(start));
+}
+
+function paintHostDeployEnvPacks(provider: string) {
+  const grid = document.querySelector("#host-deploy-env-packs");
+  const emptyEl = document.querySelector<HTMLElement>("#host-deploy-env-empty");
+  const importCb = document.querySelector<HTMLInputElement>("#host-deploy-import-env");
+  const warnEl = document.querySelector<HTMLElement>("#host-deploy-import-mismatch");
+  if (!grid) return;
+  const rel = (pendingHostDeployTargetRel || ".").replace(/\\/g, "/");
+  const filtered = pendingHostDeployPacks.filter((p) => {
+    const dir = (p.rel_dir || ".").replace(/\\/g, "/");
+    if (rel === "." || rel === "") return true;
+    return dir === rel || (p.file || "").replace(/\\/g, "/").startsWith(`${rel}/`);
+  });
+  if (!filtered.length) {
+    grid.innerHTML = "";
+    if (emptyEl) emptyEl.hidden = false;
+    pendingHostDeployEnvPackId = "";
+    if (importCb) {
+      importCb.checked = false;
+      importCb.disabled = true;
+    }
+    if (warnEl) {
+      warnEl.hidden = true;
+      warnEl.textContent = "";
+    }
+    return;
+  }
+  if (emptyEl) emptyEl.hidden = true;
+  if (importCb) importCb.disabled = false;
+  const restorePack = pendingHostDeployRestore?.packId || "";
+  const preferred =
+    (restorePack
+      ? filtered.find((p) => (p.id || p.file) === restorePack)
+      : undefined) ||
+    filtered.find((p) => (p.host_hint || "").toLowerCase() === provider) ||
+    filtered[0];
+  pendingHostDeployEnvPackId = preferred?.id || preferred?.file || "";
+  grid.innerHTML = filtered
+    .map((p) => {
+      const id = p.id || p.file || "";
+      const selected = id === pendingHostDeployEnvPackId;
+      const hint = p.host_hint ? String(p.host_hint) : "local";
+      const keys = `${p.nonempty_count ?? 0}/${p.key_count ?? 0} keys`;
+      return `<button type="button" class="env-pack-card" role="option" data-pack-id="${escapeHtml(
+        id,
+      )}" aria-selected="${selected}">
+        <span class="title">${escapeHtml(p.label || "Env")}</span>
+        <span class="path">${escapeHtml(p.file || id)}</span>
+        <span class="meta">${escapeHtml(hint)} · ${escapeHtml(keys)}</span>
+      </button>`;
+    })
+    .join("");
+  grid.querySelectorAll<HTMLButtonElement>(".env-pack-card").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      pendingHostDeployEnvPackId = btn.getAttribute("data-pack-id") || "";
+      grid.querySelectorAll<HTMLButtonElement>(".env-pack-card").forEach((b) => {
+        b.setAttribute("aria-selected", String(b === btn));
+      });
+      syncHostDeployImportMismatch(provider);
+    });
+  });
+  syncHostDeployImportMismatch(provider);
+}
+
+function paintHostDeployTargets(
+  scopes: NonNullable<ScopePlan["scopes"]>,
+  provider: string,
+) {
+  const grid = document.querySelector("#host-deploy-targets");
+  const emptyEl = document.querySelector<HTMLElement>("#host-deploy-targets-empty");
+  if (!grid) return;
+  const deployable = scopes.filter((s) => {
+    const k = (s.kind || "").toLowerCase();
+    const rel = (s.relative || ".").replace(/\\/g, "/");
+    if (rel === "." || rel === "") return false;
+    return ["web", "api", "docs", "desktop"].includes(k) || Boolean(s.provider);
+  });
+  if (!deployable.length) {
+    grid.innerHTML = `<button type="button" class="env-pack-card" role="option" data-rel="." aria-selected="true">
+      <span class="title">Project root</span>
+      <span class="path">.</span>
+      <span class="meta">whole repo</span>
+    </button>`;
+    pendingHostDeployTargetRel = ".";
+    if (emptyEl) emptyEl.hidden = true;
+    paintHostDeployEnvPacks(provider);
+    return;
+  }
+  if (emptyEl) emptyEl.hidden = true;
+  const focus = (lastDeployFocusProject || "").replace(/\\/g, "/").toLowerCase();
+  const restoreRel = (pendingHostDeployRestore?.targetRel || "").replace(/\\/g, "/");
+  // A1: provider affinity first; focus only when that scope matches the Deploy card.
+  let preferred =
+    (restoreRel
+      ? deployable.find((s) => (s.relative || "").replace(/\\/g, "/") === restoreRel)
+      : undefined) ||
+    deployable.find((s) => (s.provider || "").toLowerCase() === provider) ||
+    deployable.find((s) => {
+      const rel = (s.relative || "").replace(/\\/g, "/").toLowerCase();
+      const matchesFocus = focus.endsWith(`/${rel}`) || focus.endsWith(rel);
+      if (!matchesFocus) return false;
+      const scopeProv = (s.provider || "").toLowerCase();
+      return !scopeProv || scopeProv === provider;
+    }) ||
+    deployable[0];
+  pendingHostDeployTargetRel = (preferred?.relative || ".").replace(/\\/g, "/");
+  grid.innerHTML = deployable
+    .map((s) => {
+      const rel = (s.relative || ".").replace(/\\/g, "/");
+      const selected = rel === pendingHostDeployTargetRel;
+      const host = s.provider || s.kind || "app";
+      return `<button type="button" class="env-pack-card" role="option" data-rel="${escapeHtml(
+        rel,
+      )}" aria-selected="${selected}">
+        <span class="title">${escapeHtml(s.label || s.kind || rel)}</span>
+        <span class="path">${escapeHtml(rel)}</span>
+        <span class="meta">${escapeHtml(String(host))}</span>
+      </button>`;
+    })
+    .join("");
+  grid.querySelectorAll<HTMLButtonElement>(".env-pack-card").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      pendingHostDeployTargetRel = btn.getAttribute("data-rel") || ".";
+      grid.querySelectorAll<HTMLButtonElement>(".env-pack-card").forEach((b) => {
+        b.setAttribute("aria-selected", String(b === btn));
+      });
+      paintHostDeployEnvPacks(provider);
+    });
+  });
+  paintHostDeployEnvPacks(provider);
+  if (pendingHostDeployRestore) {
+    const wantPack = pendingHostDeployRestore.packId;
+    pendingHostDeployRestore = null;
+    if (wantPack && pendingHostDeployPacks.some((p) => (p.id || p.file) === wantPack)) {
+      pendingHostDeployEnvPackId = wantPack;
+      const packGrid = document.querySelector("#host-deploy-env-packs");
+      packGrid?.querySelectorAll<HTMLButtonElement>(".env-pack-card").forEach((b) => {
+        b.setAttribute(
+          "aria-selected",
+          String((b.getAttribute("data-pack-id") || "") === wantPack),
+        );
+      });
+      syncHostDeployImportMismatch(provider);
+    }
+  }
+}
+
+function closeEnvImportDialog() {
+  const dlg = document.querySelector<HTMLElement>("#env-import-dialog");
+  if (dlg) dlg.hidden = true;
+  pendingEnvImportWiz = null;
+  pendingEnvImportFile = "";
+  pendingEnvImportPackId = "";
+  pendingEnvImportPackDir = "";
+  const list = document.querySelector("#env-import-list");
+  if (list) list.innerHTML = "";
+  const grid = document.querySelector("#env-pack-grid");
+  if (grid) grid.innerHTML = "";
+}
+
+function showEnvImportStep(step: "packs" | "names") {
+  const packs = document.querySelector<HTMLElement>("#env-import-step-packs");
+  const names = document.querySelector<HTMLElement>("#env-import-step-names");
+  if (packs) packs.hidden = step !== "packs";
+  if (names) names.hidden = step !== "names";
+}
+
+function preferEnvPack(packs: EnvPack[], provider: string): EnvPack | null {
+  if (!packs.length) return null;
+  const focus = (lastDeployFocusProject || "").replace(/\\/g, "/").toLowerCase();
+  if (focus) {
+    const byFocus = packs.find((p) => {
+      const dir = (p.rel_dir || "").replace(/\\/g, "/").toLowerCase();
+      const file = (p.file || "").replace(/\\/g, "/").toLowerCase();
+      return focus.endsWith(`/${dir}`) || focus.endsWith(dir) || file.includes(dir);
+    });
+    if (byFocus) return byFocus;
+  }
+  return (
+    packs.find((p) => (p.host_hint || "").toLowerCase() === provider) || packs[0] || null
+  );
+}
+
+function paintEnvPackGrid(packs: EnvPack[], provider: string) {
+  const grid = document.querySelector("#env-pack-grid");
+  const emptyEl = document.querySelector<HTMLElement>("#env-pack-empty");
+  const cont = document.querySelector<HTMLButtonElement>("#env-pack-continue");
+  if (!grid) return;
+  if (!packs.length) {
+    grid.innerHTML = "";
+    if (emptyEl) emptyEl.hidden = false;
+    if (cont) cont.disabled = true;
+    return;
+  }
+  if (emptyEl) emptyEl.hidden = true;
+  const preferred = preferEnvPack(packs, provider);
+  pendingEnvImportPackId = preferred?.id || preferred?.file || "";
+  pendingEnvImportPackDir = preferred?.rel_dir || "";
+  grid.innerHTML = packs
+    .map((p) => {
+      const id = p.id || p.file || "";
+      const selected = id === pendingEnvImportPackId;
+      const hint = p.host_hint ? String(p.host_hint) : "local";
+      const keys = `${p.nonempty_count ?? 0}/${p.key_count ?? 0} keys`;
+      return `<button type="button" class="env-pack-card" role="option" data-pack-id="${escapeHtml(
+        id,
+      )}" data-rel-dir="${escapeHtml(p.rel_dir || "")}" aria-selected="${selected}">
+        <span class="title">${escapeHtml(p.label || p.kind || "App")}</span>
+        <span class="path">${escapeHtml(p.file || id)}</span>
+        <span class="meta">${escapeHtml(hint)} · ${escapeHtml(keys)}</span>
+      </button>`;
+    })
+    .join("");
+  const sync = () => {
+    if (cont) cont.disabled = !pendingEnvImportPackId;
+  };
+  grid.querySelectorAll<HTMLButtonElement>(".env-pack-card").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      pendingEnvImportPackId = btn.getAttribute("data-pack-id") || "";
+      pendingEnvImportPackDir = btn.getAttribute("data-rel-dir") || "";
+      grid.querySelectorAll<HTMLButtonElement>(".env-pack-card").forEach((b) => {
+        b.setAttribute("aria-selected", String(b === btn));
+      });
+      sync();
+    });
+  });
+  sync();
+}
+
+function envImportCandidateRowsHtml(
+  candidates: EnvImportCandidate[],
+  checkboxClass: string,
+): string {
+  return candidates
+    .map((c) => {
+      const name = c.name ?? "";
+      const denied = Boolean(c.denied);
+      const empty = Boolean(c.empty);
+      const disabled = denied || empty;
+      const cls = [denied ? "denied" : "", empty ? "empty" : ""].filter(Boolean).join(" ");
+      const tip = denied
+        ? "skipped — shell/local name"
+        : empty
+          ? "empty in .env — fill a value locally, then reopen Import"
+          : "value masked (stays on this PC)";
+      const why = denied ? "blocked" : empty ? "empty in .env" : "••••";
+      return `<li class="${cls}">
+        <input type="checkbox" class="${checkboxClass}" data-name="${escapeHtml(name)}" ${
+          disabled ? "disabled" : "checked"
+        } aria-label="${escapeHtml(name)}" title="${escapeHtml(tip)}" />
+        <span title="${escapeHtml(tip)}">${escapeHtml(name)}</span>
+        <span class="mask" title="${escapeHtml(tip)}">${escapeHtml(why)}</span>
+      </li>`;
+    })
+    .join("");
+}
+
+function envImportReadySummary(candidates: EnvImportCandidate[]): string {
+  const ready = candidates.filter((c) => c.name && !c.denied && !c.empty).length;
+  const empty = candidates.filter((c) => c.name && c.empty && !c.denied).length;
+  const denied = candidates.filter((c) => c.name && c.denied).length;
+  const parts = [`${ready} ready to push`];
+  if (empty) parts.push(`${empty} empty in .env (not selectable)`);
+  if (denied) parts.push(`${denied} blocked`);
+  return parts.join(" · ");
+}
+
+function paintEnvImportCandidates(report: EnvImportReport) {
+  const list = document.querySelector("#env-import-list");
+  const emptyEl = document.querySelector<HTMLElement>("#env-import-empty");
+  const fileEl = document.querySelector("#env-import-file");
+  const confirmBtn = document.querySelector<HTMLButtonElement>("#env-import-confirm");
+  const candidates = (report.candidates ?? []).filter((c) => c.name);
+  if (fileEl) {
+    const src = report.file
+      ? `Source: ${report.file}`
+      : "Source: local .dev.vars / .env (auto)";
+    fileEl.textContent = candidates.length
+      ? `${src} — ${envImportReadySummary(candidates)}`
+      : src;
+  }
+  if (!list) return;
+  if (!candidates.length) {
+    list.innerHTML = "";
+    if (emptyEl) emptyEl.hidden = false;
+    if (confirmBtn) confirmBtn.disabled = true;
+    return;
+  }
+  if (emptyEl) emptyEl.hidden = true;
+  list.innerHTML = envImportCandidateRowsHtml(candidates, "env-import-name");
+  const syncConfirm = () => {
+    if (!confirmBtn) return;
+    confirmBtn.disabled = !list.querySelector<HTMLInputElement>(
+      ".env-import-name:checked:not(:disabled)",
+    );
+  };
+  list.querySelectorAll<HTMLInputElement>(".env-import-name").forEach((cb) => {
+    cb.addEventListener("change", syncConfirm);
+  });
+  syncConfirm();
+}
+
+async function loadEnvImportNames(provider: string, packId: string) {
+  // Root-relative pack ids (apps/website/.env) — never run under Deploy focus cwd.
+  const args = ["secrets", "--import-env", "--provider", provider, "--dry-run"];
+  if (packId) args.push("--file", packId);
+  const dry = await run(args, {
+    silent: true,
+    quietToast: true,
+    quietHeader: true,
+    busyLabel: "Reading env pack…",
+  });
+  if (!dry) return null;
+  if (!dry.ok) {
+    toast(
+      dry.stderr.trim().slice(0, 180) || "Env dry-run failed — pick another pack",
+      "err",
+      7000,
+    );
+    return null;
+  }
+  try {
+    return JSON.parse(dry.stdout.trim() || "{}") as EnvImportReport;
+  } catch {
+    toast("Could not read env import plan — see Output", "err");
+    return null;
+  }
+}
+
+async function openEnvImportDialog(wiz: ProviderWizard) {
+  const provider = (wiz.provider ?? "").trim().toLowerCase();
+  if (!providerHasEnvPut(provider)) {
+    toast("Import env is for Cloudflare / Vercel / Netlify / Fly / Railway", "info");
+    return;
+  }
+  if (!projectPath()) {
+    toast("Bind a project first", "info");
+    return;
+  }
+  const gate = evaluateStructureGate(wiz.id, lastDetected, { projectPath: projectPath() });
+  if (gate && !gate.ok) {
+    toast(gate.reason, "info", 9000, structureGateToastActions(gate));
+    // Soft — Import may still help after rebind; dialog continues.
+  }
+  pendingEnvImportWiz = wiz;
+  const dlg = document.querySelector<HTMLElement>("#env-import-dialog");
+  const titleEl = document.querySelector("#env-import-dialog-title");
+  const blurbEl = document.querySelector("#env-import-dialog-blurb");
+  const confirmBtn = document.querySelector<HTMLButtonElement>("#env-import-confirm");
+  if (titleEl) titleEl.textContent = `Import env · ${wiz.title}`;
+  if (blurbEl) {
+    blurbEl.textContent =
+      "Pick the app pack, then confirm names. Values stay on this PC → host CLI only. Not saved in Orbit Yard.";
+  }
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "Push to host";
+  }
+  const thenDeploy = document.querySelector<HTMLInputElement>("#env-import-then-deploy");
+  if (thenDeploy) {
+    thenDeploy.checked = false;
+    // Tier B (Fly/Railway): Import only — no Orbit hostdeploy stream.
+    thenDeploy.disabled = !isHostedCliDeployCard(wiz.id);
+    const thenLabel = thenDeploy.closest("label");
+    if (thenLabel) thenLabel.hidden = !isHostedCliDeployCard(wiz.id);
+  }
+
+  // List packs from monorepo root (not focus-only) so Website + API both appear.
+  const listed = await run(["secrets", "--list-packs"], {
+    silent: true,
+    quietToast: true,
+    quietHeader: true,
+    busyLabel: "Finding env packs…",
+  });
+  if (!listed) {
+    closeEnvImportDialog();
+    return;
+  }
+  if (staleOrbityardCliHint(listed.stderr, listed.stdout)) {
+    toast(
+      "Old orbityard — rebuild with cargo build -p orbityard (and --release), restart Desktop, then retry",
+      "err",
+      12000,
+    );
+    closeEnvImportDialog();
+    return;
+  }
+  let packsReport: EnvPacksReport = {};
+  try {
+    packsReport = JSON.parse(listed.stdout.trim() || "{}") as EnvPacksReport;
+  } catch {
+    toast("Could not list env packs", "err");
+    closeEnvImportDialog();
+    return;
+  }
+  const packs = packsReport.packs ?? [];
+  if (!listed.ok || !packs.length) {
+    toast(
+      "No .env / .dev.vars found under scopes — e.g. apps/website/.env (not only the repo root)",
+      "err",
+      8000,
+    );
+    closeEnvImportDialog();
+    return;
+  }
+
+  if (dlg) dlg.hidden = false;
+
+  if (packs.length === 1) {
+    const only = packs[0];
+    pendingEnvImportPackId = only?.id || only?.file || "";
+    pendingEnvImportPackDir = only?.rel_dir || "";
+    const report = await loadEnvImportNames(provider, pendingEnvImportPackId);
+    if (!report) {
+      closeEnvImportDialog();
+      return;
+    }
+    pendingEnvImportFile = report.file ?? pendingEnvImportPackId;
+    paintEnvImportCandidates(report);
+    showEnvImportStep("names");
+    return;
+  }
+
+  paintEnvPackGrid(packs, provider);
+  showEnvImportStep("packs");
+}
+
+async function continueEnvImportFromPack() {
+  const wiz = pendingEnvImportWiz;
+  if (!wiz?.provider || !pendingEnvImportPackId) {
+    toast("Select an env pack first", "info");
+    return;
+  }
+  const provider = wiz.provider.trim().toLowerCase();
+  // Align Deploy-after with the same ship unit directory.
+  if (pendingEnvImportPackDir && pendingEnvImportPackDir !== ".") {
+    const abs = scopeAbsolutePath(pendingEnvImportPackDir);
+    if (abs) lastDeployFocusProject = abs;
+  }
+  const report = await loadEnvImportNames(provider, pendingEnvImportPackId);
+  if (!report) return;
+  pendingEnvImportFile = report.file ?? pendingEnvImportPackId;
+  paintEnvImportCandidates(report);
+  showEnvImportStep("names");
+}
+
+async function confirmEnvImport() {
+  const wiz = pendingEnvImportWiz;
+  if (!wiz?.provider) {
+    closeEnvImportDialog();
+    return;
+  }
+  const provider = wiz.provider.trim().toLowerCase();
+  const selected = Array.from(
+    document.querySelectorAll<HTMLInputElement>(".env-import-name:checked:not(:disabled)"),
+  )
+    .map((el) => el.getAttribute("data-name") ?? "")
+    .filter(Boolean);
+  if (!selected.length) {
+    toast("Select at least one name to push", "info");
+    return;
+  }
+  const thenDeploy = Boolean(
+    document.querySelector<HTMLInputElement>("#env-import-then-deploy")?.checked,
+  );
+  const file = pendingEnvImportFile;
+  const packId = pendingEnvImportPackId;
+  const focusOverride =
+    pendingEnvImportPackDir && pendingEnvImportPackDir !== "."
+      ? scopeAbsolutePath(pendingEnvImportPackDir)
+      : lastDeployFocusProject;
+  closeEnvImportDialog();
+
+  const args = ["secrets", "--import-env", "--provider", provider, "--yes"];
+  // Prefer --file from monorepo root so pack ids like apps/website/.env resolve.
+  if (file) args.push("--file", file);
+  else if (packId) args.push("--file", packId);
+  const hostName = (lastHostDeployName || defaultHostProjectName()).trim();
+  if (hostName) args.push("--host-name", hostName);
+  for (const name of selected) {
+    args.push("--name", name);
+  }
+  applyOutputDock(true);
+  const result = await run(args, {
+    quietToast: true,
+    busyLabel: "Pushing secrets…",
+  });
+  if (!result) return;
+  if (result.cancelled) {
+    toast("Env import cancelled", "ok", 3500);
+    return;
+  }
+  const report = parseEnvImportReport(result.stdout) ?? {};
+  const okCount = (report.put ?? []).filter((p) => p.ok).length;
+  const failCount = (report.put ?? []).filter((p) => !p.ok).length;
+  if (result.ok && failCount === 0) {
+    toast(
+      okCount
+        ? `Pushed ${okCount} secret(s) to ${wiz.title} — values not stored in Studio`
+        : "Import finished — nothing to push",
+      "ok",
+      5500,
+    );
+  } else {
+    const detail = firstImportPutError(report);
+    const missingProject = importErrorIsMissingProject(
+      detail,
+      result.stderr,
+      result.stdout,
+    );
+    toast(
+      missingProject
+        ? `Env import: host project missing — Deploy once to create it, then Import again`
+        : detail
+          ? `Env import: ${okCount} ok, ${failCount || "?"} failed — ${detail}`
+          : `Env import: ${okCount} ok, ${failCount || "?"} failed — names only in Output`,
+      "err",
+      9000,
+    );
+  }
+  if (thenDeploy && result.ok && failCount === 0 && isHostedCliDeployCard(wiz.id)) {
+    if (focusOverride) lastDeployFocusProject = focusOverride;
+    void runHostedCliDeploy(wiz);
+  }
+}
+
+async function openHostDeployDialog(wiz: ProviderWizard) {
   pendingHostDeployWiz = wiz;
   const dlg = document.querySelector<HTMLElement>("#host-deploy-dialog");
   const titleEl = document.querySelector("#host-deploy-dialog-title");
@@ -4153,14 +5401,11 @@ function openHostDeployDialog(wiz: ProviderWizard) {
     void runHostedCliDeploy(wiz, { skipConfirm: true });
     return;
   }
+  const provider = (wiz.provider ?? wiz.id).toLowerCase();
   if (titleEl) titleEl.textContent = `Deploy · ${wiz.title}`;
   if (blurbEl) {
     blurbEl.textContent =
-      wiz.id === "cloudflare"
-        ? "Confirm the Pages/Workers project name. Studio streams wrangler on this machine — Login CLI once if needed."
-        : wiz.id === "vercel"
-          ? "Confirm deploy. Vercel uses the linked project or creates from this folder name (`vercel --prod --yes`)."
-          : "Confirm the Netlify site name. Studio streams `netlify deploy --prod` and creates the site if it is not linked yet.";
+      "Choose the app target and .env pack, then Deploy. Secrets stay on this PC → host CLI; hosts still bill you.";
   }
   const remembered =
     lastHostDeployName ||
@@ -4168,24 +5413,323 @@ function openHostDeployDialog(wiz: ProviderWizard) {
       ? localStorage.getItem(`ship.hostdeploy.name.${wiz.id}`) || ""
       : "");
   nameInput.value = remembered || defaultHostProjectName();
-  // Cloudflare + Netlify honor --name; Vercel still uses linked project / folder.
-  nameInput.readOnly = wiz.id === "vercel";
+  // Fly/Railway app identity comes from fly.toml / railway link — name is display-only.
+  nameInput.readOnly = wiz.id === "fly" || wiz.id === "railway";
   if (metaEl) {
     metaEl.textContent =
       wiz.id === "cloudflare"
-        ? "Lane: Cloudflare Pages (or Workers if wrangler.toml) · create-if-missing · then deploy"
+        ? "Lane: Cloudflare · create-if-missing · then deploy"
         : wiz.id === "vercel"
-          ? "Lane: Vercel production · name shown for reference (CLI link wins when present)"
-          : "Lane: Netlify production · editable site name (--site / create-if-missing)";
+          ? "Lane: Vercel production · project name → vercel --project"
+          : wiz.id === "fly"
+            ? "Lane: Fly · needs fly.toml from `fly launch` (human) · then fly deploy"
+            : wiz.id === "railway"
+              ? "Lane: Railway · needs `railway link` (human) · then railway up"
+              : "Lane: Netlify production · editable site name";
   }
+
   dlg.hidden = false;
+  showHostDeployStep("setup");
+
+  // Load scopes + packs (bound monorepo root — not focus-only).
+  let scopes = lastScopes?.scopes ?? [];
+  if (!scopes.length) {
+    const plan = (await loadJsonCmd(["scopes", "--project", projectPath()], {
+      silent: true,
+    })) as ScopePlan | null;
+    if (plan) {
+      applyScopes(plan);
+      scopes = plan.scopes ?? [];
+    }
+  }
+  const listed = await run(["secrets", "--list-packs"], {
+    silent: true,
+    quietToast: true,
+    quietHeader: true,
+    busyLabel: "Finding targets…",
+  });
+  pendingHostDeployPacks = [];
+  if (listed && staleOrbityardCliHint(listed.stderr, listed.stdout)) {
+    toast(
+      "Desktop is using an old orbityard — rebuild: cargo build -p orbityard (debug+release), then restart Desktop",
+      "err",
+      12000,
+    );
+  } else if (listed?.ok) {
+    try {
+      const report = JSON.parse(listed.stdout.trim() || "{}") as EnvPacksReport;
+      pendingHostDeployPacks = report.packs ?? [];
+    } catch {
+      /* ignore */
+    }
+  }
+  paintHostDeployTargets(scopes, provider);
   nameInput.focus();
   nameInput.select();
 }
 
 /** Opens confirm dialog for hosted CLI Deploy (Self-host stays one-click). */
 function promptHostedCliDeploy(wiz: ProviderWizard): void {
-  openHostDeployDialog(wiz);
+  void openHostDeployDialog(wiz);
+}
+
+function offerDeployWithoutImport(
+  wiz: ProviderWizard,
+  name: string,
+  focusAbs: string | null,
+  message: string,
+  opts?: { switchHint?: string; targetRel?: string; packId?: string },
+) {
+  // F2 — one recovery only (mismatch → Switch; else Deploy without import).
+  const hint = (opts?.switchHint || "").toLowerCase();
+  const actions: ToastAction[] = [];
+  if (hint && providerHasEnvPut(hint)) {
+    const title =
+      PLATFORM_WIZARDS.find((w) => (w.provider || w.id).toLowerCase() === hint)?.title || hint;
+    const restoreTarget = opts?.targetRel || "";
+    const restorePack = opts?.packId || "";
+    actions.push({
+      id: "switch_hint_deploy",
+      label: `Switch to ${title}`,
+      icon: "continue",
+      run: () => {
+        const target = PLATFORM_WIZARDS.find(
+          (w) => (w.provider || w.id).toLowerCase() === hint,
+        );
+        if (!target || !isHostedCliDeployCard(target.id)) {
+          toast(`No Deploy dialog for ${hint}`, "info", 5000);
+          if (target) selectPlatform(target.id);
+          return;
+        }
+        pendingHostDeployRestore = { targetRel: restoreTarget, packId: restorePack };
+        selectPlatform(target.id);
+        void openHostDeployDialog(target);
+      },
+    });
+  } else {
+    actions.push({
+      id: "deploy_without_import",
+      label: "Deploy without import",
+      icon: "continue",
+      run: () => {
+        if (focusAbs) lastDeployFocusProject = focusAbs;
+        void runHostedCliDeploy(wiz, { name, skipConfirm: true });
+      },
+    });
+  }
+  const msg =
+    hint && providerHasEnvPut(hint)
+      ? `${message} — Next: switch host card (Output has details).`
+      : `${message} — Next: Deploy without import (Output has details).`;
+  toast(msg, "err", 14000, actions);
+}
+
+function paintHostDeployImportCandidates(report: EnvImportReport) {
+  const list = document.querySelector("#host-deploy-import-list");
+  const emptyEl = document.querySelector<HTMLElement>("#host-deploy-import-empty");
+  const fileEl = document.querySelector("#host-deploy-import-file");
+  const confirmBtn = document.querySelector<HTMLButtonElement>("#host-deploy-confirm-import");
+  const candidates = (report.candidates ?? []).filter((c) => c.name);
+  if (fileEl) {
+    const base = report.file
+      ? `Confirm names to push → ${report.file}`
+      : "Confirm names to push";
+    fileEl.textContent = candidates.length
+      ? `${base} — ${envImportReadySummary(candidates)}`
+      : base;
+  }
+  if (!list) return;
+  if (!candidates.length) {
+    list.innerHTML = "";
+    if (emptyEl) emptyEl.hidden = false;
+    if (confirmBtn) confirmBtn.disabled = true;
+    return;
+  }
+  if (emptyEl) emptyEl.hidden = true;
+  list.innerHTML = envImportCandidateRowsHtml(candidates, "host-deploy-import-name");
+  const syncConfirm = () => {
+    if (!confirmBtn) return;
+    confirmBtn.disabled = !list.querySelector<HTMLInputElement>(
+      ".host-deploy-import-name:checked:not(:disabled)",
+    );
+  };
+  list.querySelectorAll<HTMLInputElement>(".host-deploy-import-name").forEach((cb) => {
+    cb.addEventListener("change", syncConfirm);
+  });
+  syncConfirm();
+}
+
+async function runHostDeployImportThenDeploy(
+  wiz: ProviderWizard,
+  provider: string,
+  packId: string,
+  selectedNames: string[],
+  deployName: string,
+  focusAbs: string | null,
+  packHint = "",
+) {
+  const args = [
+    "secrets",
+    "--import-env",
+    "--provider",
+    provider,
+    "--file",
+    packId,
+    "--yes",
+  ];
+  const hostName = deployName.trim();
+  if (hostName) args.push("--host-name", hostName);
+  for (const n of selectedNames) args.push("--name", n);
+  applyOutputDock(true);
+  const putResult = await run(args, {
+    quietToast: true,
+    busyLabel: "Importing env…",
+  });
+  if (!putResult) return;
+  const packDir = packId.includes("/")
+    ? packId.replace(/\\/g, "/").replace(/\/[^/]+$/, "") || "."
+    : ".";
+  const mismatchOpts =
+    packHint && packHint !== provider
+      ? { switchHint: packHint, targetRel: packDir, packId }
+      : undefined;
+  if (putResult.cancelled) {
+    offerDeployWithoutImport(
+      wiz,
+      deployName,
+      focusAbs,
+      "Env import cancelled — Deploy without import if you want",
+      mismatchOpts,
+    );
+    return;
+  }
+  if (staleOrbityardCliHint(putResult.stderr, putResult.stdout)) {
+    toast("Old orbityard binary — rebuild CLI, then retry Deploy", "err", 10000);
+    return;
+  }
+  if (!putResult.ok) {
+    const blob = `${putResult.stderr}\n${putResult.stdout}`;
+    const missingCli = /\[missing_cli\]|not on PATH|program not found/i.test(blob);
+    const report = parseEnvImportReport(putResult.stdout);
+    const detail = firstImportPutError(report);
+    const missingProject = importErrorIsMissingProject(
+      detail,
+      putResult.stderr,
+      putResult.stdout,
+    );
+    const base = missingCli
+      ? `Env import: ${wiz.title} CLI missing [missing_cli] — Deploy without import, or install CLI`
+      : missingProject
+        ? `Env import: Pages project “${deployName}” missing — Deploy without import creates it, then Import again`
+        : detail
+          ? `Env import failed — ${detail}`
+          : "Env import failed — see Output; Deploy without import if you want";
+    offerDeployWithoutImport(wiz, deployName, focusAbs, base, mismatchOpts);
+    return;
+  }
+  toast("Env pushed to host — starting Deploy", "ok", 3500);
+  if (focusAbs) lastDeployFocusProject = focusAbs;
+  await runHostedCliDeploy(wiz, { name: deployName, skipConfirm: true });
+}
+
+/** Setup step → optional name confirm (A3) → put → Deploy. */
+async function confirmHostDeployAllInOne() {
+  const wiz = pendingHostDeployWiz;
+  const nameInput = document.querySelector<HTMLInputElement>("#host-deploy-name");
+  if (!wiz) {
+    closeHostDeployDialog();
+    return;
+  }
+  const name = (nameInput?.value ?? "").trim() || defaultHostProjectName();
+  const provider = (wiz.provider ?? wiz.id).toLowerCase();
+  const importEnv = Boolean(
+    document.querySelector<HTMLInputElement>("#host-deploy-import-env")?.checked,
+  );
+  const packId = pendingHostDeployEnvPackId;
+  const targetRel = pendingHostDeployTargetRel || ".";
+  const focusAbs =
+    targetRel && targetRel !== "." ? scopeAbsolutePath(targetRel) : null;
+  if (focusAbs) lastDeployFocusProject = focusAbs;
+
+  if (importEnv && packId && providerHasEnvPut(provider)) {
+    if (hostDeployImportMismatch(provider)) {
+      const hint = hostDeployPackHint();
+      const title =
+        PLATFORM_WIZARDS.find((w) => (w.provider || w.id).toLowerCase() === hint)?.title ||
+        hint;
+      toast(
+        `Import will push to ${provider}, not ${hint}. Switch Deploy card or leave Import off.`,
+        "info",
+        10000,
+        [
+          {
+            id: "switch_before_import",
+            label: `Switch to ${title}`,
+            icon: "continue",
+            run: () => {
+              const targetRel = pendingHostDeployTargetRel;
+              const restorePack = pendingHostDeployEnvPackId;
+              const target = PLATFORM_WIZARDS.find(
+                (w) => (w.provider || w.id).toLowerCase() === hint,
+              );
+              closeHostDeployDialog();
+              if (!target || !isHostedCliDeployCard(target.id)) {
+                if (target) selectPlatform(target.id);
+                return;
+              }
+              pendingHostDeployRestore = { targetRel, packId: restorePack };
+              selectPlatform(target.id);
+              void openHostDeployDialog(target);
+            },
+          },
+        ],
+      );
+      // Still allow names step if they insist — warn stays visible on file line.
+    }
+    const report = await loadEnvImportNames(provider, packId);
+    if (!report) return;
+    paintHostDeployImportCandidates(report);
+    showHostDeployStep("names");
+    const fileEl = document.querySelector("#host-deploy-import-file");
+    if (fileEl && hostDeployImportMismatch(provider)) {
+      const hint = hostDeployPackHint();
+      const summary = envImportReadySummary(
+        (report.candidates ?? []).filter((c) => c.name),
+      );
+      fileEl.textContent = `Confirm names to push → ${report.file || packId} (to ${provider}, pack hints ${hint}) — ${summary}`;
+    }
+    const pushBtn = document.querySelector<HTMLButtonElement>("#host-deploy-confirm-import");
+    if (pushBtn) {
+      pushBtn.onclick = () => {
+        const selected = Array.from(
+          document.querySelectorAll<HTMLInputElement>(
+            ".host-deploy-import-name:checked:not(:disabled)",
+          ),
+        )
+          .map((el) => el.getAttribute("data-name") ?? "")
+          .filter(Boolean);
+        if (!selected.length) {
+          toast("Select at least one name to push", "info");
+          return;
+        }
+        const hintAtConfirm = hostDeployPackHint();
+        closeHostDeployDialog();
+        void runHostDeployImportThenDeploy(
+          wiz,
+          provider,
+          packId,
+          selected,
+          name,
+          focusAbs,
+          hintAtConfirm,
+        );
+      };
+    }
+    return;
+  }
+
+  closeHostDeployDialog();
+  await runHostedCliDeploy(wiz, { name, skipConfirm: true });
 }
 
 async function ensureProviderCliAuth(
@@ -4290,6 +5834,11 @@ async function runHostedCliDeploy(
     promptHostedCliDeploy(wiz);
     return;
   }
+  if (isHardStructureLane(wiz.id)) {
+    const structureOk = await assertStructureProceed(wiz.id);
+    paintPlatformWizard();
+    if (!structureOk) return;
+  }
   const provider = wiz.provider ?? wiz.id;
   const title = wiz.title;
   const name = (opts?.name ?? (lastHostDeployName || defaultHostProjectName())).trim();
@@ -4310,7 +5859,10 @@ async function runHostedCliDeploy(
   cloudEvidenceClearedProvider = null;
   toast(`${title} Deploy — streaming CLI in Output`, "ok", 3500);
   const args = ["hostdeploy", "--provider", provider];
-  if (name && (wiz.id === "cloudflare" || wiz.id === "netlify")) {
+  if (
+    name &&
+    (wiz.id === "cloudflare" || wiz.id === "netlify" || wiz.id === "vercel")
+  ) {
     args.push("--name", name);
   }
   const focus =
@@ -4333,25 +5885,61 @@ async function runHostedCliDeploy(
     return;
   }
   if (result.ok) {
-    toast(
-      `${title} deploy ok — Open dashboard to see the project; Confirm Live check on Publish`,
-      "ok",
-      6500,
-      [
-        {
-          id: "dash",
-          label: "Open dashboard",
-          icon: "open",
-          run: () => {
-            void openHostDashboard(wiz);
-          },
+    const report = parseHostDeployReport(result.stdout);
+    const liveUrl =
+      (report?.urls ?? []).find((u) => /^https:\/\//i.test(u) && !isLoopbackDeployUrl(u)) ||
+      (lastRunState?.urls ?? []).find(
+        (u) => /^https:\/\//i.test(String(u)) && !isLoopbackDeployUrl(String(u)),
+      ) ||
+      "";
+    markProjectShipped(projectPath());
+    const actions: ToastAction[] = [];
+    if (liveUrl) {
+      actions.push({
+        id: "open_live",
+        label: "Open live",
+        icon: "open",
+        run: () => {
+          void openUrl(liveUrl).then(() => toast("Opened live URL", "ok", 2800));
         },
-      ],
+      });
+    }
+    // F5 — one secondary: next local repo, else vendor dashboard.
+    const next = nextShipCandidate(projectPath());
+    if (next) {
+      const name = projectName(next);
+      actions.push({
+        id: "next_ship",
+        label: `Next ship: ${name}`,
+        icon: "continue",
+        run: () => {
+          void bindProject(next, true);
+        },
+      });
+    } else {
+      actions.push({
+        id: "dash",
+        label: "Open dashboard",
+        icon: "open",
+        run: () => {
+          void openHostDashboard(wiz);
+        },
+      });
+    }
+    toast(
+      liveUrl
+        ? `${title} deploy ok — ${liveUrl}`
+        : `${title} deploy ok — no public URL in CLI output; Open dashboard to confirm`,
+      "ok",
+      liveUrl ? 10000 : 8000,
+      actions,
     );
+    paintDeployResultsBay();
+    paintNextShip();
     return;
   }
   const recovery = classifyHostDeployFailure(errText, provider);
-  // Auth mid-deploy: auto-open Login CLI (same redirect path as preflight).
+  // Auth mid-deploy: auto-open Login CLI; F2 toast CTA is the single next step after sign-in.
   if (recovery.kind === "auth") {
     void openPortalLoginTerminal(provider);
   }
@@ -4359,7 +5947,12 @@ async function runHostedCliDeploy(
     {
       id: "primary",
       label: recovery.kind === "auth" ? "Retry Deploy" : recovery.label,
-      icon: recovery.action === "login_cli" || recovery.action === "retry_deploy" ? "continue" : "open",
+      icon:
+        recovery.kind === "auth" ||
+        recovery.action === "login_cli" ||
+        recovery.action === "retry_deploy"
+          ? "continue"
+          : "open",
       run: () => {
         if (recovery.kind === "auth") {
           void runHostedCliDeploy(wiz, { name, skipConfirm: true });
@@ -4369,38 +5962,10 @@ async function runHostedCliDeploy(
       },
     },
   ];
-  if (recovery.kind === "auth") {
-    toastActions.push({
-      id: "login",
-      label: "Login CLI",
-      icon: "open",
-      run: () => {
-        void openPortalLoginTerminal(provider);
-      },
-    });
-  } else if (recovery.action === "open_dashboard" || recovery.kind === "account") {
-    toastActions.push({
-      id: "retry",
-      label: "Retry Deploy",
-      icon: "continue",
-      run: () => {
-        void runHostedCliDeploy(wiz, { name, skipConfirm: true });
-      },
-    });
-  } else if (recovery.action === "preview_log") {
-    toastActions.push({
-      id: "dash",
-      label: "Open dashboard",
-      icon: "open",
-      run: () => {
-        void openHostDashboard(wiz);
-      },
-    });
-  }
   toast(
     recovery.kind === "auth"
-      ? `${title}: sign in required — Login CLI opened; Retry Deploy when done`
-      : `${title}: ${recovery.hint}`,
+      ? `${title}: Next — finish Login CLI, then Retry Deploy`
+      : `${title}: Next — ${recovery.hint}`,
     "err",
     11000,
     toastActions,
@@ -4614,44 +6179,42 @@ function classifyOverall(pulse: ProjectPulse): {
     const dirtyNote = pulse.git?.dirty
       ? ` · ${pulse.git.dirty_count ?? "?"} uncommitted — not “all shipped”`
       : "";
+    const url = hostedDeployUrls(pulse.deploy)[0];
     return {
       state: "deployed",
-      badge: "Deployed",
-      title:
-        pulse.deploy?.signal === "yard_deployed"
-          ? "Already live (Orbit)"
-          : "Already deployed",
+      badge: "Live",
+      title: url ? "Public URL ready" : "Already live",
       detail:
-        (hostedDeployUrls(pulse.deploy)[0] ||
+        (url ||
           pulse.deploy?.detail ||
-          "Prior successful hosted deploy — redeploy only if you intend to.") + dirtyNote,
+          "Prior successful deploy — Open live when you want to verify.") + dirtyNote,
     };
   }
   if (selfhostOk) {
     return {
       state: "ready",
       badge: "Self-host",
-      title: "Local self-host ready",
+      title: "Local loopback ready",
       detail:
         pulse.deploy?.urls?.[0] ||
         pulse.deploy?.detail ||
-        "Self-host local check ok — not a cloud host.",
+        "Serving on this machine — not a public host URL.",
     };
   }
   if (linked) {
     return {
       state: "ready",
-      badge: "Linked",
-      title: "Provider linked",
-      detail: pulse.deploy?.detail || "Configured locally — deploy when you need a new release.",
+      badge: "Ready",
+      title: "Host linked — get live when ready",
+      detail: pulse.deploy?.detail || "Configured locally — Deploy for a public URL.",
     };
   }
   if (localOnly) {
     return {
       state: "ready",
       badge: "Local only",
-      title: "Wrangler local state",
-      detail: "Dev/miniflare cache — not proof of a remote Workers deploy.",
+      title: "Dev cache only",
+      detail: "Local wrangler state — not proof of a public URL.",
     };
   }
   if (pulse.git?.dirty) {
@@ -4927,7 +6490,7 @@ async function openRelatedStudioView(view: string): Promise<boolean> {
   } else if (id === "launch") {
     await refreshLaunch();
   } else if (id === "platforms") {
-    openPlatformsCatalog({ preferGroup: "Hosting" });
+    openPlatformsCatalog();
   } else if (id === "tools") {
     /* stay — doctor available on Tools */
   } else if (id === "dashboard") {
@@ -5195,71 +6758,248 @@ function wireWindowChrome() {
   });
 }
 
+function normalizeRecentPath(path: string): string {
+  return path.trim().replace(/[/\\]+$/, "");
+}
+
+function recentPathKey(path: string): string {
+  return normalizeRecentPath(path).replace(/\\/g, "/").toLowerCase();
+}
+
 function loadRecent(): string[] {
   try {
     const raw = localStorage.getItem(RECENT_KEY);
     const parsed = raw ? (JSON.parse(raw) as string[]) : [];
-    return Array.isArray(parsed) ? parsed.filter((p) => typeof p === "string") : [];
+    if (!Array.isArray(parsed)) return [];
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const p of parsed) {
+      if (typeof p !== "string" || !p.trim()) continue;
+      const norm = normalizeRecentPath(p);
+      const key = recentPathKey(norm);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(norm);
+    }
+    return out;
   } catch {
     return [];
   }
 }
 
+function persistRecent(list: string[]) {
+  const capped = list.slice(0, MAX_RECENT);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(capped));
+  renderRecent(capped);
+}
+
+async function pathIsDir(path: string): Promise<boolean> {
+  try {
+    return await invoke<boolean>("path_is_dir", { path });
+  } catch {
+    return false;
+  }
+}
+
+/** Drop folders that were renamed, moved, or deleted. */
+async function pruneMissingRecents(): Promise<string[]> {
+  const list = loadRecent();
+  const kept: string[] = [];
+  for (const p of list) {
+    if (await pathIsDir(p)) kept.push(p);
+  }
+  if (kept.length !== list.length) {
+    persistRecent(kept);
+    const last = localStorage.getItem(LAST_PROJECT_KEY);
+    if (last && !kept.some((p) => recentPathKey(p) === recentPathKey(last))) {
+      localStorage.removeItem(LAST_PROJECT_KEY);
+    }
+  } else {
+    renderRecent(kept);
+  }
+  return kept;
+}
+
+function removeRecent(path: string) {
+  const key = recentPathKey(path);
+  const next = loadRecent().filter((p) => recentPathKey(p) !== key);
+  persistRecent(next);
+  const last = localStorage.getItem(LAST_PROJECT_KEY);
+  if (last && recentPathKey(last) === key) {
+    localStorage.removeItem(LAST_PROJECT_KEY);
+  }
+  toast(`Removed ${projectName(path)} from recents`, "ok", 2500);
+}
+
+async function openRecentProject(path: string) {
+  if (!(await pathIsDir(path))) {
+    removeRecent(path);
+    toast(
+      `${projectName(path)} is no longer available — removed from recents`,
+      "info",
+      6000,
+    );
+    return;
+  }
+  await bindProject(path, true);
+}
+
+function loadShippedAt(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(SHIPPED_AT_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+/** F5 — mark current folder as shipped this pass (local map only). */
+function markProjectShipped(path: string | null | undefined) {
+  const p = (path ?? "").trim();
+  if (!p) return;
+  const map = loadShippedAt();
+  map[p] = new Date().toISOString();
+  try {
+    localStorage.setItem(SHIPPED_AT_KEY, JSON.stringify(map));
+  } catch {
+    /* ignore quota */
+  }
+  paintNextShip();
+}
+
+/**
+ * F5 — next local recent to ship: prefer not-yet-shipped (or older ship), skip current.
+ * No cloud portfolio hub.
+ */
+function nextShipCandidate(current?: string | null): string | null {
+  const cur = (current ?? projectPath() ?? "").trim();
+  const shipped = loadShippedAt();
+  const others = loadRecent().filter((p) => p && p !== cur);
+  if (!others.length) return null;
+  const unshipped = others.filter((p) => !shipped[p]);
+  if (unshipped.length) return unshipped[0] ?? null;
+  // All shipped recently — MRU among others (oldest ship first if timestamps differ).
+  const ranked = [...others].sort((a, b) => {
+    const ta = Date.parse(shipped[a] ?? "") || 0;
+    const tb = Date.parse(shipped[b] ?? "") || 0;
+    return ta - tb;
+  });
+  return ranked[0] ?? null;
+}
+
+function paintNextShip() {
+  const card = document.querySelector<HTMLElement>("#next-ship");
+  const body = document.querySelector("#next-ship-body");
+  const btn = document.querySelector<HTMLButtonElement>("#next-ship-open");
+  if (!card || !body || !btn) return;
+  const current = projectPath();
+  const next = nextShipCandidate(current);
+  const showCue =
+    Boolean(next) &&
+    (!current ||
+      Boolean(lastPublish?.finished) ||
+      Boolean(lastPulse?.publish?.finished) ||
+      Boolean(
+        (lastPulse?.deploy?.urls ?? lastRunState?.urls ?? []).some(
+          (u) => /^https:\/\//i.test(String(u)) && !isLoopbackDeployUrl(String(u)),
+        ),
+      ));
+  if (!next || !showCue) {
+    card.hidden = true;
+    body.textContent = "";
+    btn.dataset.path = "";
+    return;
+  }
+  const name = projectName(next);
+  card.hidden = false;
+  body.textContent = current
+    ? `This folder’s cut can wait — open ${name} next (local recents only · no cloud hub).`
+    : `Continue with ${name} from local recents — Get live spine, same machine.`;
+  btn.dataset.path = next;
+  btn.textContent = `Open ${name}`;
+}
+
 function saveRecent(path: string) {
-  const next = [path, ...loadRecent().filter((p) => p !== path)].slice(0, MAX_RECENT);
-  localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-  localStorage.setItem(LAST_PROJECT_KEY, path);
-  renderRecent(next);
+  const norm = normalizeRecentPath(path);
+  const key = recentPathKey(norm);
+  const next = [norm, ...loadRecent().filter((p) => recentPathKey(p) !== key)].slice(
+    0,
+    MAX_RECENT,
+  );
+  localStorage.setItem(LAST_PROJECT_KEY, norm);
+  persistRecent(next);
+}
+
+function recentChipHtml(p: string): string {
+  return `<span class="recent-chip" title="${escapeHtml(p)}">
+    <button type="button" class="recent-open" data-recent="${escapeHtml(p)}">${escapeHtml(projectName(p))}</button>
+    <button type="button" class="recent-remove" data-remove-recent="${escapeHtml(p)}" title="Remove from history" aria-label="Remove ${escapeHtml(projectName(p))} from history">×</button>
+  </span>`;
+}
+
+function wireRecentChips(root: ParentNode) {
+  root.querySelectorAll<HTMLButtonElement>("button[data-recent]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const p = btn.getAttribute("data-recent");
+      if (p) void openRecentProject(p);
+    });
+  });
+  root.querySelectorAll<HTMLButtonElement>("button[data-remove-recent]").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const p = btn.getAttribute("data-remove-recent");
+      if (p) removeRecent(p);
+    });
+  });
 }
 
 function renderRecent(list: string[]) {
   const host = document.querySelector<HTMLElement>("#recent-list");
   const dash = document.querySelector<HTMLElement>("#dash-recents");
+  const dashKicker = document.querySelector<HTMLElement>("#dash-recents-kicker");
+  const historyBtn = document.querySelector<HTMLButtonElement>("#btn-recent-history");
   const current = projectPath();
-  const others = list.filter((p) => p !== current);
-  const html = others
-    .map(
-      (p) =>
-        `<button type="button" data-recent="${escapeHtml(p)}" title="${escapeHtml(p)}">${escapeHtml(projectName(p))}</button>`,
-    )
-    .join("");
+  const curKey = current ? recentPathKey(current) : "";
+  const others = list.filter((p) => recentPathKey(p) !== curKey);
+  const pills = others.slice(0, RECENT_PILL_MAX);
+  const html = pills.map((p) => recentChipHtml(p)).join("");
+  const showHistory = list.length > 0;
+  if (historyBtn) {
+    historyBtn.hidden = !showHistory;
+    historyBtn.textContent =
+      others.length > RECENT_PILL_MAX
+        ? `All projects… (${list.length})`
+        : "All projects…";
+  }
   if (host) {
-    if (others.length === 0) {
+    if (pills.length === 0) {
       host.hidden = true;
       host.innerHTML = "";
     } else {
       host.hidden = false;
       host.innerHTML = html;
-      host.querySelectorAll<HTMLButtonElement>("button[data-recent]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const p = btn.getAttribute("data-recent");
-          if (p) void bindProject(p, true);
-        });
-      });
+      wireRecentChips(host);
     }
   }
   if (dash) {
-    if (others.length === 0 && current) {
+    if (pills.length === 0) {
       dash.hidden = true;
       dash.innerHTML = "";
+      if (dashKicker) dashKicker.hidden = true;
     } else {
-      const show = list.filter((p) => p !== current);
-      dash.hidden = show.length === 0;
-      dash.innerHTML = show
-        .map(
-          (p) =>
-            `<button type="button" data-recent="${escapeHtml(p)}" title="${escapeHtml(p)}">${escapeHtml(projectName(p))}</button>`,
-        )
-        .join("");
-      dash.querySelectorAll<HTMLButtonElement>("button[data-recent]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const p = btn.getAttribute("data-recent");
-          if (p) void bindProject(p, true);
-        });
-      });
+      dash.hidden = false;
+      if (dashKicker) dashKicker.hidden = false;
+      dash.innerHTML = html;
+      wireRecentChips(dash);
     }
   }
   renderSwitcher(list);
+  if (!document.querySelector<HTMLElement>("#recent-history-dialog")?.hidden) {
+    renderRecentHistoryList();
+  }
+  paintNextShip();
 }
 
 function toggleProjectSwitcher(force?: boolean) {
@@ -5274,22 +7014,114 @@ function renderSwitcher(list: string[]) {
   const host = document.querySelector<HTMLElement>("#switcher-list");
   if (!host) return;
   const current = projectPath();
-  const items = list.length ? list : [];
+  const curKey = current ? recentPathKey(current) : "";
+  const items = list.slice(0, RECENT_PILL_MAX);
   host.innerHTML = items.length
     ? items
         .map((p) => {
-          const on = p === current ? " active" : "";
-          return `<button type="button" class="switcher-item${on}" data-switch="${escapeHtml(p)}">${escapeHtml(projectName(p))}<span>${escapeHtml(p)}</span></button>`;
+          const on = recentPathKey(p) === curKey ? " active" : "";
+          return `<div class="switcher-row${on}">
+            <button type="button" class="switcher-item" data-switch="${escapeHtml(p)}">${escapeHtml(projectName(p))}<span>${escapeHtml(p)}</span></button>
+            <button type="button" class="switcher-remove" data-remove-recent="${escapeHtml(p)}" title="Remove from history" aria-label="Remove ${escapeHtml(projectName(p))}">×</button>
+          </div>`;
         })
         .join("")
-    : `<p class="detail empty-hint">No recents yet — Open folder.</p>`;
+    : `<p class="detail empty-hint">No recents yet — Open folder. Use All projects… to search history.</p>`;
   host.querySelectorAll<HTMLButtonElement>("[data-switch]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const p = btn.getAttribute("data-switch");
       toggleProjectSwitcher(false);
-      if (p) void bindProject(p, true);
+      if (p) void openRecentProject(p);
     });
   });
+  host.querySelectorAll<HTMLButtonElement>("[data-remove-recent]").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const p = btn.getAttribute("data-remove-recent");
+      if (p) removeRecent(p);
+    });
+  });
+}
+
+function recentHistoryQuery(): string {
+  return (
+    document.querySelector<HTMLInputElement>("#recent-history-search")?.value.trim() ?? ""
+  );
+}
+
+function filterRecentHistory(list: string[], query: string): string[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return list;
+  return list.filter((p) => {
+    const name = projectName(p).toLowerCase();
+    const path = p.replace(/\\/g, "/").toLowerCase();
+    return name.includes(q) || path.includes(q);
+  });
+}
+
+function renderRecentHistoryList() {
+  const listEl = document.querySelector<HTMLElement>("#recent-history-list");
+  const emptyEl = document.querySelector<HTMLElement>("#recent-history-empty");
+  const metaEl = document.querySelector("#recent-history-meta");
+  const capEl = document.querySelector("#recent-history-cap");
+  if (capEl) capEl.textContent = String(MAX_RECENT);
+  if (!listEl) return;
+  const all = loadRecent();
+  const matched = filterRecentHistory(all, recentHistoryQuery());
+  const current = projectPath();
+  const curKey = current ? recentPathKey(current) : "";
+  if (metaEl) {
+    metaEl.textContent = recentHistoryQuery()
+      ? `${matched.length} of ${all.length} match · cap ${MAX_RECENT}`
+      : `${all.length} remembered · cap ${MAX_RECENT}`;
+  }
+  listEl.innerHTML = matched
+    .map((p) => {
+      const on = recentPathKey(p) === curKey ? " is-current" : "";
+      return `<div class="recent-history-row${on}" role="option">
+        <button type="button" class="recent-history-open" data-history-open="${escapeHtml(p)}">
+          <span class="recent-history-name">${escapeHtml(projectName(p))}</span>
+          <span class="recent-history-path">${escapeHtml(p)}</span>
+        </button>
+        <button type="button" class="recent-history-remove" data-remove-recent="${escapeHtml(p)}" title="Remove from history" aria-label="Remove ${escapeHtml(projectName(p))}">×</button>
+      </div>`;
+    })
+    .join("");
+  if (emptyEl) emptyEl.hidden = matched.length > 0;
+  listEl.querySelectorAll<HTMLButtonElement>("[data-history-open]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const p = btn.getAttribute("data-history-open");
+      closeRecentHistoryDialog();
+      if (p) void openRecentProject(p);
+    });
+  });
+  listEl.querySelectorAll<HTMLButtonElement>("[data-remove-recent]").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const p = btn.getAttribute("data-remove-recent");
+      if (p) removeRecent(p);
+    });
+  });
+}
+
+function openRecentHistoryDialog() {
+  const dlg = document.querySelector<HTMLElement>("#recent-history-dialog");
+  if (!dlg) return;
+  toggleProjectSwitcher(false);
+  dlg.hidden = false;
+  const search = document.querySelector<HTMLInputElement>("#recent-history-search");
+  if (search) {
+    search.value = "";
+    search.focus();
+  }
+  renderRecentHistoryList();
+}
+
+function closeRecentHistoryDialog() {
+  const dlg = document.querySelector<HTMLElement>("#recent-history-dialog");
+  if (dlg) dlg.hidden = true;
 }
 
 
@@ -5533,8 +7365,14 @@ async function putNamedSecretOnHost(name: string, hintProvider?: string | null):
   await openEnvPutTerminal(host, name);
 }
 
-/** Tier A hosts with a real put CLI — O1 Portal env primary CTA. */
-const ENV_PUT_PROVIDERS = new Set(["cloudflare", "vercel", "netlify"]);
+/** Tier A + B hosts with a real put CLI — O1 Portal env primary CTA. */
+const ENV_PUT_PROVIDERS = new Set([
+  "cloudflare",
+  "vercel",
+  "netlify",
+  "fly",
+  "railway",
+]);
 
 function providerHasEnvPut(provider?: string | null): boolean {
   return Boolean(provider && ENV_PUT_PROVIDERS.has(provider.toLowerCase()));
@@ -6013,9 +7851,11 @@ function applyPublishView(view: PublishView | null, opts?: { reveal?: boolean })
     renderPublishStage(null);
     syncWorkflowCards();
     syncPublishRelated();
+    syncIntegrationsOrientation();
     syncBackToPublish();
     syncPublishGateButtons();
     applyNow(view);
+    paintNextShip();
     return;
   }
   // Do not yank the operator off Scopes/Sign/Env after Open — only jump when asked or already on Publish.
@@ -6091,9 +7931,15 @@ function applyPublishView(view: PublishView | null, opts?: { reveal?: boolean })
   renderPublishStage(view);
   syncWorkflowCards();
   syncPublishRelated();
+  syncIntegrationsOrientation();
   syncBackToPublish();
   syncPublishGateButtons();
   applyNow(view);
+  if (view.finished) {
+    markProjectShipped(projectPath());
+  } else {
+    paintNextShip();
+  }
 }
 
 async function refreshPublish() {
@@ -6371,6 +8217,7 @@ async function tickPublishWatch() {
     document
       .querySelector("#btn-publish-confirm")
       ?.classList.toggle("watch-ready", ok);
+    syncPublishGateButtons();
     if (ok && (!publishWatchLastOk || step !== publishWatchLastStep)) {
       toast(parsed.prompt ?? "Step ready — Confirm on the green button", "ok", 6000);
       const status = await invoke<CmdResult>("run_orbityard", {
@@ -6384,6 +8231,7 @@ async function tickPublishWatch() {
           /* ignore */
         }
       }
+      syncPublishGateButtons();
     }
     publishWatchLastOk = ok;
     publishWatchLastStep = step;
@@ -7024,7 +8872,7 @@ function applyLaunchView(view: LaunchView | null) {
       btn.addEventListener("click", () => {
         const viewId = (btn.getAttribute("data-view") || "").trim();
         if (viewId === "platforms") {
-          openPlatformsCatalog({ preferGroup: "Hosting" });
+          openPlatformsCatalog();
         } else if (viewId === "integrations") {
           setView("integrations");
           renderIntegrations();
@@ -7076,7 +8924,7 @@ function applyLaunchView(view: LaunchView | null) {
     btn.addEventListener("click", () => {
       const viewId = (btn.getAttribute("data-view") || "").trim();
       if (viewId === "platforms") {
-        openPlatformsCatalog({ preferGroup: "Hosting" });
+        openPlatformsCatalog();
       } else if (viewId === "integrations") {
         setView("integrations");
         renderIntegrations();
@@ -7271,8 +9119,14 @@ async function loadPortal(openAll = false) {
 
 function applyDetected(detected?: Detected) {
   lastDetected = detected;
+  // Structure banners must follow detect after rebind (not stay on prior monorepo fail).
+  if (activeViewId === "platforms") paintPlatformWizard();
+  else if (activeViewId === "sign") paintSignWizard();
   const host = document.querySelector<HTMLElement>("#detect-chips");
-  if (!host) return;
+  if (!host) {
+    syncProjectIdentity();
+    return;
+  }
   if (!detected) {
     host.hidden = true;
     host.innerHTML = "";
@@ -7298,6 +9152,9 @@ function applyDetected(detected?: Detected) {
     ["github", detected.github && !detected.marketing_site],
     ["polar", detected.polar],
     ["orbit", detected.yard_configured],
+    ["umami", detected.umami],
+    ["flowsint", detected.flowsint],
+    ["medusa", detected.medusa],
   ];
   host.hidden = false;
   const onFlags = flags.filter(([, on]) => on);
@@ -7434,9 +9291,21 @@ async function refreshShipState() {
 }
 
 function parseDoctor(stdout: string): DoctorReport | null {
+  const raw = stdout.trim();
+  if (!raw) return null;
   try {
-    return JSON.parse(stdout.trim()) as DoctorReport;
+    return JSON.parse(raw) as DoctorReport;
   } catch {
+    // Stream noise may precede the report — take the last JSON object.
+    const start = raw.lastIndexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      try {
+        return JSON.parse(raw.slice(start, end + 1)) as DoctorReport;
+      } catch {
+        return null;
+      }
+    }
     return null;
   }
 }
@@ -7657,6 +9526,13 @@ async function bindProject(path: string, autoDoctor = true) {
     await run(["doctor", "--project", path], { step: "doctor", quietHeader: true });
     await refreshSessionNow();
   }
+  if (activeViewId === "platforms") {
+    renderPlatforms();
+    paintPlatformWizard();
+  } else if (activeViewId === "sign") {
+    renderSignCatalog();
+    paintSignWizard();
+  }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -7755,6 +9631,15 @@ window.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#dash-open")?.addEventListener("click", () => {
     document.querySelector<HTMLButtonElement>("#btn-open")?.click();
   });
+  document.querySelector("#next-ship-open")?.addEventListener("click", () => {
+    const path =
+      document.querySelector<HTMLButtonElement>("#next-ship-open")?.dataset.path?.trim() ?? "";
+    if (!path) {
+      toast("No other local recent — Open folder for the next repo", "info", 5000);
+      return;
+    }
+    void bindProject(path, true);
+  });
   document.querySelector("#now-primary")?.addEventListener("click", () => {
     if (!projectPath()) {
       document.querySelector<HTMLButtonElement>("#btn-open")?.click();
@@ -7846,6 +9731,9 @@ window.addEventListener("DOMContentLoaded", () => {
       handoffGenericHint: "Back on Publish — Confirm the current gate when ready",
     });
   });
+  document.querySelector("#int-gate-orient-go")?.addEventListener("click", () => {
+    goToCurrentPublishGate();
+  });
   document.querySelector("#int-continue-publish")?.addEventListener("click", () => {
     const stepId = INTEGRATION_PUBLISH_STEP[selectedIntegration] ?? null;
     void continuePublishingHandoff({
@@ -7873,6 +9761,23 @@ window.addEventListener("DOMContentLoaded", () => {
     if (offline() && isHostedCliDeployCard(wiz.id)) {
       ensureHostingReady({ toastOk: true });
     }
+    // Hard spawn lanes: Self-host / Umami / Flowsint / Medusa here; cloud hostdeploy asserts inside runHostedCliDeploy.
+    if (
+      wiz.id === "selfhost" ||
+      wiz.id === "umami" ||
+      wiz.id === "flowsint" ||
+      wiz.id === "medusa"
+    ) {
+      const structureOk = await assertStructureProceed(wiz.id);
+      paintPlatformWizard();
+      if (!structureOk) return;
+    } else if (wiz.id === "github-pages" || wiz.id === "orbit") {
+      const soft = evaluateStructureGate(wiz.id, lastDetected, { projectPath: projectPath() });
+      paintDeployStructureGate(wiz.id);
+      if (soft && !soft.ok) {
+        toast(soft.reason, "info", 9000, structureGateToastActions(soft));
+      }
+    }
     if (wiz.id === "selfhost") {
       selfhostResultsDismissed = false;
       applyOutputDock(true);
@@ -7896,6 +9801,142 @@ window.addEventListener("DOMContentLoaded", () => {
           },
         ]);
       } else toast("Self-host check failed — see Output", "err", 5000);
+      return;
+    }
+    if (wiz.id === "umami") {
+      applyOutputDock(true);
+      paintPlatformWizard();
+      toast("Umami Deploy — compose + heartbeat in Output", "ok", 3500);
+      const result = await run(["umami", "deploy"], {
+        quietToast: true,
+        busyLabel: "Umami…",
+      });
+      await refreshShipState();
+      await refreshSessionNow();
+      paintPlatformWizard();
+      if (!result) return;
+      if (result.cancelled) {
+        toast("Umami deploy cancelled", "ok", 4000);
+        return;
+      }
+      const report = parseUmamiDeployReport(result.stdout);
+      const adminUrl =
+        report?.admin_url ||
+        (lastRunState?.urls ?? []).find((u) => isLoopbackDeployUrl(String(u))) ||
+        "http://127.0.0.1:3000";
+      if (result.ok && report?.ok !== false) {
+        toast(`Umami Admin ready — ${adminUrl}`, "ok", 9000, [
+          {
+            id: "open-admin",
+            label: "Open Admin",
+            icon: "open",
+            run: () => {
+              void openUrl(adminUrl).then(() =>
+                toast("Change default admin password, then Confirm on Publish", "info", 5000),
+              );
+            },
+          },
+        ]);
+      } else {
+        const detail =
+          report?.message ||
+          result.stderr.trim().split("\n").filter(Boolean).pop() ||
+          result.stdout.trim().split("\n").filter(Boolean).pop() ||
+          "Umami deploy failed — see Output";
+        toast(detail, "err", 8000);
+      }
+      return;
+    }
+    if (wiz.id === "flowsint") {
+      applyOutputDock(true);
+      paintPlatformWizard();
+      toast("Flowsint Deploy — compose.prod + App proof in Output", "ok", 3500);
+      const result = await run(["flowsint", "deploy"], {
+        quietToast: true,
+        busyLabel: "Flowsint…",
+      });
+      await refreshShipState();
+      await refreshSessionNow();
+      paintPlatformWizard();
+      if (!result) return;
+      if (result.cancelled) {
+        toast("Flowsint deploy cancelled", "ok", 4000);
+        return;
+      }
+      const report = parseFlowsintDeployReport(result.stdout);
+      const appUrl =
+        report?.app_url ||
+        (lastRunState?.urls ?? []).find((u) => isLoopbackDeployUrl(String(u))) ||
+        "http://127.0.0.1:5173";
+      if (result.ok && report?.ok !== false) {
+        toast(`Flowsint App ready — ${appUrl}`, "ok", 9000, [
+          {
+            id: "open-app",
+            label: "Open App",
+            icon: "open",
+            run: () => {
+              void openUrl(`${appUrl.replace(/\/+$/, "")}/register`).then(() =>
+                toast("Create an account at /register, then Confirm on Publish", "info", 5000),
+              );
+            },
+          },
+        ]);
+      } else {
+        const detail =
+          report?.message ||
+          result.stderr.trim().split("\n").filter(Boolean).pop() ||
+          result.stdout.trim().split("\n").filter(Boolean).pop() ||
+          "Flowsint deploy failed — see Output";
+        toast(detail, "err", 8000);
+      }
+      return;
+    }
+    if (wiz.id === "medusa") {
+      applyOutputDock(true);
+      paintPlatformWizard();
+      toast("Medusa Deploy — compose + Admin health in Output", "ok", 3500);
+      const result = await run(["medusa", "deploy"], {
+        quietToast: true,
+        busyLabel: "Medusa…",
+      });
+      await refreshShipState();
+      await refreshSessionNow();
+      paintPlatformWizard();
+      if (!result) return;
+      if (result.cancelled) {
+        toast("Medusa deploy cancelled", "ok", 4000);
+        return;
+      }
+      const report = parseMedusaDeployReport(result.stdout);
+      const adminUrl =
+        report?.admin_url ||
+        (lastRunState?.urls ?? []).find((u) => isLoopbackDeployUrl(String(u))) ||
+        "http://127.0.0.1:9000/app";
+      if (result.ok && report?.ok !== false) {
+        toast(`Medusa Admin ready — ${adminUrl}`, "ok", 9000, [
+          {
+            id: "open-admin",
+            label: "Open Admin",
+            icon: "open",
+            run: () => {
+              void openUrl(adminUrl).then(() =>
+                toast(
+                  "Create/sign in Admin, then Confirm on Publish (payments stay vendor dashboards)",
+                  "info",
+                  5000,
+                ),
+              );
+            },
+          },
+        ]);
+      } else {
+        const detail =
+          report?.message ||
+          result.stderr.trim().split("\n").filter(Boolean).pop() ||
+          result.stdout.trim().split("\n").filter(Boolean).pop() ||
+          "Medusa deploy failed — see Output";
+        toast(detail, "err", 8000);
+      }
       return;
     }
     if (isHostedCliDeployCard(wiz.id)) {
@@ -7925,6 +9966,40 @@ window.addEventListener("DOMContentLoaded", () => {
     const wiz = deployCatalogEntries().find((w) => w.id === selectedPlatform);
     if (wiz?.id === "selfhost") {
       await startSelfhostServe({ openLive: true });
+      return;
+    }
+    if (wiz?.id === "umami") {
+      const btn = document.querySelector<HTMLButtonElement>("#plat-open-live");
+      const url =
+        btn?.dataset.url?.trim() ||
+        (lastRunState?.urls ?? []).find((u) => isLoopbackDeployUrl(String(u))) ||
+        "http://127.0.0.1:3000";
+      await openUrl(url);
+      toast("Opened Umami Admin — change default password, then Confirm on Publish", "ok", 5000);
+      return;
+    }
+    if (wiz?.id === "flowsint") {
+      const btn = document.querySelector<HTMLButtonElement>("#plat-open-live");
+      const url =
+        btn?.dataset.url?.trim() ||
+        (lastRunState?.urls ?? []).find((u) => isLoopbackDeployUrl(String(u))) ||
+        "http://127.0.0.1:5173";
+      await openUrl(`${url.replace(/\/+$/, "")}/register`);
+      toast("Opened Flowsint — register at /register, then Confirm on Publish", "ok", 5000);
+      return;
+    }
+    if (wiz?.id === "medusa") {
+      const btn = document.querySelector<HTMLButtonElement>("#plat-open-live");
+      const url =
+        btn?.dataset.url?.trim() ||
+        (lastRunState?.urls ?? []).find((u) => isLoopbackDeployUrl(String(u))) ||
+        "http://127.0.0.1:9000/app";
+      await openUrl(url);
+      toast(
+        "Opened Medusa Admin — create/sign in, then Confirm on Publish (payments stay vendor dashboards)",
+        "ok",
+        5000,
+      );
       return;
     }
     const btn = document.querySelector<HTMLButtonElement>("#plat-open-live");
@@ -7981,16 +10056,35 @@ window.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-host-deploy-close]").forEach((el) => {
     el.addEventListener("click", () => closeHostDeployDialog());
   });
-  document.querySelector("#host-deploy-confirm")?.addEventListener("click", () => {
-    const wiz = pendingHostDeployWiz;
-    const nameInput = document.querySelector<HTMLInputElement>("#host-deploy-name");
-    if (!wiz) {
-      closeHostDeployDialog();
-      return;
+  document.querySelector("#btn-recent-history")?.addEventListener("click", () => {
+    openRecentHistoryDialog();
+  });
+  document.querySelector("#btn-switcher-history")?.addEventListener("click", () => {
+    openRecentHistoryDialog();
+  });
+  document.querySelectorAll("[data-recent-history-close]").forEach((el) => {
+    el.addEventListener("click", () => closeRecentHistoryDialog());
+  });
+  document.querySelector("#recent-history-search")?.addEventListener("input", () => {
+    renderRecentHistoryList();
+  });
+  document.querySelector("#recent-history-search")?.addEventListener("keydown", (ev) => {
+    if ((ev as KeyboardEvent).key === "Escape") closeRecentHistoryDialog();
+  });
+  document.querySelector("#recent-history-open-folder")?.addEventListener("click", async () => {
+    closeRecentHistoryDialog();
+    try {
+      const picked = await invoke<string | null>("pick_project");
+      if (picked) await bindProject(picked, true);
+    } catch (err) {
+      show(String(err));
     }
-    const name = (nameInput?.value ?? "").trim() || defaultHostProjectName();
-    closeHostDeployDialog();
-    void runHostedCliDeploy(wiz, { name, skipConfirm: true });
+  });
+  document.querySelector("#host-deploy-confirm")?.addEventListener("click", () => {
+    void confirmHostDeployAllInOne();
+  });
+  document.querySelector("#host-deploy-back-setup")?.addEventListener("click", () => {
+    showHostDeployStep("setup");
   });
   document.querySelector("#host-deploy-name")?.addEventListener("keydown", (ev) => {
     if ((ev as KeyboardEvent).key === "Enter") {
@@ -8039,6 +10133,30 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
     void openPortalEnvPut(wiz.provider);
+  });
+  document.querySelector("#plat-import-env")?.addEventListener("click", () => {
+    const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
+    if (!wiz?.provider || !providerHasEnvPut(wiz.provider)) {
+      toast("Import env is for Cloudflare / Vercel / Netlify / Fly / Railway", "info");
+      return;
+    }
+    if (!projectPath()) {
+      toast("Bind a project first", "info");
+      return;
+    }
+    void openEnvImportDialog(wiz);
+  });
+  document.querySelectorAll("[data-env-import-close]").forEach((el) => {
+    el.addEventListener("click", () => closeEnvImportDialog());
+  });
+  document.querySelector("#env-pack-continue")?.addEventListener("click", () => {
+    void continueEnvImportFromPack();
+  });
+  document.querySelector("#env-import-back-packs")?.addEventListener("click", () => {
+    showEnvImportStep("packs");
+  });
+  document.querySelector("#env-import-confirm")?.addEventListener("click", () => {
+    void confirmEnvImport();
   });
   document.querySelector("#plat-docs")?.addEventListener("click", async () => {
     const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectedPlatform);
@@ -8092,6 +10210,12 @@ window.addEventListener("DOMContentLoaded", () => {
       if (outputPreviewVisible()) {
         ev.preventDefault();
         closeOutputPreview();
+        return;
+      }
+      const historyDlg = document.querySelector<HTMLElement>("#recent-history-dialog");
+      if (historyDlg && !historyDlg.hidden) {
+        ev.preventDefault();
+        closeRecentHistoryDialog();
         return;
       }
       if (running || selfhostServing) {
@@ -8216,10 +10340,18 @@ window.addEventListener("DOMContentLoaded", () => {
     void refreshStatusProbes({ views: ["sign"], animate: true });
   });
 
-  const saved = localStorage.getItem(LAST_PROJECT_KEY);
-  if (saved) {
-    void bindProject(saved, true);
-  }
+  void (async () => {
+    const kept = await pruneMissingRecents();
+    const saved = localStorage.getItem(LAST_PROJECT_KEY);
+    if (saved && kept.some((p) => recentPathKey(p) === recentPathKey(saved))) {
+      await bindProject(saved, true);
+    } else if (saved) {
+      localStorage.removeItem(LAST_PROJECT_KEY);
+      renderRecent(kept);
+    } else {
+      renderRecent(kept);
+    }
+  })();
 
   document.querySelector("#btn-open")?.addEventListener("click", async () => {
     try {
@@ -8770,6 +10902,12 @@ async function runWizard() {
       show("Deploy is blocked while Offline is on.");
       toast("Deploy blocked — turn Offline off", "info");
       return;
+    }
+    const ritualGate = evaluateStructureGate("ritual-orbit-deploy", lastDetected, {
+      projectPath: projectPath(),
+    });
+    if (ritualGate && !ritualGate.ok) {
+      toast(ritualGate.reason, "info", 10000, structureGateToastActions(ritualGate));
     }
     if (
       !confirm(

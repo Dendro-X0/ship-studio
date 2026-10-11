@@ -26,6 +26,65 @@ fn silence_console(cmd: &mut Command) {
 #[cfg(not(windows))]
 fn silence_console(_cmd: &mut Command) {}
 
+/// GUI apps often miss User PATH updates (Docker Desktop). Prepend known bin dirs for children.
+fn enrich_tool_path(cmd: &mut Command) {
+    #[cfg(windows)]
+    {
+        let mut prepend: Vec<String> = Vec::new();
+        let mut consider = |p: PathBuf| {
+            if p.is_dir() {
+                let s = p.display().to_string();
+                if !prepend.iter().any(|x| x == &s) {
+                    prepend.push(s);
+                }
+            }
+        };
+        for base in [
+            std::env::var_os("ProgramFiles").map(PathBuf::from),
+            std::env::var_os("ProgramW6432").map(PathBuf::from),
+        ]
+        .into_iter()
+        .flatten()
+        {
+            consider(base.join(r"Docker\Docker\resources\bin"));
+        }
+        consider(PathBuf::from(r"C:\Program Files\Docker\Docker\resources\bin"));
+        consider(PathBuf::from(r"F:\Docker\resources\bin"));
+        // Persisted User PATH (Docker often lands here after install).
+        if let Ok(out) = Command::new("reg")
+            .args(["query", r"HKCU\Environment", "/v", "Path"])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .output()
+        {
+            if out.status.success() {
+                let text = String::from_utf8_lossy(&out.stdout);
+                for line in text.lines() {
+                    let line = line.trim();
+                    for marker in ["REG_EXPAND_SZ", "REG_SZ"] {
+                        if let Some((_, rest)) = line.split_once(marker) {
+                            for part in rest.trim().split(';').filter(|s| !s.is_empty()) {
+                                let lower = part.to_ascii_lowercase();
+                                if lower.contains("docker") {
+                                    consider(PathBuf::from(part));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if prepend.is_empty() {
+            return;
+        }
+        let cur = std::env::var_os("PATH").unwrap_or_default();
+        let mut path = prepend.join(";");
+        path.push(';');
+        path.push_str(&cur.to_string_lossy());
+        cmd.env("PATH", path);
+    }
+}
+
 /// Tracks the active orbityard process for cancel.
 struct ActiveRun {
     pid: AtomicU32,
@@ -185,6 +244,12 @@ fn pick_project() -> Result<Option<String>, String> {
     Ok(folder.map(|p| p.display().to_string()))
 }
 
+/// Whether `path` is an existing directory (recents prune / bind preflight).
+#[tauri::command]
+fn path_is_dir(path: String) -> bool {
+    Path::new(&path).is_dir()
+}
+
 #[tauri::command]
 fn pick_vault_save(default_name: Option<String>) -> Result<Option<String>, String> {
     let name = default_name.unwrap_or_else(|| "ship-secrets.km".into());
@@ -283,6 +348,7 @@ fn run_orbityard_env(
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         silence_console(&mut cmd);
+        enrich_tool_path(&mut cmd);
         for (k, v) in &env {
             cmd.env(k, v);
         }
@@ -408,6 +474,7 @@ fn run_orbityard(
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         silence_console(&mut cmd);
+        enrich_tool_path(&mut cmd);
         let child = cmd
             .spawn()
             .map_err(|e| format!("spawn {}: {e}", orbityard.display()))?;
@@ -801,6 +868,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             pick_project,
+            path_is_dir,
             pick_vault_save,
             open_orbityard_terminal,
             run_git,

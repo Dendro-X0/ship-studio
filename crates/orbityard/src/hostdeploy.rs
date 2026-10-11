@@ -222,14 +222,53 @@ fn normalize_provider(raw: &str) -> Result<&'static str> {
         "cloudflare" | "cf" | "wrangler" => Ok("cloudflare"),
         "vercel" => Ok("vercel"),
         "netlify" => Ok("netlify"),
+        "fly" | "flyio" | "fly.io" => Ok("fly"),
+        "railway" => Ok("railway"),
         other => bail!(
-            "hostdeploy unsupported provider `{other}` (cloudflare|vercel|netlify)"
+            "hostdeploy unsupported provider `{other}` (cloudflare|vercel|netlify|fly|railway)"
         ),
     }
 }
 
+/// Strip CSI ANSI so wrangler colorized URLs still parse.
+fn strip_ansi_cli(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut it = text.chars().peekable();
+    while let Some(c) = it.next() {
+        if c == '\u{1b}' {
+            match it.peek().copied() {
+                Some('[') => {
+                    it.next();
+                    for d in it.by_ref() {
+                        if ('\u{40}'..='\u{7e}').contains(&d) {
+                            break;
+                        }
+                    }
+                }
+                Some(']') => {
+                    it.next();
+                    while let Some(d) = it.next() {
+                        if d == '\u{07}' {
+                            break;
+                        }
+                        if d == '\u{1b}' && it.peek() == Some(&'\\') {
+                            it.next();
+                            break;
+                        }
+                    }
+                }
+                _ => {}
+            }
+            continue;
+        }
+        out.push(c);
+    }
+    out
+}
+
 /// Collect https:// URLs; drop loopback / file.
 pub fn extract_hosted_urls(text: &str) -> Vec<String> {
+    let text = strip_ansi_cli(text);
     let mut out = Vec::new();
     for raw in text.split_whitespace() {
         let t = raw.trim_matches(|c: char| {
@@ -271,6 +310,57 @@ pub fn extract_hosted_urls(text: &str) -> Vec<String> {
     out
 }
 
+/// Default Cloudflare Pages hostname when wrangler exits 0 but prints no URL.
+pub fn pages_preview_url(project_name: &str) -> Option<String> {
+    let name = sanitize_project_name(project_name);
+    if name.is_empty() {
+        None
+    } else {
+        Some(format!("https://{name}.pages.dev"))
+    }
+}
+
+/// Best-effort public URL when vendor CLI exits 0 but omits https in the stream.
+pub fn fallback_public_url(provider: &str, project_name: &str) -> Option<String> {
+    let name = sanitize_project_name(project_name);
+    if name.is_empty() {
+        return None;
+    }
+    match provider {
+        "cloudflare" => Some(format!("https://{name}.pages.dev")),
+        "netlify" => Some(format!("https://{name}.netlify.app")),
+        "vercel" => Some(format!("https://{name}.vercel.app")),
+        "fly" => Some(format!("https://{name}.fly.dev")),
+        _ => None,
+    }
+}
+
+/// Read `app = "…"` from fly.toml (preferred over folder basename).
+fn fly_app_name_from_toml(toml_path: &Path) -> Option<String> {
+    let raw = std::fs::read_to_string(toml_path).ok()?;
+    for line in raw.lines() {
+        let t = line.trim();
+        if t.starts_with('#') {
+            continue;
+        }
+        let rest = t.strip_prefix("app")?;
+        let rest = rest.trim().strip_prefix('=')?.trim();
+        let quoted = rest
+            .strip_prefix('"')
+            .and_then(|s| s.strip_suffix('"'))
+            .or_else(|| {
+                rest.strip_prefix('\'')
+                    .and_then(|s| s.strip_suffix('\''))
+            })
+            .unwrap_or(rest);
+        let name = sanitize_project_name(quoted);
+        if !name.is_empty() {
+            return Some(name);
+        }
+    }
+    None
+}
+
 /// Hosted CLI failure class — one primary recovery each (H4).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HostFailClass {
@@ -280,6 +370,8 @@ pub enum HostFailClass {
     Network,
     Account,
     Detect,
+    /// First-time link / launch required (Fly launch · Railway link) — human only.
+    Link,
     Unknown,
 }
 
@@ -292,6 +384,7 @@ impl HostFailClass {
             Self::Network => "network",
             Self::Account => "account",
             Self::Detect => "detect",
+            Self::Link => "link",
             Self::Unknown => "unknown",
         }
     }
@@ -300,9 +393,21 @@ impl HostFailClass {
 /// Map vendor CLI / hostdeploy stderr+stdout to a recovery class.
 pub fn classify_host_failure(text: &str) -> HostFailClass {
     let l = text.to_ascii_lowercase();
+    if l.contains("[link]")
+        || l.contains("fly launch")
+        || l.contains("railway link")
+        || l.contains("railway init")
+        || (l.contains("no fly.toml") && l.contains("launch"))
+    {
+        return HostFailClass::Link;
+    }
     if l.contains("not on path")
         || (l.contains("not found")
-            && (l.contains("wrangler") || l.contains("vercel") || l.contains("netlify")))
+            && (l.contains("wrangler")
+                || l.contains("vercel")
+                || l.contains("netlify")
+                || l.contains("fly")
+                || l.contains("railway")))
         || l.contains("program not found")
         || (l.contains("no such file")
             && (l.contains("wrangler") || l.contains("vercel") || l.contains("netlify")))
@@ -319,6 +424,8 @@ pub fn classify_host_failure(text: &str) -> HostFailClass {
         || l.contains("hostdeploy cloudflare: no ")
         || l.contains("hostdeploy vercel: no ")
         || l.contains("hostdeploy netlify: no ")
+        || l.contains("hostdeploy fly: no ")
+        || l.contains("hostdeploy railway: no ")
     {
         return HostFailClass::Detect;
     }
@@ -406,11 +513,13 @@ pub fn recovery_for(class: HostFailClass, provider: &str) -> (&'static str, Stri
         HostFailClass::Auth => (
             "login_cli",
             format!(
-                "Sign in with Login CLI (`{} login`) or Sign in (web). Studio never creates API tokens.",
+                "Sign in with Login CLI (`{}`) or Sign in (web). Studio never creates API tokens.",
                 match p.as_str() {
-                    "vercel" => "vercel",
-                    "netlify" => "netlify",
-                    _ => "wrangler",
+                    "vercel" => "vercel login",
+                    "netlify" => "netlify login",
+                    "fly" => "fly auth login",
+                    "railway" => "railway login",
+                    _ => "wrangler login",
                 }
             ),
         ),
@@ -421,9 +530,23 @@ pub fn recovery_for(class: HostFailClass, provider: &str) -> (&'static str, Stri
                 match p.as_str() {
                     "vercel" => "npm i -g vercel",
                     "netlify" => "npm i -g netlify-cli",
+                    "fly" => "install flyctl — https://fly.io/docs/hands-on/install-flyctl/",
+                    "railway" => "npm i -g @railway/cli",
                     _ => "npm i -g wrangler",
                 }
             ),
+        ),
+        HostFailClass::Link => (
+            "preview_log",
+            match p.as_str() {
+                "fly" => {
+                    "No fly.toml yet — run `fly launch` in the app folder (human), then Retry Deploy.".into()
+                }
+                "railway" => {
+                    "Not linked — run `railway link` or `railway init` (human), then Retry Deploy.".into()
+                }
+                _ => "Host project not linked — finish vendor link/init (human), then Retry Deploy.".into(),
+            },
         ),
         HostFailClass::Build => (
             "preview_log",
@@ -711,11 +834,104 @@ fn netlify_plan_for_package(
     })
 }
 
+fn find_fly_toml(project: &Path) -> Option<PathBuf> {
+    let direct = [
+        project.join("fly.toml"),
+        project.join("apps/api/fly.toml"),
+        project.join("apps/worker/fly.toml"),
+        project.join("apps/backend/fly.toml"),
+    ];
+    if let Some(p) = direct.into_iter().find(|p| p.is_file()) {
+        return Some(p);
+    }
+    // One level under apps/*
+    let apps = project.join("apps");
+    if let Ok(entries) = std::fs::read_dir(apps) {
+        for ent in entries.flatten() {
+            let p = ent.path().join("fly.toml");
+            if p.is_file() {
+                return Some(p);
+            }
+        }
+    }
+    None
+}
+
+fn find_railway_cwd(project: &Path) -> Option<PathBuf> {
+    if project.join(".railway").is_dir() {
+        return Some(project.to_path_buf());
+    }
+    let nested = [
+        project.join("apps/api"),
+        project.join("apps/worker"),
+        project.join("apps/backend"),
+        project.join("apps/website"),
+    ];
+    for dir in nested {
+        if dir.join(".railway").is_dir() {
+            return Some(dir);
+        }
+    }
+    let apps = project.join("apps");
+    if let Ok(entries) = std::fs::read_dir(apps) {
+        for ent in entries.flatten() {
+            let dir = ent.path();
+            if dir.join(".railway").is_dir() {
+                return Some(dir);
+            }
+        }
+    }
+    None
+}
+
+/// Steady-state `fly deploy` after human `fly launch` produced fly.toml.
+pub fn detect_fly(project: &Path) -> Result<HostPlan> {
+    let Some(toml) = find_fly_toml(project) else {
+        bail!(
+            "hostdeploy fly: no fly.toml — run `fly launch` once in the app directory (human), then Retry Deploy [link]"
+        );
+    };
+    let cwd = toml
+        .parent()
+        .unwrap_or(project)
+        .to_path_buf();
+    let app = fly_app_name_from_toml(&toml).unwrap_or_else(|| project_name(project));
+    Ok(HostPlan {
+        provider: "fly".into(),
+        lane: "deploy".into(),
+        cwd: cwd.clone(),
+        asset_rel: rel_display(project, &toml),
+        project_name: app,
+        argv: vec!["deploy".into(), "--yes".into()],
+        cli: "fly".into(),
+    })
+}
+
+/// Steady-state `railway up` after human `railway link` / `railway init`.
+pub fn detect_railway(project: &Path) -> Result<HostPlan> {
+    let Some(cwd) = find_railway_cwd(project) else {
+        bail!(
+            "hostdeploy railway: not linked — run `railway link` or `railway init` (human), then Retry Deploy [link]"
+        );
+    };
+    Ok(HostPlan {
+        provider: "railway".into(),
+        lane: "up".into(),
+        cwd: cwd.clone(),
+        asset_rel: rel_display(project, &cwd),
+        project_name: project_name(project),
+        argv: vec!["up".into(), "-y".into()],
+        cli: "railway".into(),
+    })
+}
+
 pub fn detect_provider(project: &Path, provider: &str) -> Result<HostPlan> {
     match normalize_provider(provider)? {
         "cloudflare" => detect_cloudflare(project),
         "vercel" => detect_vercel(project),
         "netlify" => detect_netlify(project),
+        "fly" => detect_fly(project),
+        "railway" => detect_railway(project),
         _ => unreachable!(),
     }
 }
@@ -724,14 +940,27 @@ fn resolve_cli(cli: &str) -> Result<PathBuf> {
     resolve_auth_cli(cli)
 }
 
-fn resolve_auth_cli(cli: &str) -> Result<PathBuf> {
-    let candidates: &[&str] = match cli {
-        "wrangler" => &["wrangler", "wrangler.cmd", "wrangler.exe"],
-        "vercel" => &["vercel", "vercel.cmd", "vercel.exe"],
-        "netlify" => &["netlify", "netlify.cmd", "netlify.exe"],
-        "fly" => &["flyctl", "fly", "flyctl.exe", "fly.exe"],
-        "railway" => &["railway", "railway.exe", "railway.cmd"],
-        other => bail!("unknown CLI `{other}`"),
+/// Resolve vendor CLI on PATH. On Windows prefer `.cmd` / `.exe` over the
+/// extensionless npm shim (spawning the shim via CreateProcess can hang).
+pub fn resolve_auth_cli(cli: &str) -> Result<PathBuf> {
+    let candidates: &[&str] = if cfg!(windows) {
+        match cli {
+            "wrangler" => &["wrangler.cmd", "wrangler.exe", "wrangler"],
+            "vercel" => &["vercel.cmd", "vercel.exe", "vercel"],
+            "netlify" => &["netlify.cmd", "netlify.exe", "netlify"],
+            "fly" => &["flyctl.exe", "fly.exe", "flyctl", "fly"],
+            "railway" => &["railway.cmd", "railway.exe", "railway"],
+            other => bail!("unknown CLI `{other}`"),
+        }
+    } else {
+        match cli {
+            "wrangler" => &["wrangler", "wrangler.cmd", "wrangler.exe"],
+            "vercel" => &["vercel", "vercel.cmd", "vercel.exe"],
+            "netlify" => &["netlify", "netlify.cmd", "netlify.exe"],
+            "fly" => &["flyctl", "fly", "flyctl.exe", "fly.exe"],
+            "railway" => &["railway", "railway.exe", "railway.cmd"],
+            other => bail!("unknown CLI `{other}`"),
+        }
     };
     for name in candidates {
         if let Ok(p) = which(name) {
@@ -878,17 +1107,24 @@ fn login_hint(provider: &str) -> &'static str {
     }
 }
 
-/// True when wrangler Pages deploy failed because the named project is absent.
+/// True when wrangler Pages deploy/secret failed because the named project is absent.
 pub fn is_missing_pages_project(text: &str) -> bool {
     let l = text.to_ascii_lowercase();
-    if !(l.contains("does not exist")
+    let missing = l.contains("does not exist")
         || l.contains("project not found")
         || l.contains("no such project")
-        || l.contains("project doesn't exist"))
-    {
+        || l.contains("project doesn't exist")
+        || (l.contains("couldn't find") && l.contains("project"));
+    if !missing {
         return false;
     }
-    l.contains("pages") || l.contains("project name") || l.contains("pages/projects")
+    // `pages secret put` often prints: Project "name" does not exist. (no word "pages")
+    l.contains("pages")
+        || l.contains("project name")
+        || l.contains("pages/projects")
+        || l.contains("project \"")
+        || l.contains("project '")
+        || l.contains("project `")
 }
 
 fn pages_create_plan(plan: &HostPlan) -> HostPlan {
@@ -945,6 +1181,20 @@ fn apply_project_name(plan: &mut HostPlan, name: &str) {
             i += 1;
         }
         plan.argv.push("--site".into());
+        plan.argv.push(name);
+        return;
+    }
+    // Vercel CLI 59+: --project <NAME_OR_ID>
+    if plan.provider == "vercel" {
+        let mut i = 0;
+        while i + 1 < plan.argv.len() {
+            if plan.argv[i] == "--project" {
+                plan.argv[i + 1] = name.clone();
+                return;
+            }
+            i += 1;
+        }
+        plan.argv.push("--project".into());
         plan.argv.push(name);
     }
 }
@@ -1134,7 +1384,24 @@ pub fn run(project: &Path, provider: &str, name_override: Option<&str>) -> Resul
         output.push_str(&o2);
     }
 
-    let urls = extract_hosted_urls(&output);
+    let mut urls = extract_hosted_urls(&output);
+    // Vendor CLIs sometimes exit 0 without printing https — best-effort default host.
+    if code == 0 && urls.is_empty() {
+        let use_fallback = match plan.provider.as_str() {
+            "cloudflare" => plan.lane == "pages",
+            "netlify" | "vercel" | "fly" => true,
+            _ => false,
+        };
+        if use_fallback {
+            if let Some(u) = fallback_public_url(&plan.provider, &plan.project_name) {
+                println!(
+                    "hostdeploy · no URL in CLI output — using default {} host {u}",
+                    plan.provider
+                );
+                urls.push(u);
+            }
+        }
+    }
     let lower = output.to_ascii_lowercase();
     let mut class = classify_host_failure(&output);
     if code != 0
@@ -1146,7 +1413,7 @@ pub fn run(project: &Path, provider: &str, name_override: Option<&str>) -> Resul
     }
     let auth_required = matches!(class, HostFailClass::Auth);
 
-    // Cloudflare Workers may succeed without a printed URL; others need https.
+    // Cloudflare Workers may succeed without a printed URL; Pages uses extracted or default host.
     let ok = code == 0
         && (!urls.is_empty() || (plan.provider == "cloudflare" && plan.lane == "workers"));
     let message = if ok {
@@ -1239,6 +1506,30 @@ Visit https://harbor.pages.dev/index.html
         let urls = extract_hosted_urls(text);
         assert!(urls.iter().any(|u| u.contains("harbor.pages.dev")));
         assert!(!urls.iter().any(|u| u.contains("127.0.0.1")));
+        let colored = extract_hosted_urls(
+            "Deployed to \u{1b}[32mhttps://ship-studio.pages.dev\u{1b}[0m",
+        );
+        assert!(
+            colored.iter().any(|u| u == "https://ship-studio.pages.dev"),
+            "{colored:?}"
+        );
+        assert_eq!(
+            pages_preview_url("Ship Studio").as_deref(),
+            Some("https://ship-studio.pages.dev")
+        );
+        assert_eq!(
+            fallback_public_url("netlify", "Ship Studio").as_deref(),
+            Some("https://ship-studio.netlify.app")
+        );
+        assert_eq!(
+            fallback_public_url("vercel", "ship-studio").as_deref(),
+            Some("https://ship-studio.vercel.app")
+        );
+        assert_eq!(
+            fallback_public_url("fly", "my-app").as_deref(),
+            Some("https://my-app.fly.dev")
+        );
+        assert!(fallback_public_url("railway", "x").is_none());
     }
 
     #[test]
@@ -1284,6 +1575,9 @@ Visit https://harbor.pages.dev/index.html
         assert!(is_missing_pages_project(
             r#"ERROR The Pages project "harbor" does not exist."#
         ));
+        assert!(is_missing_pages_project(
+            r#"ERROR Project "ship-studio" does not exist."#
+        ));
         assert!(!is_missing_pages_project("module not found: './x'"));
         assert!(create_ok_from_output(0, "ok"));
         assert!(create_ok_from_output(1, "Error: A project with that name already exists."));
@@ -1294,9 +1588,42 @@ Visit https://harbor.pages.dev/index.html
             ),
             HostFailClass::Detect
         );
+        assert_eq!(
+            classify_host_failure(
+                "hostdeploy fly: no fly.toml — run `fly launch` once (human) [link]"
+            ),
+            HostFailClass::Link
+        );
         let (action, hint) = recovery_for(HostFailClass::Auth, "cloudflare");
         assert_eq!(action, "login_cli");
         assert!(hint.to_lowercase().contains("login"));
+    }
+
+    #[test]
+    fn detect_fly_requires_toml_then_deploys() {
+        let dir = tmp();
+        let err = detect_fly(&dir).unwrap_err().to_string();
+        assert!(err.contains("[link]"), "{err}");
+        assert!(err.contains("fly launch"), "{err}");
+        fs::create_dir_all(dir.join("apps/api")).unwrap();
+        fs::write(dir.join("apps/api/fly.toml"), "app = \"demo\"\n").unwrap();
+        let plan = detect_fly(&dir).unwrap();
+        assert_eq!(plan.provider, "fly");
+        assert_eq!(plan.cli, "fly");
+        assert!(plan.argv.iter().any(|a| a == "deploy"));
+        assert!(plan.argv.iter().any(|a| a == "--yes"));
+    }
+
+    #[test]
+    fn detect_railway_requires_link_marker() {
+        let dir = tmp();
+        let err = detect_railway(&dir).unwrap_err().to_string();
+        assert!(err.contains("[link]"), "{err}");
+        assert!(err.contains("railway link") || err.contains("railway init"), "{err}");
+        fs::create_dir_all(dir.join("apps/api/.railway")).unwrap();
+        let plan = detect_railway(&dir).unwrap();
+        assert_eq!(plan.provider, "railway");
+        assert!(plan.argv.iter().any(|a| a == "up"));
     }
 
     #[test]
@@ -1386,6 +1713,35 @@ Visit https://harbor.pages.dev/index.html
         assert!(is_missing_netlify_site(
             "This folder isn't linked to a project yet\nTo create and deploy in one go, use: netlify deploy --create-site"
         ));
+    }
+
+    #[test]
+    fn apply_project_name_adds_vercel_project_flag() {
+        let dir = tmp();
+        fs::create_dir_all(dir.join("apps/website")).unwrap();
+        fs::write(dir.join("apps/website/index.html"), "<h1>ok</h1>").unwrap();
+        let mut plan = detect_vercel(&dir).unwrap();
+        apply_project_name(&mut plan, "Ship Studio");
+        assert_eq!(plan.project_name, "ship-studio");
+        let idx = plan
+            .argv
+            .iter()
+            .position(|a| a == "--project")
+            .expect("--project");
+        assert_eq!(plan.argv.get(idx + 1).map(String::as_str), Some("ship-studio"));
+        assert!(plan.argv.iter().any(|a| a == "--prod"));
+    }
+
+    #[test]
+    fn detect_fly_reads_app_name_from_toml() {
+        let dir = tmp();
+        fs::write(dir.join("fly.toml"), "app = \"orbit-demo\"\nprimary_region = \"iad\"\n").unwrap();
+        let plan = detect_fly(&dir).unwrap();
+        assert_eq!(plan.project_name, "orbit-demo");
+        assert_eq!(
+            fallback_public_url("fly", &plan.project_name).as_deref(),
+            Some("https://orbit-demo.fly.dev")
+        );
     }
 
     #[test]

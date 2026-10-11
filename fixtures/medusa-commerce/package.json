@@ -1,0 +1,13 @@
+{
+  "name": "medusa-commerce-fixture",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "medusa develop",
+    "start": "medusa start"
+  },
+  "dependencies": {
+    "@medusajs/framework": "^2.0.0",
+    "@medusajs/medusa": "^2.0.0"
+  }
+}

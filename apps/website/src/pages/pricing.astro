@@ -25,9 +25,19 @@ const env = paddleEnv();
   <section class="section">
     <h1>Pricing</h1>
     <p class="lead">
-      One Solo plan for the local hub (CLI · TUI · Desktop). Checkout is hosted by
+      One Solo plan for the local hub (CLI · TUI · Desktop) so you can ship a live URL
+      without assembling the toolchain. Checkout is hosted by
       <strong>Paddle</strong> — we never see your card number.
     </p>
+
+    <aside class="soft-no" role="note">
+      <p class="soft-no-kicker">Soft no</p>
+      <p class="soft-no-body">
+        Solo is <strong>not</strong> a hosted CI runner, team Ops suite, or payment processor
+        for apps you sell. Desktop Integrations stay optional deep links — the job is still
+        one public URL via Publish / Deployment.
+      </p>
+    </aside>
 
     <div class="price-block">
       <div class="price-row">
@@ -39,7 +49,7 @@ const env = paddleEnv();
       </div>
       <ul class="list-clean">
         <li>orbityard CLI, TUI, and Desktop — Adaptive Publish spine</li>
-        <li>Launch companion · provider portal · env honesty · local vault export</li>
+        <li>Host deploy gates · env honesty · local vault export</li>
         <li>Docs on this site · dogfood scripts in the repo</li>
         <li>Local <a href="/license">license key file</a> after checkout (email after Paddle confirms)</li>
         <li>{refundWindowDays()}-day refund window — see <a href="/legal/refunds">refunds</a></li>
@@ -66,8 +76,8 @@ const env = paddleEnv();
       </div>
       <p class="note">
         Studio never writes secrets, never auto-publishes to npm/crates/stores, and never
-        replaces vendor UIs. Paying is for the packaged Solo loop — not a paywall on the
-        publish sequence itself.
+        replaces vendor UIs. Paying is for packaged builds and a license file — not a paywall
+        on the publish sequence, and not an Integrations upsell.
       </p>
       {
         ready ? (

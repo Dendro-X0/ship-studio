@@ -40,7 +40,8 @@ NOT:      “AI finishes publish” · MCP as password manager · auto live publ
 | `yard_portal` | J (+ open) | Yes | Plan + optional open entry URLs |
 | `yard_secrets` | J (+ open) | Yes | Names + put CLI; no values |
 | `yard_env` | J | Yes | Plan only |
-| `yard_env_put` | J (+ spawn) | Yes | NAME only; recipe + optional external TTY; rejects `value` |
+| `yard_env_put` | J (+ spawn) | Yes | NAME only; CF/Vercel/Netlify/Fly/Railway; rejects `value` |
+| `yard_env_import` | J | Yes | Path/pack + names; dry_run default true; rejects `value`; yes:true to put; optional `host_name` (Pages `--project-name`) |
 | `yard_butler_push` | J (+ spawn) | Yes | itch target + dir; recipe / terminal; no credentials |
 | `yard_scopes` | J | Yes | Detect scopes |
 | `yard_sign_paths` | J | Yes | Self vs official |

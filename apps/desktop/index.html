@@ -26,6 +26,9 @@
         <div class="project-switcher" id="project-switcher" hidden>
           <p class="switcher-label">Recent projects</p>
           <div id="switcher-list"></div>
+          <button type="button" class="ghost" id="btn-switcher-history" title="Search all remembered folders">
+            All projects…
+          </button>
           <button type="button" id="btn-open-switch" class="primary">Open folder…</button>
         </div>
       </div>
@@ -75,7 +78,7 @@
                 <span class="nav-ico" aria-hidden="true">✦</span>
                 Sign
               </button>
-              <button type="button" class="nav-item" data-nav="platforms" title="Hosting / deploy hosts">
+              <button type="button" class="nav-item" data-nav="platforms" title="On this machine · Cloud hosts">
                 <span class="nav-ico" aria-hidden="true">⬡</span>
                 Deployment
               </button>
@@ -137,6 +140,9 @@
             <button type="button" id="btn-reveal" disabled title="Open .ship in Explorer">.ship</button>
           </div>
           <div class="recent" id="recent-list" hidden></div>
+          <button type="button" class="ghost recent-history-btn" id="btn-recent-history" hidden title="Search and manage project history">
+            All projects…
+          </button>
         </div>
       </aside>
 
@@ -196,11 +202,12 @@
             <section class="session" id="session" aria-label="Current project">
               <div class="session-empty" id="session-empty">
                 <p class="session-kicker">Session</p>
-                <h2>Bind the repo you’re shipping</h2>
+                <h2>Open the project you’re launching</h2>
                 <p class="session-lead">
-                  Orbit Yard keeps you on official platforms. Open the folder, then we’ll show where you left off.
+                  Done when you have a public URL — or Sign only finishes on this machine. Open the folder to continue.
                 </p>
                 <button type="button" id="dash-open" class="primary">Open folder…</button>
+                <p class="dash-recents-kicker" id="dash-recents-kicker" hidden>Recent projects (local)</p>
                 <div class="dash-recents" id="dash-recents" hidden></div>
               </div>
               <div class="session-bound" id="session-bound" hidden>
@@ -211,6 +218,11 @@
                 <p class="intent-cue" id="intent-cue" hidden></p>
                 <div class="chips" id="detect-chips" hidden></div>
               </div>
+              <aside class="next-ship" id="next-ship" hidden role="note">
+                <p class="next-ship-kicker">Next ship</p>
+                <p class="next-ship-body" id="next-ship-body"></p>
+                <button type="button" class="primary" id="next-ship-open">Open project</button>
+              </aside>
             </section>
 
             <section class="status-bar" id="status-bar" hidden aria-label="Project status checklist">
@@ -228,7 +240,7 @@
               <p class="now-kicker">Launch</p>
               <h3 id="now-title">Open a project to see what’s next</h3>
               <p class="now-detail" id="now-detail">
-                One human action at a time — paste, sign, list, or deploy on the vendor UI. Confirm here when you’re done.
+                Outcome: a public URL on your host — or a named gate you Confirm. One human step at a time.
               </p>
               <div class="now-cta">
                 <button type="button" id="now-primary" class="primary cta-launch" data-cta="open">
@@ -236,35 +248,50 @@
                   <span class="cta-arrow" aria-hidden="true">→</span>
                 </button>
                 <p class="now-cta-hint" id="now-cta-hint">
-                  Bind a repo — then one click starts the publish workflow.
+                  Open the folder — then Get live (Open → Host → Login → Deploy → Open live).
                 </p>
               </div>
               <div class="now-actions">
                 <button type="button" id="now-switch" class="now-switch">Switch project</button>
               </div>
               <div class="workflow-pick" id="workflow-pick" hidden>
-                <p class="workflow-pick-kicker">Start a workflow</p>
-                <p class="workflow-pick-lead">Choose a path — then follow one checkpoint at a time.</p>
+                <p class="workflow-pick-kicker">Founder path</p>
+                <p class="workflow-pick-lead">
+                  Done = public URL. Minimal spine:
+                  <span class="spine-steps">Open → Host → Login → Deploy → Open live</span>
+                </p>
+                <ol class="spine-legend" aria-label="Five-step get-live spine">
+                  <li>Open project</li>
+                  <li>Choose host</li>
+                  <li>Login once</li>
+                  <li>Env + Deploy</li>
+                  <li>Open live · Confirm</li>
+                </ol>
                 <div class="workflow-cards" role="list">
-                  <button type="button" class="workflow-card" data-workflow="sign_only" role="listitem">
-                    <span class="workflow-card-title">Sign only</span>
-                    <span class="workflow-card-detail">Local desktop / OSS cut — no hosted deploy</span>
+                  <button
+                    type="button"
+                    class="workflow-card workflow-card--primary"
+                    data-workflow="deploy_only"
+                    role="listitem"
+                  >
+                    <span class="workflow-card-title">Get live</span>
+                    <span class="workflow-card-detail">Deploy to your host — Confirm when the URL is up</span>
                   </button>
                   <button type="button" class="workflow-card" data-workflow="sign_deploy" role="listitem">
-                    <span class="workflow-card-title">Sign and deploy</span>
-                    <span class="workflow-card-detail">Short hosted final-mile when you have a web target</span>
+                    <span class="workflow-card-title">Sign and get live</span>
+                    <span class="workflow-card-detail">Sign first, then the same live URL path</span>
+                  </button>
+                  <button type="button" class="workflow-card" data-workflow="sign_only" role="listitem">
+                    <span class="workflow-card-title">Sign only</span>
+                    <span class="workflow-card-detail">Local signed build — no public URL</span>
                   </button>
                   <button type="button" class="workflow-card" data-workflow="publish_platform" role="listitem">
-                    <span class="workflow-card-title">Publish to platforms</span>
-                    <span class="workflow-card-detail">Listings, Polar, stores — Advanced path</span>
-                  </button>
-                  <button type="button" class="workflow-card" data-workflow="deploy_only" role="listitem">
-                    <span class="workflow-card-title">Deploy focus</span>
-                    <span class="workflow-card-detail">Hosted deploy gates — Confirm still required</span>
+                    <span class="workflow-card-title">Publish to stores</span>
+                    <span class="workflow-card-detail">Listings and store review — Advanced</span>
                   </button>
                 </div>
               </div>
-              <div class="now-quick" id="now-quick" hidden>
+              <div class="now-quick advanced-only" id="now-quick" hidden>
                 <button type="button" id="now-human" class="now-quick-btn" title="Open Polar/GitHub paste sources">
                   Human portal
                 </button>
@@ -325,7 +352,7 @@
                 <div>
                   <label>Publish portal</label>
                   <p class="hint" id="publish-hint">
-                    One checkpoint at a time — Continue for automatic checks; Confirm after you finish human steps.
+                    One gate at a time — the green button is the only loud step. Confirm when that gate is done.
                   </p>
                 </div>
                 <div class="portal-actions" id="publish-toolbar">
@@ -401,7 +428,7 @@
                 </div>
               </div>
               <div class="launch-current" id="publish-current">
-                <p class="detail empty-hint">Open a folder, then pick a workflow on the Dashboard — or Continue here.</p>
+                <p class="detail empty-hint">Open a folder, pick Get live (or Sign only) on the Dashboard — then Continue. Done = public URL or that named gate.</p>
               </div>
               <div class="portal-steps" id="publish-steps"></div>
             </section>
@@ -413,7 +440,7 @@
                 <div>
                   <label>Deploy assist</label>
                   <p class="hint" id="assist-hint">
-                    Overview checklist — Start publishing for the live spine. Other views are detail panels, not a second workflow.
+                    Overview only — Start publishing for the live path (done = public URL or named gate). Other views are detail panels.
                   </p>
                 </div>
                 <div class="portal-actions">
@@ -494,6 +521,11 @@
               <aside class="int-wizard" id="sign-wizard" hidden>
                 <h2 id="sign-wizard-title">Official</h2>
                 <p class="hint" id="sign-wizard-blurb"></p>
+                <div class="plat-structure-gate" id="sign-structure-gate" hidden>
+                  <p class="plat-structure-kicker" id="sign-structure-kicker">Structure</p>
+                  <p class="plat-structure-reason" id="sign-structure-reason"></p>
+                  <div class="plat-structure-actions" id="sign-structure-actions"></div>
+                </div>
                 <ol class="int-steps" id="sign-wizard-steps"></ol>
                 <div class="hero-cta int-actions">
                   <button type="button" class="primary" id="sign-open">Open dashboard</button>
@@ -654,9 +686,9 @@
                 <div>
                   <label>Deployment</label>
                   <p class="hint">
-                    Pick a host. Self-host, Cloudflare, Vercel, and Netlify Deploy stream a local CLI.
-                    Cards also offer Put / Login CLI / Open dashboard. Studio does not hold secrets
-                    or fill Create Token for you. Official signing is under Sign.
+                    <strong>On this machine</strong> (Self-host / Umami) is not a cloud host.
+                    <strong>Cloud hosts</strong> are vendor PaaS — Deploy / Login CLI / dashboard.
+                    Studio does not hold secrets. Official signing is under Sign.
                   </p>
                 </div>
               </div>
@@ -666,6 +698,11 @@
               <aside class="int-wizard" id="platforms-wizard" hidden>
                 <h2 id="plat-wizard-title">Host</h2>
                 <p class="hint" id="plat-wizard-blurb"></p>
+                <div class="plat-structure-gate" id="plat-structure-gate" hidden>
+                  <p class="plat-structure-kicker" id="plat-structure-kicker">Structure</p>
+                  <p class="plat-structure-reason" id="plat-structure-reason"></p>
+                  <div class="plat-structure-actions" id="plat-structure-actions"></div>
+                </div>
                 <ol class="int-steps" id="plat-wizard-steps"></ol>
                 <div class="plat-results" id="plat-results" hidden>
                   <p class="plat-results-kicker" id="plat-results-kicker">Last deploy</p>
@@ -683,20 +720,29 @@
                   <p class="plat-results-hint" id="plat-results-hint" hidden></p>
                 </div>
                 <div class="hero-cta int-actions">
-                  <button type="button" class="primary" id="plat-put" hidden>Put secrets</button>
+                  <button
+                    type="button"
+                    id="plat-import-env"
+                    hidden
+                    title="Import KEY=VALUE from local .env / .dev.vars via the host CLI — confirm names first; values never saved in Studio"
+                  >
+                    Import env…
+                  </button>
+                  <button type="button" id="plat-put" hidden>Put secrets</button>
                   <button type="button" id="plat-open">Open dashboard</button>
                   <button type="button" class="danger" id="plat-cancel-deploy" hidden>Cancel</button>
                   <button type="button" id="plat-dashboard" hidden>Open dashboard</button>
-                  <button type="button" id="plat-docs" hidden>Learn more</button>
-                  <button type="button" id="plat-portal-steps" hidden>Portal steps</button>
+                  <button type="button" class="advanced-only" id="plat-docs" hidden>Learn more</button>
+                  <button type="button" class="advanced-only" id="plat-portal-steps" hidden>Portal steps</button>
                   <button
                     type="button"
                     id="plat-confirm-gate"
+                    class="gate-secondary"
                     title="Confirm Live check / host gate when it is current on Publish"
                   >
                     Confirm gate
                   </button>
-                  <button type="button" id="plat-continue-publish" title="Return to the Publish spine">
+                  <button type="button" id="plat-continue-publish" class="gate-secondary" title="Return to the Publish spine">
                     Continue publishing
                   </button>
                   <button type="button" id="plat-use-local" hidden title="Skip hosted deploy for desktop-only cuts">
@@ -708,9 +754,22 @@
           </section>
 
           <section class="view" data-view="integrations" aria-label="Integrations" hidden>
+            <p class="hint gate-orient" id="int-gate-orient" hidden>
+              <span id="int-gate-orient-text"></span>
+              <button type="button" class="linkish" id="int-gate-orient-go">Go to current gate</button>
+            </p>
+            <aside class="soft-no" role="note">
+              <p class="soft-no-kicker">Soft no</p>
+              <p class="soft-no-body">
+                You do not need this panel to ship. Prefer <strong>Publish</strong> and
+                <strong>Deployment</strong> for one live URL. Integrations is an optional deep-link
+                sheet — Studio does not create products, finish vendor OAuth, hold payment keys, or
+                send email.
+              </p>
+            </aside>
             <p class="hint">
-              Same shape as Deployment: page Opens → finish on the vendor → Put when a host secret
-              exists → Confirm. Studio does not create products, hold payment keys, or send email.
+              When you do need a vendor account: Open dashboard → finish there → Put a named host
+              secret if required → Confirm the matching Publish gate.
             </p>
             <div class="int-layout">
               <div id="integrations-catalog"></div>
@@ -969,38 +1028,151 @@
       </div>
     </div>
 
+    <div class="host-deploy-dialog" id="recent-history-dialog" hidden>
+      <div class="host-deploy-dialog-backdrop" data-recent-history-close></div>
+      <div
+        class="host-deploy-dialog-panel env-import-dialog-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="recent-history-dialog-title"
+      >
+        <header class="host-deploy-dialog-head">
+          <div>
+            <p class="host-deploy-dialog-kicker">Projects</p>
+            <h2 id="recent-history-dialog-title">Project history</h2>
+          </div>
+          <button type="button" class="ghost" data-recent-history-close>Close</button>
+        </header>
+        <p class="hint">
+          Up to <span id="recent-history-cap">32</span> local folders. Missing paths are pruned
+          automatically; × removes one entry.
+        </p>
+        <label class="host-deploy-field">
+          <span>Search</span>
+          <input
+            id="recent-history-search"
+            type="search"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Name or path…"
+            aria-label="Search project history"
+          />
+        </label>
+        <p class="host-deploy-meta" id="recent-history-meta"></p>
+        <div class="recent-history-list" id="recent-history-list" role="listbox" aria-label="Project history"></div>
+        <p class="hint" id="recent-history-empty" hidden>No matching projects.</p>
+        <div class="hero-cta int-actions host-deploy-dialog-actions">
+          <button type="button" data-recent-history-close>Close</button>
+          <button type="button" class="primary" id="recent-history-open-folder">Open folder…</button>
+        </div>
+      </div>
+    </div>
+
     <div class="host-deploy-dialog" id="host-deploy-dialog" hidden>
       <div class="host-deploy-dialog-backdrop" data-host-deploy-close></div>
       <div
-        class="host-deploy-dialog-panel"
+        class="host-deploy-dialog-panel env-import-dialog-panel"
         role="dialog"
         aria-modal="true"
         aria-labelledby="host-deploy-dialog-title"
       >
         <header class="host-deploy-dialog-head">
           <div>
-            <p class="host-deploy-dialog-kicker">Confirm deploy</p>
+            <p class="host-deploy-dialog-kicker">Deploy</p>
             <h2 id="host-deploy-dialog-title">Deploy</h2>
           </div>
           <button type="button" class="ghost" data-host-deploy-close>Cancel</button>
         </header>
         <p class="hint" id="host-deploy-dialog-blurb">
-          Review the name and lane, then Deploy streams your local CLI.
+          Pick the app target, optional .env pack, then Deploy — one ship unit, host CLI on this PC.
         </p>
-        <label class="host-deploy-field">
-          <span>Project / site name</span>
-          <input
-            id="host-deploy-name"
-            type="text"
-            autocomplete="off"
-            spellcheck="false"
-            aria-label="Project or site name"
-          />
-        </label>
-        <p class="host-deploy-meta" id="host-deploy-meta"></p>
-        <div class="hero-cta int-actions host-deploy-dialog-actions">
-          <button type="button" data-host-deploy-close>Cancel</button>
-          <button type="button" class="primary" id="host-deploy-confirm">Deploy</button>
+        <div id="host-deploy-step-setup">
+          <p class="host-deploy-meta">Target (web / API / app folder)</p>
+          <div class="env-pack-grid" id="host-deploy-targets" role="listbox" aria-label="Deploy targets"></div>
+          <p class="hint" id="host-deploy-targets-empty" hidden>No app folders detected — Deploy uses the project root.</p>
+          <p class="host-deploy-meta">Env pack (optional)</p>
+          <div class="env-pack-grid" id="host-deploy-env-packs" role="listbox" aria-label="Env packs"></div>
+          <p class="hint" id="host-deploy-env-empty" hidden>No .env / .dev.vars under this target.</p>
+          <label class="env-import-check">
+            <input type="checkbox" id="host-deploy-import-env" checked />
+            <span>Import selected .env to this Deploy host before Deploy</span>
+          </label>
+          <p class="hint host-deploy-import-mismatch" id="host-deploy-import-mismatch" hidden></p>
+          <button type="button" class="ghost host-deploy-switch-hint" id="host-deploy-switch-hint" hidden>
+            Switch Deploy host
+          </button>
+          <label class="host-deploy-field">
+            <span>Project / site name</span>
+            <input
+              id="host-deploy-name"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Project or site name"
+            />
+          </label>
+          <p class="host-deploy-meta" id="host-deploy-meta"></p>
+          <div class="hero-cta int-actions host-deploy-dialog-actions">
+            <button type="button" data-host-deploy-close>Cancel</button>
+            <button type="button" class="primary" id="host-deploy-confirm">Deploy</button>
+          </div>
+        </div>
+        <div id="host-deploy-step-names" hidden>
+          <p class="host-deploy-meta" id="host-deploy-import-file"></p>
+          <ul class="env-import-list" id="host-deploy-import-list" aria-label="Environment variable names"></ul>
+          <p class="hint" id="host-deploy-import-empty" hidden>No importable keys in the local env file.</p>
+          <div class="hero-cta int-actions host-deploy-dialog-actions">
+            <button type="button" id="host-deploy-back-setup">Back</button>
+            <button type="button" data-host-deploy-close>Cancel</button>
+            <button type="button" class="primary" id="host-deploy-confirm-import" disabled>
+              Push &amp; Deploy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="host-deploy-dialog" id="env-import-dialog" hidden>
+      <div class="host-deploy-dialog-backdrop" data-env-import-close></div>
+      <div
+        class="host-deploy-dialog-panel env-import-dialog-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="env-import-dialog-title"
+      >
+        <header class="host-deploy-dialog-head">
+          <div>
+            <p class="host-deploy-dialog-kicker">Add secrets to host</p>
+            <h2 id="env-import-dialog-title">Import env</h2>
+          </div>
+          <button type="button" class="ghost" data-env-import-close>Cancel</button>
+        </header>
+        <p class="hint" id="env-import-dialog-blurb">
+          Values stay on this PC and go to the host CLI only — not saved in Orbit Yard. Hosts still
+          bill you; Studio complements their tools.
+        </p>
+        <div id="env-import-step-packs">
+          <p class="host-deploy-meta">Which app’s secrets? Same idea as Targets Deploy — one ship unit.</p>
+          <div class="env-pack-grid" id="env-pack-grid" role="listbox" aria-label="Env packs"></div>
+          <p class="hint" id="env-pack-empty" hidden>No .env / .dev.vars found under scopes.</p>
+          <div class="hero-cta int-actions host-deploy-dialog-actions">
+            <button type="button" data-env-import-close>Cancel</button>
+            <button type="button" class="primary" id="env-pack-continue" disabled>Continue</button>
+          </div>
+        </div>
+        <div id="env-import-step-names" hidden>
+          <p class="host-deploy-meta" id="env-import-file"></p>
+          <ul class="env-import-list" id="env-import-list" aria-label="Environment variable names"></ul>
+          <p class="hint" id="env-import-empty" hidden>No importable keys in the local env file.</p>
+          <label class="env-import-check">
+            <input type="checkbox" id="env-import-then-deploy" />
+            <span>Deploy after import</span>
+          </label>
+          <div class="hero-cta int-actions host-deploy-dialog-actions">
+            <button type="button" id="env-import-back-packs">Back</button>
+            <button type="button" data-env-import-close>Cancel</button>
+            <button type="button" class="primary" id="env-import-confirm" disabled>Push to host</button>
+          </div>
         </div>
       </div>
     </div>

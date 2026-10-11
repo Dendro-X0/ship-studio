@@ -1,0 +1,14 @@
+# Orbit Yard fixture — Flowsint Get-live (F1 detect).
+# Not a runnable full stack — image markers only. Real clone uses reconurge/flowsint.
+
+name: flowsint-fixture
+
+services:
+  api:
+    image: ghcr.io/reconurge/flowsint-api:latest
+    container_name: flowsint-api-fixture
+  app:
+    image: ghcr.io/reconurge/flowsint-app:latest
+    container_name: flowsint-app-fixture
+    ports:
+      - "5173:8080"

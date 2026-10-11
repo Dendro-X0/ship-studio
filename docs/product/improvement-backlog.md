@@ -4,6 +4,8 @@
 **Updated:** 2026-10-04  
 **Cadence:** Close-cut then freeze · no portal expansion · Paddle overlay optional · activate one depth band at a time  
 **Canon:** [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) · [PRODUCT.md](./PRODUCT.md) · [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) · [../../specs/backend/product-website-charter.md](../../specs/backend/product-website-charter.md) · [ship-studio-overhaul-design](../../specs/backend/ship-studio-overhaul-design.md)  
+**Productization roadmap (locked):** [../business/ROADMAP.md](../business/ROADMAP.md) — P1 Tier S before new wedges  
+**Business shelf:** [../business/README.md](../business/README.md) — value compounding · growth under constraints  
 **Strategy sim:** `strategy-research-lab/strategies/sims/S-SHIP-STUDIO-hub.md`
 
 ```text
@@ -91,7 +93,7 @@ Every candidate should still answer: Does it reduce missed gates for multi-surfa
 | S1.14 | **Local vs Public intent copy** | **Done** — Dashboard `#intent-cue` + topbar titles (one sentence each) |
 | S1.15 | **Dirty-tree Publish cue** | **Done** — soft Confirm warn on deploy/listing/release · Publish strip cue — [design](../../specs/frontend/dirty-tree-publish-cue-design.md) |
 | S1.16 | **Targets catalog depth** | **Done** — Folder · Deploy · auto-detect on bind · dirty Save cue — [design](../../specs/frontend/targets-catalog-parity-design.md) |
-| S1.17 | **Multi-project portfolio cue** | Recents / suite-oriented “next repo to ship” for 30+ OSS indies — stay local, no cloud hub |
+| S1.17 | **Multi-project portfolio cue** | **Done (F5)** — Dashboard Next ship + local `shipped-at` · no cloud hub — [founder-minimal-spine](../../specs/backend/founder-minimal-spine-design.md) |
 | S1.18 | **Web3 / chain release lanes** | Only when a real ship asks — detect + Open official explorers/wallets; no custody or auto-broadcast |
 | S1.21 | **Creem / Waffo / Paddle guide depth** | **Done** — detect · listing · portal · Desktop wizards · site honesty (Solo stays Polar) — [design](../../specs/backend/commerce-creem-waffo-design.md) |
 

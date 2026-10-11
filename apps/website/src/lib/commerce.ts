@@ -18,10 +18,11 @@ export function paddlePortalUrl(): string {
   return (import.meta.env.PUBLIC_PADDLE_PORTAL_URL ?? "").trim();
 }
 
+/** Prefer env; fallback must match CURRENT release tag (truth sync / S4). */
 export function downloadUrl(): string {
   return (
     import.meta.env.PUBLIC_DOWNLOAD_URL ??
-    "https://github.com/Dendro-X0/ship-studio/releases"
+    "https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.4"
   ).trim();
 }
 

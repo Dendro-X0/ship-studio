@@ -5,7 +5,9 @@ Front door: [../CURRENT.md](../CURRENT.md) · [../START-HERE.md](../START-HERE.m
 | Document | Role |
 |----------|------|
 | [SCOPE-OF-SERVICE.md](./SCOPE-OF-SERVICE.md) | Who / what / boundary — canonical service definition |
+| [API-EXTENSIONS-PLAN.md](./API-EXTENSIONS-PLAN.md) | Local vs vendor API boundary — mostly non-goals |
 | [PRODUCT.md](./PRODUCT.md) | Product contract · commands · surfaces |
 | [PLATFORMS-AND-PORTAL.md](./PLATFORMS-AND-PORTAL.md) | Platforms · Portal · Integrations — functionality · objectives · known gaps |
 | [OPERATOR-NEXT.md](./OPERATOR-NEXT.md) | Human gates (paste, graduate, deploy, stores) |
 | [improvement-backlog.md](./improvement-backlog.md) | Living improvement ideas (P0–P2 · Reject) — not an activate queue |
+| [../business/README.md](../business/README.md) | Strategy shelf — value compounding · growth under constraints |

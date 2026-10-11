@@ -125,9 +125,13 @@ pub fn put_launch(
         anyhow::bail!("pass a real secret name — never a value");
     }
     match id {
-        ProviderId::Cloudflare | ProviderId::Vercel | ProviderId::Netlify => {}
+        ProviderId::Cloudflare
+        | ProviderId::Vercel
+        | ProviderId::Netlify
+        | ProviderId::Fly
+        | ProviderId::Railway => {}
         _ => anyhow::bail!(
-            "{} has no interactive Put CLI — open the vendor dashboard, then put on cloudflare|vercel|netlify",
+            "{} has no interactive Put CLI — use cloudflare|vercel|netlify|fly|railway",
             id.label()
         ),
     }
@@ -149,7 +153,7 @@ pub fn put_launch(
         name.into(),
     ];
     let recipe = shell_join(&argv);
-    let host_cli = secrets::put_cli_public(id, name);
+    let host_cli = secrets::put_cli_public_for(&project, id, name);
 
     let mut spawned = false;
     if spawn {

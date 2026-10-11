@@ -7,35 +7,35 @@ const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
 ---
 
 <BaseLayout
-  title="Orbit Yard — local final-mile shipping hub"
-  description="Local Adaptive Publish for sign → release → deploy. Not the agentic ship.studio product. Vendors and humans still finish OAuth and review."
+  title="Orbit Yard — first public URL, honest gates"
+  description="Get your first public host URL live from your PC — visible process, visible result, honest gates. Not the agentic ship.studio product."
   path="/"
 >
   <section class="hero" aria-label="Hero">
     <div class="hero-atmosphere" aria-hidden="true"></div>
     <div class="hero-inner">
       <p class="hero-brand">Orbit Yard</p>
-      <h1 class="hero-line">Local final-mile shipping hub.</h1>
+      <h1 class="hero-line">First public URL — honest gates.</h1>
       <p class="hero-support">
-        Sequence sign → release → deploy on CLI, TUI, and Desktop. You Open vendor doors and
-        Confirm each gate — Studio does not replace Cloudflare, Apple, or Polar. Not the
-        unrelated agentic product at ship.studio.
+        Done when your site is live (or the named gate says so). Open the host, deploy from this
+        PC, Confirm — Studio does not replace Cloudflare, Apple, or Polar. Download is the full
+        OSS tool — try everything; no timed trial wall.
         <a href="/intent">What this is for</a>.
       </p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href={buyHref}>{buyLabel}</a>
-        <a class="btn" href={downloadUrl()}>Download</a>
+        <a class="btn btn-primary" href={downloadUrl()}>Download</a>
+        <a class="btn" href="/demo">Demo</a>
         <a class="btn" href="/docs">Docs</a>
+        <a class="btn" href={buyHref}>{buyLabel}</a>
       </div>
     </div>
   </section>
 
   <section class="section home-band" aria-label="Surfaces">
-    <h2>Three surfaces. One engine.</h2>
+    <h2>Three surfaces. One outcome.</h2>
     <p class="lead">
-      <code>orbityard</code> is the kernel. CLI, TUI, and Desktop share Adaptive Publish —
-      Open/Run → Confirm → Next. Detail panels (Platforms, Integrations, Portal) never become a
-      second wizard.
+      <code>orbityard</code> is the kernel. CLI, TUI, and Desktop share the same path to a
+      <strong>public URL</strong> (or a named Confirm gate). Detail panels never become a second wizard.
     </p>
     <div class="home-grid">
       <article>
@@ -48,7 +48,7 @@ const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
       </article>
       <article>
         <h3>Desktop</h3>
-        <p>Publish spine plus Platforms and Integrations catalogs.</p>
+        <p>Publish spine and Deployment for one live URL. Integrations stay optional deep links.</p>
       </article>
     </div>
   </section>
@@ -59,7 +59,8 @@ const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
       <article>
         <h3>Your product</h3>
         <p>
-          Integrations is a <strong>guide</strong>: Polar, Stripe, Gumroad, Lemon Squeezy,
+          Soft no: Integrations is an optional <strong>guide</strong>, not required to ship —
+          Polar, Stripe, Gumroad, Lemon Squeezy,
           <a href="https://www.paddle.com/">Paddle</a>,
           <a href="https://www.creem.io/">Creem</a>, and
           <a href="https://www.waffo.ai/">Waffo</a>. Open the vendor, put

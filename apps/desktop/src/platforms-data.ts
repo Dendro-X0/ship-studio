@@ -1,11 +1,16 @@
-/** Hosting (Deployment) + Official signing (Sign) catalog entries. */
+/** Deployment catalog: On this machine · Cloud hosts · Official signing (Sign). */
 
 import type { ProviderWizard } from "./types";
+
+/** Local runtime / compose — not a cloud hosting vendor. */
+export const LOCAL_RUNTIME_GROUP = "On this machine";
+/** Vendor PaaS / Pages — CLI deploy to their cloud. */
+export const CLOUD_HOST_GROUP = "Cloud hosts";
 
 export const PLATFORM_WIZARDS: ProviderWizard[] = [
   {
     id: "selfhost",
-    group: "Hosting",
+    group: LOCAL_RUNTIME_GROUP,
     title: "Self-host",
     blurb:
       "Local auto lane — Studio streams the run and checks it (Docker cousin; not a cloud host).",
@@ -20,8 +25,56 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
     ],
   },
   {
+    id: "umami",
+    group: LOCAL_RUNTIME_GROUP,
+    title: "Umami",
+    blurb:
+      "Self-hosted analytics — Deploy runs docker compose + Admin heartbeat on this machine.",
+    openUrl: "http://127.0.0.1:3000",
+    openLabel: "Deploy",
+    needsPublic: false,
+    steps: [
+      "Umami Get-live: **ensure secrets** → **compose up** → Admin URL (Orbit shortens the official Docker checklist).",
+      "Deploy needs Docker on PATH. Studio writes strong `.env` secrets — values never shown in the UI.",
+      "**Open Admin** opens the loopback dashboard. Change the default admin password, then Confirm on Publish.",
+      "Not a cloud host and not Self-host static — tracker paste on your site stays a human step.",
+    ],
+  },
+  {
+    id: "flowsint",
+    group: LOCAL_RUNTIME_GROUP,
+    title: "Flowsint",
+    blurb:
+      "Self-hosted OSINT graph — Deploy runs compose.prod + App proof on this machine.",
+    openUrl: "http://127.0.0.1:5173",
+    openLabel: "Deploy",
+    needsPublic: false,
+    steps: [
+      "Flowsint Get-live: **ensure multi-env secrets** → **compose.prod up** → App URL (Orbit shortens four manual .env copies).",
+      "Deploy needs Docker on PATH. Studio writes strong AUTH_SECRET / vault / DB passwords — values never shown in the UI.",
+      "**Open App** opens the loopback UI. Create an account at /register, then Confirm on Publish.",
+      "Enricher API keys stay in Flowsint’s vault — not Integrations theater.",
+    ],
+  },
+  {
+    id: "medusa",
+    group: LOCAL_RUNTIME_GROUP,
+    title: "Medusa",
+    blurb:
+      "Self-hosted commerce API — Deploy runs compose deps + Admin health on this machine.",
+    openUrl: "http://127.0.0.1:9000/app",
+    openLabel: "Deploy",
+    needsPublic: false,
+    steps: [
+      "Medusa Get-live: **ensure secrets** → **compose up** → Admin URL (Orbit sequences detect → Put → Deploy).",
+      "Deploy needs Docker on PATH for Postgres/Redis. Soft-L3 Admin needs a real Medusa clone (fixture is deps-only).",
+      "**Open Admin** opens the loopback dashboard. Create/sign in, then Confirm on Publish.",
+      "Payment plugins stay vendor dashboards — not Integrations theater.",
+    ],
+  },
+  {
     id: "cloudflare",
-    group: "Hosting",
+    group: CLOUD_HOST_GROUP,
     title: "Cloudflare",
     blurb:
       "Workers / Pages — Deploy streams wrangler on this machine; Open dashboard to see the project.",
@@ -32,14 +85,14 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
     deployArgs: "deploy --provider cloudflare",
     steps: [
       "Deploy streams orbityard hostdeploy (wrangler Pages or Workers) — watch Output for phases.",
-      "Success URL is Cloudflare-hosted (*.pages.dev / workers.dev) — not Self-host loopback.",
+      "Optional: **Import env…** from local .dev.vars / .env — confirm names, then push via wrangler (values never saved in Studio).",
       "Not logged in? Login CLI (`wrangler login`) or Sign in (web) — Studio never creates API tokens.",
-      "After you delete on the vendor: **Clear evidence** syncs Studio (drops local last-run). **Cancel on dashboard** opens Workers & Pages — Studio never undeploys for you.",
+      "After you delete on the vendor: **Clear evidence** syncs Studio (drops local last-run). Hosts still bill you — Studio complements their CLI.",
     ],
   },
   {
     id: "vercel",
-    group: "Hosting",
+    group: CLOUD_HOST_GROUP,
     title: "Vercel",
     blurb:
       "Vercel project — Deploy streams vercel CLI on this machine; Open dashboard to see the project.",
@@ -50,14 +103,14 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
     deployArgs: "deploy --provider vercel",
     steps: [
       "Deploy streams orbityard hostdeploy (vercel --prod) — watch Output for phases.",
+      "Optional: **Import env…** from local .env — confirm names, then `vercel env add` (values never saved in Studio).",
       "Not logged in? Login CLI (`vercel login`) or Sign in (web) — Studio never stores tokens.",
-      "Open dashboard → Projects list (or the project when linked). Stop/delete only on Vercel.",
       "Copy the production URL → Publish Live check → Confirm (Studio does not auto-Confirm).",
     ],
   },
   {
     id: "netlify",
-    group: "Hosting",
+    group: CLOUD_HOST_GROUP,
     title: "Netlify",
     blurb:
       "Netlify site — Deploy streams netlify CLI on this machine; Open dashboard to see the site.",
@@ -68,14 +121,14 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
     deployArgs: "deploy --provider netlify",
     steps: [
       "Deploy streams orbityard hostdeploy (netlify deploy --prod) — watch Output for phases.",
+      "Optional: **Import env…** from local .env — confirm names, then `netlify env:import` (ephemeral; values never saved in Studio).",
       "Not logged in? Login CLI (`netlify login`) or Sign in (web) — Studio never stores tokens.",
-      "Open dashboard → Projects (site deep-link when known). Stop/delete only on Netlify.",
       "Copy the site URL → Publish Live check → Confirm (Studio does not auto-Confirm).",
     ],
   },
   {
     id: "github-pages",
-    group: "Hosting",
+    group: CLOUD_HOST_GROUP,
     title: "GitHub Pages",
     blurb: "Static docs / marketing — Settings → Pages (not PAT portal).",
     openUrl: "https://github.com/settings/pages",
@@ -92,37 +145,41 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
   },
   {
     id: "fly",
-    group: "Hosting",
+    group: CLOUD_HOST_GROUP,
     title: "Fly.io",
-    blurb: "flyctl auth + secrets — Portal Login CLI, then dashboard.",
+    blurb: "Deploy streams fly deploy after fly launch — Login CLI + Import env on this machine.",
     provider: "fly",
     openUrl: "https://fly.io/dashboard",
+    openLabel: "Deploy",
     needsPublic: true,
+    deployArgs: "deploy --provider fly",
     steps: [
-      "Portal steps → Login CLI (`fly auth login`).",
-      "Open dashboard → Apps list to manage / destroy apps.",
-      "Put app secrets with flyctl or the dashboard — never in Studio.",
-      "Copy the app URL → Publish Live check → Confirm.",
+      "First time: run `fly launch` yourself (creates fly.toml) — Studio never silent-launches.",
+      "Deploy streams `fly deploy --yes` via hostdeploy — watch Output.",
+      "Optional: **Import env…** — `fly secrets set NAME=-` (stdin; values never saved in Studio).",
+      "Not logged in? Login CLI (`fly auth login`). Copy the app URL → Confirm.",
     ],
   },
   {
     id: "railway",
-    group: "Hosting",
+    group: CLOUD_HOST_GROUP,
     title: "Railway",
-    blurb: "railway login + Variables — Portal Login CLI, then dashboard.",
+    blurb: "Deploy streams railway up after link — Login CLI + Import env on this machine.",
     provider: "railway",
     openUrl: "https://railway.com/dashboard",
+    openLabel: "Deploy",
     needsPublic: true,
+    deployArgs: "deploy --provider railway",
     steps: [
-      "Portal steps → Login CLI (`railway login`).",
-      "Open dashboard → projects to manage services / variables.",
-      "Account tokens only when CI needs them (not both TOKEN env vars).",
-      "Copy the public URL → Publish Live check → Confirm.",
+      "First time: run `railway link` or `railway init` yourself — Studio never silent-inits.",
+      "Deploy streams `railway up -y` via hostdeploy — watch Output.",
+      "Optional: **Import env…** — `railway variable set NAME --stdin` (values never saved in Studio).",
+      "Not logged in? Login CLI (`railway login`). Copy the public URL → Confirm.",
     ],
   },
   {
     id: "orbit",
-    group: "Hosting",
+    group: CLOUD_HOST_GROUP,
     title: "Orbit",
     blurb:
       "Local Orbit CLI → your Cloudflare / Vercel / Netlify (only when this repo is Orbit-configured).",
@@ -191,19 +248,31 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
   },
 ];
 
-export const PLATFORM_GROUPS = ["Hosting"] as const;
+/** Deployment panel section order — local runtime first (not a PaaS marketplace). */
+export const PLATFORM_GROUPS = [LOCAL_RUNTIME_GROUP, CLOUD_HOST_GROUP] as const;
 
 /** Official store / cert lanes — rendered as a grid on the Sign panel. */
 export const SIGN_GROUPS = ["Official signing"] as const;
+
+export function isDeployCatalogGroup(group: string): boolean {
+  return group === LOCAL_RUNTIME_GROUP || group === CLOUD_HOST_GROUP;
+}
+
+/** Prefer the section that owns the selected card (local first when unset). */
+export function deployPreferGroup(selectId?: string | null): string {
+  if (!selectId) return LOCAL_RUNTIME_GROUP;
+  const wiz = PLATFORM_WIZARDS.find((w) => w.id === selectId);
+  return wiz?.group === CLOUD_HOST_GROUP ? CLOUD_HOST_GROUP : LOCAL_RUNTIME_GROUP;
+}
 
 export function signingCatalogEntries() {
   return PLATFORM_WIZARDS.filter((w) => w.group === "Official signing");
 }
 
-/** Hosting cards; Orbit only when the bound project is Orbit-configured. */
+/** Deployment cards (local + cloud); Orbit only when the bound project is Orbit-configured. */
 export function hostingCatalogEntries(opts?: { orbitConfigured?: boolean }) {
   return PLATFORM_WIZARDS.filter((w) => {
-    if (w.group !== "Hosting") return false;
+    if (!isDeployCatalogGroup(w.group)) return false;
     if (w.id === "orbit") return Boolean(opts?.orbitConfigured);
     return true;
   });

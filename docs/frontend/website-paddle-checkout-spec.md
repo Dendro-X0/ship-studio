@@ -1,7 +1,7 @@
 # Frontend — Solo Buy via Paddle overlay
 
 **Product:** Official website `/pricing`  
-**Spec status:** implemented — overlay gated on env; L3 overlay unproven until tokens exist  
+**Spec status:** implemented · **Sandbox L3 Pass** 2026-10-07 ([evidence](../handoffs/evidence-paddle-sandbox-checkout-20261007.md)) · operator path [PADDLE-SETUP](../../apps/website/docs/PADDLE-SETUP.md)  
 **API:** [website-paddle-checkout-design](../../specs/backend/website-paddle-checkout-design.md)
 
 ## Page: Pricing
@@ -19,7 +19,7 @@ Success: Paddle `settings.successUrl` → `/checkout/success`. Cancel: overlay c
 
 ## Copy
 
-Solo processor name is **Paddle**. Polar is not mentioned as the way to buy this license. Integrations guide on `/` may still list Polar for *customer* products.
+Solo processor name is **Paddle**. Polar is not mentioned as the way to buy this license. Integrations on `/` may still list Polar for *customer* products (soft-no / optional guide — not this Buy path).
 
 `/account` and `/legal/refunds` are buyer-facing: receipt email + support mailto. Do not link buyers to `vendors.paddle.com`. Optional `PUBLIC_PADDLE_PORTAL_URL` only if a Paddle **customer** portal exists.
 

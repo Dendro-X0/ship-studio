@@ -1,7 +1,8 @@
-# Feature demo — v0.2.1 (Part 1)
+# Feature demo — v0.2.1 shelf (Part 1)
 
 **Status:** T1–T7 live on `/demo` (compressed Harbor GIFs)  
-**Build:** App already installed ([v0.2.3](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.3)+) — **do not record setup/install**  
+**Truth:** Download / CURRENT = **[v0.2.4](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.4)** — shelf folder stays `v0.2.1` until presentation **R4** re-record; clips still show Get-live mid-flight.  
+**Build:** App already installed (v0.2.4+) — **do not record setup/install**  
 **Watermark:** `local app · recorded`  
 **Replace:** stylized `docs/assets/demo/v0.1.0/` → live clips under `docs/assets/demo/v0.2.1/` (same file names when possible)  
 **Shelf:** `apps/website` `DEMO_VERSION = v0.2.1` (T1–T7). Raw masters live in `_raw/` (gitignored) — never commit `.gif.gif` balloons.

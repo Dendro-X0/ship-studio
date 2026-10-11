@@ -1,28 +1,50 @@
 # Current session — Orbit Yard
 
-**Updated:** 2026-10-04  
+**Updated:** 2026-10-10  
 **Branch:** `main`  
-**Status:** **W4 payment + refund setup** reopened — sandbox Solo overlay first. Portal/Integrations UX still PAUSED.
+**Status:** **Finish-line mode** · Medusa M1–M4 · Flowsint F0–F4 · Umami Soft-L3 · pack expansion **killed until release**.
 
 ## Next Atomic Step
 
-**Paddle Solo sandbox setup** — follow [PADDLE-SETUP.md](../../apps/website/docs/PADDLE-SETUP.md) · dogfood [LICENSE-REFUND-DOGFOOD.md](../../apps/website/docs/LICENSE-REFUND-DOGFOOD.md).
+**P1b — v0.2.5 release cut** — [plan](../../specs/backend/v0.2.5-release-plan.md). Soft-no: FreeLLMAPI / next peer pack / Integrations coach.
 
-1. Create sandbox API key (`pdl_sdbx_…`) at https://sandbox-vendors.paddle.com/authentication (`product.write` · `price.write` · `client_token.write`)
-2. `setx PADDLE_SANDBOX_API_KEY "pdl_sdbx_…"` → new terminal → `python scripts/seed-paddle-solo-sandbox.py`
-3. Dashboard: **default payment link** → `http://localhost:4321` (and live site origin when ready)
-4. `pnpm website:dev` → `/pricing` test card `4242…` → then license issue / refund revoke dogfood
+Do **not** invent another detect→ensure→deploy→Desktop loop. After the tag: optional Soft-L3 film, or park Ship for Obscur EG.
 
-| Option | When |
-|--------|------|
-| Put `PUBLIC_PADDLE_*` on Netlify | After local sandbox buy works |
-| Confirm Live check on Publish | After Open live looks right |
-| Rename Netlify site / GitHub repo | Cosmetic — after Solo path works |
+**Last closed:** Medusa **M4** Desktop · M1–M3 · Flowsint F0–F4 · structure gate · host-XOR S1–S5.
+
+## Why this (anti-stuck)
+
+| Trap | Reality |
+|------|---------|
+| “Idle — pick FreeLLMAPI / Medusa Soft-L3 / another pack” | Feels busy; never completes |
+| ROADMAP P1 still “NEXT” while packs keep shipping | Docs lagged; P1 Tier S is **done** |
+| Commercial “complete company” | **CANCELLED** — finish = Gift cut + Soft-L3, not SaaS GTM |
+
+Canon: [ROADMAP](../business/ROADMAP.md) P1b · [presentation-readiness](../../specs/backend/presentation-readiness-design.md) · [STRATEGY](../business/STRATEGY.md).
 
 ## Design queue (not coding until activated)
 
 | Item | Spec |
 |------|------|
+| **P1b v0.2.5 release cut** | **ACTIVE** — Unreleased → tag · CURRENT · Download truth |
+| **P2 Soft-L3** | After P1b — [presentation-readiness](../../specs/backend/presentation-readiness-design.md) |
+| **Host automation dual path** | **D0–D3 + P1 shipped** — [host-automation-dual-path-design](../../specs/backend/host-automation-dual-path-design.md) · [provider-parity-p1](../../specs/backend/provider-parity-p1-design.md) |
+| **Project recents history** | **Shipped** — [project-recents-history-design](../../specs/backend/project-recents-history-design.md) |
+| **Structure proceed gate** | **UX law shipped** — [structure-proceed-gate-design](../../specs/backend/structure-proceed-gate-design.md) |
+| **Umami Get-live (A)** | **U0–U4 done** — [umami-get-live-design](../../specs/backend/umami-get-live-design.md) |
+| **Get-live compose packs (peers)** | **G0 · F0–F4 done** — **no new packs until P1b+P2** — [peers](../../specs/backend/get-live-compose-packs-from-peers-design.md) · [flowsint](../../specs/backend/flowsint-get-live-design.md) |
+| **Owned commerce (Medusa)** | **M1–M4 done** — [study](../../specs/backend/owned-commerce-medusa-study-design.md) · [medusa-get-live](../../specs/backend/medusa-get-live-design.md) |
+| **Presentation readiness** | Soft-L3 film optional after cut — [presentation-readiness-design](../../specs/backend/presentation-readiness-design.md) |
+| **Client pain → fastest path** | **Plan locked** — stranger optional; Soft-L3 = maintainer · [client-pain](../../specs/backend/client-pain-fastest-path-design.md) |
+| **Founder minimal spine** | **F1–F5 complete** — [founder-minimal-spine-design](../../specs/backend/founder-minimal-spine-design.md) |
+| **Host XOR value/UX polish** | **S1–S5 done** — [host-xor-value-ux-polish-design](../../specs/backend/host-xor-value-ux-polish-design.md) |
+| **Host deploy env import** | **Shipped S1–10** — [host-deploy-env-import-design](../../specs/backend/host-deploy-env-import-design.md) |
+| Commercial product / Solo Buy / DevOps GTM | **CANCELLED** until ADMIT — [commercial-product-failed](../../specs/backend/commercial-product-failed-design.md) |
+| Ops / deploy pivot | [ops-deploy-pivot-design](../../specs/backend/ops-deploy-pivot-design.md) (**charter — not a company**) |
+| Integrations-as-setup is not the product | [integrations-setup-is-not-the-product-design](../../specs/backend/integrations-setup-is-not-the-product-design.md) |
+| Solo commerce without Paddle | [solo-commerce-without-paddle-design](../../specs/backend/solo-commerce-without-paddle-design.md) (**decision only**) |
+| S3.3 One-gate orientation | [one-gate-orientation-design](../../specs/backend/one-gate-orientation-design.md) (**slice 1 shipped**) |
+| S3.2 Agent pause / resume | [agent-pause-resume-design](../../specs/backend/agent-pause-resume-design.md) (**`yard_resume` shipped**) |
 | **v0.2.4 release cut** | [v0.2.4-release-plan](../../specs/backend/v0.2.4-release-plan.md) (**shipped**) |
 | S3.1 Agent setup / human key confirm | [agent-setup-human-confirm-design](../../specs/backend/agent-setup-human-confirm-design.md) (**`yard_setup` shipped**) |
 | S1.6 Cafe / FAQ | [cafe-faq-design](../../specs/frontend/cafe-faq-design.md) (**shipped**) |
@@ -35,10 +57,11 @@
 
 | Band | Rule |
 |------|------|
-| **Vendor handoff coach** | **CANCELLED** |
-| **Paddle Solo API keys / overlay dogfood** | **ACTIVE** — maintainer reopened for W4 payment + refund setup |
-| **Portal / Integrations UX expansion** | **PAUSED** — obstacle-course verdict |
-| Polar paid checkout E2E | Deferred — Polar is not the Solo processor |
+| **New Get-live peer packs** (FreeLLMAPI, …) | **Killed until P1b + P2** — [ROADMAP](../business/ROADMAP.md) |
+| **Commercial product / compete with DevOps vendors** | **CANCELLED** — [commercial-product-failed](../../specs/backend/commercial-product-failed-design.md) |
+| **Third-party Integrations product** | **CANCELLED** — [ops-deploy-pivot](../../specs/backend/ops-deploy-pivot-design.md) |
+| **Paddle Solo / Polar checkout as Orbit features** | **CANCELLED** |
+| **Portal / Integrations UX expansion** | **CANCELLED** |
 | aperio Advanced L4 | Parked |
 | Mobile store API upload | Deferred |
 | k8s controllers | Out of scope |
@@ -49,26 +72,25 @@
 
 | Surface | State |
 |---------|--------|
-| OSS / GitHub Releases tool | **v0.2.4** Orbit Yard brand — [release](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.4) |
-| Customer Payments/Integrations **guide** | Polar · Stripe · Gumroad · Lemon · Paddle · Creem · Waffo |
-| Paid Solo checkout on the website | **Optional** — env-gated; not the close-cut |
+| OSS / GitHub Releases tool | **v0.2.4** live · **v0.2.5** = next cut (Unreleased packs) |
+| Customer Payments/Integrations **guide** | **Cancelled as product** — leftover UI not a roadmap |
+| Paid Solo / commercial SKU | **Failed / cancelled** |
 
 ## Last closed
 
 | Band | Link |
 |------|------|
-| **v0.2.4 Orbit Yard cut** | Release + installer/zip · CI smoke soft-doctor · [plan](../../specs/backend/v0.2.4-release-plan.md) |
-| **Agent setup / human key confirm** | `yard_setup` brief · skill minutes loop · [agent-setup-human-confirm-design](../../specs/backend/agent-setup-human-confirm-design.md) |
-| **Rebrand → Orbit Yard** | Product · `orbityard` CLI · `yard_*` MCP · Desktop/website · skill `orbit-yard-mcp-agent`; `.ship/` config dir kept |
-| **Uniform CLI host auth vetting** | select CF/Vercel/Netlify/Fly/Railway → Login CLI |
-| **Website Netlify bind (S3)** | `apps/website/netlify.toml` |
-| **Client finishability S1–S2** | [client-finishability-design](../../specs/backend/client-finishability-design.md) |
-| **Game butler push** | `orbityard butler push` · `yard_butler_push` |
-| **Freeze tag** | `freeze/mcp-agent-2026-10-04` |
-| **MCP agent skill** | [`.cursor/skills/orbit-yard-mcp-agent`](../../.cursor/skills/orbit-yard-mcp-agent/SKILL.md) |
+| **Medusa M1–M4** | Detect · ensure · deploy · Desktop · [design](../../specs/backend/medusa-get-live-design.md) |
+| **Flowsint F0–F4** | [design](../../specs/backend/flowsint-get-live-design.md) |
+| **Structure proceed gate** | [design](../../specs/backend/structure-proceed-gate-design.md) |
+| **Umami Get-live U0–U4** | [design](../../specs/backend/umami-get-live-design.md) |
+| **Founder minimal spine F1–F5** | [design](../../specs/backend/founder-minimal-spine-design.md) |
+| **Host XOR S1–S5** | [design](../../specs/backend/host-xor-value-ux-polish-design.md) |
+| **v0.2.4 Orbit Yard cut** | [plan](../../specs/backend/v0.2.4-release-plan.md) |
 
 ## Boot allowlist
 
 1. This file  
 2. [CURRENT.md](../CURRENT.md)  
-3. [PLATFORMS-AND-PORTAL.md](../product/PLATFORMS-AND-PORTAL.md)  
+3. [business/ROADMAP.md](../business/ROADMAP.md)  
+4. [PLATFORMS-AND-PORTAL.md](../product/PLATFORMS-AND-PORTAL.md)  
