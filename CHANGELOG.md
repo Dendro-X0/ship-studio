@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.5 — 2026-10-10
+
+Get-live packs cut (Umami · Flowsint · Medusa) + structure gate + host env import polish. Finish-line: stop peer-pack sprawl until Soft-L3.
+
 ### Added
 
 - **Medusa Desktop (M4)** — On-this-machine card · hard structure gate · Deploy/Open Admin · results bay isolation ([design](./specs/backend/medusa-get-live-design.md))
@@ -59,7 +63,7 @@
 - **Env import empty keys** — greyed rows labeled `empty in .env` with ready/empty counts (not a broken selector)
 - **Env import polish (S10)** — strip ANSI from put errors; ensure Cloudflare Pages project before secrets (create-if-missing); tag `[missing_project]`; clearer Deploy-first toast
 - **Env import dogfood (CF Pages)** — `secrets --import-env --host-name` maps Deploy project name to `wrangler pages secret put --project-name` (was folder basename); put report includes scrubbed CLI stderr; mismatch toast offers Switch + Deploy without import
-- **Download CTA truth sync (S4)** — website `downloadUrl()` fallback points at `releases/tag/v0.2.4` (match CURRENT; Netlify env still overrides)
+- **Download CTA truth sync (S4)** — website `downloadUrl()` fallback points at CURRENT release tag (Netlify env still overrides); **0.2.5** default = `releases/tag/v0.2.5`
 
 ## 0.2.4 — 2026-10-04
 

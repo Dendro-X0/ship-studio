@@ -49,7 +49,7 @@ PUBLIC_PADDLE_PRICE_LABEL=$29
 PUBLIC_PADDLE_PORTAL_URL=
 PUBLIC_REFUND_WINDOW_DAYS=14
 PUBLIC_SUPPORT_EMAIL=you@example.com
-PUBLIC_DOWNLOAD_URL=https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.4
+PUBLIC_DOWNLOAD_URL=https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.5
 ```
 
 Or seed from an API key (writes the same `PUBLIC_PADDLE_*` keys):

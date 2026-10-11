@@ -2,7 +2,7 @@
 
 **Start:** [CURRENT.md](./CURRENT.md) → [handoffs/current-session.md](./handoffs/current-session.md)
 
-_Last updated: 2026-10-04 · **0.2.4** (Orbit Yard rebrand cut)_
+_Last updated: 2026-10-10 · **0.2.5** (Get-live packs cut)_
 
 ---
 

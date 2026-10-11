@@ -22,7 +22,7 @@ export function paddlePortalUrl(): string {
 export function downloadUrl(): string {
   return (
     import.meta.env.PUBLIC_DOWNLOAD_URL ??
-    "https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.4"
+    "https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.5"
   ).trim();
 }
 

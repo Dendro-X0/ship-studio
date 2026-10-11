@@ -49,8 +49,8 @@ Productization  = compound host-XOR value (certainty · one next gate · proof)
 |-------|--------|----------------|
 | **P0** Capability | **Done** | Self-beta host path attested · v0.2.4 OSS |
 | **P1** Tier S polish | **Done** | Host-XOR S1–S5 · founder spine F1–F5 · structure gate · Get-live packs Umami/Flowsint/Medusa |
-| **P1b** Ship Unreleased | **NEXT** | Tag **v0.2.5** (or park Ship) — stop infinite pack cloning |
-| **P2** Soft-L3 proof | After P1b | Maintainer-timed Get-live (Harbor or real pack clone) · optional evidence |
+| **P1b** Ship Unreleased | **Done** | Tag **v0.2.5** — stop infinite pack cloning |
+| **P2** Soft-L3 proof | **NEXT** | Maintainer-timed Get-live (Harbor or real pack clone) · optional evidence |
 | **P3** Optional H1 | After P2 pulse | One concierge offer draft + trial rule |
 | **P4** Matrix ADMIT | Default **no** | Explicit B8 only |
 
@@ -72,15 +72,14 @@ Do NOT start FreeLLMAPI / next peer pack until P1b release cut lands.
 
 ## 3. Execution roadmap (ordered)
 
-### Now — P1b release cut (speed)
+### Done — P1b release cut
 
-| ID | Bet | Done when |
-|----|-----|-----------|
-| **R1** | Commit Unreleased | Working tree clean enough for a cut |
-| **R2** | Tag **v0.2.5** | GitHub Release + installer/zip · CURRENT points at it |
-| **R3** | Truth sync | Site Download / demo / CHANGELOG match the tag |
+| ID | Bet | State |
+|----|-----|--------|
+| **R1–R2** | Commit + tag **v0.2.5** | **Done** |
+| **R3** | Truth sync / binaries | Attach assets + Netlify `PUBLIC_DOWNLOAD_URL` if needed |
 
-### Then — P2 Soft-L3 (presentable)
+### Now — P2 Soft-L3 (presentable)
 
 1. Maintainer Soft-L3: bind → Deploy → Open live → Confirm (timed) — [presentation-readiness](../../specs/backend/presentation-readiness-design.md)  
 2. Fail → one recovery (no Ops menu spam)  
