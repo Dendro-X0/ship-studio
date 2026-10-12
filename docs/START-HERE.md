@@ -2,14 +2,14 @@
 
 **One front door.** Do not search all of `/docs`.
 
-_Last updated: 2026-10-10_
+_Last updated: 2026-10-12_
 
 ---
 
 ## Read in this order
 
 1. **[CURRENT.md](./CURRENT.md)** — version · idle/active · PAUSED bands
-2. **[handoffs/current-session.md](./handoffs/current-session.md)** — Next Atomic Step only (**P1b v0.2.5 cut** — not another pack)
+2. **[handoffs/current-session.md](./handoffs/current-session.md)** — Next Atomic Step only (**idle / park** — not another pack)
 3. **[business/ROADMAP.md](./business/ROADMAP.md)** — finish-line phases · anti-stuck rule
 4. **[product/SCOPE-OF-SERVICE.md](./product/SCOPE-OF-SERVICE.md)** — service boundary
 5. **[product/PLATFORMS-AND-PORTAL.md](./product/PLATFORMS-AND-PORTAL.md)** — Platforms / Portal when needed

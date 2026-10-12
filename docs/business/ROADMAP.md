@@ -50,7 +50,7 @@ Productization  = compound host-XOR value (certainty · one next gate · proof)
 | **P0** Capability | **Done** | Self-beta host path attested · v0.2.4 OSS |
 | **P1** Tier S polish | **Done** | Host-XOR S1–S5 · founder spine F1–F5 · structure gate · Get-live packs Umami/Flowsint/Medusa |
 | **P1b** Ship Unreleased | **Done** | Tag **v0.2.5** — stop infinite pack cloning |
-| **P2** Soft-L3 proof | **NEXT** | Maintainer-timed Get-live (Harbor or real pack clone) · optional evidence |
+| **P2** Soft-L3 proof | **Done** | Maintainer Get-live URL — [evidence-soft-l3-20261011](../handoffs/evidence-soft-l3-20261011.md) |
 | **P3** Optional H1 | After P2 pulse | One concierge offer draft + trial rule |
 | **P4** Matrix ADMIT | Default **no** | Explicit B8 only |
 
@@ -77,13 +77,17 @@ Do NOT start FreeLLMAPI / next peer pack until P1b release cut lands.
 | ID | Bet | State |
 |----|-----|--------|
 | **R1–R2** | Commit + tag **v0.2.5** | **Done** |
-| **R3** | Truth sync / binaries | Attach assets + Netlify `PUBLIC_DOWNLOAD_URL` if needed |
+| **R3** | Truth sync / binaries | **Done** — assets on Release · repo Download → v0.2.5 (Netlify env Put if prod still pins older) |
 
-### Now — P2 Soft-L3 (presentable)
+### Done — presentable product gates
 
-1. Maintainer Soft-L3: bind → Deploy → Open live → Confirm (timed) — [presentation-readiness](../../specs/backend/presentation-readiness-design.md)  
-2. Fail → one recovery (no Ops menu spam)  
-3. Only then: H1 “first URL live once” paper offer  
+1. Soft-L3 **Pass** — [evidence](../handoffs/evidence-soft-l3-20261011.md)  
+2. **R4** `/demo` shelf **v0.2.5** — [SCRIPT](../assets/demo/v0.2.5/SCRIPT.md) · [presentation-readiness](../../specs/backend/presentation-readiness-design.md)  
+3. H1 “first URL live once” paper offer stays **parked**  
+
+### Now — idle / park
+
+Park Ship or on-demand reliability. Soft-no: new Get-live packs / Integrations.  
 
 ### Parked — P1 Tier S (already shipped)
 

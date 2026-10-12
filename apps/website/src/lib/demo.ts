@@ -1,7 +1,6 @@
 /**
- * Silent GIF shelf for /demo — Harbor clips under `public/demo/v0.2.1/`.
- * Download/CURRENT is v0.2.4; shelf stays labeled until R4 re-record
- * ([presentation-readiness-design](../../../../specs/backend/presentation-readiness-design.md)).
+ * Silent GIF shelf for /demo — Harbor clips under `public/demo/v0.2.5/`.
+ * Download/CURRENT = v0.2.5 (presentation R4 re-record).
  */
 
 export type DemoStage = {
@@ -11,7 +10,7 @@ export type DemoStage = {
   src: string;
 };
 
-export const DEMO_VERSION = "v0.2.1";
+export const DEMO_VERSION = "v0.2.5";
 
 /** T1–T7 live Harbor GIFs (T6 Sign Open · T7 Deploy Open). */
 export const DEMO_STAGES: DemoStage[] = [

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Presentation R4–R5** — `/demo` Harbor shelf `v0.2.5` (T1–T7) matches CURRENT Download; site copy: Download is the full OSS tool ([SCRIPT](./docs/assets/demo/v0.2.5/SCRIPT.md) · [presentation-readiness](./specs/backend/presentation-readiness-design.md))
+
 ## 0.2.5 — 2026-10-10
 
 Get-live packs cut (Umami · Flowsint · Medusa) + structure gate + host env import polish. Finish-line: stop peer-pack sprawl until Soft-L3.

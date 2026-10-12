@@ -1,8 +1,8 @@
 # CURRENT — Orbit Yard
 
 **Version:** 0.2.5  
-**Updated:** 2026-10-10  
-**Status:** **[v0.2.5](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.5)** cut (tag on push). Get-live packs Umami/Flowsint/Medusa shipped. Pack expansion killed until Soft-L3. Commercial ADMIT **CANCELLED**.
+**Updated:** 2026-10-12  
+**Status:** **[v0.2.5](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.5)** shipped (binaries + Soft-L3 + **R4 `/demo` shelf**). Get-live packs Umami/Flowsint/Medusa shipped. Commercial ADMIT **CANCELLED**.
 
 ## Truth pointers
 
@@ -24,7 +24,7 @@
 
 | Kind | Ready? | Notes |
 |------|--------|-------|
-| OSS tool (download · dogfood · docs) | **Yes** | [v0.2.5](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.5) — attach binaries via `gh release` if missing |
+| OSS tool (download · dogfood · docs) | **Yes** | [v0.2.5](https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.5) — zip + NSIS + sha256 attached; Download fallback → tag |
 | Commercial product / Solo revenue | **No — failed** | Integrations wedge dead; ops/deploy competes with existing DevOps ([spec](../specs/backend/commercial-product-failed-design.md)) |
 | Third-party integrations (Polar/Paddle/…) | **Cancelled as product** | [ops-deploy pivot](../specs/backend/ops-deploy-pivot-design.md) |
 

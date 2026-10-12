@@ -52,9 +52,9 @@ Presentable = a visitor can **see the job** (your recording), **take the full to
 |----|-------|--------|
 | **R1** | Gift-first CTAs: Download primary | **Done** (2026-10-08) |
 | **R2** | Demo shelf labeled vs CURRENT 0.2.4 (honesty until re-record) | **Done** (2026-10-08) |
-| **R3** | Maintainer Soft-L3 — self-timed Get-live (second project **or** Harbor reset); no stranger | Optional evidence; may run with R4 |
-| **R4** | **Self-record** `/demo` Get-live shelf on 0.2.4+ Desktop (Harbor) | **Next** — primary trust artifact |
-| **R5** | Site copy: “Download is the full OSS trial” (one line where Buy confuses) | With R4 close |
+| **R3** | Maintainer Soft-L3 — self-timed Get-live (second project **or** Harbor reset); no stranger | **Pass** 2026-10-11 — [evidence](../../docs/handoffs/evidence-soft-l3-20261011.md) · [pages.dev](https://ship-studio.pages.dev/) Download → v0.2.5 |
+| **R4** | **Self-record** `/demo` Get-live shelf on 0.2.4+ Desktop (Harbor) | **Done** 2026-10-12 — shelf `v0.2.5` · [SCRIPT](../../docs/assets/demo/v0.2.5/SCRIPT.md) |
+| **R5** | Site copy: “Download is the full OSS trial” (one line where Buy confuses) | **Done** — home + `/demo` |
 
 ## 4. Self-record protocol (R4)
 
@@ -65,7 +65,7 @@ Follow [SCRIPT](../../docs/assets/demo/v0.2.1/SCRIPT.md) capture rules (720×420
 3. Deployment → **Deploy** → live URL in Results (T7 class) — this is the trust clip  
 4. Optional: Open live  
 
-Ship under `docs/assets/demo/v0.2.4/` + `apps/website/public/demo/v0.2.4/` · set `DEMO_VERSION = "v0.2.4"`. Watermark: `local app · recorded`.
+Ship under `docs/assets/demo/v0.2.5/` + `apps/website/public/demo/v0.2.5/` · set `DEMO_VERSION = "v0.2.5"`. Watermark: `local app · recorded`.
 
 ## 5. Success / fail
 
@@ -77,4 +77,4 @@ Ship under `docs/assets/demo/v0.2.4/` + `apps/website/public/demo/v0.2.4/` · se
 
 ## 6. Next atomic
 
-**R4** — maintainer records Get-live demo shelf for CURRENT. R3 self-timing can accompany the same session. Stranger protocol remains a **doc for later users**, not a blocker.
+**Idle / park** — P-* presentable gates met (Download · Soft-L3 · R4 shelf). H1 marketing stays parked. Stranger protocol remains a **doc for later users**, not a blocker.
