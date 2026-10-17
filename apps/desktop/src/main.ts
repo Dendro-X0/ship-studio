@@ -5810,11 +5810,12 @@ async function ensureProviderCliAuth(
   }
 
   if (authRequired || /not logged in|login required|\[auth\]/i.test(blob)) {
-    await openPortalLoginTerminal(provider);
+    // Never auto-spawn a terminal on card select — flashy and repeated.
+    // Deploy path: toast CTA only; human opens Login CLI when ready.
     const actions: ToastAction[] = [
       {
         id: "login",
-        label: "Login CLI again",
+        label: "Login CLI",
         icon: "open",
         run: () => {
           void openPortalLoginTerminal(provider);
@@ -5838,8 +5839,8 @@ async function ensureProviderCliAuth(
     ];
     toast(
       context === "deploy"
-        ? `${title}: sign in to continue — finish Login CLI / browser auth, then Retry Deploy`
-        : `${title}: sign in required — finish Login CLI / browser auth, then Check again`,
+        ? `${title}: sign in required — tap Login CLI, finish auth, then Retry Deploy`
+        : `${title}: sign in required — tap Login CLI when ready (no auto terminal)`,
       "info",
       12000,
       actions,
@@ -5963,32 +5964,38 @@ async function runHostedCliDeploy(
     return;
   }
   const recovery = classifyHostDeployFailure(errText, provider);
-  // Auth mid-deploy: auto-open Login CLI; F2 toast CTA is the single next step after sign-in.
+  // Auth mid-deploy: toast CTAs only — do not auto-pop a terminal (unobtrusive UX).
+  const toastActions: ToastAction[] = [];
   if (recovery.kind === "auth") {
-    void openPortalLoginTerminal(provider);
-  }
-  const toastActions: ToastAction[] = [
-    {
-      id: "primary",
-      label: recovery.kind === "auth" ? "Retry Deploy" : recovery.label,
-      icon:
-        recovery.kind === "auth" ||
-        recovery.action === "login_cli" ||
-        recovery.action === "retry_deploy"
-          ? "continue"
-          : "open",
+    toastActions.push({
+      id: "login",
+      label: "Login CLI",
+      icon: "open",
       run: () => {
-        if (recovery.kind === "auth") {
-          void runHostedCliDeploy(wiz, { name, skipConfirm: true });
-        } else {
-          runHostRecoveryAction(recovery, wiz);
-        }
+        void openPortalLoginTerminal(provider);
       },
+    });
+  }
+  toastActions.push({
+    id: "primary",
+    label: recovery.kind === "auth" ? "Retry Deploy" : recovery.label,
+    icon:
+      recovery.kind === "auth" ||
+      recovery.action === "login_cli" ||
+      recovery.action === "retry_deploy"
+        ? "continue"
+        : "open",
+    run: () => {
+      if (recovery.kind === "auth") {
+        void runHostedCliDeploy(wiz, { name, skipConfirm: true });
+      } else {
+        runHostRecoveryAction(recovery, wiz);
+      }
     },
-  ];
+  });
   toast(
     recovery.kind === "auth"
-      ? `${title}: Next — finish Login CLI, then Retry Deploy`
+      ? `${title}: Next — Login CLI, then Retry Deploy`
       : `${title}: Next — ${recovery.hint}`,
     "err",
     11000,

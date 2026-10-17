@@ -16,7 +16,8 @@ use tauri::Url;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
-/// Hide console windows when the GUI shell spawns `orbityard` / helpers (Windows).
+/// Hide console windows when the GUI shell spawns helpers (Windows).
+/// Console-subsystem tools (`orbityard`, `reg`, `git`, `taskkill`) otherwise flash a black terminal.
 #[cfg(windows)]
 fn silence_console(cmd: &mut Command) {
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
@@ -51,12 +52,12 @@ fn enrich_tool_path(cmd: &mut Command) {
         consider(PathBuf::from(r"C:\Program Files\Docker\Docker\resources\bin"));
         consider(PathBuf::from(r"F:\Docker\resources\bin"));
         // Persisted User PATH (Docker often lands here after install).
-        if let Ok(out) = Command::new("reg")
-            .args(["query", r"HKCU\Environment", "/v", "Path"])
+        let mut reg = Command::new("reg");
+        reg.args(["query", r"HKCU\Environment", "/v", "Path"])
             .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .output()
-        {
+            .stderr(Stdio::null());
+        silence_console(&mut reg);
+        if let Ok(out) = reg.output() {
             if out.status.success() {
                 let text = String::from_utf8_lossy(&out.stdout);
                 for line in text.lines() {

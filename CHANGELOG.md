@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Quieter Desktop** — no auto Login CLI terminal on host-card select / auth recovery; silence Windows helper consoles (`reg` / CLI spawns)
+- **Transparent app icon** — remove white corners; NSIS `installerIcon` + site favicon sync
+
 ## 0.2.6 — 2026-10-16
 
 Honesty + Desktop multi-OS cut. Free OSS surface; Suite shelf; Windows installer still primary attach (Linux/macOS via CI matrix).

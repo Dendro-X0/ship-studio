@@ -25,8 +25,8 @@ const canonical = new URL(path, Astro.site);
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="512x512" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -39,7 +39,7 @@ const canonical = new URL(path, Astro.site);
     <div class="site-shell">
       <header class="site-nav" id="site-nav">
         <a class="brand" href="/">
-          <img class="brand-mark" src="/favicon-32.png" width="22" height="22" alt="" />
+          <img class="brand-mark" src="/favicon.png" width="22" height="22" alt="" />
           Orbit Yard
         </a>
         <nav class="nav-links" aria-label="Primary">

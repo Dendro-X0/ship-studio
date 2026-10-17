@@ -32,7 +32,7 @@ Record community demo (official website Get-live) · optionally attach Linux/mac
 
 | Surface | State |
 |---------|--------|
-| OSS / GitHub Releases | **v0.2.6** — Windows zip + NSIS + sha256 |
+| OSS / GitHub Releases | **v0.2.6** — Windows zip/NSIS · macOS DMG · Linux deb/AppImage |
 | Marketing site | Free OSS · `/demo` shelf still v0.2.5 GIFs |
 | Paid Solo / commercial SKU | **Failed / cancelled** |
 
