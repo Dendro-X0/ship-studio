@@ -17,13 +17,7 @@ importers:
         specifier: 2.5.5
         version: 2.5.5
     devDependencies:
-      '@rollup/rollup-win32-x64-msvc':
-        specifier: 4.63.2
-        version: 4.63.2
       '@tauri-apps/cli':
-        specifier: 2.11.4
-        version: 2.11.4
-      '@tauri-apps/cli-win32-x64-msvc':
         specifier: 2.11.4
         version: 2.11.4
       typescript:
@@ -672,11 +666,6 @@ packages:
 
   '@rollup/rollup-win32-x64-gnu@4.63.4':
     resolution: {integrity: sha512-blj9z5qx/Pv4WU0W1NMFDB97e0JH5ed+aZGywW8WCvp/NhWX/4PFAq5uu6Q0AebNn+Vo6KzUYDT++JzTT5ojlQ==}
-    cpu: [x64]
-    os: [win32]
-
-  '@rollup/rollup-win32-x64-msvc@4.63.2':
-    resolution: {integrity: sha512-6NHnk/K3eq2ZFYcU1X8g67s9qIJRCOTT92gwLMVBp08dB2uuuwI1/Q/empzL2Bfr2f2WRLJVwpp90RmacQyFkw==}
     cpu: [x64]
     os: [win32]
 
@@ -2176,8 +2165,6 @@ snapshots:
   '@rollup/rollup-win32-x64-gnu@4.63.4':
     optional: true
 
-  '@rollup/rollup-win32-x64-msvc@4.63.2': {}
-
   '@rollup/rollup-win32-x64-msvc@4.63.4':
     optional: true
 
@@ -2246,7 +2233,8 @@ snapshots:
   '@tauri-apps/cli-win32-ia32-msvc@2.11.4':
     optional: true
 
-  '@tauri-apps/cli-win32-x64-msvc@2.11.4': {}
+  '@tauri-apps/cli-win32-x64-msvc@2.11.4':
+    optional: true
 
   '@tauri-apps/cli@2.11.4':
     optionalDependencies:
