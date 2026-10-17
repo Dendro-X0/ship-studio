@@ -29,3 +29,6 @@ ship-studio-*.license
 
 apps/website/.astro/
 .netlify/
+
+# Business / GTM docs — local only (never push)
+docs/business/

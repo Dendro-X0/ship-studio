@@ -1,14 +1,11 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { checkoutConfigured, downloadUrl } from "../lib/commerce";
-
-const buyHref = "/pricing";
-const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
+import { downloadUrl } from "../lib/commerce";
 ---
 
 <BaseLayout
   title="Orbit Yard — first public URL, honest gates"
-  description="Get your first public host URL live from your PC — visible process, visible result, honest gates. Not the agentic ship.studio product."
+  description="Get your first public host URL live from your PC — visible process, visible result, honest gates. Free open source. Not the agentic ship.studio product."
   path="/"
 >
   <section class="hero" aria-label="Hero">
@@ -18,15 +15,15 @@ const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
       <h1 class="hero-line">First public URL — honest gates.</h1>
       <p class="hero-support">
         Done when your site is live (or the named gate says so). Open the host, deploy from this
-        PC, Confirm — Studio does not replace Cloudflare, Apple, or Polar. Download is the full
-        OSS tool — try everything; no timed trial wall.
+        PC, Confirm — Studio does not replace Cloudflare, Apple, or Polar. Free OSS — Download is
+        the full tool; no paid Solo plan.
         <a href="/intent">What this is for</a>.
       </p>
       <div class="hero-cta">
         <a class="btn btn-primary" href={downloadUrl()}>Download</a>
         <a class="btn" href="/demo">Demo</a>
         <a class="btn" href="/docs">Docs</a>
-        <a class="btn" href={buyHref}>{buyLabel}</a>
+        <a class="btn" href="/pricing">Get it free</a>
       </div>
     </div>
   </section>
@@ -48,19 +45,19 @@ const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
       </article>
       <article>
         <h3>Desktop</h3>
-        <p>Publish spine and Deployment for one live URL. Integrations stay optional deep links.</p>
+        <p>Publish spine and Deployment for one live URL. Suite stays optional scaffolds.</p>
       </article>
     </div>
   </section>
 
   <section class="section home-band" aria-label="Payments honesty">
-    <h2>Payments: two different jobs.</h2>
+    <h2>Payments: your product, not this site.</h2>
     <div class="home-split">
       <article>
         <h3>Your product</h3>
         <p>
-          Soft no: Integrations is an optional <strong>guide</strong>, not required to ship —
-          Polar, Stripe, Gumroad, Lemon Squeezy,
+          Soft no: Suite vendor bookmarks are optional guides — Polar, Stripe, Gumroad, Lemon
+          Squeezy,
           <a href="https://www.paddle.com/">Paddle</a>,
           <a href="https://www.creem.io/">Creem</a>, and
           <a href="https://www.waffo.ai/">Waffo</a>. Open the vendor, put
@@ -71,10 +68,8 @@ const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
       <article>
         <h3>This site</h3>
         <p>
-          Orbit Yard Solo checkout is <strong>Paddle</strong> overlay when
-          <code>PUBLIC_PADDLE_*</code> is set on the site host. Creem and Waffo stay Integrations
-          <strong>guides</strong> for your products — not ways to buy this license. Until env is
-          set, <a href={downloadUrl()}>download OSS builds</a> or <a href="/pricing">see pricing</a>.
+          Orbit Yard itself is <strong>not sold</strong> — no Solo checkout. Prefer
+          <a href={downloadUrl()}>Download</a> or <a href="/pricing">Get it free</a>.
         </p>
       </article>
     </div>

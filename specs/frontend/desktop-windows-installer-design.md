@@ -37,4 +37,5 @@ Alternative if resources path is awkward: copy `orbityard.exe` into `src-tauri/b
 
 ## Out of scope
 
-- Code signing · auto-update · MSI · macOS/Linux installers
+- Code signing · auto-update · MSI  
+- macOS/Linux installers → **[desktop-multi-os-design](./desktop-multi-os-design.md)**

@@ -92,7 +92,8 @@ img {
   width: 1.35rem;
   height: 1.35rem;
   border-radius: 0.4rem;
-  background: linear-gradient(145deg, var(--accent-bright), var(--accent-dim));
+  display: block;
+  flex: none;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 

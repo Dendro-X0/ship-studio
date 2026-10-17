@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Stage portable desktop pair: orbit-yard-desktop.exe + orbityard.exe side by side.
-# With --installer: also build NSIS setup.exe (bundles resources/orbityard.exe).
+# Stage portable desktop + orbityard sidecar for the current OS.
+# With --installer: tauri build with platform bundles (NSIS / DMG / deb·AppImage).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -15,18 +15,29 @@ done
 echo "==> cargo build -p orbityard --release"
 cargo build -p orbityard --release
 
-ORBITYARD_SRC="$ROOT/target/release/orbityard.exe"
-if [[ ! -f "$ORBITYARD_SRC" ]]; then
-  ORBITYARD_SRC="$ROOT/target/release/orbityard"
+ORBITYARD_SRC="$ROOT/target/release/orbityard"
+if [[ -f "$ROOT/target/release/orbityard.exe" ]]; then
+  ORBITYARD_SRC="$ROOT/target/release/orbityard.exe"
 fi
-mkdir -p apps/desktop/src-tauri/resources
-cp -f "$ORBITYARD_SRC" apps/desktop/src-tauri/resources/orbityard.exe
-echo "==> staged resources/orbityard.exe for installer / resource resolve"
+if [[ ! -f "$ORBITYARD_SRC" ]]; then
+  echo "error: orbityard release binary not found" >&2
+  exit 1
+fi
+
+RES="$ROOT/apps/desktop/src-tauri/resources"
+mkdir -p "$RES"
+# Single sidecar — `.exe` suffix keeps Windows CreateProcess happy; Unix still execs by path.
+cp -f "$ORBITYARD_SRC" "$RES/orbityard-bin.exe"
+echo "==> staged resources/orbityard-bin.exe for Tauri resources"
 
 cd apps/desktop
 export COREPACK_ENABLE=0
+if [[ ! -x ./node_modules/.bin/tauri ]]; then
+  echo "==> pnpm install (desktop)"
+  pnpm install
+fi
 if [[ "$BUNDLE_INSTALLER" -eq 1 ]]; then
-  echo "==> tauri build (NSIS installer)"
+  echo "==> tauri build (platform installers)"
   ./node_modules/.bin/tauri build
 else
   echo "==> tauri build --no-bundle"
@@ -34,25 +45,32 @@ else
 fi
 cd "$ROOT"
 
-DESKTOP="$ROOT/target/release/orbit-yard-desktop.exe"
-ORBITYARD="$ROOT/target/release/orbityard.exe"
-if [[ ! -f "$DESKTOP" ]]; then
-  DESKTOP="$ROOT/target/release/orbit-yard-desktop"
-  ORBITYARD="$ROOT/target/release/orbityard"
+DESKTOP="$ROOT/target/release/orbit-yard-desktop"
+ORBITYARD="$ROOT/target/release/orbityard"
+if [[ -f "$ROOT/target/release/orbit-yard-desktop.exe" ]]; then
+  DESKTOP="$ROOT/target/release/orbit-yard-desktop.exe"
+  ORBITYARD="$ROOT/target/release/orbityard.exe"
 fi
 
 DESKTOP_DIR="$(dirname "$DESKTOP")"
-if [[ "$(cd "$(dirname "$ORBITYARD")" && pwd)/$(basename "$ORBITYARD")" != "$(cd "$DESKTOP_DIR" && pwd)/$(basename "$ORBITYARD")" ]]; then
+SIDE_NAME="$(basename "$ORBITYARD")"
+if [[ "$(cd "$(dirname "$ORBITYARD")" && pwd)/$SIDE_NAME" != "$(cd "$DESKTOP_DIR" && pwd)/$SIDE_NAME" ]]; then
   cp -f "$ORBITYARD" "$DESKTOP_DIR/"
 else
-  echo "==> orbityard already beside desktop exe"
+  echo "==> orbityard already beside desktop binary"
 fi
 echo "==> staged:"
-ls -la "$DESKTOP" "$DESKTOP_DIR/$(basename "$ORBITYARD")" 2>/dev/null || true
+ls -la "$DESKTOP" "$DESKTOP_DIR/$SIDE_NAME" 2>/dev/null || true
 
 if [[ "$BUNDLE_INSTALLER" -eq 1 ]]; then
-  NSIS_DIR="$ROOT/target/release/bundle/nsis"
-  echo "==> NSIS output:"
-  ls -la "$NSIS_DIR" 2>/dev/null || ls -la "$ROOT/target/release/bundle" 2>/dev/null || true
+  BUNDLE="$ROOT/target/release/bundle"
+  echo "==> bundle output:"
+  ls -la "$BUNDLE" 2>/dev/null || true
+  for sub in nsis dmg macos deb appimage rpm msi; do
+    if [[ -d "$BUNDLE/$sub" ]]; then
+      echo "---- $sub ----"
+      ls -la "$BUNDLE/$sub" || true
+    fi
+  done
 fi
 echo "Run: $DESKTOP"

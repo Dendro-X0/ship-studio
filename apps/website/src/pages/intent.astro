@@ -1,8 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { downloadUrl } from "../lib/commerce";
-
-const buyHref = "/pricing";
 ---
 
 <BaseLayout
@@ -69,7 +67,7 @@ const buyHref = "/pricing";
       <a class="btn btn-primary" href={downloadUrl()}>Download</a>
       <a class="btn" href="/demo">Watch demo</a>
       <a class="btn" href="/docs">Docs</a>
-      <a class="btn" href={buyHref}>Pricing</a>
+      <a class="btn" href="/pricing">Get it free</a>
     </div>
   </section>
 </BaseLayout>

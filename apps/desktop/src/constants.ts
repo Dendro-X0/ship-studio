@@ -94,15 +94,15 @@ export const VIEW_META: Record<string, { title: string; desc: string }> = {
   },
   launch: {
     title: "Launch",
-    desc: "Optional choice board — prefer Publish for the checklist. Sign / Deployment / Integrations are secondary.",
+    desc: "Optional choice board — prefer Publish for the checklist. Sign / Deployment / Suite are secondary.",
   },
   portal: {
     title: "Portal",
     desc: "Detail panel — human paste sprint, provider entry, markets & container docs.",
   },
   integrations: {
-    title: "Integrations",
-    desc: "Optional vendor deep links — not required to ship. Prefer Publish / Deployment for the live URL.",
+    title: "Suite",
+    desc: "Optional Strata / Velocity / Truss — separate scaffolds. Prefer Publish / Deployment to Get live.",
   },
   platforms: {
     title: "Deployment",
@@ -132,5 +132,5 @@ export const RELATED_VIEW_LABELS: Record<string, string> = {
   launch: "Open Launch",
   dashboard: "Open Dashboard",
   platforms: "Open Deployment",
-  integrations: "Open Integrations",
+  integrations: "Open Suite",
 };

@@ -1,17 +1,11 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import {
-  downloadUrl,
-  priceLabel,
-} from "../lib/commerce";
-
-const buyHref = "/pricing";
-const price = priceLabel();
+import { downloadUrl } from "../lib/commerce";
 ---
 
 <BaseLayout
   title="FAQ — Orbit Yard"
-  description="SmartScreen, brand disambiguation, why Solo pricing, and when Signet is required. Honest answers — no fake one-click claims."
+  description="SmartScreen, brand disambiguation, free OSS, and when Signet is required. Honest answers — no fake one-click claims."
   path="/faq"
 >
   <section class="section intent-page">
@@ -46,23 +40,21 @@ const price = priceLabel();
       </div>
 
       <div class="intent-contrast-row" role="listitem" id="why-solo">
-        <h2 class="intent-contrast-label">Why pay {price} if the source is open?</h2>
+        <h2 class="intent-contrast-label">Is there a paid Solo plan?</h2>
         <p class="intent-contrast-body">
-          The publish sequence itself is not paywalled — you can clone and build for free.
-          <strong>Solo</strong> pays for packaged Desktop/CLI builds, a local license file,
-          Paddle-hosted checkout/invoices/refunds, and not assembling the toolchain yourself.
-          Details on <a href="/pricing">Pricing</a>.
+          <strong>No.</strong> Commercial Solo was cancelled. Orbit Yard is free OSS —
+          <a href={downloadUrl()}>Download</a> a release or build from source. Details on
+          <a href="/pricing">Get it free</a>.
         </p>
       </div>
 
       <div class="intent-contrast-row" role="listitem" id="other-payments">
         <h2 class="intent-contrast-label">Can Studio take Paddle, Creem, or Waffo for my app?</h2>
         <p class="intent-contrast-body">
-          <strong>Soft no as a product — yes as a bookmark.</strong> Desktop Integrations opens
-          vendor dashboards; you create the product there and put keys on the deploy host.
-          Studio does not process those charges and you do not need Integrations to ship a
-          live URL. <strong>Buying Orbit Yard Solo</strong> is Paddle overlay on this site
-          (when <code>PUBLIC_PADDLE_*</code> is set). Creem and Waffo stay customer-product guides.
+          <strong>Soft no as a product — yes as a bookmark.</strong> Desktop Suite vendor
+          bookmarks open vendor dashboards; you create the product there and put keys on the
+          deploy host. Studio does not process those charges and you do not need them to ship a
+          live URL. Orbit Yard itself is not sold on this site.
         </p>
       </div>
 
@@ -81,14 +73,14 @@ const price = priceLabel();
     <p class="note">
       Still stuck? <a href="/docs">Docs</a> ·
       <a href="/docs/human-gates">Human gates catalog</a> ·
-      <a href="/legal/refunds">Refunds</a>.
+      <a href="/pricing">Get it free</a>.
     </p>
 
     <div class="intent-cta">
       <a class="btn btn-primary" href={downloadUrl()}>Download</a>
       <a class="btn" href="/demo">Watch demo</a>
       <a class="btn" href="/docs">Docs</a>
-      <a class="btn" href={buyHref}>Pricing</a>
+      <a class="btn" href="/pricing">Get it free</a>
     </div>
   </section>
 </BaseLayout>

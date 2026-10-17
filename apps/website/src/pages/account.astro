@@ -1,42 +1,34 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { paddlePortalUrl, supportEmail } from "../lib/commerce";
+import { downloadUrl, supportEmail } from "../lib/commerce";
 
 const email = supportEmail();
-const portal = paddlePortalUrl();
 ---
 
 <BaseLayout
   title="Account — Orbit Yard"
-  description="Manage your Orbit Yard order on Paddle."
+  description="Orbit Yard is not sold. No customer billing account."
   path="/account"
 >
   <section class="section">
     <h1>Account</h1>
     <p class="lead">
-      Billing, invoices, and card data stay on Paddle. We do not run a separate login for the local
-      app.
+      There is no paid Orbit Yard product and no customer portal. Download the OSS build — no
+      account required.
     </p>
     <p>
-      Your receipt is in the email Paddle sent at checkout. Refunds: email us with the Paddle
-      transaction id — see <a href="/legal/refunds">refund policy</a>.
+      If you bought a Solo license in the past (cancelled commercial experiment), keep any Paddle
+      receipt email you still have. New purchases are not offered.
     </p>
     <div class="hero-cta">
-      {
-        portal ? (
-          <a class="btn btn-primary" href={portal} rel="noopener noreferrer" target="_blank">
-            Open Paddle customer portal
-          </a>
-        ) : null
-      }
-      <a class="btn" href="/license">License file</a>
-      <a class="btn" href="/legal/refunds">Refund policy</a>
+      <a class="btn btn-primary" href={downloadUrl()} rel="noopener noreferrer">Download</a>
+      <a class="btn" href="/pricing">Get it free</a>
       <a class="btn" href="/docs/start">Docs</a>
     </div>
     {
       email ? (
         <p class="price-meta" style="margin-top: 1.5rem">
-          Support / license resend: <a href={`mailto:${email}`}>{email}</a>
+          Questions: <a href={`mailto:${email}`}>{email}</a>
         </p>
       ) : null
     }

@@ -82,9 +82,14 @@
                 <span class="nav-ico" aria-hidden="true">⬡</span>
                 Deployment
               </button>
-              <button type="button" class="nav-item" data-nav="integrations" title="Payments and email wizards">
+              <button
+                type="button"
+                class="nav-item"
+                data-nav="integrations"
+                title="Suite templates · optional — not required to Get live"
+              >
                 <span class="nav-ico" aria-hidden="true">⧉</span>
-                Integrations
+                Suite
               </button>
               <button type="button" class="nav-item" data-nav="env">
                 <span class="nav-ico" aria-hidden="true">⌘</span>
@@ -753,57 +758,61 @@
             </div>
           </section>
 
-          <section class="view" data-view="integrations" aria-label="Integrations" hidden>
+          <section class="view" data-view="integrations" aria-label="Suite" hidden>
             <p class="hint gate-orient" id="int-gate-orient" hidden>
               <span id="int-gate-orient-text"></span>
               <button type="button" class="linkish" id="int-gate-orient-go">Go to current gate</button>
             </p>
-            <aside class="soft-no" role="note">
-              <p class="soft-no-kicker">Soft no</p>
-              <p class="soft-no-body">
-                You do not need this panel to ship. Prefer <strong>Publish</strong> and
-                <strong>Deployment</strong> for one live URL. Integrations is an optional deep-link
-                sheet — Studio does not create products, finish vendor OAuth, hold payment keys, or
-                send email.
+            <aside class="suite-note" role="note">
+              <p class="suite-note-kicker">Optional · suite</p>
+              <p class="suite-note-body">
+                Orbit sequences the final mile on <em>this</em> project. Strata and Velocity are
+                <strong>separate</strong> scaffolds if you want a starting app — not ads for cloud
+                billing, and <strong>not required</strong> to Get live. Prefer
+                <strong>Publish</strong> and <strong>Deployment</strong> for one URL.
               </p>
             </aside>
-            <p class="hint">
-              When you do need a vendor account: Open dashboard → finish there → Put a named host
-              secret if required → Confirm the matching Publish gate.
-            </p>
-            <div class="int-layout">
-              <div id="integrations-catalog"></div>
-              <aside class="int-wizard" id="integrations-wizard" hidden>
-                <h2 id="int-wizard-title">Wizard</h2>
-                <p class="hint" id="int-wizard-blurb"></p>
-                <p class="int-done-cue" id="int-wizard-done" hidden></p>
-                <ol class="int-steps" id="int-wizard-steps"></ol>
-                <div class="int-open-links" id="int-open-links" hidden></div>
-                <div class="hero-cta int-actions">
-                  <button type="button" class="primary" id="int-open">Open dashboard</button>
-                  <button
-                    type="button"
-                    id="int-put"
-                    hidden
-                    title="Put the named secret on the detected deploy host — paste only in the terminal"
-                  >
-                    Put key
-                  </button>
-                  <button type="button" id="int-portal-steps" hidden>Portal steps</button>
-                  <button type="button" id="int-docs" hidden>Learn more</button>
-                  <button
-                    type="button"
-                    id="int-confirm-gate"
-                    title="Confirm the matching Publish listing gate when it is current"
-                  >
-                    Confirm gate
-                  </button>
-                  <button type="button" id="int-continue-publish" title="Return to the Publish spine">
-                    Continue publishing
-                  </button>
-                </div>
-              </aside>
-            </div>
+            <div id="suite-catalog" class="suite-catalog" aria-label="Suite templates"></div>
+            <details class="suite-vendor" id="suite-vendor-details">
+              <summary>Vendor dashboards (optional bookmarks)</summary>
+              <p class="hint">
+                Polar / email Open links only — Studio does not create SKUs, finish OAuth, or hold
+                payment keys. Keys stay on the host you Put them to.
+              </p>
+              <div class="int-layout">
+                <div id="integrations-catalog"></div>
+                <aside class="int-wizard" id="integrations-wizard" hidden>
+                  <h2 id="int-wizard-title">Wizard</h2>
+                  <p class="hint" id="int-wizard-blurb"></p>
+                  <p class="int-done-cue" id="int-wizard-done" hidden></p>
+                  <ol class="int-steps" id="int-wizard-steps"></ol>
+                  <div class="int-open-links" id="int-open-links" hidden></div>
+                  <div class="hero-cta int-actions">
+                    <button type="button" class="primary" id="int-open">Open dashboard</button>
+                    <button
+                      type="button"
+                      id="int-put"
+                      hidden
+                      title="Put the named secret on the detected deploy host — paste only in the terminal"
+                    >
+                      Put key
+                    </button>
+                    <button type="button" id="int-portal-steps" hidden>Portal steps</button>
+                    <button type="button" id="int-docs" hidden>Learn more</button>
+                    <button
+                      type="button"
+                      id="int-confirm-gate"
+                      title="Confirm the matching Publish listing gate when it is current"
+                    >
+                      Confirm gate
+                    </button>
+                    <button type="button" id="int-continue-publish" title="Return to the Publish spine">
+                      Continue publishing
+                    </button>
+                  </div>
+                </aside>
+              </div>
+            </details>
           </section>
 
           <section class="view" data-view="ritual" aria-label="Ritual" hidden>

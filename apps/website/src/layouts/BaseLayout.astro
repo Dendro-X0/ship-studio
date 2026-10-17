@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { downloadUrl } from "../lib/commerce";
 
 interface Props {
   title: string;
@@ -24,6 +25,9 @@ const canonical = new URL(path, Astro.site);
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -35,19 +39,21 @@ const canonical = new URL(path, Astro.site);
     <div class="site-shell">
       <header class="site-nav" id="site-nav">
         <a class="brand" href="/">
-          <span class="brand-mark" aria-hidden="true"></span>
+          <img class="brand-mark" src="/favicon-32.png" width="22" height="22" alt="" />
           Orbit Yard
         </a>
         <nav class="nav-links" aria-label="Primary">
-          <a href="/pricing" aria-current={path === "/pricing" ? "page" : undefined}>Pricing</a>
           <a href="/intent" aria-current={path === "/intent" ? "page" : undefined}>Intent</a>
           <a href="/honesty" aria-current={path === "/honesty" ? "page" : undefined}>Honesty</a>
           <a href="/faq" aria-current={path === "/faq" ? "page" : undefined}>FAQ</a>
           <a href="/docs" aria-current={path.startsWith("/docs") ? "page" : undefined}>Docs</a>
           <a href="/demo" aria-current={path === "/demo" ? "page" : undefined}>Demo</a>
-          <a href="/account" aria-current={path === "/account" ? "page" : undefined}>Account</a>
-          <a href="/legal/refunds">Refunds</a>
-          <a class="btn btn-primary" href="/pricing">Buy</a>
+          <a href="/pricing" aria-current={path === "/pricing" ? "page" : undefined}>Get it</a>
+          <a
+            class="btn btn-primary"
+            href={downloadUrl()}
+            rel="noopener noreferrer"
+          >Download</a>
         </nav>
       </header>
       <main class="site-main">
@@ -58,9 +64,9 @@ const canonical = new URL(path, Astro.site);
         <nav aria-label="Legal">
           <a href="/license">License</a>
           <a href="/faq">FAQ</a>
+          <a href="/pricing">Get it</a>
           <a href="/legal/terms">Terms</a>
           <a href="/legal/privacy">Privacy</a>
-          <a href="/legal/refunds">Refunds</a>
           <a href="https://github.com/Dendro-X0/ship-studio">GitHub</a>
         </nav>
       </footer>

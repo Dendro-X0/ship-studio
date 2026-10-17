@@ -136,9 +136,11 @@ fn resolve_orbityard() -> Result<PathBuf, String> {
     }
 
     // Installed / portable layout wins — never lose to a newer repo build by mtime.
+    // `orbityard-bin.exe` is the Tauri resource (works on Windows CreateProcess + Unix exec).
+    const SIDE_NAMES: &[&str] = &["orbityard-bin.exe", "orbityard.exe", "orbityard"];
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
-            for name in ["orbityard.exe", "orbityard"] {
+            for name in SIDE_NAMES {
                 let beside = dir.join(name);
                 if beside.is_file() {
                     return Ok(beside);
@@ -261,8 +263,106 @@ fn pick_vault_save(default_name: Option<String>) -> Result<Option<String>, Strin
     Ok(file.map(|p| p.display().to_string()))
 }
 
+/// Shell-escape a single argument for `/bin/sh -c` (single-quoted).
+#[cfg(unix)]
+fn sh_quote(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "'\"'\"'"))
+}
+
+/// Write a short runner script and open a user terminal on it (macOS / Linux).
+#[cfg(unix)]
+fn open_unix_orbityard_terminal(
+    project: &Path,
+    orbityard: &Path,
+    args: &[String],
+    title: &str,
+) -> Result<(), String> {
+    let tmp = std::env::temp_dir().join(format!(
+        "orbit-yard-tty-{}-{}.sh",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0)
+    ));
+    let mut body = String::from("#!/bin/sh\n");
+    body.push_str(&format!("cd {} || exit 1\n", sh_quote(&project.display().to_string())));
+    body.push_str("printf '\\033]0;%s\\007' ");
+    body.push_str(&sh_quote(title));
+    body.push('\n');
+    body.push_str(&sh_quote(&orbityard.display().to_string()));
+    for a in args {
+        body.push(' ');
+        body.push_str(&sh_quote(a));
+    }
+    body.push_str("\necho\nprintf 'Press Enter to close… '\nread -r _\n");
+    fs::write(&tmp, body).map_err(|e| format!("write terminal script: {e}"))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut perms = fs::metadata(&tmp)
+            .map_err(|e| format!("stat terminal script: {e}"))?
+            .permissions();
+        perms.set_mode(0o755);
+        fs::set_permissions(&tmp, perms).map_err(|e| format!("chmod terminal script: {e}"))?;
+    }
+    let script = tmp.display().to_string();
+
+    #[cfg(target_os = "macos")]
+    {
+        let osa = format!(
+            "tell application \"Terminal\" to do script {}",
+            sh_quote(&script)
+        );
+        if Command::new("osascript").args(["-e", &osa]).spawn().is_ok() {
+            return Ok(());
+        }
+        Command::new("open")
+            .args(["-a", "Terminal", &script])
+            .spawn()
+            .map_err(|e| format!("spawn Terminal: {e}"))?;
+        return Ok(());
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let run = format!("{}; exec sh", sh_quote(&script));
+        // Prefer Debian/Ubuntu default, then common desktop terminals.
+        let trials: &[(&str, &[&str])] = &[
+            ("x-terminal-emulator", &["-e", "sh", "-c"]),
+            ("gnome-terminal", &["--", "sh", "-c"]),
+            ("konsole", &["-e", "sh", "-c"]),
+            ("xfce4-terminal", &["-e", "sh", "-c"]),
+            ("mate-terminal", &["-e", "sh", "-c"]),
+            ("alacritty", &["-e", "sh", "-c"]),
+            ("kitty", &["sh", "-c"]),
+            ("xterm", &["-e", "sh", "-c"]),
+        ];
+        for (bin, prefix) in trials {
+            if which::which(bin).is_err() {
+                continue;
+            }
+            let mut cmd = Command::new(bin);
+            cmd.args(*prefix).arg(&run);
+            if cmd.spawn().is_ok() {
+                return Ok(());
+            }
+        }
+        return Err(
+            "no terminal found (tried x-terminal-emulator, gnome-terminal, konsole, …)".into(),
+        );
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    {
+        let _ = (project, orbityard, args, title, &script);
+        Err("open_orbityard_terminal: unsupported Unix target".into())
+    }
+}
+
 /// Open an interactive terminal running `orbityard <args>` in `project`.
-/// Prefer this for any TTY / stdin flow (login, put, publish open). Windows: wt → cmd start.
+/// Prefer this for any TTY / stdin flow (login, put, publish open).
+/// Windows: wt → cmd start · macOS: Terminal · Linux: x-terminal-emulator / GNOME / …
 #[tauri::command]
 fn open_orbityard_terminal(
     project: String,
@@ -301,10 +401,9 @@ fn open_orbityard_terminal(
         return Ok(());
     }
 
-    #[cfg(not(windows))]
+    #[cfg(unix)]
     {
-        let _ = (&orbityard, &project_path, &args, &window_title);
-        Err("open_orbityard_terminal is implemented for Windows in this build".into())
+        open_unix_orbityard_terminal(&project_path, &orbityard, &args, &window_title)
     }
 }
 

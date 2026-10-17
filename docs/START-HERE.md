@@ -60,7 +60,7 @@ cargo test -p orbityard
 ./target/release/orbityard tui --project /path/to/project
 ```
 
-Desktop (Windows): `pnpm install && pnpm dev` · or `bash scripts/stage-desktop.sh`
+Desktop (Windows · macOS · Linux): `pnpm install && pnpm dev` · or `bash scripts/stage-desktop.sh` / `--installer`
 
 ## Non-goals
 

@@ -1,20 +1,21 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { downloadUrl } from "../../lib/commerce";
 ---
 
 <BaseLayout
-  title="Checkout cancelled — Orbit Yard"
-  description="No charge was completed. You can return to pricing anytime."
+  title="Checkout closed — Orbit Yard"
+  description="Orbit Yard is not sold. Download free from GitHub Releases."
   path="/checkout/cancel"
 >
   <section class="section">
-    <h1>Checkout cancelled</h1>
+    <h1>Checkout closed</h1>
     <p class="lead">
-      No payment went through. You can try again when ready, or download a build from GitHub first.
+      There is no active paid checkout. Download a free build from GitHub Releases.
     </p>
     <div class="hero-cta">
-      <a class="btn btn-primary" href="/pricing">Back to pricing</a>
-      <a class="btn" href="/docs">Docs</a>
+      <a class="btn btn-primary" href={downloadUrl()} rel="noopener noreferrer">Download</a>
+      <a class="btn" href="/pricing">Get it free</a>
       <a class="btn" href="/">Home</a>
     </div>
   </section>

@@ -1,55 +1,35 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { refundWindowDays, supportEmail } from "../../lib/commerce";
+import { supportEmail } from "../../lib/commerce";
 
-const days = refundWindowDays();
 const email = supportEmail();
 ---
 
 <BaseLayout
   title="Refunds — Orbit Yard"
-  description={`${days}-day refund window via Paddle. Money-back only — Studio is a local tool.`}
+  description="Orbit Yard is not sold. No new refunds — legacy Solo purchases only."
   path="/legal/refunds"
 >
   <section class="section legal">
     <h1>Refunds</h1>
     <p class="lead">
-      If Orbit Yard is not right for you, request a refund within
-      <strong>{days} days</strong> of purchase. All card processing stays on Paddle.
+      Orbit Yard is <strong>not for sale</strong>. There is no active checkout and no new refund
+      window.
     </p>
 
-    <h2>How to request</h2>
-    <ol>
-      <li>
-        Email
-        {
-          email ? (
-            <a href={`mailto:${email}?subject=Ship%20Studio%20refund`}> {email} </a>
-          ) : (
-            <span> the maintainer </span>
-          )
-        }
-        with your Paddle transaction ID (from the Paddle receipt email).
-      </li>
-      <li>
-        In-window refunds are processed on Paddle — we never hold your card. You get the money back
-        through Paddle, not through this website.
-      </li>
-    </ol>
-
-    <h2>What a refund means</h2>
+    <h2>Legacy Solo purchases</h2>
     <p>
-      Orbit Yard runs on your machine. A refund returns your payment. It does <strong>not</strong>
-      remotely uninstall binaries, wipe projects, or delete your local
-      <a href="/license">license file</a>. Stop using the software if you refund — the maintainer
-      marks the order revoked in the local ledger after Paddle pays you back.
+      If you paid for the cancelled Solo experiment via Paddle and still need a refund question
+      answered, email
+      {
+        email ? (
+          <a href={`mailto:${email}?subject=Orbit%20Yard%20legacy%20refund`}>{email}</a>
+        ) : (
+          <span>the maintainer</span>
+        )
+      }
+      with your Paddle transaction ID. New purchases are not offered — prefer
+      <a href="/pricing">free Download</a>.
     </p>
-
-    <h2>Non-refundable</h2>
-    <ul>
-      <li>Requests after the {days}-day window (unless required by applicable law)</li>
-      <li>Chargebacks filed after a completed Paddle refund</li>
-      <li>Purchases explicitly marked non-refundable (none on the Solo plan today)</li>
-    </ul>
   </section>
 </BaseLayout>

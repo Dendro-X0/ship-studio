@@ -40,38 +40,7 @@ export const PLATFORM_WIZARDS: ProviderWizard[] = [
       "Not a cloud host and not Self-host static — tracker paste on your site stays a human step.",
     ],
   },
-  {
-    id: "flowsint",
-    group: LOCAL_RUNTIME_GROUP,
-    title: "Flowsint",
-    blurb:
-      "Self-hosted OSINT graph — Deploy runs compose.prod + App proof on this machine.",
-    openUrl: "http://127.0.0.1:5173",
-    openLabel: "Deploy",
-    needsPublic: false,
-    steps: [
-      "Flowsint Get-live: **ensure multi-env secrets** → **compose.prod up** → App URL (Orbit shortens four manual .env copies).",
-      "Deploy needs Docker on PATH. Studio writes strong AUTH_SECRET / vault / DB passwords — values never shown in the UI.",
-      "**Open App** opens the loopback UI. Create an account at /register, then Confirm on Publish.",
-      "Enricher API keys stay in Flowsint’s vault — not Integrations theater.",
-    ],
-  },
-  {
-    id: "medusa",
-    group: LOCAL_RUNTIME_GROUP,
-    title: "Medusa",
-    blurb:
-      "Self-hosted commerce API — Deploy runs compose deps + Admin health on this machine.",
-    openUrl: "http://127.0.0.1:9000/app",
-    openLabel: "Deploy",
-    needsPublic: false,
-    steps: [
-      "Medusa Get-live: **ensure secrets** → **compose up** → Admin URL (Orbit sequences detect → Put → Deploy).",
-      "Deploy needs Docker on PATH for Postgres/Redis. Soft-L3 Admin needs a real Medusa clone (fixture is deps-only).",
-      "**Open Admin** opens the loopback dashboard. Create/sign in, then Confirm on Publish.",
-      "Payment plugins stay vendor dashboards — not Integrations theater.",
-    ],
-  },
+  // Flowsint / Medusa cards removed from catalog (PAUSED). Medusa for new kits → Velocity.
   {
     id: "cloudflare",
     group: CLOUD_HOST_GROUP,

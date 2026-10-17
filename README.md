@@ -29,7 +29,7 @@ On Windows, binaries are `orbityard.exe` under `target/release/`.
 |------|------|
 | `crates/orbityard` | CLI + TUI + MCP + publish / pulse / portal / secrets / vault |
 | `apps/desktop` | Tauri shell (Publish spine + Related detail panels) |
-| `apps/website` | Official product site (pricing · docs · demo · legal) — [README](./apps/website/README.md) |
+| `apps/website` | Official site (docs · demo · free Download — not for sale) — [README](./apps/website/README.md) |
 | `docs/` | Front door + shelves (product · dogfood · frontend · handoffs) — [docs/README.md](./docs/README.md) |
 | `specs/backend/` | Design contracts (north star + bands) |
 | `scripts/` | `stage-desktop.sh`, `dogfood-advanced-*.sh`, `dogfood-offline.sh` |
@@ -51,7 +51,7 @@ pnpm website:dev                  # http://localhost:4321
 pnpm website:build                # apps/website/dist
 ```
 
-Primary distribution: [GitHub Releases](https://github.com/Dendro-X0/ship-studio/releases). Copy `apps/website/.env.example` → `.env` only if you enable optional Paddle overlay (`PUBLIC_PADDLE_*`). Empty env leaves Buy disabled.
+Primary distribution: [GitHub Releases](https://github.com/Dendro-X0/ship-studio/releases). Free OSS — no Solo / Paddle sale on the site.
 
 ## Vault (Clavis-compatible)
 

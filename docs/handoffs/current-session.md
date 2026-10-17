@@ -1,43 +1,43 @@
 # Current session — Orbit Yard
 
-**Updated:** 2026-10-12  
+**Updated:** 2026-10-16  
 **Branch:** `main`  
-**Status:** **v0.2.5 shipped** · Soft-L3 **Pass** · **R4 demo shelf live** · pack expansion killed.
+**Status:** **v0.2.6 cut** — Suite · free site · Desktop multi-OS wiring · Windows installer.
 
 ## Next Atomic Step
 
-Idle — park Ship for Obscur EG, or on-demand reliability. Soft-no: FreeLLMAPI / next peer pack / Integrations coach.
+Record community demo (official website Get-live) · optionally attach Linux/macOS CI artifacts when green. Soft-no: FreeLLMAPI / peer packs / Solo sale / Suite-as-path.
 
-**Last closed:** **R4** `/demo` shelf `v0.2.5` Harbor GIFs + R5 Download-is-trial copy — [SCRIPT](../assets/demo/v0.2.5/SCRIPT.md).
+**Last closed:** v0.2.6 version bump + release packaging path.
 
 ## Design queue (not coding until activated)
 
 | Item | Spec |
 |------|------|
-| **P1b v0.2.5 release cut** | **Done** — [plan](../../specs/backend/v0.2.5-release-plan.md) |
+| **P1b v0.2.5 release cut** | **Done** |
+| **v0.2.6 honesty / multi-OS** | **This cut** — [desktop-multi-os](../../specs/frontend/desktop-multi-os-design.md) |
 | **P2 Soft-L3** | **Pass** — [evidence](./evidence-soft-l3-20261011.md) |
-| **R4 demo shelf** | **Done** — `DEMO_VERSION=v0.2.5` |
-| **Owned commerce (Medusa)** | **M1–M4 done** — [medusa-get-live](../../specs/backend/medusa-get-live-design.md) |
-| **Get-live compose packs** | **G0 · F0–F4 done** — soft-no unless product need — [peers](../../specs/backend/get-live-compose-packs-from-peers-design.md) |
-| Commercial / Integrations / Solo | **CANCELLED** — [commercial-product-failed](../../specs/backend/commercial-product-failed-design.md) |
+| **R4 demo shelf** | **Done** — `DEMO_VERSION=v0.2.5` (shelf unchanged; Download = 0.2.6) |
+| Commercial / Integrations / Solo | **CANCELLED** |
 
 ## PAUSED / CANCELLED
 
 | Band | Rule |
 |------|------|
-| **New Get-live peer packs** | Soft-no — [ROADMAP](../business/ROADMAP.md) |
+| **New Get-live peer packs** | Soft-no |
+| **Flowsint / Medusa Desktop cards** | **Removed** — Medusa → Velocity |
 | **Commercial / Integrations / Solo** | **CANCELLED** |
 
 ## Release readiness
 
 | Surface | State |
 |---------|--------|
-| OSS / GitHub Releases | **v0.2.5** — zip + NSIS + sha256 |
-| Marketing site | Soft-L3 + `/demo` v0.2.5 shelf |
+| OSS / GitHub Releases | **v0.2.6** — Windows zip + NSIS + sha256 |
+| Marketing site | Free OSS · `/demo` shelf still v0.2.5 GIFs |
 | Paid Solo / commercial SKU | **Failed / cancelled** |
 
 ## Boot allowlist
 
 1. This file  
 2. [CURRENT.md](../CURRENT.md)  
-3. [business/ROADMAP.md](../business/ROADMAP.md)  
+3. [START-HERE.md](../START-HERE.md)  

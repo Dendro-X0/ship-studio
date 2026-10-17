@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Ensure apps/desktop/src-tauri/resources/orbityard.exe exists for `tauri dev` / build.
+# Ensure apps/desktop/src-tauri/resources/orbityard-bin.exe exists for `tauri dev` / build.
+# `.exe` suffix is required for Windows CreateProcess; Linux/macOS run the PE/ELF by path anyway.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DEST="$ROOT/apps/desktop/src-tauri/resources/orbityard.exe"
+DEST="$ROOT/apps/desktop/src-tauri/resources/orbityard-bin.exe"
 mkdir -p "$(dirname "$DEST")"
 
 pick() {

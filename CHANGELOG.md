@@ -2,7 +2,21 @@
 
 ## Unreleased
 
-- **Presentation R4–R5** — `/demo` Harbor shelf `v0.2.5` (T1–T7) matches CURRENT Download; site copy: Download is the full OSS tool ([SCRIPT](./docs/assets/demo/v0.2.5/SCRIPT.md) · [presentation-readiness](./specs/backend/presentation-readiness-design.md))
+## 0.2.6 — 2026-10-16
+
+Honesty + Desktop multi-OS cut. Free OSS surface; Suite shelf; Windows installer still primary attach (Linux/macOS via CI matrix).
+
+### Added
+
+- **Desktop multi-OS** — Tauri bundle targets `all` (NSIS · DMG/app · deb/AppImage); sidecar `orbityard-bin.exe`; unix Login/TTY terminal open; CI matrix Windows/macOS/Linux ([design](./specs/frontend/desktop-multi-os-design.md))
+- **Suite shelf** — Desktop Integrations → Suite (Strata/Velocity/Truss honesty); Flowsint/Medusa Deployment cards removed
+- **Umami icon** — Deployment card uses bundled `umami.svg`
+- **Site favicon** — Orbit Yard app icon on marketing site
+
+### Changed
+
+- **Site not for sale** — Solo/Paddle checkout removed; `/pricing` is free OSS · Get it
+- **Gift-first nav** — site chrome primary CTA is Download (CURRENT tag)
 
 ## 0.2.5 — 2026-10-10
 

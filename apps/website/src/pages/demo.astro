@@ -1,10 +1,8 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { checkoutConfigured, downloadUrl } from "../lib/commerce";
+import { downloadUrl } from "../lib/commerce";
 import { DEMO_STAGES, DEMO_VERSION } from "../lib/demo";
 
-const buyHref = "/pricing";
-const buyLabel = checkoutConfigured() ? "Buy Solo" : "See pricing";
 const first = DEMO_STAGES[0];
 ---
 
@@ -19,12 +17,13 @@ const first = DEMO_STAGES[0];
       <h1 class="demo-headline">Get live, silent.</h1>
       <p class="demo-support">
         Seven Harbor clips (shelf {DEMO_VERSION}) — bind · Open · Confirm · Preview · mid-flight ·
-        Sign Open · Deploy → live URL. Matches Download / CURRENT <strong>v0.2.5</strong>.
-        Watermark: local app · recorded. Download is the full OSS tool — no timed trial wall.
+        Sign Open · Deploy → live URL. Shelf GIFs from <strong>v0.2.5</strong> Harbor; Download /
+        CURRENT is <strong>v0.2.6</strong>. Watermark: local app · recorded. Download is the full
+        OSS tool — no timed trial wall.
       </p>
       <div class="hero-cta">
         <a class="btn btn-primary" href={downloadUrl()} rel="noopener noreferrer">Download</a>
-        <a class="btn" href={buyHref}>{buyLabel}</a>
+        <a class="btn" href="/pricing">Get it free</a>
       </div>
     </header>
 

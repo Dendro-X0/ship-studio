@@ -1,6 +1,6 @@
 # Orbit Yard — official website
 
-Public product surface (marketing · pricing · docs · demo · legal · checkout).  
+Public surface (docs · demo · honesty · free Download). **Not for sale** — Solo / Paddle checkout cancelled.  
 Not part of the local Adaptive Publish hub — see `specs/backend/product-website-charter.md`.
 
 ## Develop
@@ -13,29 +13,14 @@ pnpm website:dev
 # → http://localhost:4321
 ```
 
-## Paddle checkout (optional Solo Buy on this site)
-
-Operator path: **Paddle dashboard → `apps/website/.env` → Put on host → Redeploy**.  
-Full checklist: [docs/PADDLE-SETUP.md](./docs/PADDLE-SETUP.md).
-
-```bash
-cp apps/website/.env.example apps/website/.env
-# PUBLIC_PADDLE_CLIENT_TOKEN + PUBLIC_PADDLE_PRICE_ID (sandbox first)
-# then pnpm website:dev → /pricing test card → Put env on host + Deploy
-```
+## Distribution
 
 | Variable | Purpose |
 |----------|---------|
-| `PUBLIC_PADDLE_CLIENT_TOKEN` | Client-side token (`test_…` / `live_…`) |
-| `PUBLIC_PADDLE_PRICE_ID` | Catalog price id (`pri_…`) |
-| `PUBLIC_PADDLE_ENV` | `sandbox` (default) or `live` |
-| `PUBLIC_PADDLE_PRICE_LABEL` | Display price (e.g. `$29`) |
-| `PUBLIC_PADDLE_PORTAL_URL` | Optional customer portal URL (leave blank) |
-| `PUBLIC_REFUND_WINDOW_DAYS` | Default `14` |
-| `PUBLIC_SUPPORT_EMAIL` | Refund / support mailto |
-| `PUBLIC_DOWNLOAD_URL` | GitHub releases |
+| `PUBLIC_DOWNLOAD_URL` | GitHub Releases tag (default matches CURRENT) |
+| `PUBLIC_SUPPORT_EMAIL` | Optional maintainer mailto |
 
-Until token and price id are set, Buy stays disabled with a setup note. Overlay success redirects to `/checkout/success`. Soft-no: not Integrations-as-product; commercial ADMIT stays cancelled until explicit reopen.
+`/pricing` is **Get it free** ($0). Historical Paddle notes: [docs/PADDLE-SETUP.md](./docs/PADDLE-SETUP.md) (**CANCELLED** — do not re-enable sale UI).
 
 ## Never-say (S1.3)
 

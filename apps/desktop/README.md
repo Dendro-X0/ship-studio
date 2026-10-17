@@ -16,12 +16,17 @@ VS Code / Cursor: **Run and Debug → “Desktop: pnpm dev”**.
 
 ## Release stage
 
+Windows · macOS · Linux (Tauri v2 — current host only; CI matrix builds each OS):
+
 ```bash
-bash scripts/stage-desktop.sh
-./target/release/orbit-yard-desktop.exe
+bash scripts/stage-desktop.sh              # portable binary + sidecar
+bash scripts/stage-desktop.sh --installer  # + NSIS / DMG / deb·AppImage
+# Windows:  ./target/release/orbit-yard-desktop.exe
+# Unix:     ./target/release/orbit-yard-desktop
 ```
 
-Or: `pnpm desktop:release` from the repo root.
+Or: `pnpm desktop:release` / `pnpm desktop:installer` from the repo root.  
+Design: [desktop-multi-os-design](../../specs/frontend/desktop-multi-os-design.md).
 
 Bare `cargo build -p orbit-yard-desktop` keeps `cfg(dev)` → localhost refused. Use `pnpm dev` / `tauri build` / `stage-desktop.sh`.
 

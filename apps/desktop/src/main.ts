@@ -31,6 +31,7 @@ import {
   INTEGRATION_HOST_PUT,
   INTEGRATION_PUBLISH_STEP,
 } from "./integrations-data";
+import { SUITE_CARDS } from "./suite-data";
 import {
   CLOUD_HOST_GROUP,
   PLATFORM_GROUPS,
@@ -2525,8 +2526,8 @@ function commandItems(): CmdItem[] {
     },
     {
       id: "nav-integrations",
-      title: "Go to Integrations",
-      keywords: "payment email polar stripe resend wizard",
+      title: "Go to Suite",
+      keywords: "suite strata velocity truss scaffold template payment email polar",
       group: "Navigate",
       run: () => setView("integrations"),
     },
@@ -3049,7 +3050,29 @@ function toastHostingNeedsPublic(onReady: () => void) {
   ]);
 }
 
+function renderSuiteShelf() {
+  const host = document.querySelector<HTMLElement>("#suite-catalog");
+  if (!host) return;
+  host.innerHTML = SUITE_CARDS.map((card) => {
+    const primary = card.openUrl
+      ? `<button type="button" class="primary suite-open" data-suite-url="${escapeHtml(card.openUrl)}">${escapeHtml(card.openLabel ?? "Open")}</button>`
+      : `<button type="button" class="ghost suite-why" data-suite-id="${escapeHtml(card.id)}">How it fits</button>`;
+    const secondary =
+      card.secondaryUrl && card.secondaryLabel
+        ? `<button type="button" class="ghost suite-open" data-suite-url="${escapeHtml(card.secondaryUrl)}">${escapeHtml(card.secondaryLabel)}</button>`
+        : "";
+    const note = card.note ? `<p class="suite-card-note">${escapeHtml(card.note)}</p>` : "";
+    return `<article class="suite-card" data-suite="${escapeHtml(card.id)}">
+      <h3 class="suite-card-title">${escapeHtml(card.title)}</h3>
+      <p class="suite-card-blurb">${escapeHtml(card.blurb)}</p>
+      ${note}
+      <div class="hero-cta suite-card-actions">${primary}${secondary}</div>
+    </article>`;
+  }).join("");
+}
+
 function renderIntegrations() {
+  renderSuiteShelf();
   const host = document.querySelector<HTMLElement>("#integrations-catalog");
   if (!host) return;
   renderProviderCatalogGrid({
@@ -3071,7 +3094,7 @@ function renderIntegrations() {
   syncIntegrationsOrientation();
 }
 
-/** S3.3 — Integrations is not the current Publish gate unless listing/marketing/env.sprint. */
+/** S3.3 — Suite is not the current Publish gate unless listing/marketing/env.sprint. */
 function publishIntegrationsOk(stepId: string | undefined): boolean {
   const id = stepId ?? "";
   return id.startsWith("listing.") || id.startsWith("marketing.") || id === "env.sprint";
@@ -3090,7 +3113,7 @@ function syncIntegrationsOrientation() {
     !publishIntegrationsOk(id);
   banner.hidden = !show;
   if (show) {
-    text.textContent = `Current Publish gate: ${cur?.title ?? id}. Soft no — Integrations is not this step; use Publish / Deployment.`;
+    text.textContent = `Current Publish gate: ${cur?.title ?? id}. Suite is optional — use Publish / Deployment for this step.`;
   }
 }
 
@@ -3195,8 +3218,6 @@ function preferredHostingPlatformId(detected?: Detected | null): string | null {
   }
   if (detected.marketing_host === "pages") return "github-pages";
   if (detected.yard_configured) return "orbit";
-  if (detected.medusa) return "medusa";
-  if (detected.flowsint) return "flowsint";
   if (detected.umami) return "umami";
   return "selfhost";
 }
@@ -3298,8 +3319,9 @@ function renderPlatforms() {
   if (!host) return;
   const entries = deployCatalogEntries();
   if (!entries.some((e) => e.id === selectedPlatform)) {
+    const saved = savedPrimaryHost();
     selectedPlatform =
-      savedPrimaryHost() ??
+      (saved && entries.some((e) => e.id === saved) ? saved : null) ??
       preferredHostingPlatformId(lastDetected) ??
       entries[0]?.id ??
       "selfhost";
@@ -4378,10 +4400,12 @@ function routeDetectChip(label: string) {
       openPlatformsCatalog({ selectId: "umami" });
       return;
     case "flowsint":
-      openPlatformsCatalog({ selectId: "flowsint" });
+      openPlatformsCatalog({ selectId: "selfhost" });
+      toast("Flowsint lane is on hold — use Self-host or bind the compose yourself", "info", 5000);
       return;
     case "medusa":
-      openPlatformsCatalog({ selectId: "medusa" });
+      openPlatformsCatalog({ selectId: "selfhost" });
+      toast("Medusa Desktop lane is on hold — new kits use Velocity", "info", 5000);
       return;
     default:
       setView("portal");
@@ -8586,7 +8610,7 @@ function launchLaneMeta(group: string): { title: string; blurb: string; view?: s
     case "payments":
       return {
         title: "Payments",
-        blurb: "Polar / Stripe / … — Integrations wizards.",
+        blurb: "Polar / Stripe / … — vendor bookmarks under Suite.",
         view: "integrations",
       };
     case "env":
@@ -8673,7 +8697,7 @@ function applyLaunchView(view: LaunchView | null) {
           : related === "sign"
             ? "Open Sign"
             : related === "integrations"
-              ? "Open Integrations"
+              ? "Open Suite"
               : related === "env"
                 ? "Open Env"
                 : RELATED_VIEW_LABELS[related];
@@ -9153,8 +9177,6 @@ function applyDetected(detected?: Detected) {
     ["polar", detected.polar],
     ["orbit", detected.yard_configured],
     ["umami", detected.umami],
-    ["flowsint", detected.flowsint],
-    ["medusa", detected.medusa],
   ];
   host.hidden = false;
   const onFlags = flags.filter(([, on]) => on);
@@ -9264,9 +9286,17 @@ function applyStudio(studio: ShipState["studio"]) {
   }
   syncLaunchPaymentsToggle(Boolean(studio?.launch_payments));
   const host = (studio?.primary_host ?? "").trim().toLowerCase();
-  rememberedPrimaryHost = host || null;
-  if (host) {
+  // Drop parked primary_host ids (flowsint / medusa) so Deployment stays on catalog cards.
+  const hostOk =
+    Boolean(host) &&
+    hostingCatalogEntries({ orbitConfigured: true }).some((e) => e.id === host);
+  rememberedPrimaryHost = hostOk ? host : null;
+  if (hostOk) {
     selectedPlatform = host;
+    if (activeViewId === "platforms") renderPlatforms();
+  } else if (host && (host === "flowsint" || host === "medusa")) {
+    rememberedPrimaryHost = null;
+    selectedPlatform = preferredHostingPlatformId(lastDetected) ?? "selfhost";
     if (activeViewId === "platforms") renderPlatforms();
   }
 }
@@ -9673,6 +9703,25 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   document.querySelector("#now-polar")?.addEventListener("click", () => {
     setupPolarPortal();
+  });
+  document.querySelector("#suite-catalog")?.addEventListener("click", async (ev) => {
+    const t = ev.target as HTMLElement | null;
+    const openBtn = t?.closest<HTMLButtonElement>("button.suite-open");
+    const url = openBtn?.dataset.suiteUrl?.trim();
+    if (url) {
+      await openUrl(url);
+      toast("Opened suite link in your browser", "info", 3500);
+      return;
+    }
+    const whyBtn = t?.closest<HTMLButtonElement>("button.suite-why");
+    const id = whyBtn?.dataset.suiteId?.trim();
+    if (id === "velocity") {
+      toast(
+        "Velocity is a private modular scaffold — hire a wall or license it; no fake public storefront here. Get live still uses Publish / Deployment on this project.",
+        "info",
+        8000,
+      );
+    }
   });
   document.querySelector("#int-open")?.addEventListener("click", async () => {
     const wiz = INTEGRATION_WIZARDS.find((w) => w.id === selectedIntegration);
@@ -10573,7 +10622,7 @@ async function runWizard() {
         await run(["launch", "--project", project, "reset"], { quietHeader: true, quietToast: true });
         await refreshLaunch();
         toast(
-          el.checked ? "Payments lane on — Refresh shows Integrations" : "Payments lane off",
+          el.checked ? "Payments lane on — Refresh shows Suite vendor bookmarks" : "Payments lane off",
           "ok",
           3500,
         );

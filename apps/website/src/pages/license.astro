@@ -1,61 +1,54 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { downloadUrl, refundWindowDays, supportEmail } from "../lib/commerce";
+import { downloadUrl, supportEmail } from "../lib/commerce";
 
 const email = supportEmail();
-const days = refundWindowDays();
 ---
 
 <BaseLayout
   title="License — Orbit Yard"
-  description="Solo license is a local key file. Delivered by email after Paddle checkout."
+  description="Orbit Yard is MIT open source. No Solo purchase required."
   path="/license"
 >
   <section class="section">
     <h1>License</h1>
     <p class="lead">
-      Orbit Yard Solo is a <strong>local key file</strong> — not a cloud seat. After Paddle
-      checkout you receive <code>orbit-yard.license</code> by email.
+      Orbit Yard is <strong>MIT-licensed</strong> open source. You do not need to buy a Solo key
+      file to download, build, or run the tool.
     </p>
 
-    <h2>After you buy</h2>
+    <h2>How to get it</h2>
     <ol class="list-clean license-steps">
-      <li>Finish checkout — you land on <a href="/checkout/success">purchase complete</a>.</li>
-      <li>Check email for the <code>.license</code> attachment.</li>
       <li>
-        Save it as:
-        <ul>
-          <li>Windows: <code>%USERPROFILE%\.ship\orbit-yard.license</code></li>
-          <li>macOS / Linux: <code>~/.ship/orbit-yard.license</code></li>
-        </ul>
+        <a href={downloadUrl()} rel="noopener noreferrer">Download</a> a GitHub Release, or clone
+        <a href="https://github.com/Dendro-X0/ship-studio">the repo</a>.
       </li>
-      <li>
-        <a href={downloadUrl()} rel="noopener noreferrer">Download</a> the build and open
-        <a href="/docs/start">Start here</a>.
-      </li>
+      <li>Open <a href="/docs/start">Start here</a> and bind a project.</li>
+      <li>Ship a live URL via Publish / Deployment — Confirm when the gate is true.</li>
     </ol>
 
     <div class="hero-cta" style="margin-top: 1.5rem">
-      <a class="btn btn-primary" href="/license/orbit-yard.license.example" download>
-        Example license file
-      </a>
-      <a class="btn" href="/account">Manage order</a>
-      <a class="btn" href="/legal/refunds">Refunds ({days} days)</a>
+      <a class="btn btn-primary" href={downloadUrl()} rel="noopener noreferrer">Download</a>
+      <a
+        class="btn"
+        href="https://github.com/Dendro-X0/ship-studio/blob/main/LICENSE"
+        rel="noopener noreferrer"
+        >MIT License</a
+      >
+      <a class="btn" href="/pricing">Get it free</a>
     </div>
 
     <p class="price-meta" style="margin-top: 1.5rem">
-      Missing your file?
+      Historical note: a local <code>orbit-yard.license</code> file existed for the cancelled Solo
+      experiment. It is not required for current builds.
       {
         email ? (
-          <a href={`mailto:${email}?subject=Ship%20Studio%20license%20resend`}>
-            Email {email}
-          </a>
-        ) : (
-          <span>Email the maintainer</span>
-        )
+          <>
+            {" "}
+            Questions: <a href={`mailto:${email}`}>{email}</a>.
+          </>
+        ) : null
       }
-      with your Paddle transaction ID. Schema:
-      <code>docs/assets/license/FORMAT.md</code> in the repo.
     </p>
   </section>
 </BaseLayout>

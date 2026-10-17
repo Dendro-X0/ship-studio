@@ -1,50 +1,23 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { downloadUrl, refundWindowDays, supportEmail } from "../../lib/commerce";
-
-const email = supportEmail();
-const days = refundWindowDays();
+import { downloadUrl } from "../../lib/commerce";
 ---
 
 <BaseLayout
-  title="Purchase complete — Orbit Yard"
-  description="Thanks for buying Orbit Yard. Download, save your license file, start shipping."
+  title="Checkout closed — Orbit Yard"
+  description="Orbit Yard is not sold. Download free from GitHub Releases."
   path="/checkout/success"
 >
   <section class="section">
-    <h1>You’re in.</h1>
+    <h1>Checkout closed</h1>
     <p class="lead">
-      Paddle confirmed the payment. Next: save your <strong>license key file</strong>, download the
-      build, then follow Start here.
+      Orbit Yard is no longer sold. If you landed here from an old link, there is nothing to buy —
+      download the OSS build instead.
     </p>
-
-    <ol class="list-clean license-steps">
-      <li>
-        Watch for email with <code>orbit-yard.license</code> after the maintainer issues it. See
-        <a href="/license">license setup</a>.
-      </li>
-      <li>Save the file under <code>~/.ship/orbit-yard.license</code>.</li>
-      <li>Download the desktop / CLI build from GitHub Releases.</li>
-    </ol>
-
     <div class="hero-cta" style="margin-top: 1.5rem">
       <a class="btn btn-primary" href={downloadUrl()} rel="noopener noreferrer">Download</a>
-      <a class="btn" href="/license">License setup</a>
+      <a class="btn" href="/pricing">Get it free</a>
       <a class="btn" href="/docs/start">Start here</a>
-      <a class="btn" href="/account">Manage order</a>
     </div>
-    <p class="price-meta" style="margin-top: 1.5rem">
-      Receipts come from Paddle by email.
-      {
-        email ? (
-          <>
-            {" "}
-            Resend license: <a href={`mailto:${email}?subject=Ship%20Studio%20license%20resend`}>{email}</a>.
-          </>
-        ) : null
-      }
-      {" "}
-      {days}-day refunds — <a href="/legal/refunds">policy</a>.
-    </p>
   </section>
 </BaseLayout>

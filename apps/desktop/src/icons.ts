@@ -25,6 +25,7 @@ const PROVIDER_ICONS: Record<string, LocalIcon> = {
   resend: { file: "Resend_dark.svg" },
   orbit: { file: "lighthouse.svg" },
   selfhost: { file: "lighthouse.svg" },
+  umami: { file: "umami.svg", tone: "ink" },
   cloudflare: { file: "cloudflare.svg" },
   vercel: { file: "Vercel_dark.svg" },
   netlify: { file: "netlify.svg" },

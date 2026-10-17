@@ -1,4 +1,12 @@
-/** Paddle overlay (Solo owner) + download env. */
+/**
+ * Download URL helpers. Solo / Paddle checkout is CANCELLED — do not re-enable sale UI.
+ * Paddle env helpers remain for legacy scripts only; site pages must not sell.
+ */
+
+/** Always false — commercial Solo cancelled. */
+export function salesOpen(): boolean {
+  return false;
+}
 
 export function paddleClientToken(): string {
   return (import.meta.env.PUBLIC_PADDLE_CLIENT_TOKEN ?? "").trim();
@@ -22,7 +30,7 @@ export function paddlePortalUrl(): string {
 export function downloadUrl(): string {
   return (
     import.meta.env.PUBLIC_DOWNLOAD_URL ??
-    "https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.5"
+    "https://github.com/Dendro-X0/ship-studio/releases/tag/v0.2.6"
   ).trim();
 }
 
@@ -38,9 +46,9 @@ export function paddleConfigured(): boolean {
   return paddleClientToken().length > 0 && paddlePriceId().length > 0;
 }
 
-/** Solo Buy is ready only when Paddle overlay env is set. */
+/** @deprecated Solo cancelled — always false. Prefer salesOpen(). */
 export function checkoutConfigured(): boolean {
-  return paddleConfigured();
+  return false;
 }
 
 export function refundWindowDays(): number {

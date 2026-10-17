@@ -1,7 +1,11 @@
 # Paddle — Solo checkout on this website
 
-**What this is:** Optional Buy overlay on `/pricing` for **Orbit Yard Solo** (this site).  
-**What this is not:** Desktop Integrations product · DevOps GTM · Studio finishing Paddle OAuth for *your* customers ([solo-commerce-without-paddle](../../../specs/backend/solo-commerce-without-paddle-design.md) · commercial ADMIT still cancelled).
+> **CANCELLED (2026-10).** Orbit Yard is not sold. `/pricing` is free OSS / Download only.
+> Keep this file as historical operator notes — do **not** re-enable Paddle overlay without an
+> explicit commercial reopen decision.
+
+**What this was:** Optional Buy overlay on `/pricing` for **Orbit Yard Solo** (this site).  
+**What this is not:** Desktop Integrations product · DevOps GTM · Studio finishing Paddle OAuth for *your* customers ([solo-commerce-without-paddle](../../../specs/backend/solo-commerce-without-paddle-design.md) · commercial ADMIT cancelled).
 
 Paddle has more gates than Polar. Collapse what you can with a seed script; finish the one dashboard setting Paddle requires; keep `pdl_…` out of Studio and git.
 
