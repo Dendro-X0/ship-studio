@@ -22,6 +22,11 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "If set, upload built installers to this GitHub release tag (e.g. v0.2.6)"
+        required: false
+        default: ""
 
 env:
   CARGO_TERM_COLOR: always
@@ -45,9 +50,8 @@ jobs:
           workspaces: "."
           cache-targets: "true"
 
+      # Use package.json packageManager only (do not also pass version:)
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
@@ -73,15 +77,86 @@ jobs:
         shell: bash
         run: bash scripts/stage-desktop.sh --installer
 
-      - name: Upload bundle artifacts
+      - name: Package named release assets
+        id: pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          VER="$(node -p "require('./apps/desktop/package.json').version")"
+          OUT="dist/ci-desktop"
+          mkdir -p "$OUT"
+          BUNDLE="target/release/bundle"
+          ARCH="$(uname -m)"
+          case "$ARCH" in
+            x86_64|amd64) ARCH_LABEL=x64 ;;
+            arm64|aarch64) ARCH_LABEL=aarch64 ;;
+            *) ARCH_LABEL="$ARCH" ;;
+          esac
+
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            OS_LABEL=windows
+            if compgen -G "$BUNDLE/nsis/*-setup.exe" > /dev/null; then
+              cp -f "$BUNDLE"/nsis/*-setup.exe "$OUT/orbit-yard-v${VER}-${OS_LABEL}-${ARCH_LABEL}-setup.exe"
+            fi
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            OS_LABEL=macos
+            if compgen -G "$BUNDLE/dmg/*.dmg" > /dev/null; then
+              cp -f "$BUNDLE"/dmg/*.dmg "$OUT/orbit-yard-v${VER}-${OS_LABEL}-${ARCH_LABEL}.dmg"
+            fi
+            # Also ship .app as zip if no dmg
+            if [[ ! -f "$OUT/orbit-yard-v${VER}-${OS_LABEL}-${ARCH_LABEL}.dmg" ]] && compgen -G "$BUNDLE/macos/*.app" > /dev/null; then
+              (cd "$BUNDLE/macos" && ditto -c -k --sequesterRsrc --keepParent ./*.app "../../$OUT/orbit-yard-v${VER}-${OS_LABEL}-${ARCH_LABEL}.app.zip")
+            fi
+          else
+            OS_LABEL=linux
+            if compgen -G "$BUNDLE/deb/*.deb" > /dev/null; then
+              cp -f "$BUNDLE"/deb/*.deb "$OUT/orbit-yard-v${VER}-${OS_LABEL}-${ARCH_LABEL}.deb"
+            fi
+            if compgen -G "$BUNDLE/appimage/*.AppImage" > /dev/null; then
+              cp -f "$BUNDLE"/appimage/*.AppImage "$OUT/orbit-yard-v${VER}-${OS_LABEL}-${ARCH_LABEL}.AppImage"
+            fi
+          fi
+
+          ls -la "$OUT" || true
+          echo "ver=$VER" >> "$GITHUB_OUTPUT"
+          echo "os_label=$OS_LABEL" >> "$GITHUB_OUTPUT"
+          echo "arch_label=$ARCH_LABEL" >> "$GITHUB_OUTPUT"
+
+      - name: Upload named installers
         uses: actions/upload-artifact@v4
         with:
-          name: orbit-yard-desktop-${{ matrix.os }}
-          path: |
-            target/release/bundle/nsis/*
-            target/release/bundle/dmg/*
-            target/release/bundle/macos/*
-            target/release/bundle/deb/*
-            target/release/bundle/appimage/*
-          if-no-files-found: warn
+          name: orbit-yard-desktop-${{ steps.pack.outputs.os_label }}-${{ steps.pack.outputs.arch_label }}
+          path: dist/ci-desktop/*
+          if-no-files-found: error
           retention-days: 14
+
+  release-attach:
+    name: attach to GitHub release
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all desktop artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: orbit-yard-desktop-*
+          merge-multiple: true
+
+      - name: Upload assets to release ${{ inputs.release_tag }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          ls -la artifacts/
+          # sha256 beside each binary
+          cd artifacts
+          for f in *; do
+            [[ -f "$f" ]] || continue
+            sha256sum "$f" > "${f}.sha256"
+          done
+          cd ..
+          gh release upload "$TAG" artifacts/* --clobber --repo "$GITHUB_REPOSITORY"
